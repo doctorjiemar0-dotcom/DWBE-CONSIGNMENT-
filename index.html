@@ -148,6 +148,7 @@
                 storeName: sName,
                 initialQty: qty,
                 currentStock: qty,
+                rejectedQty: 0, // Bagong counter para sa rejected/bawas items
                 price: price,
                 dateDelivered: startD,
                 collectionDate: collD,
@@ -184,10 +185,16 @@
             const currentYM = new Date().toISOString().slice(0, 7);
 
             consignments.forEach((item, index) => {
-                const sold = item.initialQty - item.currentStock;
-                const sales = sold * item.price;
+                // Siguraduhing may rejectedQty kung lumang data ang naka-save
+                if (item.rejectedQty === undefined) item.rejectedQty = 0;
+
+                // Ang benta ay kinukuha mula sa initial minus current stock minus rejected items
+                const sold = item.initialQty - item.currentStock - item.rejectedQty;
+                const actualSold = sold < 0 ? 0 : sold;
+                const sales = actualSold * item.price;
+                
                 tStock += item.currentStock;
-                tSold += sold;
+                tSold += actualSold;
                 tSales += sales;
 
                 const isDue = item.collectionDate && item.collectionDate.startsWith(currentYM);
@@ -196,7 +203,7 @@
                 // Performance rating
                 let rating = 'Maayos';
                 let badgeClass = 'badge-good';
-                if (sold === 0 && item.initialQty > 0) { rating = 'Mabagal'; badgeClass = 'badge-ok'; }
+                if (actualSold === 0 && item.initialQty > 0) { rating = 'Mabagal'; badgeClass = 'badge-ok'; }
                 if (isDue) { rating = 'Due Na!'; badgeClass = 'badge-due'; }
 
                 const div = document.createElement('div');
@@ -210,13 +217,13 @@
                         </div>
                     </div>
                     <div style="margin-top: 5px; font-size:0.85rem; color:#555;">
-                        Simulang Stock: ${item.initialQty} pcs | Natitira: ${item.currentStock} pcs | Nabenta: ${sold} pcs
+                        Simulang Stock: ${item.initialQty} pcs | Natitira: ${item.currentStock} pcs | Nabenta: ${actualSold} pcs ${item.rejectedQty > 0 ? `| Rejected: ${item.rejectedQty} pcs` : ''}
                     </div>
                     
                     <div style="display: ${item.expanded ? 'block' : 'none'}; margin-top: 8px;">
                         <div style="font-size: 0.85rem; background: #f1f3f5; padding: 6px; border-radius: 4px;">
                             Presyo: ₱${item.price} / isa | Total Halaga ng Natitira: <strong>₱${item.currentStock * item.price}</strong><br>
-                            Petsa ng Simula: ${item.dateDelivered} | Target Koleksyon: ${item.collectionDate} ${isDue ? '<b>(Due Na!)</b>' : ''}
+                            Petsa ng Simula: ${item.dateDelivered} | Target Koleksyon: ${item.collectionDate} ${isDue ? '<b style="color:red;">(Due Na!)</b>' : ''}
                         </div>
                         
                         <div class="history-box">
@@ -231,7 +238,7 @@
 
                         <div class="btn-group">
                             <button onclick="checkupStore(${index})" style="background-color: #0288d1;">Koleksyon (Check-up)</button>
-                            <button onclick="bawasStock(${index})" style="background-color: #ff9800;">Bawas</button>
+                            <button onclick="bawasStock(${index})" style="background-color: #ff9800;">Bawas (Rejected)</button>
                             <button onclick="restockStore(${index})" style="background-color: #388e3c;">Restock</button>
                             <button onclick="printStore(${index})" style="background-color: #555;">Print</button>
                             <button onclick="deleteStore(${index})" style="background-color: #d32f2f;">Burahin</button>
@@ -259,9 +266,10 @@
         };
 
         window.checkupStore = function(index) {
-            const soldCount = prompt('Ilang piraso ang nabenta o nakolekta sa check-up na ito?', '1');
+            const soldCount = prompt('Ilang piraso ang totoong nabenta o nakolekta sa check-up na ito?', '1');
             if (soldCount !== null && !isNaN(soldCount)) {
                 const count = parseInt(soldCount);
+                const maxAvailable = consignments[index].initialQty - consignments.reduce ? (consignments[index].currentStock + consignments[index].rejectedQty) : consignments[index].currentStock;
                 if (count > consignments[index].currentStock) {
                     alert('Higit pa sa kasalukuyang natitirang stock ang inilagay mo.');
                     return;
@@ -276,15 +284,20 @@
         };
 
         window.bawasStock = function(index) {
-            if (consignments[index].currentStock > 0) {
-                consignments[index].currentStock -= 1;
+            const bawasCount = prompt('Ilang piraso ang ibabawas (Rejected / Sirang items / Pull-out)?', '1');
+            if (bawasCount !== null && !isNaN(bawasCount)) {
+                const count = parseInt(bawasCount);
+                if (count > consignments[index].currentStock) {
+                    alert('Hindi maaaring lumampas sa kasalukuyang natitirang stock ang ibabawas.');
+                    return;
+                }
+                consignments[index].currentStock -= count;
+                consignments[index].rejectedQty = (consignments[index].rejectedQty || 0) + count;
                 consignments[index].history.unshift({
                     date: new Date().toLocaleString(),
-                    text: `Nagbawas ng 1 pc stock (Benta)`
+                    text: `Nagbawas ng ${count} pc(s) stock (Rejected / Sirang Item)`
                 });
                 saveAndRender();
-            } else {
-                alert('Wala nang natitirang stock.');
             }
         };
 
