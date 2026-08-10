@@ -20,8 +20,11 @@
         input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #388e3c; }
+        
+        /* Install App Banner Styling */
         .install-banner { background: #e8f5e9; border: 2px dashed #4caf50; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: none; }
-        .install-banner button { background-color: #1b5e20; margin-top: 8px; }
+        .install-banner button { background-color: #1b5e20; margin-top: 8px; width: auto; padding: 8px 16px; }
+
         .summary-box { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 5px; font-weight: bold; color: var(--primary-color); }
@@ -52,9 +55,10 @@
 
     <div class="container">
         
-        <!-- Install App Banner -->
+        <!-- Install App Banner Support -->
         <div class="card install-banner" id="installCard">
             <h2>📱 I-install bilang Mobile App</h2>
+            <p style="font-size: 0.85rem; color: #333; margin-bottom: 5px;">Para mas mabilis ma-access kahit walang internet.</p>
             <button id="installBtn" type="button">I-install ang App</button>
         </div>
 
@@ -67,12 +71,13 @@
             <div class="summary-row summary-row-highlight"><span>Kabuuang Koleksyon / Benta:</span><span id="totalSales">₱0</span></div>
         </div>
 
-        <!-- Sync Card -->
+        <!-- Sync Card / Data Recovery (Load lumang files) -->
         <div class="card sync-card">
-            <h2>📱 Pagpapasa sa Client / Share Data</h2>
+            <h2>📱 Data Backup & Recovery (Lumang Files)</h2>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 8px;">I-load ang iyong dating nai-save na JSON file para maibalik ang mga datos:</p>
             <div style="display: flex; gap: 8px;">
                 <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data</button>
-                <button type="button" id="importBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Data</button>
+                <button type="button" id="importBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Lumang File</button>
                 <input type="file" id="importFile" style="display: none;" accept=".json">
             </div>
         </div>
@@ -292,7 +297,7 @@
 
         window.editHistoryDate = function(storeIdx, histIdx) {
             const currentLog = consignments[storeIdx].history[histIdx];
-            const newDateText = prompt('I-edit ang timestamp o petsa ng transaksyong ito:', currentLog.date);
+            const newDateText = prompt('I-edit ang petsa o oras ng transaksyong ito:', currentLog.date);
             if (newDateText !== null) {
                 consignments[storeIdx].history[histIdx].date = newDateText;
                 saveAndRender();
@@ -366,7 +371,7 @@
             window.print();
         };
 
-        // Export/Import
+        // Export/Import lumang data file
         document.getElementById('exportBtn').addEventListener('click', () => {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(consignments));
             const downloadAnchor = document.createElement('a');
@@ -390,7 +395,7 @@
                     if (Array.isArray(parsed)) {
                         consignments = parsed;
                         saveAndRender();
-                        alert('Matagumpay na na-load ang data!');
+                        alert('Matagumpay na na-load ang lumang data file!');
                     } else {
                         alert('Maling format ng file.');
                     }
@@ -399,6 +404,28 @@
                 }
             };
             reader.readAsText(file);
+        });
+
+        // PWA Install prompt handler
+        let deferredPrompt;
+        const installCard = document.getElementById('installCard');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installCard.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installCard.style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
         });
 
         renderApp();
