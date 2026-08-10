@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor's Whisk Broom Etc. Consignment</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --secondary-color: #4caf50;
+            --background-color: #f4f6f8;
+            --text-color: #333;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding-bottom: 50px;
+        }
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .container {
+            padding: 15px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        h2 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        button:hover {
+            background-color: #388e3c;
+        }
+        .consignment-item {
+            background: #fff;
+            border-left: 4px solid var(--primary-color);
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+        }
+        /* Espesyal na border para sa mga tindahang for collection ngayong buwan */
+        .consignment-item.due-this-month {
+            border-left: 6px solid #d32f2f;
+            background-color: #fff9f9;
+        }
+
+        .store-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding-bottom: 5px;
+        }
+        .store-header-row h3 {
+            font-size: 0.95rem;
+            color: var(--primary-color);
+        }
+        .toggle-icon {
+            font-size: 0.8rem;
+            background: #e8f5e9;
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .store-details {
+            margin-top: 8px;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+        }
+        .consignment-item p {
+            margin-bottom: 5px;
+        }
+        /* Highlight Styling para sa Importanteng Petsa */
+        .highlight-collection {
+            background-color: #fffde7;
+            border: 1px solid #fbc02d;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #f57f17;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+        /* Mas matingkad na kulay kung koleksyon ngayong buwan */
+        .highlight-collection.due-alert {
+            background-color: #ffebee;
+            border: 1px solid #ef5350;
+            color: #c62828;
+            animation: pulse-border 1.5s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: #ef5350; }
+            50% { border-color: #b71c1c; }
+            100% { border-color: #ef5350; }
+        }
+
+        .highlight-restock {
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #1565c0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .collect-btn {
+            background-color: #00838f;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            width: auto;
+            margin-top: 0;
+            color: white;
+        }
+        .collect-btn:hover { background-color: #006064; }
+        .sold-btn {
+            background-color: #e65100;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            width: auto;
+            margin-top: 0;
+        }
+        .sold-btn:hover { background-color: #bf360c; }
+        .restock-btn {
+            background-color: #1976d2;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            width: auto;
+            margin-top: 0;
+        }
+        .restock-btn:hover { background-color: #115293; }
+        .print-btn {
+            background-color: #455a64;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            width: auto;
+            margin-top: 0;
+        }
+        .print-btn:hover { background-color: #37474f; }
+        .delete-btn {
+            background-color: #d32f2f;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            width: auto;
+            margin-top: 0;
+        }
+        .delete-btn:hover { background-color: #c62828; }
+        
+        .sync-card {
+            background: #e3f2fd;
+            border: 1px dashed #90caf9;
+        }
+        .history-box {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+        .history-box h4 {
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 2px;
+        }
+        .history-list {
+            list-style-type: none;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+        .history-list li {
+            padding: 4px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-actions {
+            display: flex;
+            gap: 3px;
+        }
+        .edit-hist-btn {
+            background: #7b1fa2;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 0;
+            width: auto;
+        }
+        .edit-hist-btn:hover { background: #4a148c; }
+        .del-hist-btn {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 0;
+            width: auto;
+        }
+        .del-hist-btn:hover { background: #b71c1c; }
+
+        .summary-box {
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #c8e6c9;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .summary-row-highlight {
+            border-top: 1px dashed #a5d6a7;
+            padding-top: 5px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-excellent { background-color: #2e7d32; } 
+        .badge-good { background-color: #f57c00; }      
+        .badge-slow { background-color: #d32f2f; }      
+
+        .due-badge {
+            background-color: #d32f2f;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            font-weight: bold;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableArea, #printableArea * {
+                visibility: visible;
+            }
+            #printableArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .btn-group, .card:not(:nth-child(2)), header, .summary-box, .toggle-icon {
+                display: none !important;
+            }
+            .store-details {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>🧹 Doctor's Whisk Broom Etc. Consignment</header>
+
+    <div class="container">
+        
+        <!-- Summary Dashboard -->
+        <div class="summary-box">
+            <div class="summary-row">
+                <span>Kabuuang Tindahan:</span>
+                <span id="totalStores">0</span>
+            </div>
+            <div class="summary-row" style="color: #c62828; font-weight: bold;">
+                <span>⚠️ For Koleksyon Ngayong Buwan:</span>
+                <span id="totalDueThisMonth">0</span>
+            </div>
+            <div class="summary-row">
+                <span>Aktibong Stock (Natitira):</span>
+                <span id="totalStock">0 pcs</span>
+            </div>
+            <div class="summary-row">
+                <span>Kabuuang Nabenta:</span>
+                <span id="totalSoldSummary">0 pcs</span>
+            </div>
+            <div class="summary-row summary-row-highlight">
+                <span>Kabuuang Benta / Koleksyon:</span>
+                <span id="totalSales">₱0</span>
+            </div>
+        </div>
+
+        <!-- Pang-share / Sync sa Client -->
+        <div class="card sync-card">
+            <h2>📱 Pagpapasa sa Client / Share Data</h2>
+            <p style="font-size: 0.8rem; margin-bottom: 8px; color: #555;">I-export ang data para ma-send sa client, o i-load ang file nila para magkapareho kayo ng datos.</p>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" onclick="exportData()" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data File</button>
+                <button type="button" onclick="document.getElementById('importFile').click()" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Data ng Client</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+            </div>
+        </div>
+
+        <!-- Form para sa pagdagdag ng Consignment -->
+        <div class="card">
+            <h2>Magdagdag ng Consignment</h2>
+            <form id="consignmentForm">
+                <div class="form-group">
+                    <label for="storeName">Pangalan ng Tindahan:</label>
+                    <input type="text" id="storeName" required placeholder="Hal. Aling Nena Store">
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Bilang ng Item (Simulang Stock):</label>
+                    <input type="number" id="quantity" required placeholder="Hal. 10">
+                </div>
+                <div class="form-group">
+                    <label for="price">Presyo bawat Isa (₱):</label>
+                    <input type="number" id="price" required placeholder="Hal. 150">
+                </div>
+                <div class="form-group">
+                    <label for="dateDelivered">Petsa ng Simula (Start of Consignment):</label>
+                    <input type="date" id="dateDelivered" required>
+                </div>
+                <div class="form-group">
+                    <label for="collectionDate">Target na Petsa ng Koleksyon (Auto-update buwan-buwan):</label>
+                    <input type="date" id="collectionDate" required>
+                </div>
+                <button type="submit">I-save ang Consignment</button>
+            </form>
+        </div>
+
+        <!-- Listahan ng mga Consignment -->
+        <div class="card" id="printableArea">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2>Listahan ng mga Tindahan at History</h2>
+                <div style="display: flex; gap: 5px;">
+                    <button type="button" onclick="toggleAllStores(true)" style="background-color: #555; padding: 3px 8px; font-size: 0.75rem; width: auto; margin-top:0;">Itago Lahat</button>
+                    <button type="button" onclick="toggleAllStores(false)" style="background-color: #388e3c; padding: 3px 8px; font-size: 0.75rem; width: auto; margin-top:0;">Ipakita Lahat</button>
+                </div>
+            </div>
+            <div id="consignmentList">
+                <!-- Dito papasok ang mga dynamic items -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const form = document.getElementById('consignmentForm');
+        const consignmentList = document.getElementById('consignmentList');
+        const totalStoresEl = document.getElementById('totalStores');
+        const totalDueThisMonthEl = document.getElementById('totalDueThisMonth');
+        const totalStockEl = document.getElementById('totalStock');
+        const totalSoldSummaryEl = document.getElementById('totalSoldSummary');
+        const totalSalesEl = document.getElementById('totalSales');
+
+        const dateDeliveredInput = document.getElementById('dateDelivered');
+        const collectionDateInput = document.getElementById('collectionDate');
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        dateDeliveredInput.value = todayStr;
+        updateDefaultCollectionDate(todayStr);
+
+        dateDeliveredInput.addEventListener('change', function() {
+            updateDefaultCollectionDate(this.value);
+        });
+
+        function updateDefaultCollectionDate(startDateStr) {
+            let d = new Date(startDateStr);
+            d.setMonth(d.getMonth() + 1);
+            collectionDateInput.value = d.toISOString().split('T')[0];
+        }
+
+        let consignments = JSON.parse(localStorage.getItem('consignments')) || [];
+
+        function checkAndUpdateMonthlyTarget(item) {
+            let now = new Date();
+
+            if (!item.collectionDate) {
+                let startD = item.dateDelivered ? new Date(item.dateDelivered) : new Date();
+                startD.setMonth(startD.getMonth() + 1);
+                item.collectionDate = startD.toISOString().split('T')[0];
+            }
+
+            let targetD = new Date(item.collectionDate);
+            
+            while (now > targetD) {
+                targetD.setMonth(targetD.getMonth() + 1);
+                item.collectionDate = targetD.toISOString().split('T')[0];
+            }
+        }
+
+        function isDueCurrentMonth(dateStr) {
+            if (!dateStr) return false;
+            const targetDate = new Date(dateStr);
+            const now = new Date();
+            return targetDate.getFullYear() === now.getFullYear() && targetDate.getMonth() === now.getMonth();
+        }
+
+        function calculateAutoRating(soldCount) {
+            if (soldCount >= 10) {
+                return 'Pinakamahusay (Maraming Nabenta)';
+            } else if (soldCount >= 4) {
+                return 'Maayos';
+            } else {
+                return 'Mabagal (Kaunti ang Nabenta)';
+            }
+        }
+
+        function renderConsignments() {
+            consignmentList.innerHTML = '';
+            let totalStock = 0;
+            let totalSoldOverall = 0;
+            let totalSalesAmount = 0;
+            let dueCount = 0;
+
+            if (consignments.length === 0) {
+                consignmentList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>';
+            }
+
+            consignments.forEach((item, index) => {
+                checkAndUpdateMonthlyTarget(item);
+
+                let qty = parseInt(item.quantity) || 0;
+                let initialQty = parseInt(item.initialQuantity) || qty;
+                let price = parseFloat(item.price) || 0;
+
+                totalStock += qty;
+
+                let restockTotal = item.totalRestock || 0;
+                let soldCount = (initialQty + restockTotal) - qty;
+                if (soldCount < 0) soldCount = 0;
+                
+                totalSoldOverall += soldCount;
+                let storeSales = soldCount * price;
+                totalSalesAmount += storeSales;
+
+                item.storeRating = calculateAutoRating(soldCount);
+
+                let badgeClass = 'badge-good';
+                if (item.storeRating.includes('Pinakamahusay')) badgeClass = 'badge-excellent';
+                if (item.storeRating.includes('Mabagal')) badgeClass = 'badge-slow';
+
+                const isDue = isDueCurrentMonth(item.collectionDate);
+                if (isDue) {
+                    dueCount++;
+                    if (item.isCollapsed === undefined) {
+                        item.isCollapsed = false; // Awtomatikong buksan kung for collection ngayong buwan
+                    }
+                } else {
+                    if (item.isCollapsed === undefined) {
+                        item.isCollapsed = true; 
+                    }
+                }
+
+                let historyHtml = '';
+                if (item.history && item.history.length > 0) {
+                    historyHtml = `<div class="history-box">
+                        <h4>Kasaysayan (Transaction History):</h4>
+                        <ul class="history-list">`;
+                    item.history.forEach((h, hIndex) => {
+                        historyHtml += `<li>
+                            <span>[${h.date}] ${h.action}</span>
+                            <div class="history-actions">
+                                <button class="edit-hist-btn" onclick="editHistoryDate(${index}, ${hIndex})" title="Baguhin ang petsa/oras">✏️</button>
+                                <button class="del-hist-btn" onclick="deleteHistoryItem(${index}, ${hIndex})" title="Burahin ang entry na ito">❌</button>
+                            </div>
+                        </li>`;
+                    });
+                    historyHtml += `</ul></div>`;
+                } else {
+                    historyHtml = `<div class="history-box">
+                        <h4>Kasaysayan (Transaction History):</h4>
+                        <p style="color:#888; font-size:0.75rem;">Wala pang transaksiyon.</p>
+                    </div>`;
+                }
+
+                const div = document.createElement('div');
+                div.className = `consignment-item ${isDue ? 'due-this-month' : ''}`;
+                div.innerHTML = `
+                    <div class="store-header-row" onclick="toggleStoreCollapse(${index})">
+                        <h3>🏪 ${item.storeName} ${isDue ? '<span class="due-badge">⚠️ FOR COLLECTION NGAYONG BUWAN</span>' : ''} <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(Stock: ${qty} | Nabenta: ${soldCount})</span></h3>
+                        <span class="toggle-icon">${item.isCollapsed ? '➕ Ipakita' : '➖ Itago'}</span>
+                    </div>
+                    <div class="store-details" style="display: ${item.isCollapsed ? 'none' : 'block'};">
+                        <p><strong>Aktibong Stocks (Natitira):</strong> ${qty} pcs (₱${price} / isa)</p>
+                        <p><strong>Nabenta na:</strong> ${soldCount} pcs (Benta: ₱${storeSales})</p>
+                        <p><strong>Performance Rating:</strong> <span class="badge ${badgeClass}">${item.storeRating}</span></p>
+                        
+                        <!-- START OF CONSIGNMENT -->
+                        <div class="highlight-restock">
+                            <span>📅 Start of Consignment:</span>
+                            <span>${item.dateDelivered}</span>
+                        </div>
+
+                        <!-- TARGET COLLECTION DATE (Naka-highlight nang husto kung ngayong buwan) -->
+                        <div class="highlight-collection ${isDue ? 'due-alert' : ''}">
+                            <span>🎯 Target Collection Date:</span>
+                            <span>${item.collectionDate || 'Hindi nakatakda'} ${isDue ? '🔔 (Due Na!)' : ''}</span>
+                        </div>
+
+                        <p style="margin-top: 6px;"><strong>Total Halaga ng Natitira:</strong> ₱${qty * price}</p>
+                        ${historyHtml}
+                        <div class="btn-group">
+                            <button class="collect-btn" onclick="recordCollection(${index})">📝 Koleksyon (Check-up)</button>
+                            <button class="sold-btn" onclick="reduceStock(${index})">📉 Bawas</button>
+                            <button class="restock-btn" onclick="restockItem(${index})">➕ Restock</button>
+                            <button class="print-btn" onclick="printStore(${index})">🖨️ Print</button>
+                            <button class="delete-btn" onclick="deleteConsignment(${index})">🗑️ Burahin Tindahan</button>
+                        </div>
+                    </div>
+                `;
+                consignmentList.appendChild(div);
+            });
+
+            totalStoresEl.textContent = consignments.length;
+            totalDueThisMonthEl.textContent = dueCount;
+            totalStockEl.textContent = `${totalStock} pcs`;
+            totalSoldSummaryEl.textContent = `${totalSoldOverall} pcs`;
+            totalSalesEl.textContent = `₱${totalSalesAmount.toLocaleString()}`;
+
+            localStorage.setItem('consignments', JSON.stringify(consignments));
+        }
+
+        window.toggleStoreCollapse = function(index) {
+            consignments[index].isCollapsed = !consignments[index].isCollapsed;
+            renderConsignments();
+        }
+
+        window.toggleAllStores = function(collapseState) {
+            consignments.forEach(item => {
+                item.isCollapsed = collapseState;
+            });
+            renderConsignments();
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const storeName = document.getElementById('storeName').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const dateDelivered = document.getElementById('dateDelivered').value;
+            const collectionDate = document.getElementById('collectionDate').value;
+
+            const currentDate = new Date().toLocaleString();
+
+            const newConsignment = {
+                storeName,
+                quantity,
+                initialQuantity: quantity,
+                totalRestock: 0,
+                price,
+                storeRating: 'Maayos',
+                dateDelivered,
+                collectionDate,
+                isCollapsed: false,
+                history: [
+                    { action: `Nag-simula ng Consignment: ${quantity} pcs (Start: ${dateDelivered})`, date: currentDate }
+                ]
+            };
+
+            consignments.push(newConsignment);
+            renderConsignments();
+            form.reset();
+            dateDeliveredInput.value = todayStr;
+            updateDefaultCollectionDate(todayStr);
+        });
+
+        window.editHistoryDate = function(storeIndex, histIndex) {
+            const currentHist = consignments[storeIndex].history[histIndex];
+            const newDateStr = prompt(`Itama ang Petsa at Oras para sa:\n"${currentHist.action}"`, currentHist.date);
+            
+            if (newDateStr !== null && newDateStr.trim() !== '') {
+                consignments[storeIndex].history[histIndex].date = newDateStr.trim();
+                renderConsignments();
+                alert('Matagumpay na nabago ang petsa at oras ng transaksiyong ito!');
+            }
+        }
+
+        window.deleteHistoryItem = function(storeIndex, histIndex) {
+            const histItem = consignments[storeIndex].history[histIndex];
+            
+            if (confirm(`Sigurado ka bang gusto mong burahin ang transaksiyong ito?\n\n"${histItem.action}"`)) {
+                let actionText = histItem.action;
+                
+                if (actionText.includes('May Nabenta:') || actionText.includes('Nabawasan/Naibenta:')) {
+                    let match = actionText.match(/-(\d+)/);
+                    if (match && match[1]) {
+                        let returnedQty = parseInt(match[1]);
+                        consignments[storeIndex].quantity += returnedQty;
+                        alert(`Matagumpay na binura ang transaksiyon. Ang ${returnedQty} pcs ay ibinalik na sa aktibong stock.`);
+                    }
+                } else if (actionText.includes('Nag-restock:')) {
+                    let match = actionText.match(/\+(\d+)/);
+                    if (match && match[1]) {
+                        let deductedQty = parseInt(match[1]);
+                        consignments[storeIndex].quantity -= deductedQty;
+                        if (consignments[storeIndex].quantity < 0) consignments[storeIndex].quantity = 0;
+                        if (typeof consignments[storeIndex].totalRestock !== 'undefined') {
+                            consignments[storeIndex].totalRestock -= deductedQty;
+                            if (consignments[storeIndex].totalRestock < 0) consignments[storeIndex].totalRestock = 0;
+                        }
+                        alert(`Matagumpay na binura ang restock. Binawasan ng ${deductedQty} pcs ang stock.`);
+                    }
+                } else {
+                    alert('Matagumpay na binura ang transaksiyon sa history.');
+                }
+
+                consignments[storeIndex].history.splice(histIndex, 1);
+                renderConsignments();
+            }
+        }
+
+        window.recordCollection = function(index) {
+            const store = consignments[index];
+            const soldQty = prompt(`Ilang piraso ang nabenta sa check-up/koleksyong ito sa ${store.storeName}? (I-type ang 0 kung walang nabenta):`);
+            
+            if (soldQty !== null && soldQty.trim() !== '') {
+                const parsedSold = parseInt(soldQty);
+                if (!isNaN(parsedSold) && parsedSold >= 0) {
+                    const currentDate = new Date().toLocaleString();
+                    
+                    if (parsedSold > 0) {
+                        let currentQty = parseInt(store.quantity);
+                        if (parsedSold > currentQty) {
+                            alert('Ang bilang ng nabenta ay mas mataas kaysa sa kasalukuyang stock!');
+                            return;
+                        }
+                        store.quantity = currentQty - parsedSold;
+                        
+                        if (!store.history) store.history = [];
+                        store.history.unshift({
+                            action: `Koleksyon Check-up - May Nabenta: -${parsedSold} pcs`,
+                            date: currentDate
+                        });
+                        alert(`Na-record: May nabentang ${parsedSold} pcs.`);
+                    } else {
+                        if (!store.history) store.history = [];
+                        store.history.unshift({
+                            action: `Koleksyon Check-up - Walang Nabenta (0 pcs)`,
+                            date: currentDate
+                        });
+                        alert(`Na-record: Walang nabenta (0 pcs) sa koleksyong ito.`);
+                    }
+
+                    let targetD = new Date(store.collectionDate);
+                    if (isNaN(targetD)) targetD = new Date();
+                    targetD.setMonth(targetD.getMonth() + 1);
+                    store.collectionDate = targetD.toISOString().split('T')[0];
+
+                    renderConsignments();
+                } else {
+                    alert('Maglagay ng wastong numero (0 pataas).');
+                }
+            }
+        }
+
+        window.printStore = function(index) {
+            window.print();
+        }
+
+        window.exportData = function() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(consignments));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "doctors_consignment_data.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        window.importData = function(event) {
+            const fileReader = new FileReader();
+            if (event.target.files[0]) {
+                fileReader.readAsText(event.target.files[0], "UTF-8");
+                fileReader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (Array.isArray(importedData)) {
+                            consignments = importedData;
+                            renderConsignments();
+                            alert("Matagumpay na na-load ang datos ng client!");
+                        } else {
+                            alert("Maling format ng file.");
+                        }
+                    } catch (error) {
+                        alert("Hindi mabasa ang file.");
+                    }
+                };
+            }
+        }
+
+        window.reduceStock = function(index) {
+            const soldQty = prompt(`Ilang piraso ang nabenta/nabawas sa ${consignments[index].storeName}?`);
+            if (soldQty !== null && soldQty.trim() !== '') {
+                const parsedSold = parseInt(soldQty);
+                if (!isNaN(parsedSold) && parsedSold > 0) {
+                    let currentQty = parseInt(consignments[index].quantity);
+                    if (parsedSold > currentQty) {
+                        alert('Ang bilang na ibinebenta ay mas mataas kaysa sa kasalukuyang stock!');
+                        return;
+                    }
+                    consignments[index].quantity = currentQty - parsedSold;
+                    
+                    if (!consignments[index].history) consignments[index].history = [];
+                    const currentDate = new Date().toLocaleString();
+                    consignments[index].history.unshift({
+                        action: `Nabawasan/Naibenta: -${parsedSold} pcs`,
+                        date: currentDate
+                    });
+
+                    renderConsignments();
+                    alert(`Matagumpay na ibinawas ang ${parsedSold} pcs na nabenta!`);
+                } else {
+                    alert('Maglagay ng wastong bilang ng numero.');
+                }
+            }
+        }
+
+        window.restockItem = function(index) {
+            const addQty = prompt(`Ilang bagong item ang idadagdag sa ${consignments[index].storeName}?`);
+            if (addQty !== null && addQty.trim() !== '') {
+                const parsedQty = parseInt(addQty);
+                if (!isNaN(parsedQty) && parsedQty > 0) {
+                    consignments[index].quantity = parseInt(consignments[index].quantity) + parsedQty;
+                    
+                    if (typeof consignments[index].totalRestock === 'undefined') consignments[index].totalRestock = 0;
+                    consignments[index].totalRestock += parsedQty;
+                    
+                    if (!consignments[index].history) consignments[index].history = [];
+                    const currentDate = new Date().toLocaleString();
+                    consignments[index].history.unshift({
+                        action: `Nag-restock: +${parsedQty} pcs`,
+                        date: currentDate
+                    });
+
+                    renderConsignments();
+                    alert(`Matagumpay na nadagdagan ng ${parsedQty} pcs ang stocks!`);
+                } else {
+                    alert('Maglagay ng wastong bilang ng numero.');
+                }
+            }
+        }
+
+        window.deleteConsignment = function(index) {
+            if(confirm('Sigurado ka bang gusto mong burahin ang buong record ng tindahang ito?')) {
+                consignments.splice(index, 1);
+                renderConsignments();
+            }
+        }
+
+        renderConsignments();
+    </script>
+</body>
+</html>
