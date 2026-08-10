@@ -28,6 +28,7 @@
         .sync-card { background: #e3f2fd; border: 1px dashed #90caf9; }
         .consignment-item { background: #fff; border-left: 4px solid var(--primary-color); padding: 10px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
         .consignment-item.due-this-month { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
+        @media print { body * { visibility: hidden; } #printableArea, #printableArea * { visibility: visible; } #printableArea { position: absolute; left: 0; top: 0; width: 100%; } button, .sync-card, .install-banner, form { display: none !important; } }
     </style>
 </head>
 <body>
@@ -72,8 +73,8 @@
             <h2>📱 Pagpapasa sa Client / Share Data</h2>
             <p style="font-size: 0.8rem; margin-bottom: 8px; color: #555;">I-export ang data para ma-send sa client, o i-load ang file nila para magkapareho kayo ng datos.</p>
             <div style="display: flex; gap: 8px;">
-                <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download</button>
-                <button type="button" id="importBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load</button>
+                <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data</button>
+                <button type="button" id="importBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Data</button>
                 <input type="file" id="importFile" style="display: none;" accept=".json">
             </div>
         </div>
@@ -95,7 +96,7 @@
                     <input type="number" id="price" required placeholder="Hal. 150">
                 </div>
                 <div class="form-group">
-                    <label for="dateDelivered">Petsa ng Simula:</label>
+                    <label for="dateDelivered">Petsa ng Simula (Start of Consignment):</label>
                     <input type="date" id="dateDelivered" required>
                 </div>
                 <div class="form-group">
@@ -107,8 +108,11 @@
         </div>
 
         <!-- Listahan ng mga Consignment -->
-        <div class="card">
-            <h2>Listahan ng mga Tindahan at History</h2>
+        <div class="card" id="printableArea">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2>Listahan ng mga Tindahan at History</h2>
+                <button type="button" onclick="window.print()" style="background-color: #555; padding: 4px 10px; font-size: 0.75rem; width: auto; margin-top:0;">🖨️ I-print / PDF</button>
+            </div>
             <div id="consignmentList">
                 <p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>
             </div>
@@ -213,7 +217,7 @@
                     <strong>🏪 ${item.storeName}</strong> ${isDue ? '<span style="color:red; font-size:0.75rem;">(Due Ngayon!)</span>' : ''}<br>
                     Simulang Stock: ${item.initialQty} pcs | Natitira: ${item.currentStock} pcs<br>
                     Nabenta: ${sold} pcs @ ₱${item.price} = <strong>₱${sales}</strong><br>
-                    Petsa ng Koleksyon: ${item.collectionDate || 'Walang nakalagay'}<br>
+                    Petsa ng Simula: ${item.dateDelivered || 'N/A'} | Koleksyon: ${item.collectionDate || 'N/A'}<br>
                     <div style="margin-top: 5px; display: flex; gap: 5px;">
                         <button onclick="updateStock(${index}, 1)" style="padding:4px 8px; font-size:0.8rem; background:#0288d1; margin-top:0;">- Bawas Stock (Benta)</button>
                         <button onclick="deleteItem(${index})" style="padding:4px 8px; font-size:0.8rem; background:#d32f2f; margin-top:0; width:auto;">Burahin</button>
@@ -287,3 +291,4 @@
     </script>
 </body>
 </html>
+ 
