@@ -28,6 +28,7 @@
         .sync-card { background: #e3f2fd; border: 1px dashed #90caf9; }
         .consignment-item { background: #fff; border-left: 4px solid var(--primary-color); padding: 10px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
         .consignment-item.due-this-month { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
+        .history-item { background: #f9f9f9; border-left: 4px solid #0288d1; padding: 8px; margin-bottom: 6px; border-radius: 4px; font-size: 0.8rem; color: #555; }
         @media print { body * { visibility: hidden; } #printableArea, #printableArea * { visibility: visible; } #printableArea { position: absolute; left: 0; top: 0; width: 100%; } button, .sync-card, .install-banner, form { display: none !important; } }
     </style>
 </head>
@@ -107,20 +108,25 @@
             </form>
         </div>
 
-        <!-- Listahan ng mga Consignment -->
+        <!-- Pangkalahatang Printable Area (Listahan + History) -->
         <div class="card" id="printableArea">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h2>Listahan ng mga Tindahan at History</h2>
-                <button type="button" onclick="window.print()" style="background-color: #555; padding: 4px 10px; font-size: 0.75rem; width: auto; margin-top:0;">🖨️ I-print / PDF</button>
+                <h2>Listahan ng mga Tindahan</h2>
+                <button type="button" onclick="window.print()" style="background-color: #555; padding: 4px 10px; font-size: 0.75rem; width: auto; margin-top:0;">🖨️ I-print / PDF Lahat</button>
             </div>
             <div id="consignmentList">
                 <p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>
             </div>
+
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+            
+            <h2>📜 Transaction History Log</h2>
+            <div id="historyList">
+                <p style="text-align:center; color:#778; font-size:0.85rem;">Wala pang transaksyon o bawas stock.</p>
+            </div>
         </div>
 
     </div>
-
-
 
     <script>
         // PWA Service Worker Registration
@@ -151,9 +157,11 @@
 
         // App Logic: LocalStorage & Consignment Management
         let consignments = JSON.parse(localStorage.getItem('consignments')) || [];
+        let historyLogs = JSON.parse(localStorage.getItem('historyLogs')) || [];
 
         const form = document.getElementById('consignmentForm');
         const consignmentList = document.getElementById('consignmentList');
+        const historyList = document.getElementById('historyList');
         const totalStoresEl = document.getElementById('totalStores');
         const totalDueThisMonthEl = document.getElementById('totalDueThisMonth');
         const totalStockEl = document.getElementById('totalStock');
@@ -162,21 +170,36 @@
 
         function saveAndRender() {
             localStorage.setItem('consignments', JSON.stringify(consignments));
+            localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
             renderConsignments();
+            renderHistory();
         }
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
+            const storeName = document.getElementById('storeName').value;
+            const qty = parseInt(document.getElementById('quantity').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const dateDelivered = document.getElementById('dateDelivered').value;
+            const collectionDate = document.getElementById('collectionDate').value;
+
             const newItem = {
                 id: Date.now(),
-                storeName: document.getElementById('storeName').value,
-                initialQty: parseInt(document.getElementById('quantity').value),
-                currentStock: parseInt(document.getElementById('quantity').value),
-                price: parseFloat(document.getElementById('price').value),
-                dateDelivered: document.getElementById('dateDelivered').value,
-                collectionDate: document.getElementById('collectionDate').value
+                storeName: storeName,
+                initialQty: qty,
+                currentStock: qty,
+                price: price,
+                dateDelivered: dateDelivered,
+                collectionDate: collectionDate
             };
             consignments.push(newItem);
+
+            // Add to history log
+            historyLogs.unshift({
+                date: new Date().toLocaleString(),
+                text: `Nagdagdag ng tindahan: ${storeName} (${qty} pcs @ ₱${price})`
+            });
+
             form.reset();
             saveAndRender();
         });
@@ -235,9 +258,28 @@
             totalSalesEl.textContent = '₱' + totalSales.toLocaleString();
         }
 
+        function renderHistory() {
+            historyList.innerHTML = '';
+            if (historyLogs.length === 0) {
+                historyList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.85rem;">Wala pang transaksyon o bawas stock.</p>';
+                return;
+            }
+            historyLogs.forEach(log => {
+                const hDiv = document.createElement('div');
+                hDiv.className = 'history-item';
+                hDiv.innerHTML = `<strong>[${log.date}]</strong> ${log.text}`;
+                historyList.appendChild(hDiv);
+            });
+        }
+
         window.updateStock = function(index, amount) {
             if (consignments[index].currentStock > 0) {
                 consignments[index].currentStock -= amount;
+                const store = consignments[index].storeName;
+                historyLogs.unshift({
+                    date: new Date().toLocaleString(),
+                    text: `Nagbawas ng 1 pc stock (Benta) sa ${store}`
+                });
                 saveAndRender();
             } else {
                 alert('Wala nang natitirang stock sa tindahang ito.');
@@ -246,14 +288,20 @@
 
         window.deleteItem = function(index) {
             if (confirm('Sigurado ka bang burahin ang consignment na ito?')) {
+                const store = consignments[index].storeName;
                 consignments.splice(index, 1);
+                historyLogs.unshift({
+                    date: new Date().toLocaleString(),
+                    text: `Binura ang tindahan: ${store}`
+                });
                 saveAndRender();
             }
         };
 
         // Export & Import Data Features
         document.getElementById('exportBtn').addEventListener('click', () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(consignments));
+            const allData = { consignments, historyLogs };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
             downloadAnchor.setAttribute("download", "consignment_data.json");
@@ -276,11 +324,12 @@
                     const parsed = JSON.parse(evt.target.result);
                     if (Array.isArray(parsed)) {
                         consignments = parsed;
-                        saveAndRender();
-                        alert('Matagumpay na na-load ang data!');
-                    } else {
-                        alert('Maling format ng file.');
+                    } else if (parsed.consignments) {
+                        consignments = parsed.consignments;
+                        historyLogs = parsed.historyLogs || [];
                     }
+                    saveAndRender();
+                    alert('Matagumpay na na-load ang data!');
                 } catch (err) {
                     alert('Hindi mabasa ang JSON file.');
                 }
@@ -290,10 +339,7 @@
 
         // Initial render on load
         renderConsignments();
+        renderHistory();
     </script>
 </body>
 </html>
-
-
-
-
