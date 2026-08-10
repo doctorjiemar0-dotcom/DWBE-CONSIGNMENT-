@@ -37,6 +37,8 @@
         .badge-ok { background-color: #ff9800; }
         .badge-good { background-color: #4caf50; }
         
+        /* Highlighted Important Details Boxes */
+        .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         .highlight-start { background-color: #e3f2fd; border: 1px solid #90caf9; padding: 6px 8px; border-radius: 4px; margin-bottom: 5px; font-size: 0.85rem; color: #0d47a1; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .highlight-due { background-color: #ffebee; border: 1px solid #ef9a9a; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; color: #b71c1c; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         
@@ -221,9 +223,14 @@
                             <button onclick="toggleCard(${index})" style="padding:2px 6px; font-size:0.75rem; background:#6c757d; width:auto; margin-top:0; display:inline-block;">${item.expanded ? 'Itago' : 'Ipakita'}</button>
                         </div>
                     </div>
-                    <div style="margin-top: 5px; font-size:0.85rem; color:#555;">
-                        Simulang Stock: ${item.initialQty} pcs | Natitira: ${item.currentStock} pcs | Nabenta: ${actualSold} pcs ${item.rejectedQty > 0 ? `| Rejected: ${item.rejectedQty} pcs` : ''}
+                    
+                    <!-- HIGHLIGHTED NA IMPORTANTENG IMPORMASYON (Simula, Natitira, Nabenta) -->
+                    <div class="highlight-box">
+                        <span>📦 Simula: <strong>${item.initialQty} pcs</strong></span>
+                        <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock} pcs</strong></span>
+                        <span style="color: #c2185b;">🛒 Nabenta: <strong>${actualSold} pcs</strong></span>
                     </div>
+                    ${item.rejectedQty > 0 ? `<div style="font-size: 0.8rem; color: #d32f2f; margin-bottom: 5px; font-weight: bold;">⚠️ Rejected / Sirang Items: ${item.rejectedQty} pcs</div>` : ''}
                     
                     <div style="display: ${item.expanded ? 'block' : 'none'}; margin-top: 8px;">
                         <!-- Highlighted Start of Consignment and Target Collection Date -->
