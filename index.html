@@ -278,6 +278,128 @@
     </script>
 </body>
 </html>
+<body>
+
+    <header>🧹 Doctor's Whisk Broom Etc. Consignment</header>
+
+    <div class="container">
+        
+        <!-- Install App Banner -->
+        <div class="card install-banner" id="installCard">
+            <h2>📱 I-install bilang Mobile App</h2>
+            <p style="font-size: 0.85rem; color: #333;">I-install ang app na ito sa iyong home screen para mas mabilis at madaling buksan.</p>
+            <button id="installBtn" type="button">I-install ang App</button>
+        </div>
+
+        <!-- Summary Dashboard -->
+        <div class="summary-box">
+            <div class="summary-row">
+                <span>Kabuuang Tindahan:</span>
+                <span id="totalStores">0</span>
+            </div>
+            <div class="summary-row" style="color: #c62828; font-weight: bold;">
+                <span>⚠️ For Koleksyon Ngayong Buwan:</span>
+                <span id="totalDueThisMonth">0</span>
+            </div>
+            <div class="summary-row">
+                <span>Aktibong Stock (Natitira):</span>
+                <span id="totalStock">0 pcs</span>
+            </div>
+            <div class="summary-row">
+                <span>Kabuuang Nabenta:</span>
+                <span id="totalSoldSummary">0 pcs</span>
+            </div>
+            <div class="summary-row summary-row-highlight">
+                <span>Kabuuang Benta / Koleksyon:</span>
+                <span id="totalSales">₱0</span>
+            </div>
+        </div>
+
+        <!-- Pang-share / Sync sa Client -->
+        <div class="card sync-card">
+            <h2>📱 Pagpapasa sa Client / Share Data</h2>
+            <p style="font-size: 0.8rem; margin-bottom: 8px; color: #555;">I-export ang data para ma-send sa client, o i-load ang file nila para magkapareho kayo ng datos.</p>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data File</button>
+                <button type="button" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Data ng Client</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json">
+            </div>
+        </div>
+
+        <!-- Form para sa pagdagdag ng Consignment -->
+        <div class="card">
+            <h2>Magdagdag ng Consignment</h2>
+            <form id="consignmentForm">
+                <div class="form-group">
+                    <label for="storeName">Pangalan ng Tindahan:</label>
+                    <input type="text" id="storeName" required placeholder="Hal. Aling Nena Store">
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Bilang ng Item (Simulang Stock):</label>
+                    <input type="number" id="quantity" required placeholder="Hal. 10">
+                </div>
+                <div class="form-group">
+                    <label for="price">Presyo bawat Isa (₱):</label>
+                    <input type="number" id="price" required placeholder="Hal. 150">
+                </div>
+                <div class="form-group">
+                    <label for="dateDelivered">Petsa ng Simula (Start of Consignment):</label>
+                    <input type="date" id="dateDelivered" required>
+                </div>
+                <div class="form-group">
+                    <label for="collectionDate">Target na Petsa ng Koleksyon (Auto-update buwan-buwan):</label>
+                    <input type="date" id="collectionDate" required>
+                </div>
+                <button type="submit">I-save ang Consignment</button>
+            </form>
+        </div>
+
+        <!-- Listahan ng mga Consignment -->
+        <div class="card" id="printableArea">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2>Listahan ng mga Tindahan at History</h2>
+                <div style="display: flex; gap: 5px;">
+                    <button type="button" style="background-color: #555; padding: 3px 8px; font-size: 0.75rem; width: auto; margin-top:0;">Itago Lahat</button>
+                    <button type="button" style="background-color: #388e3c; padding: 3px 8px; font-size: 0.75rem; width: auto; margin-top:0;">Ipakita Lahat</button>
+                </div>
+            </div>
+            <div id="consignmentList"><p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p></div>
+        </div>
+
+    </div>
+
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('Service Worker Registered'));
+        }
+
+        // Install Prompt Event Handler
+        let deferredPrompt;
+        const installCard = document.getElementById('installCard');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installCard.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                installCard.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
             <h2>📱 I-install bilang Mobile App</h2>
             <p style="font-size: 0.85rem; color: #333;">I-install ang app na ito sa iyong home screen para mas mabilis at madaling buksan.</p>
             <button id="installBtn" type="button">I-install ang App</button>
