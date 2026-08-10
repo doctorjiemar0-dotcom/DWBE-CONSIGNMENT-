@@ -26,6 +26,8 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 5px; font-weight: bold; color: var(--primary-color); }
         .sync-card { background: #e3f2fd; border: 1px dashed #90caf9; }
+        .consignment-item { background: #fff; border-left: 4px solid var(--primary-color); padding: 10px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
+        .consignment-item.due-this-month { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
     </style>
 </head>
 <body>
@@ -70,8 +72,9 @@
             <h2>📱 Pagpapasa sa Client / Share Data</h2>
             <p style="font-size: 0.8rem; margin-bottom: 8px; color: #555;">I-export ang data para ma-send sa client, o i-load ang file nila para magkapareho kayo ng datos.</p>
             <div style="display: flex; gap: 8px;">
-                <button type="button" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download</button>
-                <button type="button" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load</button>
+                <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download</button>
+                <button type="button" id="importBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json">
             </div>
         </div>
 
@@ -106,7 +109,9 @@
         <!-- Listahan ng mga Consignment -->
         <div class="card">
             <h2>Listahan ng mga Tindahan at History</h2>
-            <div id="consignmentList"><p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p></div>
+            <div id="consignmentList">
+                <p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>
+            </div>
         </div>
 
     </div>
@@ -118,7 +123,7 @@
             .then(() => console.log('Service Worker Registered'));
         }
 
-        // Install Prompt Event Handler
+        // Install Prompt
         let deferredPrompt;
         const installCard = document.getElementById('installCard');
         const installBtn = document.getElementById('installBtn');
@@ -133,13 +138,152 @@
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                }
                 deferredPrompt = null;
                 installCard.style.display = 'none';
             }
         });
+
+        // App Logic: LocalStorage & Consignment Management
+        let consignments = JSON.parse(localStorage.getItem('consignments')) || [];
+
+        const form = document.getElementById('consignmentForm');
+        const consignmentList = document.getElementById('consignmentList');
+        const totalStoresEl = document.getElementById('totalStores');
+        const totalDueThisMonthEl = document.getElementById('totalDueThisMonth');
+        const totalStockEl = document.getElementById('totalStock');
+        const totalSoldSummaryEl = document.getElementById('totalSoldSummary');
+        const totalSalesEl = document.getElementById('totalSales');
+
+        function saveAndRender() {
+            localStorage.setItem('consignments', JSON.stringify(consignments));
+            renderConsignments();
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newItem = {
+                id: Date.now(),
+                storeName: document.getElementById('storeName').value,
+                initialQty: parseInt(document.getElementById('quantity').value),
+                currentStock: parseInt(document.getElementById('quantity').value),
+                price: parseFloat(document.getElementById('price').value),
+                dateDelivered: document.getElementById('dateDelivered').value,
+                collectionDate: document.getElementById('collectionDate').value
+            };
+            consignments.push(newItem);
+            form.reset();
+            saveAndRender();
+        });
+
+        function renderConsignments() {
+            consignmentList.innerHTML = '';
+            if (consignments.length === 0) {
+                consignmentList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>';
+                totalStoresEl.textContent = '0';
+                totalDueThisMonthEl.textContent = '0';
+                totalStockEl.textContent = '0 pcs';
+                totalSoldSummaryEl.textContent = '0 pcs';
+                totalSalesEl.textContent = '₱0';
+                return;
+            }
+
+            let totalStores = consignments.length;
+            let totalDue = 0;
+            let totalStock = 0;
+            let totalSold = 0;
+            let totalSales = 0;
+
+            const currentDate = new Date();
+            const currentYearMonth = currentDate.toISOString().slice(0, 7);
+
+            consignments.forEach((item, index) => {
+                const sold = item.initialQty - item.currentStock;
+                const sales = sold * item.price;
+                
+                totalStock += item.currentStock;
+                totalSold += sold;
+                totalSales += sales;
+
+                const isDue = item.collectionDate && item.collectionDate.startsWith(currentYearMonth);
+                if (isDue) totalDue++;
+
+                const div = document.createElement('div');
+                div.className = `consignment-item ${isDue ? 'due-this-month' : ''}`;
+                div.innerHTML = `
+                    <strong>🏪 ${item.storeName}</strong> ${isDue ? '<span style="color:red; font-size:0.75rem;">(Due Ngayon!)</span>' : ''}<br>
+                    Simulang Stock: ${item.initialQty} pcs | Natitira: ${item.currentStock} pcs<br>
+                    Nabenta: ${sold} pcs @ ₱${item.price} = <strong>₱${sales}</strong><br>
+                    Petsa ng Koleksyon: ${item.collectionDate || 'Walang nakalagay'}<br>
+                    <div style="margin-top: 5px; display: flex; gap: 5px;">
+                        <button onclick="updateStock(${index}, 1)" style="padding:4px 8px; font-size:0.8rem; background:#0288d1; margin-top:0;">- Bawas Stock (Benta)</button>
+                        <button onclick="deleteItem(${index})" style="padding:4px 8px; font-size:0.8rem; background:#d32f2f; margin-top:0; width:auto;">Burahin</button>
+                    </div>
+                `;
+                consignmentList.appendChild(div);
+            });
+
+            totalStoresEl.textContent = totalStores;
+            totalDueThisMonthEl.textContent = totalDue;
+            totalStockEl.textContent = totalStock + ' pcs';
+            totalSoldSummaryEl.textContent = totalSold + ' pcs';
+            totalSalesEl.textContent = '₱' + totalSales.toLocaleString();
+        }
+
+        window.updateStock = function(index, amount) {
+            if (consignments[index].currentStock > 0) {
+                consignments[index].currentStock -= amount;
+                saveAndRender();
+            } else {
+                alert('Wala nang natitirang stock sa tindahang ito.');
+            }
+        };
+
+        window.deleteItem = function(index) {
+            if (confirm('Sigurado ka bang burahin ang consignment na ito?')) {
+                consignments.splice(index, 1);
+                saveAndRender();
+            }
+        };
+
+        // Export & Import Data Features
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(consignments));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "consignment_data.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        });
+
+        const importFile = document.getElementById('importFile');
+        document.getElementById('importBtn').addEventListener('click', () => {
+            importFile.click();
+        });
+
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    if (Array.isArray(parsed)) {
+                        consignments = parsed;
+                        saveAndRender();
+                        alert('Matagumpay na na-load ang data!');
+                    } else {
+                        alert('Maling format ng file.');
+                    }
+                } catch (err) {
+                    alert('Hindi mabasa ang JSON file.');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Initial render on load
+        renderConsignments();
     </script>
 </body>
 </html>
