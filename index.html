@@ -4,36 +4,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor's Whisk Broom Etc. Consignment</title>
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2e7d32">
     <style>
-        :root {
-            --primary-color: #2e7d32;
-            --secondary-color: #4caf50;
-            --background-color: #f4f6f8;
-            --text-color: #333;
+        :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
+        * { box-sizing: border-box; margin: 0px; padding: 0px; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
+        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); margin-bottom: 15px; }
+        h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 3px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+        button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button:hover { background-color: #388e3c; }
+        .install-banner { background: #e8f5e9; border: 2px dashed #4caf50; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: none; }
+        .install-banner button { background-color: #1b5e20; margin-top: 8px; }
+        .summary-box { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <header>🧹 Doctor's Whisk Broom Etc. Consignment</header>
+
+    <div class="container">
+        
+        <!-- Install App Banner (Lilitaw kung pwede nang i-install) -->
+        <div class="card install-banner" id="installCard">
+            <h2>📱 I-install bilang Mobile App</h2>
+            <p style="font-size: 0.85rem; color: #333;">I-install ang app na ito sa iyong home screen para mas mabilis at madaling buksan.</p>
+            <button id="installBtn" type="button">I-install ang App</button>
+        </div>
+
+        <!-- Summary Dashboard -->
+        <div class="summary-box">
+            <div class="summary-row">
+                <span>Kabuuang Tindahan:</span>
+                <span id="totalStores">0</span>
+            </div>
+            <div class="summary-row" style="color: #c62828; font-weight: bold;">
+                <span>⚠️ For Koleksyon Ngayong Buwan:</span>
+                <span id="totalDueThisMonth">0</span>
+            </div>
+            <div class="summary-row">
+                <span>Aktibong Stock (Natitira):</span>
+                <span id="totalStock">0 pcs</span>
+            </div>
+            <div class="summary-row">
+                <span>Kabuuang Nabenta:</span>
+                <span id="totalSoldSummary">0 pcs</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('Service Worker Registered'));
         }
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            padding-bottom: 50px;
-        }
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .container {
-            padding: 15px;
-            max-width: 600px;
+
+        // Install Prompt Event Handler
+        let deferredPrompt;
+        const installCard = document.getElementById('installCard');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installCard.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                installCard.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
             margin: auto;
         }
         .card {
