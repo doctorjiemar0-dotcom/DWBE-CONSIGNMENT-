@@ -1,336 +1,453 @@
-<script>
-    let consignments = JSON.parse(localStorage.getItem('consignments_v2')) || [];
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor's Whisk Broom Etc. Consignment</title>
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2e7d32">
+    <style>
+        :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
+        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; box-shadow: 0px 2px 5px rgba(0,0,0,0.2); }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 3px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+        button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button:hover { background-color: #388e3c; }
+        
+        /* Install App Banner Styling */
+        .install-banner { background: #e8f5e9; border: 2px dashed #4caf50; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: none; }
+        .install-banner button { background-color: #1b5e20; margin-top: 8px; width: auto; padding: 8px 16px; }
 
-    // Set default date to today
-    document.getElementById('dateDelivered').valueAsDate = new Date();
-    let nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    document.getElementById('collectionDate').valueAsDate = nextMonth;
+        .summary-box { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+        .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 5px; font-weight: bold; color: var(--primary-color); }
+        .sync-card { background: #e3f2fd; border: 1px dashed #90caf9; }
+        
+        .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
+        .store-card.due { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
+        .badge { display: inline-block; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; color: white; }
+        .badge-due { background-color: #d32f2f; }
+        .badge-ok { background-color: #ff9800; }
+        .badge-good { background-color: #4caf50; }
+        
+        .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
+        .highlight-start { background-color: #e3f2fd; border: 1px solid #90caf9; padding: 6px 8px; border-radius: 4px; margin-bottom: 5px; font-size: 0.85rem; color: #0d47a1; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .highlight-due { background-color: #ffebee; border: 1px solid #ef9a9a; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; color: #b71c1c; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        
+        .history-box { background: #f8f9fa; border: 1px solid #e9ecef; padding: 8px; border-radius: 4px; margin-top: 8px; max-height: 140px; overflow-y: auto; font-size: 0.8rem; }
+        .history-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 4px 0; gap: 5px; }
+        
+        .btn-group { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+        .btn-group button { padding: 6px 10px; font-size: 0.8rem; margin-top: 0; width: auto; flex: 1; }
+        
+        @media print { body * { visibility: hidden; } #printableArea, #printableArea * { visibility: visible; } #printableArea { position: absolute; left: 0; top: 0; width: 100%; } button, .sync-card, .install-banner, form, .btn-group { display: none !important; } }
+    </style>
+</head>
+<body>
 
-    const form = document.getElementById('consignmentForm');
-    const storesList = document.getElementById('storesList');
+    <header>🧹 Doctor's Whisk Broom Etc. Consignment</header>
 
-    function saveAndRender() {
-        localStorage.setItem('consignments_v2', JSON.stringify(consignments));
-        renderApp();
-    }
+    <div class="container">
+        
+        <div class="card install-banner" id="installCard">
+            <h2>📱 I-install bilang Mobile App</h2>
+            <p style="font-size: 0.85rem; color: #333; margin-bottom: 5px;">Para mas mabilis ma-access kahit walang internet.</p>
+            <button id="installBtn" type="button">I-install ang App</button>
+        </div>
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const sName = document.getElementById('storeName').value;
-        const qty = parseInt(document.getElementById('quantity').value);
-        const price = parseFloat(document.getElementById('price').value);
-        const startD = document.getElementById('dateDelivered').value;
-        const collD = document.getElementById('collectionDate').value;
+        <div class="summary-box">
+            <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
+            <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection Ngayong Buwan:</span><span id="totalDue">0</span></div>
+            <div class="summary-row"><span>Aktibong Stock (Natitira):</span><span id="totalStock">0 pcs</span></div>
+            <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
+            <div class="summary-row summary-row-highlight"><span>Kabuuang Koleksyon / Benta:</span><span id="totalSales">₱0</span></div>
+        </div>
 
-        const newItem = {
-            id: Date.now(),
-            storeName: sName,
-            initialQty: qty,
-            currentStock: qty,
-            rejectedQty: 0,
-            price: price,
-            dateDelivered: startD,
-            collectionDate: collD,
-            expanded: true,
-            history: [
-                { type: 'start', qty: qty, date: new Date().toLocaleString(), text: `Nag-simula ng Consignment: ${qty} pcs (Start: ${startD})` }
-            ]
-        };
-        consignments.push(newItem);
-        form.reset();
+        <div class="card sync-card">
+            <h2>📱 Data Backup & Recovery (Lumang Files)</h2>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 8px;">I-load ang iyong dating nai-save na JSON file para maibalik ang mga datos:</p>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data</button>
+                <button type="button" id="importBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Lumang File</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json">
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Magdagdag ng Consignment</h2>
+            <form id="consignmentForm">
+                <div class="form-group">
+                    <label for="storeName">Pangalan ng Tindahan:</label>
+                    <input type="text" id="storeName" required placeholder="Hal. Aling Nena Store">
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Bilang ng Item (Simulang Stock):</label>
+                    <input type="number" id="quantity" required placeholder="Hal. 10">
+                </div>
+                <div class="form-group">
+                    <label for="price">Presyo bawat Isa (₱):</label>
+                    <input type="number" id="price" required placeholder="Hal. 150">
+                </div>
+                <div class="form-group">
+                    <label for="dateDelivered">Petsa ng Simula (Start):</label>
+                    <input type="date" id="dateDelivered" required>
+                </div>
+                <div class="form-group">
+                    <label for="collectionDate">Target na Petsa ng Koleksyon:</label>
+                    <input type="date" id="collectionDate" required>
+                </div>
+                <button type="submit">I-save ang Consignment</button>
+            </form>
+        </div>
+
+        <div class="card" id="printableArea">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2>Listahan ng mga Tindahan at History</h2>
+                <div>
+                    <button type="button" onclick="toggleAll(false)" style="background-color: #555; padding: 4px 8px; font-size: 0.75rem; width: auto; margin-top:0;">Itago Lahat</button>
+                    <button type="button" onclick="toggleAll(true)" style="background-color: #2e7d32; padding: 4px 8px; font-size: 0.75rem; width: auto; margin-top:0;">Ipakita Lahat</button>
+                </div>
+            </div>
+            <div id="storesList">
+                <p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let consignments = JSON.parse(localStorage.getItem('consignments_v2')) || [];
+
         document.getElementById('dateDelivered').valueAsDate = new Date();
+        let nextMonth = new Date();
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
         document.getElementById('collectionDate').valueAsDate = nextMonth;
-        saveAndRender();
-    });
 
-    function renderApp() {
-        storesList.innerHTML = '';
-        if (consignments.length === 0) {
-            storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>';
-            document.getElementById('totalStores').textContent = '0';
-            document.getElementById('totalDue').textContent = '0';
-            document.getElementById('totalStock').textContent = '0 pcs';
-            document.getElementById('totalSold').textContent = '0 pcs';
-            document.getElementById('totalSales').textContent = '₱0';
-            return;
+        const form = document.getElementById('consignmentForm');
+        const storesList = document.getElementById('storesList');
+
+        function saveAndRender() {
+            localStorage.setItem('consignments_v2', JSON.stringify(consignments));
+            renderApp();
         }
 
-        let tStores = consignments.length;
-        let tDue = 0;
-        let tStock = 0;
-        let tSold = 0;
-        let tSales = 0;
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const sName = document.getElementById('storeName').value;
+            const qty = parseInt(document.getElementById('quantity').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const startD = document.getElementById('dateDelivered').value;
+            const collD = document.getElementById('collectionDate').value;
 
-        const currentYM = new Date().toISOString().slice(0, 7);
-
-        consignments.forEach((item, index) => {
-            if (item.rejectedQty === undefined) item.rejectedQty = 0;
-
-            const sold = item.initialQty - item.currentStock - item.rejectedQty;
-            const actualSold = sold < 0 ? 0 : sold;
-            const sales = actualSold * item.price;
-            
-            tStock += item.currentStock;
-            tSold += actualSold;
-            tSales += sales;
-
-            const isDue = item.collectionDate && item.collectionDate.startsWith(currentYM);
-            if (isDue) tDue++;
-
-            let rating = 'Maayos';
-            let badgeClass = 'badge-good';
-            if (actualSold === 0 && item.initialQty > 0) { rating = 'Mabagal'; badgeClass = 'badge-ok'; }
-            if (isDue) { rating = 'Due Na!'; badgeClass = 'badge-due'; }
-
-            const div = document.createElement('div');
-            div.className = `store-card ${isDue ? 'due' : ''}`;
-            div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>🏪 ${item.storeName}</strong>
-                    <div>
-                        <span class="badge ${badgeClass}">${rating}</span>
-                        <button onclick="toggleCard(${index})" style="padding:2px 6px; font-size:0.75rem; background:#6c757d; width:auto; margin-top:0; display:inline-block;">${item.expanded ? 'Itago' : 'Ipakita'}</button>
-                    </div>
-                </div>
-                
-                <div class="highlight-box">
-                    <span>📦 Simula: <strong>${item.initialQty} pcs</strong></span>
-                    <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock} pcs</strong></span>
-                    <span style="color: #c2185b;">🛒 Nabenta: <strong>${actualSold} pcs</strong></span>
-                </div>
-                ${item.rejectedQty > 0 ? `<div style="font-size: 0.8rem; color: #d32f2f; margin-bottom: 5px; font-weight: bold;">⚠️ Rejected / Sirang Items: ${item.rejectedQty} pcs</div>` : ''}
-                
-                <div style="display: ${item.expanded ? 'block' : 'none'}; margin-top: 8px;">
-                    <div class="highlight-start">
-                        <span>📅 Start of Consignment: ${item.dateDelivered}</span>
-                        <button onclick="editDate(${index}, 'dateDelivered')" style="background:none; color:#0d47a1; border:none; cursor:pointer; font-size:0.75rem; width:auto; padding:0; margin:0; text-decoration:underline;">✏️ Baguhin</button>
-                    </div>
-                    <div class="highlight-due">
-                        <span>🎯 Target Collection Date: ${item.collectionDate} ${isDue ? '<b>(Due Na!)</b>' : ''}</span>
-                        <button onclick="editDate(${index}, 'collectionDate')" style="background:none; color:#b71c1c; border:none; cursor:pointer; font-size:0.75rem; width:auto; padding:0; margin:0; text-decoration:underline;">✏️ Baguhin</button>
-                    </div>
-
-                    <div style="font-size: 0.85rem; background: #f1f3f5; padding: 6px; border-radius: 4px; margin-bottom: 8px;">
-                        Presyo: ₱${item.price} / isa | Total Halaga ng Natitira: <strong>₱${item.currentStock * item.price}</strong>
-                    </div>
-                    
-                    <div class="history-box">
-                        <strong>Kasaysayan (Transaction History):</strong>
-                        ${item.history.map((h, hIdx) => `
-                            <div class="history-row">
-                                <span style="flex: 1; word-break: break-word;">[${h.date}] ${h.text}</span>
-                                <div style="display: flex; gap: 4px; flex-shrink: 0;">
-                                    <button onclick="editHistoryDate(${index}, ${hIdx})" title="Baguhin ang Petsa" style="background:none; color:#0288d1; border:none; cursor:pointer; font-size:0.75rem; width:auto; padding:0; margin:0;">✏️</button>
-                                    <button onclick="deleteHistory(${index}, ${hIdx})" title="Burahin" style="background:none; color:red; border:none; cursor:pointer; font-size:0.75rem; width:auto; padding:0; margin:0;">❌</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-
-                    <div class="btn-group">
-                        <button onclick="checkupStore(${index})" style="background-color: #0288d1;">Koleksyon (Check-up)</button>
-                        <button onclick="bawasStock(${index})" style="background-color: #ff9800;">Bawas (Rejected)</button>
-                        <button onclick="restockStore(${index})" style="background-color: #388e3c;">Restock</button>
-                        <button onclick="printStore(${index})" style="background-color: #555;">Print</button>
-                        <button onclick="deleteStore(${index})" style="background-color: #d32f2f;">Burahin</button>
-                    </div>
-                </div>
-            `;
-            storesList.appendChild(div);
+            const newItem = {
+                id: Date.now(),
+                storeName: sName,
+                initialQty: qty,
+                currentStock: qty,
+                rejectedQty: 0,
+                price: price,
+                dateDelivered: startD,
+                collectionDate: collD,
+                expanded: true,
+                history: [
+                    { type: 'start', qty: qty, date: new Date().toLocaleString(), text: `Nag-simula ng Consignment: ${qty} pcs (Start: ${startD})` }
+                ]
+            };
+            consignments.push(newItem);
+            form.reset();
+            document.getElementById('dateDelivered').valueAsDate = new Date();
+            document.getElementById('collectionDate').valueAsDate = nextMonth;
+            saveAndRender();
         });
 
-        document.getElementById('totalStores').textContent = tStores;
-        document.getElementById('totalDue').textContent = tDue;
-        document.getElementById('totalStock').textContent = tStock + ' pcs';
-        document.getElementById('totalSold').textContent = tSold + ' pcs';
-        document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
-    }
-
-    window.toggleCard = function(index) {
-        consignments[index].expanded = !consignments[index].expanded;
-        saveAndRender();
-    };
-
-    window.toggleAll = function(status) {
-        consignments.forEach(item => item.expanded = status);
-        saveAndRender();
-    };
-
-    window.editDate = function(index, field) {
-        const currentVal = consignments[index][field];
-        const newVal = prompt(`Baguhin ang ${field === 'dateDelivered' ? 'Start of Consignment' : 'Target Collection Date'} (Format: YYYY-MM-DD):`, currentVal);
-        if (newVal) {
-            consignments[index][field] = newVal;
-            consignments[index].history.unshift({
-                type: 'info',
-                date: new Date().toLocaleString(),
-                text: `Binago ang ${field === 'dateDelivered' ? 'Start Date' : 'Collection Date'} sa ${newVal}`
-            });
-            saveAndRender();
-        }
-    };
-
-    window.editHistoryDate = function(storeIdx, histIdx) {
-        const currentLog = consignments[storeIdx].history[histIdx];
-        const newDateText = prompt('I-edit ang petsa o oras ng transaksyong ito:', currentLog.date);
-        if (newDateText !== null) {
-            consignments[storeIdx].history[histIdx].date = newDateText;
-            saveAndRender();
-        }
-    };
-
-    window.checkupStore = function(index) {
-        const soldCount = prompt('Ilang piraso ang totoong nabenta o nakolekta sa check-up na ito?', '1');
-        if (soldCount !== null && !isNaN(soldCount)) {
-            const count = parseInt(soldCount);
-            if (count > consignments[index].currentStock) {
-                alert('Higit pa sa kasalukuyang natitirang stock ang inilagay mo.');
-                return;
-            }
-            consignments[index].currentStock -= count;
-            consignments[index].history.unshift({
-                type: 'checkup',
-                qty: count,
-                date: new Date().toLocaleString(),
-                text: `Koleksyon Check-up - Nabenta: ${count} pcs (Koleksyon: ₱${count * consignments[index].price})`
-            });
-            saveAndRender();
-        }
-    };
-
-    window.bawasStock = function(index) {
-        const bawasCount = prompt('Ilang piraso ang ibabawas (Rejected / Sirang items / Pull-out)?', '1');
-        if (bawasCount !== null && !isNaN(bawasCount)) {
-            const count = parseInt(bawasCount);
-            if (count > consignments[index].currentStock) {
-                alert('Hindi maaaring lumampas sa kasalukuyang natitirang stock ang ibabawas.');
-                return;
-            }
-            consignments[index].currentStock -= count;
-            consignments[index].rejectedQty = (consignments[index].rejectedQty || 0) + count;
-            consignments[index].history.unshift({
-                type: 'reject',
-                qty: count,
-                date: new Date().toLocaleString(),
-                text: `Nagbawas ng ${count} pc(s) stock (Rejected / Sirang Item)`
-            });
-            saveAndRender();
-        }
-    };
-
-    window.restockStore = function(index) {
-        const addQty = prompt('Ilang bagong stock ang idadagdag?', '10');
-        if (addQty !== null && !isNaN(addQty)) {
-            const count = parseInt(addQty);
-            consignments[index].initialQty += count;
-            consignments[index].currentStock += count;
-            consignments[index].history.unshift({
-                type: 'restock',
-                qty: count,
-                date: new Date().toLocaleString(),
-                text: `Nag-restock ng +${count} pcs (Bagong Initial: ${consignments[index].initialQty})`
-            });
-            saveAndRender();
-        }
-    };
-
-    // --- BAGONG LOGIC PARA SA PAGBURA NG HISTORY AT AUTO-REVERT NG STOCK ---
-    window.deleteHistory = function(storeIdx, histIdx) {
-        const historyItem = consignments[storeIdx].history[histIdx];
-        
-        if (confirm('Sigurado ka bang burahin ang linyang ito sa kasaysayan? Awtomatikong aayusin nito ang stock.')) {
-            // Revert o ibalik ang epekto sa stock depende sa uri ng log
-            if (historyItem.type === 'checkup') {
-                // Kung checkup/nabenta ang binura, ibabalik ang stock sa currentStock
-                consignments[storeIdx].currentStock += historyItem.qty;
-            } else if (historyItem.type === 'reject') {
-                // Kung rejected ang binura, ibabalik ang stock at ibabawas sa rejected count
-                consignments[storeIdx].currentStock += historyItem.qty;
-                consignments[storeIdx].rejectedQty -= historyItem.qty;
-                if (consignments[storeIdx].rejectedQty < 0) consignments[storeIdx].rejectedQty = 0;
-            } else if (historyItem.type === 'restock') {
-                // Kung restock ang binura, ibabawas sa initialQty at currentQty
-                consignments[storeIdx].initialQty -= historyItem.qty;
-                consignments[storeIdx].currentStock -= historyItem.qty;
-            } else if (historyItem.type === 'start') {
-                alert('Hindi maaaring burahin ang unang simula ng consignment log. I-delete na lang ang buong tindahan kung kinakailangan.');
+        function renderApp() {
+            storesList.innerHTML = '';
+            if (consignments.length === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>';
+                document.getElementById('totalStores').textContent = '0';
+                document.getElementById('totalDue').textContent = '0';
+                document.getElementById('totalStock').textContent = '0 pcs';
+                document.getElementById('totalSold').textContent = '0 pcs';
+                document.getElementById('totalSales').textContent = '₱0';
                 return;
             }
 
-            // Alisin na sa array ng history
-            consignments[storeIdx].history.splice(histIdx, 1);
-            saveAndRender();
+            let tStores = consignments.length;
+            let tDue = 0;
+            let tStock = 0;
+            let tSold = 0;
+            let tSales = 0;
+
+            const currentYM = new Date().toISOString().slice(0, 7);
+
+            consignments.forEach((item, index) => {
+                if (item.rejectedQty === undefined) item.rejectedQty = 0;
+
+                const sold = item.initialQty - item.currentStock - item.rejectedQty;
+                const actualSold = sold < 0 ? 0 : sold;
+                const sales = actualSold * item.price;
+                
+                tStock += item.currentStock;
+                tSold += actualSold;
+                tSales += sales;
+
+                const isDue = item.collectionDate && item.collectionDate.startsWith(currentYM);
+                if (isDue) tDue++;
+
+                let rating = 'Maayos';
+                let badgeClass = 'badge-good';
+                if (actualSold === 0 && item.initialQty > 0) { rating = 'Mabagal'; badgeClass = 'badge-ok'; }
+                if (isDue) { rating = 'Due Na!'; badgeClass = 'badge-due'; }
+
+                const div = document.createElement('div');
+                div.className = `store-card ${isDue ? 'due' : ''}`;
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>🏪 ${item.storeName}</strong>
+                        <div>
+                            <span class="badge ${badgeClass}">${rating}</span>
+                            <button onclick="toggleCard(${index})" style="padding:2px 6px; font-size:0.75rem; background:#6c757d; width:auto; margin-top:0; display:inline-block;">${item.expanded ? 'Itago' : 'Ipakita'}</button>
+                        </div>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <span>📦 Simula: <strong>${item.initialQty} pcs</strong></span>
+                        <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock} pcs</strong></span>
+                        <span style="color: #c2185b;">🛒 Nabenta: <strong>${actualSold} pcs</strong></span>
+                    </div>
+                    ${item.rejectedQty > 0 ? `<div style="font-size: 0.8rem; color: #d32f2f; margin-bottom: 5px; font-weight: bold;">⚠️ Rejected / Sirang Items: ${item.rejectedQty} pcs</div>` : ''}
+                    
+                    <div style="display: ${item.expanded ? 'block' : 'none'}; margin-top: 8px;">
+                        <div class="highlight-start">
+                            <span>📅 Start of Consignment: ${item.dateDelivered}</span>
+                            <button onclick="editDate(${index}, 'dateDelivered')" style="background:none; color:#0d47a1; border:none; cursor:pointer; font-size:0.75rem; width:auto; padding:0; margin:0; text-decoration:underline;">✏️ Baguhin</button>
+                        </div>
+                        <div class="highlight-due">
+                            <span>🎯 Target Collection Date: ${item.collectionDate} ${isDue ? '<b>(Due Na!)</b>' : ''}</span>
+                            <button onclick="editDate(${index}, 'collectionDate')" style="background:none; color:#b71c1c; border:none; cursor:pointer; font-size:0.75rem; width:auto; padding:0; margin:0; text-decoration:underline;">✏️ Baguhin</button>
+                        </div>
+
+                        <div style="font-size: 0.85rem; background: #f1f3f5; padding: 6px; border-radius: 4px; margin-bottom: 8px;">
+                            Presyo: ₱${item.price} / isa | Total Halaga ng Natitira: <strong>₱${item.currentStock * item.price}</strong>
+                        </div>
+                        
+                        <div class="history-box">
+                            <strong>Kasaysayan (Transaction History):</strong>
+                            ${item.history.map((h, hIdx) => `
+                                <div class="history-row">
+                                    <span style="flex: 1; word-break: break-word;">[${h.date}] ${h.text}</span>
+                                    <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                                        <button onclick="editHistoryDate(${index}, ${hIdx})" title="Baguhin ang Petsa" style="background:none; color:#0288d1; border:none; cursor:pointer; font-size:0.75rem; width:auto; padding:0; margin:0;">✏️</button>
+                                        <button onclick="deleteHistory(${index}, ${hIdx})" title="Burahin" style="background:none; color:red; border:none; cursor:pointer; font-size:0.75rem; width:auto; padding:0; margin:0;">❌</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="btn-group">
+                            <button onclick="checkupStore(${index})" style="background-color: #0288d1;">Koleksyon (Check-up)</button>
+                            <button onclick="bawasStock(${index})" style="background-color: #ff9800;">Bawas (Rejected)</button>
+                            <button onclick="restockStore(${index})" style="background-color: #388e3c;">Restock</button>
+                            <button onclick="printStore(${index})" style="background-color: #555;">Print</button>
+                            <button onclick="deleteStore(${index})" style="background-color: #d32f2f;">Burahin</button>
+                        </div>
+                    </div>
+                `;
+                storesList.appendChild(div);
+            });
+
+            document.getElementById('totalStores').textContent = tStores;
+            document.getElementById('totalDue').textContent = tDue;
+            document.getElementById('totalStock').textContent = tStock + ' pcs';
+            document.getElementById('totalSold').textContent = tSold + ' pcs';
+            document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
         }
-    };
 
-    window.deleteStore = function(index) {
-        if (confirm('Sigurado ka bang burahin ang tindahang ito?')) {
-            consignments.splice(index, 1);
+        window.toggleCard = function(index) {
+            consignments[index].expanded = !consignments[index].expanded;
             saveAndRender();
-        }
-    };
+        };
 
-    window.printStore = function(index) {
-        window.print();
-    };
+        window.toggleAll = function(status) {
+            consignments.forEach(item => item.expanded = status);
+            saveAndRender();
+        };
 
-    // Export/Import lumang data file
-    document.getElementById('exportBtn').addEventListener('click', () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(consignments));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", "consignment_detailed_data.json");
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-    });
-
-    const importFile = document.getElementById('importFile');
-    document.getElementById('importBtn').addEventListener('click', () => importFile.click());
-
-    importFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            try {
-                const parsed = JSON.parse(evt.target.result);
-                if (Array.isArray(parsed)) {
-                    consignments = parsed;
-                    saveAndRender();
-                    alert('Matagumpay na na-load ang lumang data file!');
-                } else {
-                    alert('Maling format ng file.');
-                }
-            } catch (err) {
-                alert('Hindi mabasa ang JSON file.');
+        window.editDate = function(index, field) {
+            const currentVal = consignments[index][field];
+            const newVal = prompt(`Baguhin ang ${field === 'dateDelivered' ? 'Start of Consignment' : 'Target Collection Date'} (Format: YYYY-MM-DD):`, currentVal);
+            if (newVal) {
+                consignments[index][field] = newVal;
+                consignments[index].history.unshift({
+                    type: 'info',
+                    date: new Date().toLocaleString(),
+                    text: `Binago ang ${field === 'dateDelivered' ? 'Start Date' : 'Collection Date'} sa ${newVal}`
+                });
+                saveAndRender();
             }
         };
-        reader.readAsText(file);
-    });
 
-    // PWA Install prompt handler
-    let deferredPrompt;
-    const installCard = document.getElementById('installCard');
-    const installBtn = document.getElementById('installBtn');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        installCard.style.display = 'block';
-    });
-
-    installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                installCard.style.display = 'none';
+        window.editHistoryDate = function(storeIdx, histIdx) {
+            const currentLog = consignments[storeIdx].history[histIdx];
+            const newDateText = prompt('I-edit ang petsa o oras ng transaksyong ito:', currentLog.date);
+            if (newDateText !== null) {
+                consignments[storeIdx].history[histIdx].date = newDateText;
+                saveAndRender();
             }
-            deferredPrompt = null;
-        }
-    });
+        };
 
-    renderApp();
-</script>
+        window.checkupStore = function(index) {
+            const soldCount = prompt('Ilang piraso ang totoong nabenta o nakolekta sa check-up na ito?', '1');
+            if (soldCount !== null && !isNaN(soldCount)) {
+                const count = parseInt(soldCount);
+                if (count > consignments[index].currentStock) {
+                    alert('Higit pa sa kasalukuyang natitirang stock ang inilagay mo.');
+                    return;
+                }
+                consignments[index].currentStock -= count;
+                consignments[index].history.unshift({
+                    type: 'checkup',
+                    qty: count,
+                    date: new Date().toLocaleString(),
+                    text: `Koleksyon Check-up - Nabenta: ${count} pcs (Koleksyon: ₱${count * consignments[index].price})`
+                });
+                saveAndRender();
+            }
+        };
+
+        window.bawasStock = function(index) {
+            const bawasCount = prompt('Ilang piraso ang ibabawas (Rejected / Sirang items / Pull-out)?', '1');
+            if (bawasCount !== null && !isNaN(bawasCount)) {
+                const count = parseInt(bawasCount);
+                if (count > consignments[index].currentStock) {
+                    alert('Hindi maaaring lumampas sa kasalukuyang natitirang stock ang ibabawas.');
+                    return;
+                }
+                consignments[index].currentStock -= count;
+                consignments[index].rejectedQty = (consignments[index].rejectedQty || 0) + count;
+                consignments[index].history.unshift({
+                    type: 'reject',
+                    qty: count,
+                    date: new Date().toLocaleString(),
+                    text: `Nagbawas ng ${count} pc(s) stock (Rejected / Sirang Item)`
+                });
+                saveAndRender();
+            }
+        };
+
+        window.restockStore = function(index) {
+            const addQty = prompt('Ilang bagong stock ang idadagdag?', '10');
+            if (addQty !== null && !isNaN(addQty)) {
+                const count = parseInt(addQty);
+                consignments[index].initialQty += count;
+                consignments[index].currentStock += count;
+                consignments[index].history.unshift({
+                    type: 'restock',
+                    qty: count,
+                    date: new Date().toLocaleString(),
+                    text: `Nag-restock ng +${count} pcs (Bagong Initial: ${consignments[index].initialQty})`
+                });
+                saveAndRender();
+            }
+        };
+
+        window.deleteHistory = function(storeIdx, histIdx) {
+            const historyItem = consignments[storeIdx].history[histIdx];
+            
+            if (confirm('Sigurado ka bang burahin ang linyang ito sa kasaysayan? Awtomatikong aayusin nito ang stock.')) {
+                if (historyItem.type === 'checkup') {
+                    consignments[storeIdx].currentStock += historyItem.qty;
+                } else if (historyItem.type === 'reject') {
+                    consignments[storeIdx].currentStock += historyItem.qty;
+                    consignments[storeIdx].rejectedQty -= historyItem.qty;
+                    if (consignments[storeIdx].rejectedQty < 0) consignments[storeIdx].rejectedQty = 0;
+                } else if (historyItem.type === 'restock') {
+                    consignments[storeIdx].initialQty -= historyItem.qty;
+                    consignments[storeIdx].currentStock -= historyItem.qty;
+                } else if (historyItem.type === 'start') {
+                    alert('Hindi maaaring burahin ang unang simula ng consignment log.');
+                    return;
+                }
+
+                consignments[storeIdx].history.splice(histIdx, 1);
+                saveAndRender();
+            }
+        };
+
+        window.deleteStore = function(index) {
+            if (confirm('Sigurado ka bang burahin ang tindahang ito?')) {
+                consignments.splice(index, 1);
+                saveAndRender();
+            }
+        };
+
+        window.printStore = function(index) {
+            window.print();
+        };
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(consignments));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "consignment_detailed_data.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        });
+
+        const importFile = document.getElementById('importFile');
+        document.getElementById('importBtn').addEventListener('click', () => importFile.click());
+
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    if (Array.isArray(parsed)) {
+                        consignments = parsed;
+                        saveAndRender();
+                        alert('Matagumpay na na-load ang lumang data file!');
+                    } else {
+                        alert('Maling format ng file.');
+                    }
+                } catch (err) {
+                    alert('Hindi mabasa ang JSON file.');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        let deferredPrompt;
+        const installCard = document.getElementById('installCard');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installCard.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installCard.style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        renderApp();
+    </script>
+</body>
+</html>
