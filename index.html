@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor's Whisk Broom Etc. - ADMIN APP</title>
+    <title>Doctor's Whisk Broom - ADMIN APP</title>
     <style>
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
@@ -273,10 +273,29 @@
         };
 
         window.deleteHistory = function(storeIdx, histIdx) {
-            if (confirm('Burahin ang history log na ito?')) {
-                appData.consignments[storeIdx].history.splice(histIdx, 1);
-                saveAndRender();
+            const item = appData.consignments[storeIdx];
+            const log = item.history[histIdx];
+
+            if (!confirm('Burahin ang history log na ito? Awtomatikong mag-aadjust ang stock base sa log na ito.')) return;
+
+            const logText = log.text.toLowerCase();
+            const match = log.text.match(/\d+/);
+            const qty = match ? parseInt(match[0]) : 0;
+
+            if (logText.includes('nabenta') || logText.includes('rejected')) {
+                item.currentStock += qty;
+                if (logText.includes('rejected')) item.rejectedQty = Math.max(0, item.rejectedQty - qty);
+            } 
+            else if (logText.includes('nagdagdag') || logText.includes('nagsimula')) {
+                item.currentStock = Math.max(0, item.currentStock - qty);
+                if (logText.includes('nagsimula')) {
+                    item.initialQty = Math.max(0, item.initialQty - qty);
+                }
             }
+
+            item.history.splice(histIdx, 1);
+            saveAndRender();
+            alert('Na-delete ang log at na-update ang inventory count.');
         };
 
         document.getElementById('exportBtn').addEventListener('click', () => {
