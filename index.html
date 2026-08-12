@@ -35,6 +35,9 @@
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         .btn-group { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
+        
+        .history-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 8px; margin-top: 8px; max-height: 100px; overflow-y: auto; font-size: 0.75rem; color: #555; }
+        .history-item { border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
@@ -181,8 +184,7 @@
                 price: price,
                 dateDelivered: startD,
                 collectionDate: collD,
-                expanded: true,
-                history: [{ type: 'start', qty: qty, date: new Date().toLocaleString(), text: `Simula (${styleType}): ${qty} pcs` }]
+                history: [{ date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
             });
             form.reset();
             document.getElementById('dateDelivered').valueAsDate = new Date();
@@ -211,6 +213,7 @@
             appData.consignments.forEach((item, index) => {
                 if (item.rejectedQty === undefined) item.rejectedQty = 0;
                 if (!item.styleType) item.styleType = 'Ordinary';
+                if (!item.history) item.history = [];
 
                 const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
                 const sales = sold * item.price;
@@ -225,6 +228,12 @@
                 let rating = isDue ? 'Due Na!' : (sold === 0 ? 'Mabagal' : 'Maayos');
                 let badgeClass = isDue ? 'badge-due' : (sold === 0 ? 'badge-ok' : 'badge-good');
 
+                let historyHtml = '';
+                item.history.forEach(h => {
+                    historyHtml += `<div class="history-item">▪️ [${h.date}] ${h.text}</div>`;
+                });
+                if (historyHtml === '') historyHtml = '<div class="history-item">Wala pang tala.</div>';
+
                 const div = document.createElement('div');
                 div.className = `store-card ${isDue ? 'due' : ''}`;
                 div.innerHTML = `
@@ -236,6 +245,10 @@
                         <span>📦 Simula: <strong>${item.initialQty}</strong></span>
                         <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
                         <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
+                    </div>
+                    <div class="history-box">
+                        <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History:</div>
+                        ${historyHtml}
                     </div>
                     <div class="btn-group">
                         <button onclick="checkupStore(${index})" style="background-color: #0288d1;">Koleksyon</button>
@@ -259,7 +272,10 @@
             const count = parseInt(prompt('Ilang piraso ang nabenta?', '1'));
             if (!isNaN(count) && count > 0) {
                 appData.consignments[index].currentStock -= count;
-                appData.consignments[index].history.unshift({ type: 'checkup', date: new Date().toLocaleString(), text: `Nabenta: ${count} pcs` });
+                appData.consignments[index].history.unshift({
+                    date: new Date().toLocaleString(),
+                    text: `Nabenta/Nakolekta: ${count} pcs`
+                });
                 saveAndRender();
             }
         };
@@ -269,7 +285,10 @@
             if (!isNaN(count) && count > 0) {
                 appData.consignments[index].currentStock -= count;
                 appData.consignments[index].rejectedQty += count;
-                appData.consignments[index].history.unshift({ type: 'reject', date: new Date().toLocaleString(), text: `Rejected: ${count} pcs` });
+                appData.consignments[index].history.unshift({
+                    date: new Date().toLocaleString(),
+                    text: `Ibinawas/Rejected: ${count} pcs`
+                });
                 saveAndRender();
             }
         };
@@ -282,6 +301,10 @@
                 appData.homeStock[style] -= count;
                 appData.consignments[index].initialQty += count;
                 appData.consignments[index].currentStock += count;
+                appData.consignments[index].history.unshift({
+                    date: new Date().toLocaleString(),
+                    text: `Nagdagdag ng ${count} pcs stock mula sa bahay`
+                });
                 saveAndRender();
             }
         };
@@ -300,15 +323,30 @@
             let cleanStyle = newStyle.trim().toLowerCase();
             let finalStyle = cleanStyle.includes('prem') ? 'Premium' : 'Ordinary';
 
-            if (newName.trim() !== '') item.storeName = newName.trim();
-            if (!isNaN(newPrice) && parseFloat(newPrice) > 0) item.price = parseFloat(newPrice);
-            item.styleType = finalStyle;
+            let changes = [];
+            if (newName.trim() !== '' && newName.trim() !== item.storeName) {
+                changes.name = newName.trim();
+            }
+            if (!isNaN(newPrice) && parseFloat(newPrice) > 0 && parseFloat(newPrice) !== item.price) {
+                item.price = parseFloat(newPrice);
+            }
+            if (finalStyle !== item.styleType) {
+                item.styleType = finalStyle;
+            }
+            if (changes.name) {
+                item.storeName = changes.name;
+            }
+
+            item.history.unshift({
+                date: new Date().toLocaleString(),
+                text: `Na-edit ang detalye (Pangalan/Presyo/Estilo)`
+            });
 
             saveAndRender();
         };
 
         window.deleteStore = function(index) {
-            if (confirm('Burahin ang tindahang ito?')) {
+            if (confirm('Burahin ang tindahang ito? Babalik sa stock sa bahay ang natitirang items.')) {
                 const item = appData.consignments[index];
                 if (item.currentStock > 0) appData.homeStock[item.styleType] += item.currentStock;
                 appData.consignments.splice(index, 1);
