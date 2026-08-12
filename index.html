@@ -149,7 +149,6 @@
 
     <script>
         let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
-        // Safe fallback structure if loading old version formats
         if (Array.isArray(appData)) {
             appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: appData };
         }
@@ -199,7 +198,6 @@
             const startD = document.getElementById('dateDelivered').value;
             const collD = document.getElementById('collectionDate').value;
 
-            // Optional check kung may sapat na stock sa bahay, pero itutuloy pa rin o mag-aalert
             if (appData.homeStock[styleType] < qty) {
                 if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay mas mababa sa kinuha mo (${qty} pcs). Gusto mo pa bang ituloy?`)) {
                     return;
@@ -231,7 +229,6 @@
         });
 
         function renderApp() {
-            // Render Home stock metrics
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
 
@@ -460,7 +457,6 @@
 
         window.deleteStore = function(index) {
             if (confirm('Sigurado ka bang burahin ang tindahang ito?')) {
-                // Ibalik sa home stock ang natitirang current stock kung sakaling ibinabalik
                 const item = appData.consignments[index];
                 if (item.currentStock > 0) {
                     if (confirm(`Gusto mo bang ibalik ang natitirang ${item.currentStock} pcs sa Home Stock (${item.styleType})?`)) {
@@ -473,7 +469,6 @@
         };
 
         window.printStore = function(index) {
-            // I-expand muna ang card bago i-print para lumabas ang buong ledger history
             appData.consignments[index].expanded = true;
             renderApp();
             setTimeout(() => {
@@ -492,31 +487,43 @@
         });
 
         const importFile = document.getElementById('importFile');
-        document.getElementById('importBtn').addEventListener('click', () => importFile.click());
+        document.getElementById('importBtn').addEventListener('click', () => {
+            importFile.value = '';
+            importFile.click();
+        });
 
         importFile.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
             reader.onload = function(evt) {
                 try {
-                    const parsed = JSON.parse(evt.target.result);
+                    const rawContent = evt.target.result;
+                    const parsed = JSON.parse(rawContent);
+                    
                     if (Array.isArray(parsed)) {
-                        appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: parsed };
-                        saveAndRender();
-                        alert('Matagumpay na na-load ang lumang data file!');
+                        appData = { 
+                            homeStock: { Ordinary: 0, Premium: 0 }, 
+                            consignments: parsed 
+                        };
                     } else if (parsed && typeof parsed === 'object') {
                         appData = parsed;
                         if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                         if (!appData.consignments) appData.consignments = [];
-                        saveAndRender();
-                        alert('Matagumpay na na-load ang backup file!');
                     } else {
-                        alert('Maling format ng file.');
+                        throw new Error('Invalid format');
                     }
+                    
+                    saveAndRender();
+                    alert('Matagumpay na na-load ang backup data file!');
                 } catch (err) {
-                    alert('Hindi mabasa ang JSON file o sira ang format nito.');
+                    console.error(err);
+                    alert('Hindi mabasa ang JSON file. Siguraduhing ito ang tamang backup file na na-download mula sa app.');
                 }
+            };
+            reader.onerror = function() {
+                alert('Nagkaroon ng error sa pagbasa ng file.');
             };
             reader.readAsText(file);
         });
