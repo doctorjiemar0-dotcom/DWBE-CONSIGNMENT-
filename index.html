@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor's Whisk Broom - CLIENT VIEW</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2e7d32">
     <style>
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
@@ -25,6 +27,10 @@
         .dates-info { background: #f1f3f5; padding: 6px 8px; border-radius: 4px; margin: 6px 0; font-size: 0.8rem; color: #495057; display: flex; justify-content: space-between; }
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         
+        .install-btn-container { text-align: center; margin-bottom: 15px; display: none; }
+        .install-btn { background-color: #ff9800; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .install-btn:hover { background-color: #f57c00; }
+
         .app-link-box { text-align: center; margin-top: 25px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; color: #555; }
         .app-link-box a { color: #0288d1; word-break: break-all; text-decoration: none; font-weight: bold; }
         .app-link-box a:hover { text-decoration: underline; }
@@ -35,6 +41,11 @@
     <header>🧹 Doctor's Whisk Broom - Client View</header>
 
     <div class="container">
+
+        <!-- INSTALL APP BUTTON CONTAINER -->
+        <div class="install-btn-container" id="installContainer">
+            <button class="install-btn" id="installBtn">📲 I-install ang App sa Phone</button>
+        </div>
 
         <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
             <h2>🏠 Home Stock Inventory (Bodega / Bahay)</h2>
@@ -66,6 +77,43 @@
     </div>
 
     <script>
+        // PWA Install Prompt Logic
+        let deferredPrompt;
+        const installContainer = document.getElementById('installContainer');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installContainer.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                installContainer.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installContainer.style.display = 'none';
+            console.log('PWA was installed');
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('ServiceWorker registered!'))
+                    .catch(err => console.log('ServiceWorker error: ', err));
+            });
+        }
+
         document.getElementById('currentAppLink').href = window.location.href;
         document.getElementById('currentAppLink').textContent = window.location.href;
 
