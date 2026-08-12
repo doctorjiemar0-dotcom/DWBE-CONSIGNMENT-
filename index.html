@@ -29,7 +29,7 @@
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- Install App Card (Nakatago muna hangga't hindi pwedeng i-install) -->
+        <!-- Install App Card -->
         <div class="card" id="installCard" style="display: none; text-align: center; background: #e8f5e9; border: 1px dashed #2e7d32;">
             <h2 style="margin-bottom: 5px;">📱 I-install ang App</h2>
             <p style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">I-install ito sa iyong phone para madaling mabuksan tulad ng regular app.</p>
@@ -78,7 +78,14 @@
 
         const syncStatus = document.getElementById('syncStatus');
         const urlParams = new URLSearchParams(window.location.search);
-        const storeName = urlParams.get('store');
+        let storeName = urlParams.get('store');
+
+        // Awtomatikong isinasaulo sa phone ang store name mula sa link
+        if (storeName) {
+            localStorage.setItem('dwbe_store', storeName);
+        } else {
+            storeName = localStorage.getItem('dwbe_store');
+        }
 
         if (!storeName) {
             document.getElementById('storeTitle').textContent = "⚠️ Walang Napiling Tindahan";
