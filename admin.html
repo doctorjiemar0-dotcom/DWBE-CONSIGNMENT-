@@ -220,7 +220,6 @@
             } catch (err) {
                 console.error("Error loading from cloud:", err);
                 syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-                // Fallback sa LocalStorage kung sakaling walang internet
                 const local = localStorage.getItem('consignments_v3');
                 if (local) {
                     appData = JSON.parse(local);
@@ -297,7 +296,12 @@
             });
             form.reset();
             document.getElementById('dateDelivered').valueAsDate = new Date();
+            
+            // Fixed: Ginawang defined ang nextMonth variable dito sa loob ng submit event
+            let nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
             document.getElementById('collectionDate').valueAsDate = nextMonth;
+            
             saveToCloud();
         });
 
