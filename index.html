@@ -10,7 +10,7 @@
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
-        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
+        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; cursor: pointer; user-select: none; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
         h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
@@ -20,14 +20,25 @@
         .history-item { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; font-size: 0.85rem; color: #555; }
         .admin-link { margin-top: 30px; text-align: center; }
         .admin-link a { color: #2e7d32; text-decoration: none; font-size: 0.8rem; font-weight: bold; padding: 10px; border: 1px solid #2e7d32; border-radius: 5px; display: inline-block; }
+        
+        select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <header>🧹 Doctor's Whisk Broom - Client</header>
+    <header id="appHeader">🧹 Doctor's Whisk Broom - Client</header>
 
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
+
+        <!-- SECRET STORE SELECTOR (Nakatago sa mga client, lalabas lang sa 5 taps) -->
+        <div class="card" id="selectorCard" style="display: none; background: #e3f2fd; border: 1px solid #90caf9;">
+            <h2 style="color: #1565c0; margin-bottom: 5px;">🏪 Pumili ng Tindahan (Admin Switch)</h2>
+            <p style="font-size: 0.8rem; color: #555;">Pumili sa listahan para masilip ang dashboard ng isang partikular na tindahan:</p>
+            <select id="storeSelector">
+                <option value="">-- Pumili ng Tindahan --</option>
+            </select>
+        </div>
 
         <!-- Install App Card -->
         <div class="card" id="installCard" style="display: none; text-align: center; background: #e8f5e9; border: 1px dashed #2e7d32;">
@@ -86,6 +97,8 @@
         const db = getFirestore(app);
 
         const syncStatus = document.getElementById('syncStatus');
+        const storeSelector = document.getElementById('storeSelector');
+        
         const urlParams = new URLSearchParams(window.location.search);
         let storeName = urlParams.get('store');
 
@@ -95,15 +108,63 @@
             storeName = localStorage.getItem('dwbe_store');
         }
 
+        let currentStoreData = null;
+
+        // I-load ang mga tindahan sakaling i-activate ang secret mode
+        loadStoresDropdown();
+
         if (!storeName) {
             document.getElementById('storeTitle').textContent = "⚠️ Walang Napiling Tindahan";
-            syncStatus.textContent = "Pakitukoy ang tindahan gamit ang tamang link mula sa Admin Panel.";
+            syncStatus.textContent = "I-tap ang Header nang 5 beses kung ikaw ang Admin, o gamitin ang link mula sa Admin Panel.";
         } else {
             document.getElementById('storeTitle').textContent = `🏪 ${storeName}`;
             loadClientData(storeName);
         }
 
-        let currentStoreData = null;
+        // SECRET TRIGGER: I-tap/I-click ang Header ng 5 beses para lumabas ang Store Selector
+        let headerClicks = 0;
+        document.getElementById('appHeader').addEventListener('click', () => {
+            headerClicks++;
+            if (headerClicks === 5) {
+                const selectorCard = document.getElementById('selectorCard');
+                selectorCard.style.display = 'block';
+                alert("Admin Mode Unlocked: Lumitaw na ang Store Selector.");
+                headerClicks = 0; // i-reset
+            }
+        });
+
+        storeSelector.addEventListener('change', (e) => {
+            const selected = e.target.value;
+            if (selected) {
+                localStorage.setItem('dwbe_store', selected);
+                window.location.href = `index.html?store=${encodeURIComponent(selected)}`;
+            }
+        });
+
+        async function loadStoresDropdown() {
+            try {
+                const docRef = doc(db, "app_data", "main_inventory");
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const consignments = data.consignments || [];
+                    
+                    storeSelector.innerHTML = '<option value="">-- Pumili ng Tindahan --</option>';
+                    consignments.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.storeName;
+                        opt.textContent = `${item.storeName} (${item.styleType || 'Ordinary'})`;
+                        if (storeName && item.storeName.toLowerCase() === storeName.toLowerCase()) {
+                            opt.selected = true;
+                        }
+                        storeSelector.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading stores list for dropdown:", err);
+            }
+        }
 
         async function loadClientData(targetStore) {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
@@ -161,14 +222,13 @@
             }
         }
 
-        // Function para makapag-request ang client ng restock
         window.requestRestock = async function() {
-            if (!storeName) {
-                alert('Walang natukoy na tindahan.');
+            if (!storeName || !currentStoreData) {
+                alert('Pumili muna ng tindahan bago mag-request.');
                 return;
             }
 
-            const qtyStr = prompt(`Ilang piraso ng (${currentStoreData ? currentStoreData.styleType : 'Ordinary'}) ang nire-request mong stock?`, '10');
+            const qtyStr = prompt(`Ilang piraso ng (${currentStoreData.styleType || 'Ordinary'}) ang nire-request mong stock?`, '10');
             if (qtyStr !== null && !isNaN(qtyStr)) {
                 const qty = parseInt(qtyStr);
                 if (qty > 0) {
@@ -188,7 +248,6 @@
                             if (storeIndex !== -1) {
                                 if (!consignments[storeIndex].history) consignments[storeIndex].history = [];
                                 
-                                // Idagdag ang request sa unahan ng history
                                 consignments[storeIndex].history.unshift({
                                     id: Date.now(),
                                     date: new Date().toLocaleString(),
@@ -208,7 +267,6 @@
             }
         };
 
-        // PWA Install Prompt Logic
         let deferredPrompt;
         const installCard = document.getElementById('installCard');
         const installBtn = document.getElementById('installBtn');
@@ -236,7 +294,6 @@
             console.log('PWA was installed');
         });
 
-        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
