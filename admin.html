@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor's Whisk Broom - ADMIN APP</title>
+    <title>Doctor's Whisk Broom - ADMIN</title>
     <!-- PWA Manifest Link & Theme Color -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
@@ -62,19 +62,21 @@
 
     <div class="container">
 
-        <!-- PASSWORD & FINGERPRINT PROTECTION SCREEN -->
+        <!-- PASSWORD & DOWNLOAD BACKUP PROTECTION SCREEN -->
         <div id="authScreen" class="card">
             <h2>🔒 Security Login</h2>
-            <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">Ilagay ang PIN code o gumamit ng Fingerprint para buksan ang panel.</p>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">Ilagay ang iyong PIN para mabuksan ang panel.</p>
             
             <div class="form-group" style="width: 100%;">
-                <input type="password" id="adminPasswordInput" placeholder="I-type ang PIN (0802)..." style="text-align: center; font-size: 1.1rem; letter-spacing: 2px;">
+                <!-- Naka-type="password" na para laging nakatago ang mga numero -->
+                <input type="password" id="adminPasswordInput" placeholder="I-type ang PIN (0802)..." style="text-align: center; font-size: 1.1rem; letter-spacing: 2px;" autocomplete="current-password">
             </div>
             <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login gamit ang PIN</button>
 
             <div style="margin: 15px 0; font-size: 0.8rem; color: #888;">— O kaya —</div>
 
-            <button type="button" id="fingerprintBtn" style="background-color: #0288d1;">👆 Gamitin ang Fingerprint / Biometrics</button>
+            <!-- Pangalawang opsyon sa ibaba: Download app / backup data button -->
+            <button type="button" id="authDownloadBtn" style="background-color: #0288d1;">📥 I-download ang App Data Backup</button>
         </div>
 
         <!-- MAIN APP CONTENT (Nakatago habang di pa nagla-login) -->
@@ -180,7 +182,7 @@
         const mainAppContent = document.getElementById('mainAppContent');
         const loginBtn = document.getElementById('loginBtn');
         const passwordInput = document.getElementById('adminPasswordInput');
-        const fingerprintBtn = document.getElementById('fingerprintBtn');
+        const authDownloadBtn = document.getElementById('authDownloadBtn');
 
         function grantAccess() {
             sessionStorage.setItem('admin_logged_in', 'true');
@@ -199,7 +201,7 @@
             if (passwordInput.value === ADMIN_PIN) {
                 grantAccess();
             } else {
-                alert('Mali ang PIN code! Subukan muli (0802).');
+                alert('Mali ang PIN code! Subukan muli.');
                 passwordInput.value = '';
             }
         });
@@ -210,39 +212,18 @@
             }
         });
 
-        // Fingerprint / Biometric Login Support (Web Authentication API)
-        fingerprintBtn.addEventListener('click', async () => {
-            try {
-                if (!window.PublicKeyCredential) {
-                    alert('Hindi sinusuportahan ng iyong browser o device ang Biometric/Fingerprint scanner.');
-                    return;
-                }
-
-                // Sinusubukan i-trigger ang built-in fingerprint o screen lock ng cellphone/computer
-                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-                if (!available) {
-                    alert('Walang nakitang fingerprint scanner o screen lock sa device na ito.');
-                    return;
-                }
-
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
-
-                // Humihingi ng user verification (Fingerprint, FaceID, o Device PIN)
-                await navigator.credentials.get({
-                    publicKey: {
-                        challenge: challenge,
-                        timeout: 60000,
-                        userVerification: "required"
-                    }
-                });
-
-                // Kung matagumpay na na-scan o na-verify
-                grantAccess();
-            } catch (err) {
-                console.log(err);
-                alert('Hindi natuloy o nakansela ang fingerprint verification.');
-            }
+        // Quick Download App Data button sa login screen
+        authDownloadBtn.addEventListener('click', () => {
+            const rawData = localStorage.getItem('consignments_v3') || '{"homeStock":{"Ordinary":0,"Premium":0},"consignments":[]}';
+            const blob = new Blob([rawData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'doctors_whisk_broom_backup.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         });
 
         // Service Worker Registration
