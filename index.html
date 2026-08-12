@@ -48,6 +48,15 @@
             </div>
         </div>
 
+        <!-- RESTOCK REQUEST CARD PARA SA CLIENT -->
+        <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
+            <h2 style="color: #f57f17; margin-bottom: 5px;">📦 Kailangan mo ba ng Panustos?</h2>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">I-click ang button sa ibaba para mag-request ng karagdagang stock sa Admin.</p>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="requestRestock()" style="background-color: #f57f17; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; width: 100%; cursor: pointer;">🚨 Mag-request ng Restock</button>
+            </div>
+        </div>
+
         <div class="card">
             <h2>📜 Kasaysayan ng Transaksyon</h2>
             <div id="historyList">
@@ -62,7 +71,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -80,7 +89,6 @@
         const urlParams = new URLSearchParams(window.location.search);
         let storeName = urlParams.get('store');
 
-        // Awtomatikong isinasaulo sa phone ang store name mula sa link
         if (storeName) {
             localStorage.setItem('dwbe_store', storeName);
         } else {
@@ -95,6 +103,8 @@
             loadClientData(storeName);
         }
 
+        let currentStoreData = null;
+
         async function loadClientData(targetStore) {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
@@ -105,12 +115,12 @@
                     const data = docSnap.data();
                     const consignments = data.consignments || [];
                     
-                    const storeData = consignments.find(item => 
+                    currentStoreData = consignments.find(item => 
                         item.storeName.toLowerCase() === targetStore.toLowerCase()
                     );
 
-                    if (storeData) {
-                        renderClient(storeData);
+                    if (currentStoreData) {
+                        renderClient(currentStoreData);
                         syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
                     } else {
                         syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahang ito sa database.";
@@ -150,6 +160,53 @@
                 historyList.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>';
             }
         }
+
+        // Function para makapag-request ang client ng restock
+        window.requestRestock = async function() {
+            if (!storeName) {
+                alert('Walang natukoy na tindahan.');
+                return;
+            }
+
+            const qtyStr = prompt(`Ilang piraso ng (${currentStoreData ? currentStoreData.styleType : 'Ordinary'}) ang nire-request mong stock?`, '10');
+            if (qtyStr !== null && !isNaN(qtyStr)) {
+                const qty = parseInt(qtyStr);
+                if (qty > 0) {
+                    syncStatus.textContent = "Nagpapadala ng request sa Admin...";
+                    try {
+                        const docRef = doc(db, "app_data", "main_inventory");
+                        const docSnap = await getDoc(docRef);
+                        
+                        if (docSnap.exists()) {
+                            let data = docSnap.data();
+                            let consignments = data.consignments || [];
+                            
+                            let storeIndex = consignments.findIndex(item => 
+                                item.storeName.toLowerCase() === storeName.toLowerCase()
+                            );
+
+                            if (storeIndex !== -1) {
+                                if (!consignments[storeIndex].history) consignments[storeIndex].history = [];
+                                
+                                // Idagdag ang request sa unahan ng history
+                                consignments[storeIndex].history.unshift({
+                                    id: Date.now(),
+                                    date: new Date().toLocaleString(),
+                                    text: `🚨 RESTOCK REQUEST: Humihiling ng ${qty} pcs (${consignments[storeIndex].styleType || 'Ordinary'})`
+                                });
+
+                                await setDoc(docRef, data);
+                                alert('Matagumpay na naipadala ang iyong restock request sa Admin!');
+                                loadClientData(storeName);
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Error sending request:", err);
+                        alert('Nabigo sa pagpapadala ng request. Subukang muli.');
+                    }
+                }
+            }
+        };
 
         // PWA Install Prompt Logic
         let deferredPrompt;
