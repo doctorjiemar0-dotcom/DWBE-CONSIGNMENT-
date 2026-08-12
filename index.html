@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor's Whisk Broom - CLIENT VIEW</title>
+    <title>Doctor's Whisk Broom - Client View</title>
+    <!-- PWA Manifest Link & Theme Color -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
     <style>
@@ -27,13 +28,9 @@
         .dates-info { background: #f1f3f5; padding: 6px 8px; border-radius: 4px; margin: 6px 0; font-size: 0.8rem; color: #495057; display: flex; justify-content: space-between; }
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         
-        .install-btn-container { text-align: center; margin-bottom: 15px; display: none; }
-        .install-btn { background-color: #ff9800; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .install-btn:hover { background-color: #f57c00; }
-
-        .app-link-box { text-align: center; margin-top: 25px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; color: #555; }
-        .app-link-box a { color: #0288d1; word-break: break-all; text-decoration: none; font-weight: bold; }
-        .app-link-box a:hover { text-decoration: underline; }
+        .admin-link-box { text-align: center; margin-top: 25px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; font-size: 0.9rem; }
+        .admin-link-box a { color: #2e7d32; text-decoration: none; font-weight: bold; padding: 8px 16px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 4px; display: inline-block; word-break: break-all; }
+        .admin-link-box a:hover { background: #c8e6c9; }
     </style>
 </head>
 <body>
@@ -42,19 +39,16 @@
 
     <div class="container">
 
-        <!-- INSTALL APP BUTTON CONTAINER -->
-        <div class="install-btn-container" id="installContainer">
-            <button class="install-btn" id="installBtn">📲 I-install ang App sa Phone</button>
-        </div>
-
+        <!-- HOME STOCK SUMMARY FOR CLIENT -->
         <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
-            <h2>🏠 Home Stock Inventory (Bodega / Bahay)</h2>
+            <h2>🏠 Stock sa Bodega / Bahay</h2>
             <div style="font-size: 0.9rem; display: flex; justify-content: space-between;">
                 <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
                 <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
             </div>
         </div>
 
+        <!-- OVERALL SUMMARY -->
         <div class="summary-box">
             <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
             <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
@@ -62,77 +56,53 @@
             <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
         </div>
 
+        <!-- STORES LIST -->
         <div class="card">
-            <h2>Listahan ng mga Tindahan</h2>
+            <h2>Listahan ng mga Konsignment sa Tindahan</h2>
             <div id="storesList">
                 <p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>
             </div>
         </div>
 
-        <div class="app-link-box">
-            🔗 **Link ng Client App na ito:**<br>
-            <a href="#" id="currentAppLink" target="_blank">Kinakarga ang link...</a>
+        <!-- TOTOO AT DINAMIKONG LINK PATUNGO SA ADMIN -->
+        <div class="admin-link-box">
+            🔗 **Admin Panel Link:**<br>
+            <a href="#" id="adminAppLink" target="_blank">Kinakarga ang link...</a>
         </div>
 
     </div>
 
     <script>
-        // PWA Install Prompt Logic
-        let deferredPrompt;
-        const installContainer = document.getElementById('installContainer');
-        const installBtn = document.getElementById('installBtn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installContainer.style.display = 'block';
-        });
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                }
-                deferredPrompt = null;
-                installContainer.style.display = 'none';
-            }
-        });
-
-        window.addEventListener('appinstalled', () => {
-            installContainer.style.display = 'none';
-            console.log('PWA was installed');
-        });
-
-        // Service Worker Registration
+        // Service Worker Registration para sa PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('ServiceWorker registered!'))
-                    .catch(err => console.log('ServiceWorker error: ', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
             });
         }
 
-        document.getElementById('currentAppLink').href = window.location.href;
-        document.getElementById('currentAppLink').textContent = window.location.href;
-
-        let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
-        if (Array.isArray(appData)) {
-            appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: appData };
-        }
-        if (!appData.homeStock) {
-            appData.homeStock = { Ordinary: 0, Premium: 0 };
-        }
-
-        const storesList = document.getElementById('storesList');
+        // Awtomatikong pinapalitan ang link para maging totoong URL patungo sa admin.html
+        const adminAppURL = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '') + '/admin.html';
+        const adminLinkElement = document.getElementById('adminAppLink');
+        adminLinkElement.href = adminAppURL;
+        adminLinkElement.textContent = adminAppURL;
 
         function renderClientApp() {
-            document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
-            document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
+            let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
+            
+            if (Array.isArray(appData)) {
+                appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: appData };
+            }
+            if (!appData.homeStock) {
+                appData.homeStock = { Ordinary: 0, Premium: 0 };
+            }
 
+            document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary || 0;
+            document.getElementById('homePremStock').textContent = appData.homeStock.Premium || 0;
+
+            const storesList = document.getElementById('storesList');
             storesList.innerHTML = '';
-            if (appData.consignments.length === 0) {
+
+            if (!appData.consignments || appData.consignments.length === 0) {
                 storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>';
                 document.getElementById('totalStores').textContent = '0';
                 document.getElementById('totalStock').textContent = '0 pcs';
