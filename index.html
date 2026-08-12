@@ -17,11 +17,14 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
-        .history-item { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; font-size: 0.85rem; color: #555; }
+        .history-item { border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; font-size: 0.85rem; color: #555; }
         .admin-link { margin-top: 30px; text-align: center; }
         .admin-link a { color: #2e7d32; text-decoration: none; font-size: 0.8rem; font-weight: bold; padding: 10px; border: 1px solid #2e7d32; border-radius: 5px; display: inline-block; }
         
         select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; margin-top: 5px; }
+        .chat-msg { margin-bottom: 6px; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; max-width: 85%; }
+        .chat-client { background: #e8f5e9; align-self: flex-start; }
+        .chat-admin { background: #e3f2fd; align-self: flex-end; margin-left: auto; }
     </style>
 </head>
 <body>
@@ -68,6 +71,18 @@
             </div>
         </div>
 
+        <!-- CHATBOX SECTION -->
+        <div class="card" id="chatCard" style="border: 1px solid #b0bec5;">
+            <h2 style="color: #37474f; margin-bottom: 8px;">💬 Mensahe / Chat</h2>
+            <div id="chatBoxContainer" style="display: flex; flex-direction: column; height: 160px; overflow-y: scroll; border: 1px solid #e0e0e0; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 4px;">
+                <p style="font-size: 0.8rem; color: #888; text-align: center;">Walang mensahe pa.</p>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="chatInput" placeholder="Mag-type ng mensahe dito..." style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem;" onkeypress="checkEnter(event)">
+                <button onclick="sendChatMessage()" style="background-color: #2e7d32; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer;">Ipadala</button>
+            </div>
+        </div>
+
         <div class="card">
             <h2>📜 Kasaysayan ng Transaksyon</h2>
             <div id="historyList">
@@ -109,8 +124,8 @@
         }
 
         let currentStoreData = null;
+        let isAdminMode = false;
 
-        // I-load ang mga tindahan sakaling i-activate ang secret mode
         loadStoresDropdown();
 
         if (!storeName) {
@@ -121,15 +136,16 @@
             loadClientData(storeName);
         }
 
-        // SECRET TRIGGER: I-tap/I-click ang Header ng 5 beses para lumabas ang Store Selector
+        // SECRET TRIGGER: I-tap/I-click ang Header ng 5 beses para ma-unlock ang Admin Mode
         let headerClicks = 0;
         document.getElementById('appHeader').addEventListener('click', () => {
             headerClicks++;
             if (headerClicks === 5) {
-                const selectorCard = document.getElementById('selectorCard');
-                selectorCard.style.display = 'block';
-                alert("Admin Mode Unlocked: Lumitaw na ang Store Selector.");
-                headerClicks = 0; // i-reset
+                isAdminMode = true;
+                document.getElementById('selectorCard').style.display = 'block';
+                alert("Admin Mode Unlocked: Makikita mo na ang mga Admin controls at decline buttons.");
+                headerClicks = 0;
+                if (currentStoreData) renderClient(currentStoreData); // I-re-render para lumabas ang Admin buttons
             }
         });
 
@@ -207,18 +223,54 @@
             document.getElementById('soldQty').textContent = sold + ' pcs';
             document.getElementById('totalSales').textContent = '₱' + sales.toLocaleString();
 
+            // Render History & Chats
             const historyList = document.getElementById('historyList');
+            const chatBoxContainer = document.getElementById('chatBoxContainer');
+            
             historyList.innerHTML = '';
+            chatBoxContainer.innerHTML = '';
+
+            let hasHistory = false;
+            let hasChat = false;
 
             if (item.history && item.history.length > 0) {
-                item.history.forEach(h => {
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    div.innerHTML = `▪️ [${h.date}] ${h.text}`;
-                    historyList.appendChild(div);
+                item.history.forEach((h, index) => {
+                    // Kung ito ay chat message
+                    if (h.type === 'chat') {
+                        hasChat = true;
+                        const chatDiv = document.createElement('div');
+                        chatDiv.className = `chat-msg ${h.sender === 'admin' ? 'chat-admin' : 'chat-client'}`;
+                        chatDiv.innerHTML = `<b style="font-size:0.75rem; display:block; color:#555;">${h.sender === 'admin' ? '👨‍💼 Admin' : '🏪 Kliyente'} - ${h.date}</b>${h.text}`;
+                        chatBoxContainer.appendChild(chatDiv);
+                    } else {
+                        // Regular History / Request
+                        hasHistory = true;
+                        const div = document.createElement('div');
+                        div.className = 'history-item';
+                        
+                        let adminActionHTML = '';
+                        // Kung naka-admin mode at restock request ang nasa history at wala pang aksyon
+                        if (isAdminMode && h.text.includes('RESTOCK REQUEST') && !h.resolved) {
+                            adminActionHTML = `
+                                <div style="margin-top: 5px;">
+                                    <button onclick="declineRequest(${index})" style="background: #c62828; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 0.75rem; cursor: pointer;">❌ I-decline</button>
+                                </div>
+                            `;
+                        }
+
+                        div.innerHTML = `▪️ [${h.date}] ${h.text} ${adminActionHTML}`;
+                        historyList.appendChild(div);
+                    }
                 });
-            } else {
+            }
+
+            if (!hasHistory) {
                 historyList.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>';
+            }
+            if (!hasChat) {
+                chatBoxContainer.innerHTML = '<p style="font-size: 0.8rem; color: #888; text-align: center;">Walang mensahe pa.</p>';
+            } else {
+                chatBoxContainer.scrollTop = chatBoxContainer.scrollHeight;
             }
         }
 
@@ -232,7 +284,7 @@
             if (qtyStr !== null && !isNaN(qtyStr)) {
                 const qty = parseInt(qtyStr);
                 if (qty > 0) {
-                    syncStatus.textContent = "Nagpapadala ng request sa Admin...";
+                    syncStatus.textContent = "Nagpapadala ng request...";
                     try {
                         const docRef = doc(db, "app_data", "main_inventory");
                         const docSnap = await getDoc(docRef);
@@ -240,30 +292,110 @@
                         if (docSnap.exists()) {
                             let data = docSnap.data();
                             let consignments = data.consignments || [];
-                            
-                            let storeIndex = consignments.findIndex(item => 
-                                item.storeName.toLowerCase() === storeName.toLowerCase()
-                            );
+                            let storeIndex = consignments.findIndex(item => item.storeName.toLowerCase() === storeName.toLowerCase());
 
                             if (storeIndex !== -1) {
                                 if (!consignments[storeIndex].history) consignments[storeIndex].history = [];
                                 
                                 consignments[storeIndex].history.unshift({
-                                    id: Date.now(),
                                     date: new Date().toLocaleString(),
-                                    text: `🚨 RESTOCK REQUEST: Humihiling ng ${qty} pcs (${consignments[storeIndex].styleType || 'Ordinary'})`
+                                    text: `🚨 RESTOCK REQUEST: Humihiling ng ${qty} pcs`,
+                                    resolved: false
                                 });
 
                                 await setDoc(docRef, data);
-                                alert('Matagumpay na naipadala ang iyong restock request sa Admin!');
+                                alert('Matagumpay na naipadala ang iyong restock request!');
                                 loadClientData(storeName);
                             }
                         }
                     } catch (err) {
-                        console.error("Error sending request:", err);
-                        alert('Nabigo sa pagpapadala ng request. Subukang muli.');
+                        console.error(err);
+                        alert('Nabigo sa pagpapadala ng request.');
                     }
                 }
+            }
+        };
+
+        // ADMIN: I-decline ang request na may kasamang reason
+        window.declineRequest = async function(historyIndex) {
+            const reason = prompt("Ilagay ang dahilan kung bakit idine-decline ang request na ito:");
+            if (reason !== null) {
+                syncStatus.textContent = "Nag-a-update...";
+                try {
+                    const docRef = doc(db, "app_data", "main_inventory");
+                    const docSnap = await getDoc(docRef);
+                    
+                    if (docSnap.exists()) {
+                        let data = docSnap.data();
+                        let consignments = data.consignments || [];
+                        let storeIndex = consignments.findIndex(item => item.storeName.toLowerCase() === storeName.toLowerCase());
+
+                        if (storeIndex !== -1) {
+                            let hist = consignments[storeIndex].history[historyIndex];
+                            hist.resolved = true;
+                            
+                            // Idagdag ang declined status sa unahan ng history
+                            consignments[storeIndex].history.unshift({
+                                date: new Date().toLocaleString(),
+                                text: `❌ IDECLINE ANG REQUEST: "${reason}"`,
+                                resolved: true
+                            });
+
+                            await setDoc(docRef, data);
+                            alert('Naitala na nai-decline ang request.');
+                            loadClientData(storeName);
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Nabigo sa pag-update.');
+                }
+            }
+        };
+
+        // CHAT FUNCTIONALITY
+        window.sendChatMessage = async function() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg || !storeName) return;
+
+            // Kung naka-admin mode, 'admin' ang sender; kung hindi, 'client'
+            const senderType = isAdminMode ? 'admin' : 'client';
+
+            syncStatus.textContent = "Nagpapadala ng mensahe...";
+            try {
+                const docRef = doc(db, "app_data", "main_inventory");
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    let data = docSnap.data();
+                    let consignments = data.consignments || [];
+                    let storeIndex = consignments.findIndex(item => item.storeName.toLowerCase() === storeName.toLowerCase());
+
+                    if (storeIndex !== -1) {
+                        if (!consignments[storeIndex].history) consignments[storeIndex].history = [];
+                        
+                        consignments[storeIndex].history.push({
+                            type: 'chat',
+                            sender: senderType,
+                            text: msg,
+                            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (' + new Date().toLocaleDateString() + ')'
+                        });
+
+                        await setDoc(docRef, data);
+                        input.value = '';
+                        loadClientData(storeName);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Nabigo sa pagpapadala ng mensahe.');
+            }
+        };
+
+        window.checkEnter = function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
             }
         };
 
@@ -281,26 +413,10 @@
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                }
                 deferredPrompt = null;
                 installCard.style.display = 'none';
             }
         });
-
-        window.addEventListener('appinstalled', () => {
-            installCard.style.display = 'none';
-            console.log('PWA was installed');
-        });
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registered', reg))
-                    .catch(err => console.log('Service Worker error', err));
-            });
-        }
     </script>
 </body>
 </html>
