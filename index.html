@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor's Whisk Broom - Store Dashboard</title>
-    <!-- PWA Manifest Link & Theme Color -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
     <style>
@@ -21,7 +20,6 @@
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); font-size: 1rem; }
         
         .dates-info { background: #f1f3f5; padding: 8px 10px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #495057; display: flex; justify-content: space-between; }
-        .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         
         .history-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.8rem; color: #555; }
         .history-item { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
@@ -39,13 +37,11 @@
 
     <div class="container">
 
-        <!-- KUNG WALANG PINASANG STORE SA LINK O HINDI MAKITA -->
         <div id="errorScreen" style="display: none;" class="card">
             <h2>⚠️ Paalala</h2>
             <p>Walang natukoy na tindahan o maling link ang ginamit. Mangyaring hingin ang tamang personal link mula sa administrator.</p>
         </div>
 
-        <!-- DASHBOARD NG ISANG TIBAK NA TINDAHAN -->
         <div id="storeDashboard" style="display: none;">
             
             <div class="summary-box">
@@ -74,29 +70,27 @@
 
         </div>
 
-        <!-- LINK PATUNGO SA ADMIN -->
         <div class="admin-link-box">
-            🔗 **Admin Panel Link:**<br>
+            🔗 <strong>Admin Panel Link:</strong><br>
             <a href="#" id="adminAppLink" target="_blank">Kinakarga ang link...</a>
         </div>
 
     </div>
 
     <script>
-        // Service Worker Registration para sa PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
             });
         }
 
-        // Dynamic link para sa Admin Panel sa ilalim ng app
-        const adminAppURL = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '') + '/admin.html';
+        // Itama ang pagbuo ng Admin Link kahit may ?store=... sa URL
+        const baseUrl = window.location.origin + window.location.pathname.replace(/index\.html$/, '');
+        const adminAppURL = baseUrl.endsWith('/') ? baseUrl + 'admin.html' : baseUrl + '/admin.html';
         const adminLinkElement = document.getElementById('adminAppLink');
         adminLinkElement.href = adminAppURL;
         adminLinkElement.textContent = adminAppURL;
 
-        // Kunin ang pangalan ng tindahan mula sa URL query parameter (Hal. ?store=Aling+Nena)
         const urlParams = new URLSearchParams(window.location.search);
         const targetStoreName = urlParams.get('store');
 
@@ -109,18 +103,16 @@
         } else {
             appHeader.textContent = `🧹 ${targetStoreName} - Store Dashboard`;
             
-            // Kunin ang data mula sa localStorage ng Admin app
             let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { consignments: [] };
             if (Array.isArray(appData)) appData = { consignments: appData };
 
-            // Hanapin ang partikular na tindahan (case-insensitive para sigurado)
             const storeItem = appData.consignments.find(item => 
                 item.storeName.toLowerCase() === targetStoreName.toLowerCase()
             );
 
             if (!storeItem) {
                 errorScreen.style.display = 'block';
-                errorScreen.innerHTML = `<h2>⚠️ Tindahan ay Hindi Makita</h2><p>Walang nahanap na record o transaksyon para sa "<strong>${targetStoreName}</strong>".</p>`;
+                errorScreen.innerHTML = `<h2>⚠️ Tindahan ay Hindi Makita</h2><p>Walang nahanap na record o transaksyon para sa "<strong>${targetStoreName}</strong>". Siguraduhing na-save na ito sa Admin Panel gamit ang eksaktong pangalan.</p>`;
             } else {
                 storeDashboard.style.display = 'block';
 
@@ -137,7 +129,6 @@
                 document.getElementById('storeStart').textContent = storeItem.dateDelivered || 'N/A';
                 document.getElementById('storeCollection').textContent = storeItem.collectionDate || 'N/A';
 
-                // I-render ang sarili nilang history logs lamang
                 const historyList = document.getElementById('storeHistoryList');
                 historyList.innerHTML = '';
                 
