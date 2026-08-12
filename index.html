@@ -20,9 +20,6 @@
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #388e3c; }
         
-        .install-banner { background: #e8f5e9; border: 2px dashed #4caf50; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: none; }
-        .install-banner button { background-color: #1b5e20; margin-top: 8px; width: auto; padding: 8px 16px; }
-
         .summary-box { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 5px; font-weight: bold; color: var(--primary-color); }
@@ -45,19 +42,18 @@
     <header>🧹 Doctor's Whisk Broom Etc. Consignment</header>
 
     <div class="container">
-        
-        <div class="card install-banner" id="installCard">
-            <h2>📱 I-install bilang Mobile App</h2>
-            <button id="installBtn" type="button">I-install ang App</button>
-        </div>
 
+        <!-- HOME INVENTORY & PRODUCTION STOCK -->
         <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
             <h2>🏠 Home Stock Inventory (Bodega / Bahay)</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 10px; display: flex; justify-content: space-between;">
-                <span>Ordinary Style Stock: <strong id="homeOrdStock">0</strong> pcs</span>
-                <span>Premium Style Stock: <strong id="homePremStock">0</strong> pcs</span>
+            <div style="font-size: 0.9rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
+                <span>Ordinary Style Stock: <strong id="homeOrdStock" style="font-size: 1.1rem; color: #2e7d32;">0</strong> pcs</span>
+                <span>Premium Style Stock: <strong id="homePremStock" style="font-size: 1.1rem; color: #2e7d32;">0</strong> pcs</span>
             </div>
-            <button type="button" onclick="addHomeStock()" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0;">➕ Magdagdag sa Bahay</button>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0;">➕ Magdagdag Ordinary</button>
+                <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0;">➕ Magdagdag Premium</button>
+            </div>
         </div>
 
         <div class="summary-box">
@@ -147,15 +143,14 @@
             renderApp();
         }
 
-        window.addHomeStock = function() {
-            const style = prompt('Anong estilo ang idadagdag sa Home Stock? (Ordinary o Premium):', 'Ordinary');
-            if (!style) return;
-            const cleanStyle = style.trim().toLowerCase();
-            let targetKey = cleanStyle.includes('prem') ? 'Premium' : 'Ordinary';
-            const qtyStr = prompt(`Ilang piraso ng ${targetKey} Style ang idadagdag?`, '10');
+        window.addSpecificHomeStock = function(styleType) {
+            const qtyStr = prompt(`Ilang piraso ng ${styleType} Style ang idadagdag sa Bodega/Bahay?`, '10');
             if (qtyStr !== null && !isNaN(qtyStr)) {
-                appData.homeStock[targetKey] += parseInt(qtyStr);
-                saveAndRender();
+                const qty = parseInt(qtyStr);
+                if (qty > 0) {
+                    appData.homeStock[styleType] += qty;
+                    saveAndRender();
+                }
             }
         };
 
@@ -168,10 +163,14 @@
             const startD = document.getElementById('dateDelivered').value;
             const collD = document.getElementById('collectionDate').value;
 
+            // Awtomatikong sinusuri kung sapat ang stock sa bahay bawas ang kaukulang style
             if (appData.homeStock[styleType] < qty) {
-                if (!confirm(`Babala: Ang Home stock para sa ${styleType} ay kulang. Ituloy pa rin?`)) return;
+                if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
+                    return;
+                }
             }
 
+            // Awtomatikong binabawasan ang stock sa bahay batay sa napiling style
             appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
 
             appData.consignments.push({
@@ -314,7 +313,7 @@
                     appData = parsed;
                 }
                 saveAndRender();
-                document.getElementById('backupTextarea').value = ''; // Awtomatikong lilinisin ang kahon pagkatapos i-load
+                document.getElementById('backupTextarea').value = '';
                 alert('Matagumpay na na-load at nailapat ang data!');
             } catch (err) {
                 alert('Mali ang format ng JSON text na inilagay.');
