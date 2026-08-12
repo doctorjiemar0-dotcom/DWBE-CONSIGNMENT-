@@ -18,7 +18,7 @@
         label { display: block; font-size: 0.85rem; margin-bottom: 3px; font-weight: bold; }
         input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        button:hover { background-color: #388e3c; }
+        button:hover { opacity: 0.9; }
         
         #authScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; }
         #mainAppContent { display: none; }
@@ -32,10 +32,15 @@
         
         .sync-card { background: #f9f9f9; border: 1px dashed #ccc; }
         
-        .history-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 8px; margin-top: 8px; max-height: 120px; overflow-y: auto; font-size: 0.75rem; color: #555; display: none; }
-        .history-item { border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center; }
+        .history-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 8px; margin-top: 8px; max-height: 180px; overflow-y: auto; font-size: 0.75rem; color: #555; display: none; }
+        .history-item { border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 4px; }
         .history-btns button { background: none; border: none; font-size: 0.7rem; cursor: pointer; padding: 2px 4px; margin-left: 2px; }
         
+        /* Chat Design */
+        .chat-msg { margin-bottom: 6px; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; }
+        .chat-admin { background: #e3f2fd; margin-left: 15px; border-left: 3px solid #1976d2; }
+        .chat-client { background: #e8f5e9; margin-right: 15px; border-left: 3px solid #388e3c; }
+
         .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
         .store-card.due { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
         .badge { display: inline-block; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; color: white; }
@@ -351,7 +356,7 @@
                 if (isDue) tDue++;
 
                 // Alamin kung may pending restock request sa history
-                const hasPendingRequest = item.history.some(h => h.text.includes('🚨 RESTOCK REQUEST'));
+                const hasPendingRequest = item.history.some(h => h.text && h.text.includes('🚨 RESTOCK REQUEST') && !h.text.includes('DECLINED'));
                 if (hasPendingRequest) tRequests++;
 
                 let rating = hasPendingRequest ? 'May Request!' : (isDue ? 'Due Na!' : (sold === 0 ? 'Mabagal' : 'Maayos'));
@@ -359,15 +364,32 @@
 
                 let historyHtml = '';
                 item.history.forEach((h, hIdx) => {
-                    let isReq = h.text.includes('🚨 RESTOCK REQUEST');
-                    historyHtml += `<div class="history-item" style="${isReq ? 'background: #fff3e0; padding: 4px; border-radius: 3px;' : ''}">
-                        <span>▪️ [${h.date}] ${h.text}</span>
-                        <span class="history-btns">
-                            ${isReq ? `<button onclick="approveRequest(${index}, ${hIdx})" style="color:#2e7d32; font-weight:bold;" type="button">✔️ I-restock</button>` : ''}
-                            <button onclick="editHistory(${index}, ${hIdx})" style="color:#0288d1;" type="button">✏️</button>
-                            <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;" type="button">❌</button>
-                        </span>
-                    </div>`;
+                    const isChat = h.type === 'chat';
+                    const isReq = h.text && h.text.includes('🚨 RESTOCK REQUEST');
+                    const isDeclined = h.text && h.text.includes('DECLINED');
+
+                    if (isChat) {
+                        historyHtml += `<div class="history-item">
+                            <div class="chat-msg ${h.sender === 'admin' ? 'chat-admin' : 'chat-client'}">
+                                <b style="font-size:0.7rem; color:#555; display:block;">${h.sender === 'admin' ? '👨‍💼 Admin' : '🏪 Kliyente'} - ${h.date}</b>
+                                ${h.text}
+                            </div>
+                        </div>`;
+                    } else {
+                        historyHtml += `<div class="history-item" style="${isReq && !isDeclined ? 'background: #fff3e0; padding: 6px; border-radius: 4px;' : ''}">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>▪️ [${h.date}] ${h.text}</span>
+                                <span class="history-btns">
+                                    ${isReq && !isDeclined ? `
+                                        <button onclick="approveRequest(${index}, ${hIdx})" style="color:#2e7d32; font-weight:bold;" type="button">✔️ I-restock</button>
+                                        <button onclick="declineRequest(${index}, ${hIdx})" style="color:#d32f2f; font-weight:bold;" type="button">❌ Decline</button>
+                                    ` : ''}
+                                    <button onclick="editHistory(${index}, ${hIdx})" style="color:#0288d1;" type="button">✏️</button>
+                                    <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;" type="button">❌</button>
+                                </span>
+                            </div>
+                        </div>`;
+                    }
                 });
                 if (!historyHtml) historyHtml = '<div class="history-item">Wala pang tala.</div>';
 
@@ -387,13 +409,14 @@
                         <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
                         <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
                     </div>
-                    <button type="button" onclick="toggleHistory(${index})" id="historyBtn_${index}" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">📜 Ipakita ang History (${item.history.length})</button>
+                    <button type="button" onclick="toggleHistory(${index})" id="historyBtn_${index}" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">📜 Ipakita ang History & Chat (${item.history.length})</button>
                     <div class="history-box" id="historyBox_${index}" ${hasPendingRequest ? 'style="display:block;"' : ''}>
-                        <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History & Requests:</div>
+                        <div style="font-weight:bold; margin-bottom:4px;">📜 Transaction Logs & Chatbox:</div>
                         ${historyHtml}
                     </div>
                     <div class="btn-group">
-                        <button type="button" onclick="checkupStore(${index})" style="background-color: #0288d1;">Koleksyon</button>
+                        <button type="button" onclick="sendAdminChat(${index})" style="background-color: #0288d1;">💬 Mag-chat</button>
+                        <button type="button" onclick="checkupStore(${index})" style="background-color: #00acc1;">Koleksyon</button>
                         <button type="button" onclick="bawasStock(${index})" style="background-color: #ff9800;">Bawas</button>
                         <button type="button" onclick="restockStore(${index})" style="background-color: #388e3c;">Restock</button>
                         <button type="button" onclick="editStore(${index})" style="background-color: #6d4c41;">I-edit</button>
@@ -416,19 +439,18 @@
             const btn = document.getElementById(`historyBtn_${index}`);
             if (box.style.display === 'block') {
                 box.style.display = 'none';
-                btn.textContent = `📜 Ipakita ang History (${appData.consignments[index].history.length})`;
+                btn.textContent = `📜 Ipakita ang History & Chat (${appData.consignments[index].history.length})`;
             } else {
                 box.style.display = 'block';
-                btn.textContent = '📜 Itago ang History';
+                btn.textContent = '📜 Itago ang History & Chat';
             }
         };
 
-        // Automatic na pag-apruba ng Restock Request mula sa client
+        // Pag-apruba ng Restock Request
         window.approveRequest = function(storeIdx, histIdx) {
             const item = appData.consignments[storeIdx];
             const logText = item.history[histIdx].text;
             
-            // Kunin ang dami ng nire-request mula sa text gamit ang regex
             const match = logText.match(/\d+/);
             const qty = match ? parseInt(match[0]) : 10;
             const style = item.styleType;
@@ -443,7 +465,6 @@
                 item.initialQty += qty;
                 item.currentStock += qty;
                 
-                // Palitan ang request log ng tagumpay na tala o tanggalin / lagyan ng marka na aprubado na
                 item.history[histIdx].text = `✅ Naaprubahan ang Restock: +${qty} pcs (${style})`;
                 
                 item.history.unshift({
@@ -454,6 +475,31 @@
 
                 saveToCloud();
                 alert('Matagumpay na na-restock ang tindahan!');
+            }
+        };
+
+        // Decline Restock Request
+        window.declineRequest = function(storeIdx, histIdx) {
+            if (confirm("I-decline ba ang restock request na ito?")) {
+                const item = appData.consignments[storeIdx];
+                item.history[histIdx].text = `❌ DECLINED: ${item.history[histIdx].text}`;
+                saveToCloud();
+                alert('Na-decline ang request.');
+            }
+        };
+
+        // Magpadala ng Chat mula sa Admin patungo sa Tindahan
+        window.sendAdminChat = function(index) {
+            const msg = prompt("Ilagay ang mensahe o sagot sa tindahan:");
+            if (msg && msg.trim() !== "") {
+                appData.consignments[index].history.push({
+                    id: Date.now(),
+                    type: 'chat',
+                    sender: 'admin',
+                    text: msg.trim(),
+                    date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (' + new Date().toLocaleDateString() + ')'
+                });
+                saveToCloud();
             }
         };
 
