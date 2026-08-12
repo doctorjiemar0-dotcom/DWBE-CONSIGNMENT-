@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor's Whisk Broom - ADMIN APP (Cloud Sync)</title>
+    <title>Doctor's Whisk Broom - ADMIN (Cloud Sync)</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
     <style>
@@ -36,7 +36,6 @@
         .history-item { border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 4px; }
         .history-btns button { background: none; border: none; font-size: 0.7rem; cursor: pointer; padding: 2px 4px; margin-left: 2px; }
         
-        /* Chat Design */
         .chat-msg { margin-bottom: 6px; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; }
         .chat-admin { background: #e3f2fd; margin-left: 15px; border-left: 3px solid #1976d2; }
         .chat-client { background: #e8f5e9; margin-right: 15px; border-left: 3px solid #388e3c; }
@@ -355,7 +354,6 @@
                 const isDue = item.collectionDate && item.collectionDate.startsWith(currentYM);
                 if (isDue) tDue++;
 
-                // Alamin kung may pending restock request sa history
                 const hasPendingRequest = item.history.some(h => h.text && h.text.includes('🚨 RESTOCK REQUEST') && !h.text.includes('DECLINED'));
                 if (hasPendingRequest) tRequests++;
 
@@ -452,8 +450,13 @@
             const logText = item.history[histIdx].text;
             
             const match = logText.match(/\d+/);
-            const qty = match ? parseInt(match[0]) : 10;
+            const qty = match ? parseInt(match[0]) : 0;
             const style = item.styleType;
+
+            if (qty <= 0) {
+                alert('Hindi makuha ang tamang bilang ng quantity mula sa request.');
+                return;
+            }
 
             if (appData.homeStock[style] < qty) {
                 alert(`Babala: Ang stock mo sa bahay para sa ${style} (${appData.homeStock[style]} pcs) ay kulang sa nire-request na ${qty} pcs.`);
@@ -565,30 +568,37 @@
             }
         };
 
+        // FIXED DELETE HISTORY LOGIC (TAMA NA ANG PAGBALIK SA HOME STOCK AT SIMULANG STOCKS)
         window.deleteHistory = function(storeIdx, histIdx) {
             const item = appData.consignments[storeIdx];
             const log = item.history[histIdx];
 
-            if (!confirm('Burahin ang history log na ito? Awtomatikong mag-aadjust ang stock base sa log na ito.')) return;
+            if (!confirm('Burahin ang history log na ito? Awtomatikong mag-aadjust ang inventory base sa log na ito.')) return;
 
             const logText = log.text.toLowerCase();
             const match = log.text.match(/\d+/);
             const qty = match ? parseInt(match[0]) : 0;
 
-            if (logText.includes('nabenta') || logText.includes('rejected')) {
+            if (logText.includes('nabenta')) {
+                // Pag na-delete ang "Nabenta", babalik ang stock sa currentStock ng tindahan
                 item.currentStock += qty;
-                if (logText.includes('rejected')) item.rejectedQty = Math.max(0, item.rejectedQty - qty);
             } 
-            else if (logText.includes('nagdagdag') || logText.includes('nagsimula')) {
+            else if (logText.includes('rejected')) {
+                // Pag na-delete ang "Rejected", babalik sa currentStock at babawasan ang rejectedQty
+                item.currentStock += qty;
+                item.rejectedQty = Math.max(0, item.rejectedQty - qty);
+            }
+            else if (logText.includes('nagdagdag') || logText.includes('nagsimula') || logText.includes('naprubahan ang restock')) {
+                // Pag na-delete ang log tungkol sa pagdaragdag ng stock (simula, restock, o approved),
+                // ibabalik ang quantity sa Home Inventory at ibabawas sa Initial & Current Stock ng tindahan
+                appData.homeStock[item.styleType] += qty;
+                item.initialQty = Math.max(0, item.initialQty - qty);
                 item.currentStock = Math.max(0, item.currentStock - qty);
-                if (logText.includes('nagsimula')) {
-                    item.initialQty = Math.max(0, item.initialQty - qty);
-                }
             }
 
             item.history.splice(histIdx, 1);
             saveToCloud();
-            alert('Na-delete ang log at na-update ang inventory count.');
+            alert('Na-delete ang log at na-update nang tama ang inventory counts.');
         };
 
         document.getElementById('exportBtn').addEventListener('click', () => {
