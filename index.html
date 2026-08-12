@@ -33,8 +33,8 @@
         .badge-good { background-color: #4caf50; }
         
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
-        .btn-group { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
-        .btn-group button { padding: 6px 10px; font-size: 0.8rem; margin-top: 0; width: auto; flex: 1; }
+        .btn-group { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+        .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
     </style>
 </head>
 <body>
@@ -163,14 +163,12 @@
             const startD = document.getElementById('dateDelivered').value;
             const collD = document.getElementById('collectionDate').value;
 
-            // Awtomatikong sinusuri kung sapat ang stock sa bahay bawas ang kaukulang style
             if (appData.homeStock[styleType] < qty) {
                 if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
                     return;
                 }
             }
 
-            // Awtomatikong binabawasan ang stock sa bahay batay sa napiling style
             appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
 
             appData.consignments.push({
@@ -231,7 +229,7 @@
                 div.className = `store-card ${isDue ? 'due' : ''}`;
                 div.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong>🏪 ${item.storeName} (${item.styleType})</strong>
+                        <strong>🏪 ${item.storeName} (${item.styleType}) - ₱${item.price}</strong>
                         <div><span class="badge ${badgeClass}">${rating}</span></div>
                     </div>
                     <div class="highlight-box">
@@ -243,6 +241,7 @@
                         <button onclick="checkupStore(${index})" style="background-color: #0288d1;">Koleksyon</button>
                         <button onclick="bawasStock(${index})" style="background-color: #ff9800;">Bawas</button>
                         <button onclick="restockStore(${index})" style="background-color: #388e3c;">Restock</button>
+                        <button onclick="editStore(${index})" style="background-color: #6d4c41;">I-edit</button>
                         <button onclick="deleteStore(${index})" style="background-color: #d32f2f;">Burahin</button>
                     </div>
                 `;
@@ -285,6 +284,27 @@
                 appData.consignments[index].currentStock += count;
                 saveAndRender();
             }
+        };
+
+        window.editStore = function(index) {
+            const item = appData.consignments[index];
+            const newName = prompt('Bagong Pangalan ng Tindahan:', item.storeName);
+            if (newName === null) return;
+            
+            const newPrice = prompt('Bagong Presyo bawat Isa (₱):', item.price);
+            if (newPrice === null) return;
+
+            const newStyle = prompt('Bagong Estilo (Ordinary o Premium):', item.styleType);
+            if (newStyle === null) return;
+
+            let cleanStyle = newStyle.trim().toLowerCase();
+            let finalStyle = cleanStyle.includes('prem') ? 'Premium' : 'Ordinary';
+
+            if (newName.trim() !== '') item.storeName = newName.trim();
+            if (!isNaN(newPrice) && parseFloat(newPrice) > 0) item.price = parseFloat(newPrice);
+            item.styleType = finalStyle;
+
+            saveAndRender();
         };
 
         window.deleteStore = function(index) {
