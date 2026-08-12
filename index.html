@@ -36,12 +36,6 @@
         .badge-good { background-color: #4caf50; }
         
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
-        .highlight-start { background-color: #e3f2fd; border: 1px solid #90caf9; padding: 6px 8px; border-radius: 4px; margin-bottom: 5px; font-size: 0.85rem; color: #0d47a1; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .highlight-due { background-color: #ffebee; border: 1px solid #ef9a9a; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; color: #b71c1c; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        
-        .history-box { background: #f8f9fa; border: 1px solid #e9ecef; padding: 8px; border-radius: 4px; margin-top: 8px; max-height: 140px; overflow-y: auto; font-size: 0.8rem; }
-        .history-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 4px 0; gap: 5px; }
-        
         .btn-group { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
         .btn-group button { padding: 6px 10px; font-size: 0.8rem; margin-top: 0; width: auto; flex: 1; }
     </style>
@@ -76,18 +70,16 @@
 
         <div class="card sync-card">
             <h2>📱 Data Backup & Recovery (Copy-Paste Method)</h2>
-            <p style="font-size: 0.85rem; color: #555; margin-bottom: 8px;">Kung ayaw mag-load ng file, buksan ang backup file gamit ang Text Viewer o Quick Edit, kopyahin ang laman, at i-paste dito:</p>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 8px;">I-paste dito ang backup text para ma-load:</p>
             
             <div class="form-group">
-                <textarea id="backupTextarea" rows="4" placeholder="I-paste dito ang JSON code mula sa backup file..."></textarea>
+                <textarea id="backupTextarea" rows="3" placeholder="I-paste dito ang JSON code..."></textarea>
             </div>
             
             <div style="display: flex; gap: 8px;">
                 <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data</button>
                 <button type="button" id="importTextBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Naka-paste</button>
             </div>
-            <!-- Nakatago pa rin ang file input kung sakaling gumana -->
-            <input type="file" id="importFile" style="display: none;" accept=".json">
         </div>
 
         <div class="card">
@@ -177,7 +169,7 @@
             const collD = document.getElementById('collectionDate').value;
 
             if (appData.homeStock[styleType] < qty) {
-                if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang. Ituloy pa rin?`)) return;
+                if (!confirm(`Babala: Ang Home stock para sa ${styleType} ay kulang. Ituloy pa rin?`)) return;
             }
 
             appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
@@ -308,7 +300,7 @@
         document.getElementById('exportBtn').addEventListener('click', () => {
             const dataStr = JSON.stringify(appData, null, 2);
             document.getElementById('backupTextarea').value = dataStr;
-            alert('Kopyahin ang text na lumitaw sa kahon sa itaas para sa iyong backup.');
+            alert('Kopyahin ang text na lumitaw sa kahon.');
         });
 
         document.getElementById('importTextBtn').addEventListener('click', () => {
@@ -322,7 +314,8 @@
                     appData = parsed;
                 }
                 saveAndRender();
-                alert('Matagumpay na na-load ang data mula sa text!');
+                document.getElementById('backupTextarea').value = ''; // Awtomatikong lilinisin ang kahon pagkatapos i-load
+                alert('Matagumpay na na-load at nailapat ang data!');
             } catch (err) {
                 alert('Mali ang format ng JSON text na inilagay.');
             }
