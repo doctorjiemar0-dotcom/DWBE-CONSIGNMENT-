@@ -32,6 +32,7 @@
         .badge-ok { background-color: #ff9800; }
         .badge-good { background-color: #4caf50; }
         
+        .dates-info { background: #f1f3f5; padding: 6px 8px; border-radius: 4px; margin: 6px 0; font-size: 0.8rem; color: #495057; display: flex; justify-content: space-between; }
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         .btn-group { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
@@ -184,7 +185,7 @@
                 price: price,
                 dateDelivered: startD,
                 collectionDate: collD,
-                history: [{ date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
+                history: [{ date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) noong ${startD}` }]
             });
             form.reset();
             document.getElementById('dateDelivered').valueAsDate = new Date();
@@ -214,6 +215,8 @@
                 if (item.rejectedQty === undefined) item.rejectedQty = 0;
                 if (!item.styleType) item.styleType = 'Ordinary';
                 if (!item.history) item.history = [];
+                if (!item.dateDelivered) item.dateDelivered = 'N/A';
+                if (!item.collectionDate) item.collectionDate = 'N/A';
 
                 const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
                 const sales = sold * item.price;
@@ -240,6 +243,10 @@
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong>🏪 ${item.storeName} (${item.styleType}) - ₱${item.price}</strong>
                         <div><span class="badge ${badgeClass}">${rating}</span></div>
+                    </div>
+                    <div class="dates-info">
+                        <span>📅 Start: <strong>${item.dateDelivered}</strong></span>
+                        <span>🎯 Collection: <strong>${item.collectionDate}</strong></span>
                     </div>
                     <div class="highlight-box">
                         <span>📦 Simula: <strong>${item.initialQty}</strong></span>
@@ -323,19 +330,9 @@
             let cleanStyle = newStyle.trim().toLowerCase();
             let finalStyle = cleanStyle.includes('prem') ? 'Premium' : 'Ordinary';
 
-            let changes = [];
-            if (newName.trim() !== '' && newName.trim() !== item.storeName) {
-                changes.name = newName.trim();
-            }
-            if (!isNaN(newPrice) && parseFloat(newPrice) > 0 && parseFloat(newPrice) !== item.price) {
-                item.price = parseFloat(newPrice);
-            }
-            if (finalStyle !== item.styleType) {
-                item.styleType = finalStyle;
-            }
-            if (changes.name) {
-                item.storeName = changes.name;
-            }
+            if (newName.trim() !== '') item.storeName = newName.trim();
+            if (!isNaN(newPrice) && parseFloat(newPrice) > 0) item.price = parseFloat(newPrice);
+            item.styleType = finalStyle;
 
             item.history.unshift({
                 date: new Date().toLocaleString(),
