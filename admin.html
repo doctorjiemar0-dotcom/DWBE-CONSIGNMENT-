@@ -22,7 +22,7 @@
         button:hover { background-color: #388e3c; }
         
         /* Password Screen Styling */
-        #authScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; }
+        #authScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; text-align: center; }
         #mainAppContent { display: none; }
 
         /* Install Banner Styling */
@@ -62,14 +62,19 @@
 
     <div class="container">
 
-        <!-- PASSWORD PROTECTION SCREEN -->
+        <!-- PASSWORD & FINGERPRINT PROTECTION SCREEN -->
         <div id="authScreen" class="card">
             <h2>🔒 Security Login</h2>
-            <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px; text-align: center;">Ilagay ang iyong password para mabuksan ang admin panel.</p>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">Ilagay ang PIN code o gumamit ng Fingerprint para buksan ang panel.</p>
+            
             <div class="form-group" style="width: 100%;">
-                <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
+                <input type="password" id="adminPasswordInput" placeholder="I-type ang PIN (0802)..." style="text-align: center; font-size: 1.1rem; letter-spacing: 2px;">
             </div>
-            <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
+            <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login gamit ang PIN</button>
+
+            <div style="margin: 15px 0; font-size: 0.8rem; color: #888;">— O kaya —</div>
+
+            <button type="button" id="fingerprintBtn" style="background-color: #0288d1;">👆 Gamitin ang Fingerprint / Biometrics</button>
         </div>
 
         <!-- MAIN APP CONTENT (Nakatago habang di pa nagla-login) -->
@@ -157,7 +162,7 @@
                 </div>
             </div>
 
-            <!-- PUBLIC / DISPLAY APP LINK SA IBABA -->
+            <!-- PUBLIC APP LINK SA IBABA -->
             <div class="app-link-box">
                 🔗 **Link ng Display App:**<br>
                 <a href="index.html" id="publicAppLink" target="_blank">Kinakarga ang link...</a>
@@ -168,28 +173,33 @@
     </div>
 
     <script>
-        // BAGUHIN ANG PASSWORD DITO KUNG KAHILANGAN MO
-        const ADMIN_PASSWORD = "1234"; 
+        // NAKATAKDA NA ANG PASSWORD SA 0802
+        const ADMIN_PIN = "0802"; 
 
         const authScreen = document.getElementById('authScreen');
         const mainAppContent = document.getElementById('mainAppContent');
         const loginBtn = document.getElementById('loginBtn');
         const passwordInput = document.getElementById('adminPasswordInput');
+        const fingerprintBtn = document.getElementById('fingerprintBtn');
 
-        // Check kung nakapag-login na kamakailan sa session na ito
+        function grantAccess() {
+            sessionStorage.setItem('admin_logged_in', 'true');
+            authScreen.style.display = 'none';
+            mainAppContent.style.display = 'block';
+            renderApp();
+        }
+
+        // Check kung naka-login na sa session na ito
         if (sessionStorage.getItem('admin_logged_in') === 'true') {
             authScreen.style.display = 'none';
             mainAppContent.style.display = 'block';
         }
 
         loginBtn.addEventListener('click', () => {
-            if (passwordInput.value === ADMIN_PASSWORD) {
-                sessionStorage.setItem('admin_logged_in', 'true');
-                authScreen.style.display = 'none';
-                mainAppContent.style.display = 'block';
-                renderApp();
+            if (passwordInput.value === ADMIN_PIN) {
+                grantAccess();
             } else {
-                alert('Mali ang password! Subukan muli.');
+                alert('Mali ang PIN code! Subukan muli (0802).');
                 passwordInput.value = '';
             }
         });
@@ -197,6 +207,41 @@
         passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 loginBtn.click();
+            }
+        });
+
+        // Fingerprint / Biometric Login Support (Web Authentication API)
+        fingerprintBtn.addEventListener('click', async () => {
+            try {
+                if (!window.PublicKeyCredential) {
+                    alert('Hindi sinusuportahan ng iyong browser o device ang Biometric/Fingerprint scanner.');
+                    return;
+                }
+
+                // Sinusubukan i-trigger ang built-in fingerprint o screen lock ng cellphone/computer
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                if (!available) {
+                    alert('Walang nakitang fingerprint scanner o screen lock sa device na ito.');
+                    return;
+                }
+
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+
+                // Humihingi ng user verification (Fingerprint, FaceID, o Device PIN)
+                await navigator.credentials.get({
+                    publicKey: {
+                        challenge: challenge,
+                        timeout: 60000,
+                        userVerification: "required"
+                    }
+                });
+
+                // Kung matagumpay na na-scan o na-verify
+                grantAccess();
+            } catch (err) {
+                console.log(err);
+                alert('Hindi natuloy o nakansela ang fingerprint verification.');
             }
         });
 
@@ -229,9 +274,7 @@
             }
         });
 
-        // Pag-set ng link patungo sa display app (halimbawa ay index.html o iba pang pahina sa parehong repo)
         const publicAppURL = window.location.href.replace('admin.html', 'index.html');
-        document.getElementById('publicAppLink.href') // safety
         const linkElement = document.getElementById('publicAppLink');
         linkElement.href = publicAppURL;
         linkElement.textContent = publicAppURL;
