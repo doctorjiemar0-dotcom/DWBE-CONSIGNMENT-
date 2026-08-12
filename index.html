@@ -33,13 +33,13 @@
 </head>
 <body>
 
-    <header id="appHeader">🧹 Doctor's Whisk Broom - Store Dashboard</header>
+    <header id="appHeader">🧹 Store Dashboard</header>
 
     <div class="container">
 
         <div id="errorScreen" style="display: none;" class="card">
             <h2>⚠️ Paalala</h2>
-            <p>Walang natukoy na tindahan o maling link ang ginamit. Mangyaring hingin ang tamang personal link mula sa administrator.</p>
+            <p>Walang natukoy na tindahan o maling link ang ginamit.</p>
         </div>
 
         <div id="storeDashboard" style="display: none;">
@@ -72,27 +72,28 @@
 
         <div class="admin-link-box">
             🔗 <strong>Admin Panel Link:</strong><br>
-            <a href="#" id="adminAppLink" target="_blank">Kinakarga ang link...</a>
+            <a href="admin.html" id="adminAppLink">admin.html</a>
         </div>
 
     </div>
 
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
-            });
-        }
-
-        // Itama ang pagbuo ng Admin Link kahit may ?store=... sa URL
-        const baseUrl = window.location.origin + window.location.pathname.replace(/index\.html$/, '');
-        const adminAppURL = baseUrl.endsWith('/') ? baseUrl + 'admin.html' : baseUrl + '/admin.html';
+        // Ayusin ang Admin Link direkta patungong admin.html
+        const currentPath = window.location.pathname;
+        const adminUrl = currentPath.includes('index.html') 
+            ? currentPath.replace('index.html', 'admin.html') 
+            : currentPath + (currentPath.endsWith('/') ? '' : '/') + 'admin.html';
+        
         const adminLinkElement = document.getElementById('adminAppLink');
-        adminLinkElement.href = adminAppURL;
-        adminLinkElement.textContent = adminAppURL;
+        adminLinkElement.href = adminUrl;
+        adminLinkElement.textContent = window.location.origin + adminUrl;
 
+        // Kunin ang store parameter galing sa URL
         const urlParams = new URLSearchParams(window.location.search);
-        const targetStoreName = urlParams.get('store');
+        let rawStoreName = urlParams.get('store') || '';
+        
+        // Linisin sakaling may nasamang markdown o brackets
+        const targetStoreName = rawStoreName.split(']')[0].trim();
 
         const errorScreen = document.getElementById('errorScreen');
         const storeDashboard = document.getElementById('storeDashboard');
@@ -103,16 +104,18 @@
         } else {
             appHeader.textContent = `🧹 ${targetStoreName} - Store Dashboard`;
             
+            // Kunin ang data mula sa localStorage (pareho sa ginagamit ng admin panel)
             let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { consignments: [] };
             if (Array.isArray(appData)) appData = { consignments: appData };
 
+            // Hanapin ang match (case-insensitive)
             const storeItem = appData.consignments.find(item => 
-                item.storeName.toLowerCase() === targetStoreName.toLowerCase()
+                item.storeName && item.storeName.toLowerCase().trim() === targetStoreName.toLowerCase().trim()
             );
 
             if (!storeItem) {
                 errorScreen.style.display = 'block';
-                errorScreen.innerHTML = `<h2>⚠️ Tindahan ay Hindi Makita</h2><p>Walang nahanap na record o transaksyon para sa "<strong>${targetStoreName}</strong>". Siguraduhing na-save na ito sa Admin Panel gamit ang eksaktong pangalan.</p>`;
+                errorScreen.innerHTML = `<h2>⚠️ Tindahan ay Hindi Makita</h2><p>Walang nahanap na record para sa "<strong>${targetStoreName}</strong>". Siguraduhing pareho ang spelling sa Admin Panel.</p>`;
             } else {
                 storeDashboard.style.display = 'block';
 
