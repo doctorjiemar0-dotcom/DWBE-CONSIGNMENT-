@@ -18,6 +18,8 @@
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
         .history-item { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; font-size: 0.85rem; color: #555; }
+        .admin-link { margin-top: 30px; text-align: center; }
+        .admin-link a { color: #2e7d32; text-decoration: none; font-size: 0.8rem; font-weight: bold; padding: 10px; border: 1px solid #2e7d32; border-radius: 5px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -29,7 +31,7 @@
 
         <div class="card" id="clientCard">
             <h2 id="storeTitle">🏪 Tindahan</h2>
-            <div class="summary-box" style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
+            <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
                 <div class="summary-row"><span>Uri ng Estilo:</span><span id="styleType">-</span></div>
                 <div class="summary-row"><span>Presyo bawat Isa:</span><span id="price">-</span></div>
                 <div class="summary-row"><span>Simulang Stock:</span><span id="initialQty">-</span></div>
@@ -45,9 +47,12 @@
                 <p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>
             </div>
         </div>
+
+        <div class="admin-link">
+            <a href="admin.html">⚙️ Bumalik sa Admin Panel</a>
+        </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -65,8 +70,6 @@
         const db = getFirestore(app);
 
         const syncStatus = document.getElementById('syncStatus');
-        
-        // Kunin ang pangalan ng tindahan mula sa URL (Hal. index.html?store=Aling%20Nena)
         const urlParams = new URLSearchParams(window.location.search);
         const storeName = urlParams.get('store');
 
@@ -88,8 +91,10 @@
                     const data = docSnap.data();
                     const consignments = data.consignments || [];
                     
-                    // Hanapin ang partikular na tindahan sa listahan
-                    const storeData = consignments.find(item => item.storeName === targetStore);
+                    // Case-insensitive search
+                    const storeData = consignments.find(item => 
+                        item.storeName.toLowerCase() === targetStore.toLowerCase()
+                    );
 
                     if (storeData) {
                         renderClient(storeData);
