@@ -29,6 +29,7 @@
         .admin-link-box a:hover { background: #c8e6c9; }
 
         #errorScreen { text-align: center; padding: 40px; color: #d32f2f; font-weight: bold; }
+        #loadingScreen { text-align: center; padding: 40px; color: #555; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -37,9 +38,13 @@
 
     <div class="container">
 
+        <div id="loadingScreen" class="card">
+            <p>Kinukuha ang data mula sa cloud...</p>
+        </div>
+
         <div id="errorScreen" style="display: none;" class="card">
-            <h2>⚠️ Paalala</h2>
-            <p>Walang natukoy na tindahan o maling link ang ginamit.</p>
+            <h2>⚠️ Tindahan ay Hindi Makita</h2>
+            <p id="errorMsg">Walang natukoy na tindahan o maling link ang ginamit.</p>
         </div>
 
         <div id="storeDashboard" style="display: none;">
@@ -77,7 +82,23 @@
 
     </div>
 
-    <script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+          authDomain: "dwbe-consignment.firebaseapp.com",
+          projectId: "dwbe-consignment",
+          storageBucket: "dwbe-consignment.firebasestorage.app",
+          messagingSenderId: "205759197252",
+          appId: "1:205759197252:web:b04400821f81791d10cc11"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         // Ayusin ang Admin Link direkta patungong admin.html
         const currentPath = window.location.pathname;
         const adminUrl = currentPath.includes('index.html') 
@@ -91,62 +112,70 @@
         // Kunin ang store parameter galing sa URL
         const urlParams = new URLSearchParams(window.location.search);
         let rawStoreName = urlParams.get('store') || '';
-        
-        // Linisin sakaling may nasamang markdown o brackets
         const targetStoreName = rawStoreName.split(']')[0].trim();
 
+        const loadingScreen = document.getElementById('loadingScreen');
         const errorScreen = document.getElementById('errorScreen');
         const storeDashboard = document.getElementById('storeDashboard');
         const appHeader = document.getElementById('appHeader');
 
-        if (!targetStoreName) {
-            errorScreen.style.display = 'block';
-        } else {
-            appHeader.textContent = `🧹 ${targetStoreName} - Store Dashboard`;
-            
-            // Kunin ang data mula sa localStorage (pareho sa ginagamit ng admin panel)
-            let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { consignments: [] };
-            if (Array.isArray(appData)) appData = { consignments: appData };
-
-            // Hanapin ang match (case-insensitive)
-            const storeItem = appData.consignments.find(item => 
-                item.storeName && item.storeName.toLowerCase().trim() === targetStoreName.toLowerCase().trim()
-            );
-
-            if (!storeItem) {
+        async function fetchStoreData() {
+            if (!targetStoreName) {
+                loadingScreen.style.display = 'none';
                 errorScreen.style.display = 'block';
-                errorScreen.innerHTML = `<h2>⚠️ Tindahan ay Hindi Makita</h2><p>Walang nahanap na record para sa "<strong>${targetStoreName}</strong>". Siguraduhing pareho ang spelling sa Admin Panel.</p>`;
-            } else {
-                storeDashboard.style.display = 'block';
+                return;
+            }
 
-                if (storeItem.rejectedQty === undefined) storeItem.rejectedQty = 0;
-                const sold = Math.max(0, storeItem.initialQty - storeItem.currentStock - storeItem.rejectedQty);
-                const sales = sold * storeItem.price;
+            try {
+                appHeader.textContent = `🧹 ${targetStoreName} - Store Dashboard`;
+                const docRef = doc(db, "consignments", targetStoreName);
+                const docSnap = await getDoc(docRef);
 
-                document.getElementById('storeStyle').textContent = storeItem.styleType || 'Ordinary';
-                document.getElementById('storePrice').textContent = '₱' + storeItem.price.toLocaleString();
-                document.getElementById('storeInitial').textContent = storeItem.initialQty + ' pcs';
-                document.getElementById('storeCurrent').textContent = storeItem.currentStock + ' pcs';
-                document.getElementById('storeSold').textContent = sold + ' pcs';
-                document.getElementById('storeSales').textContent = '₱' + sales.toLocaleString();
-                document.getElementById('storeStart').textContent = storeItem.dateDelivered || 'N/A';
-                document.getElementById('storeCollection').textContent = storeItem.collectionDate || 'N/A';
+                loadingScreen.style.display = 'none';
 
-                const historyList = document.getElementById('storeHistoryList');
-                historyList.innerHTML = '';
-                
-                if (storeItem.history && storeItem.history.length > 0) {
-                    storeItem.history.forEach(h => {
-                        const div = document.createElement('div');
-                        div.className = 'history-item';
-                        div.innerHTML = `<span>▪️ [${h.date}]</span> <strong>${h.text}</strong>`;
-                        historyList.appendChild(div);
-                    });
+                if (docSnap.exists()) {
+                    const storeItem = docSnap.data();
+                    storeDashboard.style.display = 'block';
+
+                    if (storeItem.rejectedQty === undefined) storeItem.rejectedQty = 0;
+                    const sold = Math.max(0, storeItem.initialQty - storeItem.currentStock - storeItem.rejectedQty);
+                    const sales = sold * storeItem.price;
+
+                    document.getElementById('storeStyle').textContent = storeItem.styleType || 'Ordinary';
+                    document.getElementById('storePrice').textContent = '₱' + storeItem.price.toLocaleString();
+                    document.getElementById('storeInitial').textContent = storeItem.initialQty + ' pcs';
+                    document.getElementById('storeCurrent').textContent = storeItem.currentStock + ' pcs';
+                    document.getElementById('storeSold').textContent = sold + ' pcs';
+                    document.getElementById('storeSales').textContent = '₱' + sales.toLocaleString();
+                    document.getElementById('storeStart').textContent = storeItem.dateDelivered || 'N/A';
+                    document.getElementById('storeCollection').textContent = storeItem.collectionDate || 'N/A';
+
+                    const historyList = document.getElementById('storeHistoryList');
+                    historyList.innerHTML = '';
+                    
+                    if (storeItem.history && storeItem.history.length > 0) {
+                        storeItem.history.forEach(h => {
+                            const div = document.createElement('div');
+                            div.className = 'history-item';
+                            div.innerHTML = `<span>▪️ [${h.date}]</span> <strong>${h.text}</strong>`;
+                            historyList.appendChild(div);
+                        });
+                    } else {
+                        historyList.innerHTML = '<div>Wala pang tala ng transaksyon.</div>';
+                    }
                 } else {
-                    historyList.innerHTML = '<div>Wala pang tala ng transaksyon.</div>';
+                    errorScreen.style.display = 'block';
+                    document.getElementById('errorMsg').textContent = `Walang nahanap na record para sa "${targetStoreName}".`;
                 }
+            } catch (err) {
+                console.error(err);
+                loadingScreen.style.display = 'none';
+                errorScreen.style.display = 'block';
+                document.getElementById('errorMsg').textContent = 'May problema sa pagkonekta sa internet o cloud database.';
             }
         }
+
+        fetchStoreData();
     </script>
 </body>
 </html>
