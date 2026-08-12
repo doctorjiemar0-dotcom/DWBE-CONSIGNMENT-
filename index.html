@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor's Whisk Broom - Client View</title>
+    <title>Doctor's Whisk Broom - Store Dashboard</title>
     <!-- PWA Manifest Link & Theme Color -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
@@ -17,54 +17,64 @@
         h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
         
         .summary-box { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
-        .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 5px; font-weight: bold; color: var(--primary-color); }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); font-size: 1rem; }
         
-        .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
-        .badge { display: inline-block; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; color: white; }
-        .badge-ok { background-color: #ff9800; }
-        .badge-good { background-color: #4caf50; }
+        .dates-info { background: #f1f3f5; padding: 8px 10px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #495057; display: flex; justify-content: space-between; }
+        .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         
-        .dates-info { background: #f1f3f5; padding: 6px 8px; border-radius: 4px; margin: 6px 0; font-size: 0.8rem; color: #495057; display: flex; justify-content: space-between; }
-        .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
+        .history-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.8rem; color: #555; }
+        .history-item { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         
         .admin-link-box { text-align: center; margin-top: 25px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; font-size: 0.9rem; }
         .admin-link-box a { color: #2e7d32; text-decoration: none; font-weight: bold; padding: 8px 16px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 4px; display: inline-block; word-break: break-all; }
         .admin-link-box a:hover { background: #c8e6c9; }
+
+        #errorScreen { text-align: center; padding: 40px; color: #d32f2f; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header>🧹 Doctor's Whisk Broom - Client View</header>
+    <header id="appHeader">🧹 Doctor's Whisk Broom - Store Dashboard</header>
 
     <div class="container">
 
-        <!-- HOME STOCK SUMMARY FOR CLIENT -->
-        <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
-            <h2>🏠 Stock sa Bodega / Bahay</h2>
-            <div style="font-size: 0.9rem; display: flex; justify-content: space-between;">
-                <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
-                <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
+        <!-- KUNG WALANG PINASANG STORE SA LINK O HINDI MAKITA -->
+        <div id="errorScreen" style="display: none;" class="card">
+            <h2>⚠️ Paalala</h2>
+            <p>Walang natukoy na tindahan o maling link ang ginamit. Mangyaring hingin ang tamang personal link mula sa administrator.</p>
+        </div>
+
+        <!-- DASHBOARD NG ISANG TIBAK NA TINDAHAN -->
+        <div id="storeDashboard" style="display: none;">
+            
+            <div class="summary-box">
+                <div class="summary-row"><span>Uri ng Estilo (Variation):</span><strong id="storeStyle">Ordinary</strong></div>
+                <div class="summary-row"><span>Presyo bawat Isa:</span><strong id="storePrice">₱0</strong></div>
+                <div class="summary-row"><span>Simulang Stock:</span><strong id="storeInitial">0 pcs</strong></div>
+                <div class="summary-row"><span>Natitirang Stock:</span><strong id="storeCurrent" style="color: #2e7d32;">0 pcs</strong></div>
+                <div class="summary-row"><span>Kabuuang Nabenta:</span><strong id="storeSold" style="color: #c2185b;">0 pcs</strong></div>
+                <div class="summary-row summary-row-highlight"><span>Kabuuang Halaga ng Benta:</span><strong id="storeSales">₱0</strong></div>
             </div>
-        </div>
 
-        <!-- OVERALL SUMMARY -->
-        <div class="summary-box">
-            <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
-            <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
-            <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
-            <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
-        </div>
-
-        <!-- STORES LIST -->
-        <div class="card">
-            <h2>Listahan ng mga Konsignment sa Tindahan</h2>
-            <div id="storesList">
-                <p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>
+            <div class="card">
+                <h2>📅 Mga Petsa</h2>
+                <div class="dates-info">
+                    <span>Simula: <strong id="storeStart">-</strong></span>
+                    <span>Target na Koleksyon: <strong id="storeCollection">-</strong></span>
+                </div>
             </div>
+
+            <div class="card">
+                <h2>📜 Sariling Transaction History</h2>
+                <div class="history-box" id="storeHistoryList">
+                    <div>Wala pang tala.</div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- TOTOO AT DINAMIKONG LINK PATUNGO SA ADMIN -->
+        <!-- LINK PATUNGO SA ADMIN -->
         <div class="admin-link-box">
             🔗 **Admin Panel Link:**<br>
             <a href="#" id="adminAppLink" target="_blank">Kinakarga ang link...</a>
@@ -80,82 +90,69 @@
             });
         }
 
-        // Awtomatikong pinapalitan ang link para maging totoong URL patungo sa admin.html
+        // Dynamic link para sa Admin Panel sa ilalim ng app
         const adminAppURL = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '') + '/admin.html';
         const adminLinkElement = document.getElementById('adminAppLink');
         adminLinkElement.href = adminAppURL;
         adminLinkElement.textContent = adminAppURL;
 
-        function renderClientApp() {
-            let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
+        // Kunin ang pangalan ng tindahan mula sa URL query parameter (Hal. ?store=Aling+Nena)
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetStoreName = urlParams.get('store');
+
+        const errorScreen = document.getElementById('errorScreen');
+        const storeDashboard = document.getElementById('storeDashboard');
+        const appHeader = document.getElementById('appHeader');
+
+        if (!targetStoreName) {
+            errorScreen.style.display = 'block';
+        } else {
+            appHeader.textContent = `🧹 ${targetStoreName} - Store Dashboard`;
             
-            if (Array.isArray(appData)) {
-                appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: appData };
-            }
-            if (!appData.homeStock) {
-                appData.homeStock = { Ordinary: 0, Premium: 0 };
-            }
+            // Kunin ang data mula sa localStorage ng Admin app
+            let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { consignments: [] };
+            if (Array.isArray(appData)) appData = { consignments: appData };
 
-            document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary || 0;
-            document.getElementById('homePremStock').textContent = appData.homeStock.Premium || 0;
+            // Hanapin ang partikular na tindahan (case-insensitive para sigurado)
+            const storeItem = appData.consignments.find(item => 
+                item.storeName.toLowerCase() === targetStoreName.toLowerCase()
+            );
 
-            const storesList = document.getElementById('storesList');
-            storesList.innerHTML = '';
+            if (!storeItem) {
+                errorScreen.style.display = 'block';
+                errorScreen.innerHTML = `<h2>⚠️ Tindahan ay Hindi Makita</h2><p>Walang nahanap na record o transaksyon para sa "<strong>${targetStoreName}</strong>".</p>`;
+            } else {
+                storeDashboard.style.display = 'block';
 
-            if (!appData.consignments || appData.consignments.length === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>';
-                document.getElementById('totalStores').textContent = '0';
-                document.getElementById('totalStock').textContent = '0 pcs';
-                document.getElementById('totalSold').textContent = '0 pcs';
-                document.getElementById('totalSales').textContent = '₱0';
-                return;
-            }
+                if (storeItem.rejectedQty === undefined) storeItem.rejectedQty = 0;
+                const sold = Math.max(0, storeItem.initialQty - storeItem.currentStock - storeItem.rejectedQty);
+                const sales = sold * storeItem.price;
 
-            let tStores = appData.consignments.length, tStock = 0, tSold = 0, tSales = 0;
+                document.getElementById('storeStyle').textContent = storeItem.styleType || 'Ordinary';
+                document.getElementById('storePrice').textContent = '₱' + storeItem.price.toLocaleString();
+                document.getElementById('storeInitial').textContent = storeItem.initialQty + ' pcs';
+                document.getElementById('storeCurrent').textContent = storeItem.currentStock + ' pcs';
+                document.getElementById('storeSold').textContent = sold + ' pcs';
+                document.getElementById('storeSales').textContent = '₱' + sales.toLocaleString();
+                document.getElementById('storeStart').textContent = storeItem.dateDelivered || 'N/A';
+                document.getElementById('storeCollection').textContent = storeItem.collectionDate || 'N/A';
 
-            appData.consignments.forEach((item) => {
-                if (item.rejectedQty === undefined) item.rejectedQty = 0;
-                if (!item.styleType) item.styleType = 'Ordinary';
-                if (!item.dateDelivered) item.dateDelivered = 'N/A';
-                if (!item.collectionDate) item.collectionDate = 'N/A';
-
-                const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
-                const sales = sold * item.price;
+                // I-render ang sarili nilang history logs lamang
+                const historyList = document.getElementById('storeHistoryList');
+                historyList.innerHTML = '';
                 
-                tStock += item.currentStock;
-                tSold += sold;
-                tSales += sales;
-
-                let rating = sold === 0 ? 'Mabagal' : 'Maayos';
-                let badgeClass = sold === 0 ? 'badge-ok' : 'badge-good';
-
-                const div = document.createElement('div');
-                div.className = 'store-card';
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong>🏪 ${item.storeName} (${item.styleType}) - ₱${item.price}</strong>
-                        <div><span class="badge ${badgeClass}">${rating}</span></div>
-                    </div>
-                    <div class="dates-info">
-                        <span>📅 Start: <strong>${item.dateDelivered}</strong></span>
-                        <span>🎯 Collection: <strong>${item.collectionDate}</strong></span>
-                    </div>
-                    <div class="highlight-box">
-                        <span>📦 Simula: <strong>${item.initialQty}</strong></span>
-                        <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
-                        <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
-                    </div>
-                `;
-                storesList.appendChild(div);
-            });
-
-            document.getElementById('totalStores').textContent = tStores;
-            document.getElementById('totalStock').textContent = tStock + ' pcs';
-            document.getElementById('totalSold').textContent = tSold + ' pcs';
-            document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
+                if (storeItem.history && storeItem.history.length > 0) {
+                    storeItem.history.forEach(h => {
+                        const div = document.createElement('div');
+                        div.className = 'history-item';
+                        div.innerHTML = `<span>▪️ [${h.date}]</span> <strong>${h.text}</strong>`;
+                        historyList.appendChild(div);
+                    });
+                } else {
+                    historyList.innerHTML = '<div>Wala pang tala ng transaksyon.</div>';
+                }
+            }
         }
-
-        renderClientApp();
     </script>
 </body>
 </html>
