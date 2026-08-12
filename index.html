@@ -24,7 +24,6 @@
         
         .sync-card { background: #f9f9f9; border: 1px dashed #ccc; }
         
-        /* Naka-hide ang history box bilang default, lalabas lang kapag tinanggal ang hidden class o ginamitan ng toggle */
         .history-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 8px; margin-top: 8px; max-height: 120px; overflow-y: auto; font-size: 0.75rem; color: #555; display: none; }
         .history-item { border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center; }
         .history-btns button { background: none; border: none; font-size: 0.7rem; cursor: pointer; padding: 2px 4px; margin-left: 2px; }
@@ -40,6 +39,11 @@
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         .btn-group { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
+        
+        /* Istilo para sa link sa ibaba */
+        .app-link-box { text-align: center; margin-top: 25px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; color: #555; }
+        .app-link-box a { color: #0288d1; word-break: break-all; text-decoration: none; font-weight: bold; }
+        .app-link-box a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -123,9 +127,19 @@
             </div>
         </div>
 
+        <!-- BUONG LINK NG ADMIN APP SA BABA -->
+        <div class="app-link-box">
+            🔗 **Link ng App na ito:**<br>
+            <a href="#" id="currentAppLink" target="_blank">Kinakarga ang link...</a>
+        </div>
+
     </div>
 
     <script>
+        // Awtomatikong ilalagay ang kasalukuyang URL sa link box sa ibaba
+        document.getElementById('currentAppLink').href = window.location.href;
+        document.getElementById('currentAppLink').textContent = window.location.href;
+
         let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
         if (Array.isArray(appData)) {
             appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: appData };
