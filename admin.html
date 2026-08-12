@@ -50,10 +50,6 @@
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         .btn-group { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
-        
-        .app-link-box { text-align: center; margin-top: 25px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; color: #555; }
-        .app-link-box a { color: #0288d1; word-break: break-all; text-decoration: none; font-weight: bold; }
-        .app-link-box a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -65,14 +61,13 @@
         <!-- PASSWORD PROTECTION SCREEN -->
         <div id="authScreen" class="card">
             <h2>🔒 Security Login</h2>
-            <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px; text-align: center;">Ilagay ang iyong password para mabuksan ang admin panel.</p>
             <div class="form-group" style="width: 100%;">
                 <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
             </div>
             <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
         </div>
 
-        <!-- MAIN APP CONTENT (Nakatago habang di pa nagla-login) -->
+        <!-- MAIN APP CONTENT -->
         <div id="mainAppContent">
 
             <!-- INSTALL APP BANNER -->
@@ -157,26 +152,18 @@
                 </div>
             </div>
 
-            <!-- PUBLIC / DISPLAY APP LINK SA IBABA -->
-            <div class="app-link-box">
-                🔗 **Link ng Display App:**<br>
-                <a href="index.html" id="publicAppLink" target="_blank">Kinakarga ang link...</a>
-            </div>
-
         </div>
 
     </div>
 
     <script>
-        // BAGUHIN ANG PASSWORD DITO KUNG KAHILANGAN MO
-        const ADMIN_PASSWORD = "1234"; 
+        const ADMIN_PASSWORD = "0802"; 
 
         const authScreen = document.getElementById('authScreen');
         const mainAppContent = document.getElementById('mainAppContent');
         const loginBtn = document.getElementById('loginBtn');
         const passwordInput = document.getElementById('adminPasswordInput');
 
-        // Check kung nakapag-login na kamakailan sa session na ito
         if (sessionStorage.getItem('admin_logged_in') === 'true') {
             authScreen.style.display = 'none';
             mainAppContent.style.display = 'block';
@@ -200,14 +187,12 @@
             }
         });
 
-        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Registration Failed:', err));
             });
         }
 
-        // PWA Install Prompt Handling
         let deferredPrompt;
         const installCard = document.getElementById('installCard');
         const installBtn = document.getElementById('installBtn');
@@ -228,13 +213,6 @@
                 deferredPrompt = null;
             }
         });
-
-        // Pag-set ng link patungo sa display app (halimbawa ay index.html o iba pang pahina sa parehong repo)
-        const publicAppURL = window.location.href.replace('admin.html', 'index.html');
-        document.getElementById('publicAppLink.href') // safety
-        const linkElement = document.getElementById('publicAppLink');
-        linkElement.href = publicAppURL;
-        linkElement.textContent = publicAppURL;
 
         let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
         if (Array.isArray(appData)) {
