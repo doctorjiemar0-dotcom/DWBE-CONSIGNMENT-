@@ -21,6 +21,10 @@
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #388e3c; }
         
+        /* Password Screen Styling */
+        #authScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; }
+        #mainAppContent { display: none; }
+
         /* Install Banner Styling */
         .install-banner { background: #e8f5e9; border: 2px dashed #4caf50; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: none; }
         .install-banner button { background-color: #1b5e20; margin-top: 8px; width: auto; padding: 8px 16px; }
@@ -58,96 +62,144 @@
 
     <div class="container">
 
-        <!-- INSTALL APP BANNER -->
-        <div class="card install-banner" id="installCard">
-            <h2>📱 I-install bilang Mobile App</h2>
-            <p style="font-size: 0.85rem; color: #333; margin-bottom: 5px;">Para mas mabilis ma-access sa iyong home screen.</p>
-            <button id="installBtn" type="button">📲 I-install ang Admin App</button>
+        <!-- PASSWORD PROTECTION SCREEN -->
+        <div id="authScreen" class="card">
+            <h2>🔒 Security Login</h2>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px; text-align: center;">Ilagay ang iyong password para mabuksan ang admin panel.</p>
+            <div class="form-group" style="width: 100%;">
+                <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
+            </div>
+            <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
         </div>
 
-        <!-- COLLAPSED BACKUP & RECOVERY -->
-        <details class="card sync-card">
-            <summary style="cursor:pointer; font-size:0.9rem; font-weight:bold; color:#555;">📱 Data Backup & Recovery (I-click para buksan)</summary>
-            <div style="margin-top: 10px;">
-                <div class="form-group">
-                    <textarea id="backupTextarea" rows="3" placeholder="I-paste dito ang JSON code..."></textarea>
+        <!-- MAIN APP CONTENT (Nakatago habang di pa nagla-login) -->
+        <div id="mainAppContent">
+
+            <!-- INSTALL APP BANNER -->
+            <div class="card install-banner" id="installCard">
+                <h2>📱 I-install bilang Mobile App</h2>
+                <p style="font-size: 0.85rem; color: #333; margin-bottom: 5px;">Para mas mabilis ma-access sa iyong home screen.</p>
+                <button id="installBtn" type="button">📲 I-install ang Admin App</button>
+            </div>
+
+            <!-- COLLAPSED BACKUP & RECOVERY -->
+            <details class="card sync-card">
+                <summary style="cursor:pointer; font-size:0.9rem; font-weight:bold; color:#555;">📱 Data Backup & Recovery (I-click para buksan)</summary>
+                <div style="margin-top: 10px;">
+                    <div class="form-group">
+                        <textarea id="backupTextarea" rows="3" placeholder="I-paste dito ang JSON code..."></textarea>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data</button>
+                        <button type="button" id="importTextBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Naka-paste</button>
+                    </div>
+                </div>
+            </details>
+
+            <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
+                <h2>🏠 Home Stock Inventory (Bodega / Bahay)</h2>
+                <div style="font-size: 0.9rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
+                    <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
+                    <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data</button>
-                    <button type="button" id="importTextBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Naka-paste</button>
+                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0;">➕ Magdagdag Ordinary</button>
+                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0;">➕ Magdagdag Premium</button>
                 </div>
             </div>
-        </details>
 
-        <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
-            <h2>🏠 Home Stock Inventory (Bodega / Bahay)</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
-                <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
-                <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
+            <div class="summary-box">
+                <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
+                <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>
+                <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
+                <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
+                <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0;">➕ Magdagdag Ordinary</button>
-                <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0;">➕ Magdagdag Premium</button>
+
+            <div class="card">
+                <h2>Magdagdag ng Consignment</h2>
+                <form id="consignmentForm">
+                    <div class="form-group">
+                        <label for="storeName">Pangalan ng Tindahan:</label>
+                        <input type="text" id="storeName" required placeholder="Hal. Aling Nena Store">
+                    </div>
+                    <div class="form-group">
+                        <label for="styleType">Uri ng Estilo (Variation):</label>
+                        <select id="styleType" required>
+                            <option value="Ordinary">Ordinary Style</option>
+                            <option value="Premium">Premium Style</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Bilang ng Item (Simulang Stock):</label>
+                        <input type="number" id="quantity" required placeholder="Hal. 10">
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Presyo bawat Isa (₱):</label>
+                        <input type="number" id="price" required placeholder="Hal. 150">
+                    </div>
+                    <div class="form-group">
+                        <label for="dateDelivered">Petsa ng Simula (Start):</label>
+                        <input type="date" id="dateDelivered" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="collectionDate">Target na Petsa ng Koleksyon:</label>
+                        <input type="date" id="collectionDate" required>
+                    </div>
+                    <button type="submit">I-save ang Consignment</button>
+                </form>
             </div>
-        </div>
 
-        <div class="summary-box">
-            <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
-            <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>
-            <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
-            <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
-            <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
-        </div>
-
-        <div class="card">
-            <h2>Magdagdag ng Consignment</h2>
-            <form id="consignmentForm">
-                <div class="form-group">
-                    <label for="storeName">Pangalan ng Tindahan:</label>
-                    <input type="text" id="storeName" required placeholder="Hal. Aling Nena Store">
+            <div class="card">
+                <h2>Listahan ng mga Tindahan</h2>
+                <div id="storesList">
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>
                 </div>
-                <div class="form-group">
-                    <label for="styleType">Uri ng Estilo (Variation):</label>
-                    <select id="styleType" required>
-                        <option value="Ordinary">Ordinary Style</option>
-                        <option value="Premium">Premium Style</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="quantity">Bilang ng Item (Simulang Stock):</label>
-                    <input type="number" id="quantity" required placeholder="Hal. 10">
-                </div>
-                <div class="form-group">
-                    <label for="price">Presyo bawat Isa (₱):</label>
-                    <input type="number" id="price" required placeholder="Hal. 150">
-                </div>
-                <div class="form-group">
-                    <label for="dateDelivered">Petsa ng Simula (Start):</label>
-                    <input type="date" id="dateDelivered" required>
-                </div>
-                <div class="form-group">
-                    <label for="collectionDate">Target na Petsa ng Koleksyon:</label>
-                    <input type="date" id="collectionDate" required>
-                </div>
-                <button type="submit">I-save ang Consignment</button>
-            </form>
-        </div>
-
-        <div class="card">
-            <h2>Listahan ng mga Tindahan</h2>
-            <div id="storesList">
-                <p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>
             </div>
-        </div>
 
-        <div class="app-link-box">
-            🔗 **Link ng App na ito:**<br>
-            <a href="#" id="currentAppLink" target="_blank">Kinakarga ang link...</a>
+            <!-- PUBLIC / DISPLAY APP LINK SA IBABA -->
+            <div class="app-link-box">
+                🔗 **Link ng Display App:**<br>
+                <a href="index.html" id="publicAppLink" target="_blank">Kinakarga ang link...</a>
+            </div>
+
         </div>
 
     </div>
 
     <script>
+        // BAGUHIN ANG PASSWORD DITO KUNG KAHILANGAN MO
+        const ADMIN_PASSWORD = "1234"; 
+
+        const authScreen = document.getElementById('authScreen');
+        const mainAppContent = document.getElementById('mainAppContent');
+        const loginBtn = document.getElementById('loginBtn');
+        const passwordInput = document.getElementById('adminPasswordInput');
+
+        // Check kung nakapag-login na kamakailan sa session na ito
+        if (sessionStorage.getItem('admin_logged_in') === 'true') {
+            authScreen.style.display = 'none';
+            mainAppContent.style.display = 'block';
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                sessionStorage.setItem('admin_logged_in', 'true');
+                authScreen.style.display = 'none';
+                mainAppContent.style.display = 'block';
+                renderApp();
+            } else {
+                alert('Mali ang password! Subukan muli.');
+                passwordInput.value = '';
+            }
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loginBtn.click();
+            }
+        });
+
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -177,8 +229,12 @@
             }
         });
 
-        document.getElementById('currentAppLink').href = window.location.href;
-        document.getElementById('currentAppLink').textContent = window.location.href;
+        // Pag-set ng link patungo sa display app (halimbawa ay index.html o iba pang pahina sa parehong repo)
+        const publicAppURL = window.location.href.replace('admin.html', 'index.html');
+        document.getElementById('publicAppLink.href') // safety
+        const linkElement = document.getElementById('publicAppLink');
+        linkElement.href = publicAppURL;
+        linkElement.textContent = publicAppURL;
 
         let appData = JSON.parse(localStorage.getItem('consignments_v3')) || { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
         if (Array.isArray(appData)) {
@@ -248,6 +304,8 @@
         });
 
         function renderApp() {
+            if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
+
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
 
@@ -451,7 +509,9 @@
             } catch (err) { alert('Mali ang format ng JSON.'); }
         });
 
-        renderApp();
+        if (sessionStorage.getItem('admin_logged_in') === 'true') {
+            renderApp();
+        }
     </script>
 </body>
 </html>
