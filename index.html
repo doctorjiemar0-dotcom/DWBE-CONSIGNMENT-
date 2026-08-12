@@ -22,9 +22,12 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 5px; font-weight: bold; color: var(--primary-color); }
         
-        /* Nakatago ang Backup at History para sa malinis na view */
         .sync-card { background: #f9f9f9; border: 1px dashed #ccc; }
-        .history-box { display: none; } 
+        
+        /* Naka-hide ang history box bilang default, lalabas lang kapag tinanggal ang hidden class o ginamitan ng toggle */
+        .history-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 8px; margin-top: 8px; max-height: 120px; overflow-y: auto; font-size: 0.75rem; color: #555; display: none; }
+        .history-item { border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center; }
+        .history-btns button { background: none; border: none; font-size: 0.7rem; cursor: pointer; padding: 2px 4px; margin-left: 2px; }
         
         .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
         .store-card.due { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
@@ -228,11 +231,17 @@
                 let rating = isDue ? 'Due Na!' : (sold === 0 ? 'Mabagal' : 'Maayos');
                 let badgeClass = isDue ? 'badge-due' : (sold === 0 ? 'badge-ok' : 'badge-good');
 
-                // Nakatago ang history UI pero gumagana pa rin sa background logic kung sakaling kailanganin i-delete
                 let historyHtml = '';
                 item.history.forEach((h, hIdx) => {
-                    historyHtml += `<div class="history-item">▪️ [${h.date}] ${h.text}</div>`;
+                    historyHtml += `<div class="history-item">
+                        <span>▪️ [${h.date}] ${h.text}</span>
+                        <span class="history-btns">
+                            <button onclick="editHistory(${index}, ${hIdx})" style="color:#0288d1;">✏️</button>
+                            <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;">❌</button>
+                        </span>
+                    </div>`;
                 });
+                if (!historyHtml) historyHtml = '<div class="history-item">Wala pang tala.</div>';
 
                 const div = document.createElement('div');
                 div.className = `store-card ${isDue ? 'due' : ''}`;
@@ -250,7 +259,8 @@
                         <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
                         <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
                     </div>
-                    <div class="history-box">
+                    <button type="button" onclick="toggleHistory(${index})" id="historyBtn_${index}" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">📜 Ipakita ang History</button>
+                    <div class="history-box" id="historyBox_${index}">
                         <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History:</div>
                         ${historyHtml}
                     </div>
@@ -271,6 +281,18 @@
             document.getElementById('totalSold').textContent = tSold + ' pcs';
             document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
         }
+
+        window.toggleHistory = function(index) {
+            const box = document.getElementById(`historyBox_${index}`);
+            const btn = document.getElementById(`historyBtn_${index}`);
+            if (box.style.display === 'block') {
+                box.style.display = 'none';
+                btn.textContent = '📜 Ipakita ang History';
+            } else {
+                box.style.display = 'block';
+                btn.textContent = '📜 Itago ang History';
+            }
+        };
 
         window.checkupStore = function(index) {
             const count = parseInt(prompt('Ilang piraso ang nabenta?', '1'));
@@ -323,6 +345,41 @@
                 appData.consignments.splice(index, 1);
                 saveAndRender();
             }
+        };
+
+        window.editHistory = function(storeIdx, histIdx) {
+            const currentText = appData.consignments[storeIdx].history[histIdx].text;
+            const newText = prompt('I-edit ang transaction history note:', currentText);
+            if (newText !== null && newText.trim() !== '') {
+                appData.consignments[storeIdx].history[histIdx].text = newText.trim();
+                saveAndRender();
+            }
+        };
+
+        window.deleteHistory = function(storeIdx, histIdx) {
+            const item = appData.consignments[storeIdx];
+            const log = item.history[histIdx];
+
+            if (!confirm('Burahin ang history log na ito? Awtomatikong mag-aadjust ang stock base sa log na ito.')) return;
+
+            const logText = log.text.toLowerCase();
+            const match = log.text.match(/\d+/);
+            const qty = match ? parseInt(match[0]) : 0;
+
+            if (logText.includes('nabenta') || logText.includes('rejected')) {
+                item.currentStock += qty;
+                if (logText.includes('rejected')) item.rejectedQty = Math.max(0, item.rejectedQty - qty);
+            } 
+            else if (logText.includes('nagdagdag') || logText.includes('nagsimula')) {
+                item.currentStock = Math.max(0, item.currentStock - qty);
+                if (logText.includes('nagsimula')) {
+                    item.initialQty = Math.max(0, item.initialQty - qty);
+                }
+            }
+
+            item.history.splice(histIdx, 1);
+            saveAndRender();
+            alert('Na-delete ang log at na-update ang inventory count.');
         };
 
         document.getElementById('exportBtn').addEventListener('click', () => {
