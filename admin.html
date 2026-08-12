@@ -42,6 +42,13 @@
         .badge-due { background-color: #d32f2f; }
         .badge-ok { background-color: #ff9800; }
         .badge-good { background-color: #4caf50; }
+        .badge-request { background-color: #e65100; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
         
         .dates-info { background: #f1f3f5; padding: 6px 8px; border-radius: 4px; margin: 6px 0; font-size: 0.8rem; color: #495057; display: flex; justify-content: space-between; }
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
@@ -107,6 +114,7 @@
             <div class="summary-box">
                 <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
                 <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>
+                <div class="summary-row" style="color: #e65100; font-weight: bold;"><span>🔔 Restock Requests:</span><span id="totalRequests">0</span></div>
                 <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
                 <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
@@ -297,7 +305,6 @@
             form.reset();
             document.getElementById('dateDelivered').valueAsDate = new Date();
             
-            // Fixed: Ginawang defined ang nextMonth variable dito sa loob ng submit event
             let nextMonth = new Date();
             nextMonth.setMonth(nextMonth.getMonth() + 1);
             document.getElementById('collectionDate').valueAsDate = nextMonth;
@@ -316,13 +323,14 @@
                 storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>';
                 document.getElementById('totalStores').textContent = '0';
                 document.getElementById('totalDue').textContent = '0';
+                document.getElementById('totalRequests').textContent = '0';
                 document.getElementById('totalStock').textContent = '0 pcs';
                 document.getElementById('totalSold').textContent = '0 pcs';
                 document.getElementById('totalSales').textContent = '₱0';
                 return;
             }
 
-            let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
+            let tStores = appData.consignments.length, tDue = 0, tRequests = 0, tStock = 0, tSold = 0, tSales = 0;
             const currentYM = new Date().toISOString().slice(0, 7);
 
             appData.consignments.forEach((item, index) => {
@@ -342,14 +350,20 @@
                 const isDue = item.collectionDate && item.collectionDate.startsWith(currentYM);
                 if (isDue) tDue++;
 
-                let rating = isDue ? 'Due Na!' : (sold === 0 ? 'Mabagal' : 'Maayos');
-                let badgeClass = isDue ? 'badge-due' : (sold === 0 ? 'badge-ok' : 'badge-good');
+                // Alamin kung may pending restock request sa history
+                const hasPendingRequest = item.history.some(h => h.text.includes('🚨 RESTOCK REQUEST'));
+                if (hasPendingRequest) tRequests++;
+
+                let rating = hasPendingRequest ? 'May Request!' : (isDue ? 'Due Na!' : (sold === 0 ? 'Mabagal' : 'Maayos'));
+                let badgeClass = hasPendingRequest ? 'badge-request' : (isDue ? 'badge-due' : (sold === 0 ? 'badge-ok' : 'badge-good'));
 
                 let historyHtml = '';
                 item.history.forEach((h, hIdx) => {
-                    historyHtml += `<div class="history-item">
+                    let isReq = h.text.includes('🚨 RESTOCK REQUEST');
+                    historyHtml += `<div class="history-item" style="${isReq ? 'background: #fff3e0; padding: 4px; border-radius: 3px;' : ''}">
                         <span>▪️ [${h.date}] ${h.text}</span>
                         <span class="history-btns">
+                            ${isReq ? `<button onclick="approveRequest(${index}, ${hIdx})" style="color:#2e7d32; font-weight:bold;" type="button">✔️ I-restock</button>` : ''}
                             <button onclick="editHistory(${index}, ${hIdx})" style="color:#0288d1;" type="button">✏️</button>
                             <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;" type="button">❌</button>
                         </span>
@@ -373,9 +387,9 @@
                         <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
                         <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
                     </div>
-                    <button type="button" onclick="toggleHistory(${index})" id="historyBtn_${index}" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">📜 Ipakita ang History</button>
-                    <div class="history-box" id="historyBox_${index}">
-                        <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History:</div>
+                    <button type="button" onclick="toggleHistory(${index})" id="historyBtn_${index}" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">📜 Ipakita ang History (${item.history.length})</button>
+                    <div class="history-box" id="historyBox_${index}" ${hasPendingRequest ? 'style="display:block;"' : ''}>
+                        <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History & Requests:</div>
                         ${historyHtml}
                     </div>
                     <div class="btn-group">
@@ -391,6 +405,7 @@
 
             document.getElementById('totalStores').textContent = tStores;
             document.getElementById('totalDue').textContent = tDue;
+            document.getElementById('totalRequests').textContent = tRequests;
             document.getElementById('totalStock').textContent = tStock + ' pcs';
             document.getElementById('totalSold').textContent = tSold + ' pcs';
             document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
@@ -401,10 +416,44 @@
             const btn = document.getElementById(`historyBtn_${index}`);
             if (box.style.display === 'block') {
                 box.style.display = 'none';
-                btn.textContent = '📜 Ipakita ang History';
+                btn.textContent = `📜 Ipakita ang History (${appData.consignments[index].history.length})`;
             } else {
                 box.style.display = 'block';
                 btn.textContent = '📜 Itago ang History';
+            }
+        };
+
+        // Automatic na pag-apruba ng Restock Request mula sa client
+        window.approveRequest = function(storeIdx, histIdx) {
+            const item = appData.consignments[storeIdx];
+            const logText = item.history[histIdx].text;
+            
+            // Kunin ang dami ng nire-request mula sa text gamit ang regex
+            const match = logText.match(/\d+/);
+            const qty = match ? parseInt(match[0]) : 10;
+            const style = item.styleType;
+
+            if (appData.homeStock[style] < qty) {
+                alert(`Babala: Ang stock mo sa bahay para sa ${style} (${appData.homeStock[style]} pcs) ay kulang sa nire-request na ${qty} pcs.`);
+                return;
+            }
+
+            if (confirm(`Aprubahan ang pagdagdag ng ${qty} pcs (${style}) sa ${item.storeName}? Awtomatiko itong babawas sa stock sa bahay.`)) {
+                appData.homeStock[style] -= qty;
+                item.initialQty += qty;
+                item.currentStock += qty;
+                
+                // Palitan ang request log ng tagumpay na tala o tanggalin / lagyan ng marka na aprubado na
+                item.history[histIdx].text = `✅ Naaprubahan ang Restock: +${qty} pcs (${style})`;
+                
+                item.history.unshift({
+                    id: Date.now(),
+                    date: new Date().toLocaleString(),
+                    text: `Nagdagdag ng ${qty} pcs stock (Mula sa Client Request)`
+                });
+
+                saveToCloud();
+                alert('Matagumpay na na-restock ang tindahan!');
             }
         };
 
