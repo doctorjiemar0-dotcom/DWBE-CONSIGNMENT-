@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor's Whisk Broom - Store Dashboard</title>
+    <title>Doctor's Whisk Broom - Client Dashboard</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
     <style>
@@ -14,72 +14,37 @@
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
         h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
-        
-        .summary-box { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
-        .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); font-size: 1rem; }
-        
-        .dates-info { background: #f1f3f5; padding: 8px 10px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #495057; display: flex; justify-content: space-between; }
-        
-        .history-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.8rem; color: #555; }
-        .history-item { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-        
-        .admin-link-box { text-align: center; margin-top: 25px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; font-size: 0.9rem; }
-        .admin-link-box a { color: #2e7d32; text-decoration: none; font-weight: bold; padding: 8px 16px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 4px; display: inline-block; word-break: break-all; }
-        .admin-link-box a:hover { background: #c8e6c9; }
-
-        #errorScreen { text-align: center; padding: 40px; color: #d32f2f; font-weight: bold; }
-        #loadingScreen { text-align: center; padding: 40px; color: #555; font-weight: bold; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); }
+        #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
+        .history-item { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; font-size: 0.85rem; color: #555; }
     </style>
 </head>
 <body>
 
-    <header id="appHeader">🧹 Store Dashboard</header>
+    <header>🧹 Doctor's Whisk Broom - Client</header>
 
     <div class="container">
+        <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <div id="loadingScreen" class="card">
-            <p>Kinukuha ang data mula sa cloud...</p>
-        </div>
-
-        <div id="errorScreen" style="display: none;" class="card">
-            <h2>⚠️ Tindahan ay Hindi Makita</h2>
-            <p id="errorMsg">Walang natukoy na tindahan o maling link ang ginamit.</p>
-        </div>
-
-        <div id="storeDashboard" style="display: none;">
-            
-            <div class="summary-box">
-                <div class="summary-row"><span>Uri ng Estilo (Variation):</span><strong id="storeStyle">Ordinary</strong></div>
-                <div class="summary-row"><span>Presyo bawat Isa:</span><strong id="storePrice">₱0</strong></div>
-                <div class="summary-row"><span>Simulang Stock:</span><strong id="storeInitial">0 pcs</strong></div>
-                <div class="summary-row"><span>Natitirang Stock:</span><strong id="storeCurrent" style="color: #2e7d32;">0 pcs</strong></div>
-                <div class="summary-row"><span>Kabuuang Nabenta:</span><strong id="storeSold" style="color: #c2185b;">0 pcs</strong></div>
-                <div class="summary-row summary-row-highlight"><span>Kabuuang Halaga ng Benta:</span><strong id="storeSales">₱0</strong></div>
+        <div class="card" id="clientCard">
+            <h2 id="storeTitle">🏪 Tindahan</h2>
+            <div class="summary-box" style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
+                <div class="summary-row"><span>Uri ng Estilo:</span><span id="styleType">-</span></div>
+                <div class="summary-row"><span>Presyo bawat Isa:</span><span id="price">-</span></div>
+                <div class="summary-row"><span>Simulang Stock:</span><span id="initialQty">-</span></div>
+                <div class="summary-row"><span>Natitirang Stock:</span><span id="currentStock" style="color: #2e7d32; font-weight: bold;">-</span></div>
+                <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="soldQty" style="color: #c2185b; font-weight: bold;">-</span></div>
+                <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
-
-            <div class="card">
-                <h2>📅 Mga Petsa</h2>
-                <div class="dates-info">
-                    <span>Simula: <strong id="storeStart">-</strong></span>
-                    <span>Target na Koleksyon: <strong id="storeCollection">-</strong></span>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>📜 Sariling Transaction History</h2>
-                <div class="history-box" id="storeHistoryList">
-                    <div>Wala pang tala.</div>
-                </div>
-            </div>
-
         </div>
 
-        <div class="admin-link-box">
-            🔗 <strong>Admin Panel Link:</strong><br>
-            <a href="admin.html" id="adminAppLink">admin.html</a>
+        <div class="card">
+            <h2>📜 Kasaysayan ng Transaksyon</h2>
+            <div id="historyList">
+                <p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>
+            </div>
         </div>
-
     </div>
 
     <!-- Firebase SDKs -->
@@ -99,83 +64,74 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Ayusin ang Admin Link direkta patungong admin.html
-        const currentPath = window.location.pathname;
-        const adminUrl = currentPath.includes('index.html') 
-            ? currentPath.replace('index.html', 'admin.html') 
-            : currentPath + (currentPath.endsWith('/') ? '' : '/') + 'admin.html';
+        const syncStatus = document.getElementById('syncStatus');
         
-        const adminLinkElement = document.getElementById('adminAppLink');
-        adminLinkElement.href = adminUrl;
-        adminLinkElement.textContent = window.location.origin + adminUrl;
-
-        // Kunin ang store parameter galing sa URL
+        // Kunin ang pangalan ng tindahan mula sa URL (Hal. index.html?store=Aling%20Nena)
         const urlParams = new URLSearchParams(window.location.search);
-        let rawStoreName = urlParams.get('store') || '';
-        const targetStoreName = rawStoreName.split(']')[0].trim();
+        const storeName = urlParams.get('store');
 
-        const loadingScreen = document.getElementById('loadingScreen');
-        const errorScreen = document.getElementById('errorScreen');
-        const storeDashboard = document.getElementById('storeDashboard');
-        const appHeader = document.getElementById('appHeader');
+        if (!storeName) {
+            document.getElementById('storeTitle').textContent = "⚠️ Walang Napiling Tindahan";
+            syncStatus.textContent = "Pakitukoy ang tindahan gamit ang tamang link mula sa Admin Panel.";
+        } else {
+            document.getElementById('storeTitle').textContent = `🏪 ${storeName}`;
+            loadClientData(storeName);
+        }
 
-        async function fetchStoreData() {
-            if (!targetStoreName) {
-                loadingScreen.style.display = 'none';
-                errorScreen.style.display = 'block';
-                return;
-            }
-
+        async function loadClientData(targetStore) {
+            syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
-                appHeader.textContent = `🧹 ${targetStoreName} - Store Dashboard`;
-                const docRef = doc(db, "consignments", targetStoreName);
+                const docRef = doc(db, "app_data", "main_inventory");
                 const docSnap = await getDoc(docRef);
 
-                loadingScreen.style.display = 'none';
-
                 if (docSnap.exists()) {
-                    const storeItem = docSnap.data();
-                    storeDashboard.style.display = 'block';
-
-                    if (storeItem.rejectedQty === undefined) storeItem.rejectedQty = 0;
-                    const sold = Math.max(0, storeItem.initialQty - storeItem.currentStock - storeItem.rejectedQty);
-                    const sales = sold * storeItem.price;
-
-                    document.getElementById('storeStyle').textContent = storeItem.styleType || 'Ordinary';
-                    document.getElementById('storePrice').textContent = '₱' + storeItem.price.toLocaleString();
-                    document.getElementById('storeInitial').textContent = storeItem.initialQty + ' pcs';
-                    document.getElementById('storeCurrent').textContent = storeItem.currentStock + ' pcs';
-                    document.getElementById('storeSold').textContent = sold + ' pcs';
-                    document.getElementById('storeSales').textContent = '₱' + sales.toLocaleString();
-                    document.getElementById('storeStart').textContent = storeItem.dateDelivered || 'N/A';
-                    document.getElementById('storeCollection').textContent = storeItem.collectionDate || 'N/A';
-
-                    const historyList = document.getElementById('storeHistoryList');
-                    historyList.innerHTML = '';
+                    const data = docSnap.data();
+                    const consignments = data.consignments || [];
                     
-                    if (storeItem.history && storeItem.history.length > 0) {
-                        storeItem.history.forEach(h => {
-                            const div = document.createElement('div');
-                            div.className = 'history-item';
-                            div.innerHTML = `<span>▪️ [${h.date}]</span> <strong>${h.text}</strong>`;
-                            historyList.appendChild(div);
-                        });
+                    // Hanapin ang partikular na tindahan sa listahan
+                    const storeData = consignments.find(item => item.storeName === targetStore);
+
+                    if (storeData) {
+                        renderClient(storeData);
+                        syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
                     } else {
-                        historyList.innerHTML = '<div>Wala pang tala ng transaksyon.</div>';
+                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahang ito sa database.";
                     }
                 } else {
-                    errorScreen.style.display = 'block';
-                    document.getElementById('errorMsg').textContent = `Walang nahanap na record para sa "${targetStoreName}".`;
+                    syncStatus.textContent = "⚠️ Walang makitang record sa database.";
                 }
             } catch (err) {
-                console.error(err);
-                loadingScreen.style.display = 'none';
-                errorScreen.style.display = 'block';
-                document.getElementById('errorMsg').textContent = 'May problema sa pagkonekta sa internet o cloud database.';
+                console.error("Error loading client data:", err);
+                syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
             }
         }
 
-        fetchStoreData();
+        function renderClient(item) {
+            if (item.rejectedQty === undefined) item.rejectedQty = 0;
+            const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
+            const sales = sold * item.price;
+
+            document.getElementById('styleType').textContent = item.styleType || 'Ordinary';
+            document.getElementById('price').textContent = '₱' + item.price;
+            document.getElementById('initialQty').textContent = item.initialQty + ' pcs';
+            document.getElementById('currentStock').textContent = item.currentStock + ' pcs';
+            document.getElementById('soldQty').textContent = sold + ' pcs';
+            document.getElementById('totalSales').textContent = '₱' + sales.toLocaleString();
+
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            if (item.history && item.history.length > 0) {
+                item.history.forEach(h => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `▪️ [${h.date}] ${h.text}`;
+                    historyList.appendChild(div);
+                });
+            } else {
+                historyList.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>';
+            }
+        }
     </script>
 </body>
 </html>
