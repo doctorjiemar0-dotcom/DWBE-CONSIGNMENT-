@@ -29,6 +29,13 @@
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
+        <!-- Install App Card (Nakatago muna hangga't hindi pwedeng i-install) -->
+        <div class="card" id="installCard" style="display: none; text-align: center; background: #e8f5e9; border: 1px dashed #2e7d32;">
+            <h2 style="margin-bottom: 5px;">📱 I-install ang App</h2>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">I-install ito sa iyong phone para madaling mabuksan tulad ng regular app.</p>
+            <button id="installBtn" style="background-color: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;">I-install ang App</button>
+        </div>
+
         <div class="card" id="clientCard">
             <h2 id="storeTitle">🏪 Tindahan</h2>
             <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
@@ -91,7 +98,6 @@
                     const data = docSnap.data();
                     const consignments = data.consignments || [];
                     
-                    // Case-insensitive search
                     const storeData = consignments.find(item => 
                         item.storeName.toLowerCase() === targetStore.toLowerCase()
                     );
@@ -136,6 +142,43 @@
             } else {
                 historyList.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>';
             }
+        }
+
+        // PWA Install Prompt Logic
+        let deferredPrompt;
+        const installCard = document.getElementById('installCard');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installCard.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                installCard.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installCard.style.display = 'none';
+            console.log('PWA was installed');
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.log('Service Worker error', err));
+            });
         }
     </script>
 </body>
