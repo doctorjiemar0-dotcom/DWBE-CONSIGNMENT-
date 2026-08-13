@@ -57,9 +57,7 @@
         .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; }
         .floating-add-btn:hover { background-color: #388e3c; }
 
-        .store-header-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
-        .store-body-content { margin-top: 8px; }
+        .store-header-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 6px; }
     </style>
 </head>
 <body>
@@ -120,7 +118,7 @@
             </div>
 
             <div class="summary-box">
-                <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
+                <div class="summary-row"><span>Kabuuang Tindahan (Records):</span><span id="totalStores">0</span></div>
                 <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>
                 <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
                 <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
@@ -255,18 +253,6 @@
                 formCard.scrollIntoView({ behavior: 'smooth' });
             } else {
                 formCard.style.display = 'none';
-            }
-        };
-
-        window.toggleStoreDetails = function(index) {
-            const bodyContent = document.getElementById(`storeBody_${index}`);
-            const toggleBtn = document.getElementById(`storeToggleBtn_${index}`);
-            if (bodyContent.style.display === 'none') {
-                bodyContent.style.display = 'block';
-                toggleBtn.textContent = '➖';
-            } else {
-                bodyContent.style.display = 'none';
-                toggleBtn.textContent = '➕';
             }
         };
 
@@ -512,14 +498,11 @@
                 const div = document.createElement('div');
                 div.className = `store-card ${isDue ? 'due' : ''}`;
                 div.innerHTML = `
-                    <div class="store-header-row" onclick="toggleStoreDetails(${index})">
+                    <div class="store-header-row">
                         <strong>🏪 ${item.storeName} (${item.styleType}) - ₱${item.price}</strong>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span class="badge ${badgeClass}">${rating}</span>
-                            <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" title="I-expand / I-collapse">➕</button>
-                        </div>
+                        <span class="badge ${badgeClass}">${rating}</span>
                     </div>
-                    <div class="store-body-content" id="storeBody_${index}" style="display: none;">
+                    <div>
                         <div class="dates-info">
                             <span>📅 Start: <strong>${item.dateDelivered}</strong></span>
                             <span>🎯 Collection: <strong>${item.collectionDate}</strong></span>
@@ -532,7 +515,7 @@
 
                         <a href="client.html?store=${encodeURIComponent(item.storeName)}&style=${encodeURIComponent(item.styleType)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
 
-                        <div style="margin-top: 5px;">
+                        <div style="margin-top: 8px;">
                             <button type="button" onclick="toggleBox('chatBox_${index}', this)" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">💬 Ipakita ang Chatbox (${item.messages.length})</button>
                             <div class="collapsible-box" id="chatBox_${index}">
                                 ${chatHtml}
@@ -542,8 +525,8 @@
                                 </div>
                             </div>
 
-                            <button type="button" onclick="toggleBox('historyBox_${index}', this)" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;" id="historyBtn_${index}">📜 Ipakita ang History</button>
-                            <div class="collapsible-box" id="historyBox_${index}">
+                            <button type="button" onclick="toggleBox('historyBox_${index}', this)" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;" id="historyBtn_${index}">📜 Itago ang History</button>
+                            <div class="collapsible-box" id="historyBox_${index}" style="display: block;">
                                 <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History:</div>
                                 ${historyHtml}
                             </div>
