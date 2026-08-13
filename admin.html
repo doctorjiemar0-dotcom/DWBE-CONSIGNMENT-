@@ -57,7 +57,8 @@
         .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; }
         .floating-add-btn:hover { background-color: #388e3c; }
 
-        .store-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .store-header-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
         .store-body-content { margin-top: 8px; }
     </style>
 </head>
@@ -126,7 +127,7 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
-            <!-- Magdagdag ng Consignment Form -->
+            <!-- Magdagdag ng Consignment Form, lilitaw lang kapag pinindot ang floating icon -->
             <div class="card" id="addStoreCard" style="display: none;">
                 <h2>Magdagdag ng Consignment</h2>
                 <form id="consignmentForm">
@@ -172,7 +173,7 @@
 
     </div>
 
-    <!-- Floating Action Button -->
+    <!-- Floating Action Button para lumitaw/itago ang Add Store Form -->
     <button class="floating-add-btn" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
 
     <!-- Firebase SDKs -->
@@ -257,6 +258,18 @@
                 formCard.scrollIntoView({ behavior: 'smooth' });
             } else {
                 formCard.style.display = 'none';
+            }
+        };
+
+        window.toggleStoreDetails = function(index) {
+            const bodyContent = document.getElementById(`storeBody_${index}`);
+            const toggleBtn = document.getElementById(`storeToggleBtn_${index}`);
+            if (bodyContent.style.display === 'none') {
+                bodyContent.style.display = 'block';
+                toggleBtn.textContent = '➖';
+            } else {
+                bodyContent.style.display = 'none';
+                toggleBtn.textContent = '➕';
             }
         };
 
@@ -486,11 +499,14 @@
                 const div = document.createElement('div');
                 div.className = `store-card ${isDue ? 'due' : ''}`;
                 div.innerHTML = `
-                    <div class="store-header-row">
+                    <div class="store-header-row" onclick="toggleStoreDetails(${index})">
                         <strong>🏪 ${item.storeName} (${item.styleType}) - ₱${item.price}</strong>
-                        <span class="badge ${badgeClass}">${rating}</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="badge ${badgeClass}">${rating}</span>
+                            <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" title="I-expand / I-collapse">➕</button>
+                        </div>
                     </div>
-                    <div class="store-body-content">
+                    <div class="store-body-content" id="storeBody_${index}" style="display: none;">
                         <div class="dates-info">
                             <span>📅 Start: <strong>${item.dateDelivered}</strong></span>
                             <span>🎯 Collection: <strong>${item.collectionDate}</strong></span>
@@ -566,6 +582,7 @@
             const timestamp = new Date().toLocaleString();
             const style = reqStyle || item.styleType || 'Ordinary';
 
+            // Tanggalin muna sa active requests
             item.activeRequests.splice(reqIdx, 1);
             if (!item.clientNotifications) item.clientNotifications = [];
 
@@ -574,15 +591,35 @@
                     alert(`Babala: Ang Home stock para sa ${style} (${appData.homeStock[style]} pcs) ay kulang sa hiling na ${qty} pcs.`);
                 }
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-                item.initialQty += qty;
-                item.currentStock += qty;
+
+                // GUMAWA NG PANIBAGONG RECORD (BATCH) PARA SA TINDAHAN NA ITO
+                const todayStr = new Date().toISOString().slice(0, 10);
+                let nextMonth = new Date();
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                const nextMonthStr = nextMonth.toISOString().slice(0, 10);
+
+                appData.consignments.push({
+                    id: Date.now(),
+                    storeName: item.storeName,
+                    styleType: style,
+                    initialQty: qty,
+                    currentStock: qty,
+                    rejectedQty: 0,
+                    price: item.price,
+                    dateDelivered: todayStr,
+                    collectionDate: nextMonthStr,
+                    activeRequests: [],
+                    clientNotifications: [],
+                    messages: [],
+                    history: [{ id: Date.now(), date: timestamp, text: `Bagong Batch mula sa Restock Request: +${qty} pcs (${style})` }]
+                });
 
                 item.clientNotifications.push({
                     id: Date.now(),
-                    text: `✅ Magandang balita! Ang iyong hiling na restock na ${qty} pcs (${style}) ay NA-APPROVE na ng Admin.`,
+                    text: `✅ Na-approve at nailagay na bilang bagong batch ang iyong hiling na restock na ${qty} pcs (${style}).`,
                     date: timestamp
                 });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs (${style})` });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Inaprubahan ang restock request na ${qty} pcs (${style}) - Gumawa ng bagong batch.` });
             } else {
                 item.clientNotifications.push({
                     id: Date.now(),
@@ -593,7 +630,7 @@
             }
 
             await saveToCloud();
-            alert(isApproved ? `Na-approve ang restock at nabawas sa ${style} bodega!` : "Tinanggihan ang request.");
+            alert(isApproved ? `Na-approve! Awtomatikong gumawa ng panibagong batch record para sa ${item.storeName} (${style}).` : "Tinanggihan ang request.");
         };
 
         window.sendAdminReply = function(index) {
