@@ -47,7 +47,6 @@
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         .payment-box { background: #e3f2fd; border: 1px solid #bbdefb; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; color: #0d47a1; }
         
-        /* New Admin Additions Styles */
         .chat-admin-box { background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 4px; max-height: 100px; overflow-y: auto; margin-bottom: 6px; font-size: 0.8rem; display: none; }
         .request-banner { background: #fff3e0; border: 1px solid #ffe0b2; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; color: #e65100; display: flex; justify-content: space-between; align-items: center; }
 
@@ -301,7 +300,7 @@
             const qty = parseInt(document.getElementById('quantity').value);
             const price = parseFloat(document.getElementById('price').value);
             const paymentType = document.getElementById('paymentType').value;
-            const initialPayment = paymentType === 'Downpayment' ? parseFloat(document.getElementById('initialPayment').value) || 0 : (paymentType === 'GCash' || paymentType === 'COD' ? 0 : 0);
+            const initialPayment = paymentType === 'Downpayment' ? parseFloat(document.getElementById('initialPayment').value) || 0 : 0;
             const startD = document.getElementById('dateDelivered').value;
             const collD = document.getElementById('collectionDate').value;
 
@@ -325,7 +324,7 @@
                 amountPaid: initialPayment,
                 dateDelivered: startD,
                 collectionDate: collD,
-                pendingRestock: null, // New field for restock request
+                pendingRestock: null,
                 messages: [],
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) | Mode: ${paymentType} | Bayad/DP: ₱${initialPayment}` }]
             });
@@ -521,7 +520,7 @@
             item.pendingRestock = null;
 
             const timestamp = new Date().toLocaleString();
-            item.history.unshift({ id: Date.now(), date: timestamp, text: `Aprubado ang Restock Request: +${qty} pcs` });
+            item.history.unshift({ id: Date.now(), date: timestamp, text: `Nagdagdag ng ${qty} pcs stock` });
             item.messages.push({ date: timestamp, text: `Admin: Na-approve ang iyong restock request na ${qty} pcs.` });
 
             saveToCloud();
@@ -631,26 +630,37 @@
             const item = appData.consignments[storeIdx];
             const log = item.history[histIdx];
 
-            if (!confirm('Burahin ang history log na ito? Awtomatikong mag-aadjust ang stock base sa log na ito.')) return;
+            if (!confirm('Burahin ang history log na ito? Awtomatikong mag-aadjust ang stock (pati sa Home Stock kung kinakailangan) base sa log na ito.')) return;
 
             const logText = log.text.toLowerCase();
             const match = log.text.match(/\d+/);
             const qty = match ? parseInt(match[0]) : 0;
+            const style = item.styleType;
 
-            if (logText.includes('nabenta') || logText.includes('rejected')) {
+            // Baliktarin ang epekto ng stock depende sa binurang history log
+            if (logText.includes('nabenta')) {
                 item.currentStock += qty;
-                if (logText.includes('rejected')) item.rejectedQty = Math.max(0, item.rejectedQty - qty);
             } 
-            else if (logText.includes('nagdagdag') || logText.includes('nagsimula')) {
+            else if (logText.includes('rejected')) {
+                item.currentStock += qty;
+                item.rejectedQty = Math.max(0, item.rejectedQty - qty);
+            } 
+            else if (logText.includes('nagdagdag')) {
+                // Binura ang restock/dagdag log: ibalik ang stock sa Home Stock at bawasan ang konsignment stocks
                 item.currentStock = Math.max(0, item.currentStock - qty);
-                if (logText.includes('nagsimula')) {
-                    item.initialQty = Math.max(0, item.initialQty - qty);
-                }
+                item.initialQty = Math.max(0, item.initialQty - qty);
+                appData.homeStock[style] += qty;
+            }
+            else if (logText.includes('nagsimula')) {
+                // Binura ang simula log: ibalik ang buong initial qty sa Home Stock at bawasan ang tindahan stock
+                item.currentStock = Math.max(0, item.currentStock - qty);
+                item.initialQty = Math.max(0, item.initialQty - qty);
+                appData.homeStock[style] += qty;
             }
 
             item.history.splice(histIdx, 1);
             saveToCloud();
-            alert('Na-delete ang log at na-update ang inventory count.');
+            alert('Na-delete ang log at sabay-sabay na na-update ang inventory count sa tindahan at sa bahay.');
         };
 
         document.getElementById('exportBtn').addEventListener('click', () => {
