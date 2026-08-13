@@ -254,28 +254,23 @@
                 storeData.clientNotifications = [];
             }
 
-            if (isApproved) {
-                // Opsyonal: Maaari mo ring idagdag sa currentStock o i-record lang ang pag-apruba
-                storeData.currentStock += qty; 
-                storeData.clientNotifications.push({
-                    id: Date.now(),
-                    text: `✅ Magandang balita! Ang iyong hiling na restock na ${qty} pcs ay NA-APPROVE na ng Admin.`,
-                    date: timestamp
-                });
-            } else {
-                storeData.clientNotifications.push({
-                    id: Date.now(),
-                    text: `❌ Paumanhin, ang iyong hiling na restock na ${qty} pcs ay NA-DECLINE muna sa ngayon.`,
-                    date: timestamp
-                });
-            }
+            // Pagtukoy sa mensahe ng notification para sa client panel
+            const notifText = isApproved 
+                ? `✅ Magandang balita! Na-approve ang iyong restock request na ${qty} pcs.` 
+                : `❌ Paumanhin, tinanggihan ang iyong restock request na ${qty} pcs.`;
+
+            storeData.clientNotifications.push({
+                id: Date.now(),
+                text: notifText,
+                date: timestamp
+            });
 
             // Magdagdag din sa history ng tindahan
             if (!storeData.history) storeData.history = [];
             storeData.history.unshift({
                 id: Date.now(),
                 date: timestamp,
-                text: isApproved ? `Na-approve ang restock request na ${qty} pcs.` : `Na-decline ang restock request na ${qty} pcs.`
+                text: isApproved ? `Na-approve ang Restock: +${qty} pcs` : `Tinanggihan ang Restock Request na ${qty} pcs`
             });
 
             syncStatus.textContent = "Sine-save ang aksyon sa Cloud...";
