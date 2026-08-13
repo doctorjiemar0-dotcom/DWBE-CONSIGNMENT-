@@ -444,7 +444,7 @@
             }
         };
 
-        // Pag-apruba ng Restock Request
+        // Pag-apruba ng Restock Request na may kasamang Payment info
         window.approveRequest = function(storeIdx, histIdx) {
             const item = appData.consignments[storeIdx];
             const logText = item.history[histIdx].text;
@@ -568,7 +568,7 @@
             }
         };
 
-        // FIXED DELETE HISTORY LOGIC (TAMA NA ANG PAGBALIK SA HOME STOCK AT SIMULANG STOCKS)
+        // FIXED DELETE HISTORY LOGIC
         window.deleteHistory = function(storeIdx, histIdx) {
             const item = appData.consignments[storeIdx];
             const log = item.history[histIdx];
@@ -580,17 +580,13 @@
             const qty = match ? parseInt(match[0]) : 0;
 
             if (logText.includes('nabenta')) {
-                // Pag na-delete ang "Nabenta", babalik ang stock sa currentStock ng tindahan
                 item.currentStock += qty;
             } 
             else if (logText.includes('rejected')) {
-                // Pag na-delete ang "Rejected", babalik sa currentStock at babawasan ang rejectedQty
                 item.currentStock += qty;
                 item.rejectedQty = Math.max(0, item.rejectedQty - qty);
             }
             else if (logText.includes('nagdagdag') || logText.includes('nagsimula') || logText.includes('naprubahan ang restock')) {
-                // Pag na-delete ang log tungkol sa pagdaragdag ng stock (simula, restock, o approved),
-                // ibabalik ang quantity sa Home Inventory at ibabawas sa Initial & Current Stock ng tindahan
                 appData.homeStock[item.styleType] += qty;
                 item.initialQty = Math.max(0, item.initialQty - qty);
                 item.currentStock = Math.max(0, item.currentStock - qty);
