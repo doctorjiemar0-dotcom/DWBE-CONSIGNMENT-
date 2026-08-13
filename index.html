@@ -18,7 +18,7 @@
             font-weight: bold; 
         }
 
-        /* Search Bar Panel na pamalit sa Face ID */
+        /* Search Bar Panel pamalit sa Face ID */
         .search-panel {
             background: #1b5e20;
             padding: 12px;
@@ -66,7 +66,6 @@
         .portal-title { font-weight: bold; color: #0d47a1; margin-bottom: 8px; font-size: 0.95rem; display: flex; align-items: center; gap: 5px; }
         .portal-detail { font-size: 0.85rem; margin-bottom: 5px; color: #1565c0; display: flex; justify-content: space-between; }
         
-        /* Chatbox & Action Styles */
         .chat-box { background: #fafafa; border: 1px solid #ddd; padding: 10px; border-radius: 6px; max-height: 150px; overflow-y: auto; margin-bottom: 10px; font-size: 0.85rem; }
         .chat-input-group { display: flex; gap: 5px; }
         .chat-input-group input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
@@ -80,7 +79,6 @@
 
     <header>🧹 Doctor's Whisk Broom - Client</header>
 
-    <!-- SEARCH BAR PANEL PAMALIT SA FACE ID -->
     <div class="search-panel">
         <div style="font-size: 0.85rem; color: white; margin-bottom: 6px; font-weight: bold;">🔍 I-type ang Pangalan ng Tindahan:</div>
         <div class="search-box-group">
@@ -104,7 +102,6 @@
             </div>
         </div>
 
-        <!-- PAYMENT / PORTAL INFO CARD -->
         <div class="portal-box" id="paymentPortalCard">
             <div class="portal-title">💳 Payment & Terms Portal</div>
             <div class="portal-detail"><span>Paraan ng Bayad:</span> <strong id="portalPaymentType">-</strong></div>
@@ -132,13 +129,11 @@
             </div>
         </div>
 
-        <!-- REQUEST RESTOCK SECTION -->
         <div class="restock-action-box">
             <div style="font-size: 0.85rem; color: #2e7d32; margin-bottom: 8px; font-weight: bold;">Nauubusan na ba ng walis? Humiling ng karagdagang stock dito:</div>
             <button type="button" class="restock-btn" id="requestRestockBtn">📦 Humiling ng Restock (Request Restock)</button>
         </div>
 
-        <!-- CLIENT CHAT / NOTES SECTION -->
         <div class="card">
             <h2>💬 Mensahe / Paalala sa Admin</h2>
             <div class="chat-box" id="clientChatBox">
@@ -162,10 +157,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateData, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -186,13 +180,15 @@
         let globalStoreData = null;
         let globalAllData = null;
 
-        // Load data automatically kung may store sa URL o kaya i-load ang buong database para sa search
-        if (storeName) {
-            document.getElementById('storeSearchInput').value = storeName;
-            loadClientData(storeName);
-        } else {
-            loadAllDatabase();
-        }
+        // Auto-load kapag may ?store= sa URL o kaya i-load ang buong database para sa search
+        window.addEventListener('DOMContentLoaded', () => {
+            if (storeName) {
+                document.getElementById('storeSearchInput').value = decodeURIComponent(storeName);
+                fetchAndLoadStore(decodeURIComponent(storeName));
+            } else {
+                fetchAllDatabase();
+            }
+        });
 
         document.getElementById('searchStoreBtn').addEventListener('click', () => {
             const query = document.getElementById('storeSearchInput').value.trim();
@@ -200,10 +196,10 @@
                 alert("Ilagay ang pangalan ng tindahan.");
                 return;
             }
-            loadClientData(query);
+            fetchAndLoadStore(query);
         });
 
-        async function loadAllDatabase() {
+        async function fetchAllDatabase() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
@@ -211,17 +207,17 @@
 
                 if (docSnap.exists()) {
                     globalAllData = docSnap.data();
-                    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database. Mag-search ng tindahan.";
+                    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database. I-type ang pangalan ng tindahan.";
                 } else {
                     syncStatus.textContent = "⚠️ Walang makitang record sa database.";
                 }
             } catch (err) {
-                console.error("Error loading database:", err);
+                console.error("Error fetching database:", err);
                 syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
             }
         }
 
-        async function loadClientData(targetStore) {
+        async function fetchAndLoadStore(targetStore) {
             syncStatus.textContent = "Hinahanap ang tindahan...";
             try {
                 if (!globalAllData) {
@@ -234,23 +230,27 @@
 
                 if (globalAllData && globalAllData.consignments) {
                     const consignments = globalAllData.consignments;
-                    const storeData = consignments.find(item => 
-                        item.storeName.toLowerCase() === targetStore.toLowerCase()
-                    );
+                    
+                    // Eksakto at madaling pag-match ng pangalan ng tindahan mula sa database array
+                    const cleanTarget = targetStore.toLowerCase().trim();
+                    const storeData = consignments.find(item => {
+                        const sName = (item.storeName || "").toLowerCase().trim();
+                        return sName === cleanTarget || sName.includes(cleanTarget);
+                    });
 
                     if (storeData) {
                         globalStoreData = storeData;
                         renderClient(storeData);
-                        syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+                        syncStatus.textContent = `✅ Nakakonekta sa tindahan: ${storeData.storeName}`;
                     } else {
-                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahang ito.";
+                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahan.";
                         alert("Walang natagpuang tindahan na may pangalang: " + targetStore);
                     }
                 } else {
-                    syncStatus.textContent = "⚠️ Walang makitang record sa database.";
+                    syncStatus.textContent = "⚠️ Walang listahan ng mga tindahan sa database.";
                 }
             } catch (err) {
-                console.error("Error loading client data:", err);
+                console.error("Error loading store:", err);
                 syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
             }
         }
