@@ -51,6 +51,31 @@
         .search-box-group button:hover { background-color: #f57c00; }
 
         .container { padding: 15px; max-width: 600px; margin: auto; }
+        
+        /* Istilo para sa Request Banner ng Client */
+        .client-banner {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-left: 5px solid #ffb300;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .client-banner-title { font-weight: bold; color: #f57c00; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .client-banner-text { font-size: 0.85rem; color: #5d4037; margin-bottom: 8px; }
+        .clear-banner-btn {
+            background-color: #78909c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .clear-banner-btn:hover { background-color: #607d8b; }
+
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
         h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
@@ -88,6 +113,13 @@
 
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
+
+        <!-- Banner para sa Request Status ng Client -->
+        <div class="client-banner" id="clientRequestBanner">
+            <div class="client-banner-title">📦 Status ng Restock Request</div>
+            <div class="client-banner-text" id="clientBannerText">Mayroon kang isinumiteng kahilingan ng restock.</div>
+            <button type="button" class="clear-banner-btn" id="clearBannerBtn">✓ Nakita ko na / I-clear</button>
+        </div>
 
         <div class="card" id="clientCard">
             <h2 id="storeTitle">🏪 Tindahan</h2>
@@ -231,7 +263,6 @@
                     const consignments = globalAllData.consignments;
                     const cleanTarget = targetStore.toLowerCase().trim();
                     
-                    // Hanapin ang index at exact match para maiwasan ang maling pag-update
                     globalStoreIndex = consignments.findIndex(item => {
                         const sName = (item.storeName || "").toLowerCase().trim();
                         return sName === cleanTarget || sName.includes(cleanTarget);
@@ -291,6 +322,18 @@
                 dpDiv.style.display = 'block';
             }
 
+            // Pagpapakita o pagtatago ng Request Banner batay sa activeRequests
+            const banner = document.getElementById('clientRequestBanner');
+            const bannerText = document.getElementById('clientBannerText');
+
+            if (item.activeRequests && item.activeRequests.length > 0) {
+                const req = item.activeRequests[item.activeRequests.length - 1];
+                bannerText.innerHTML = `Humiling ka ng karagdagang <strong>${req.qty} pcs</strong> ng stock. Naghihintay pa ng aksyon o pag-apruba mula sa Admin.`;
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
             if (item.history && item.history.length > 0) {
@@ -317,6 +360,26 @@
                 chatBox.innerHTML = '<div style="color: #778; font-size: 0.8rem;">Wala pang mensahe. Mag-iwan ng mensahe o tanong para sa admin dito.</div>';
             }
         }
+
+        // Pindutan para i-clear ng client ang activeRequests banner nila kapag nakita na nila
+        document.getElementById('clearBannerBtn').addEventListener('click', async () => {
+            if (globalStoreIndex === -1 || !globalAllData) return;
+
+            const storeData = globalAllData.consignments[globalStoreIndex];
+            // Burahin o i-clear ang activeRequests para mawala ang banner
+            storeData.activeRequests = [];
+
+            syncStatus.textContent = "Ina-update ang status...";
+            try {
+                const docRef = doc(db, "app_data", "main_inventory");
+                await setDoc(docRef, globalAllData);
+                renderClient(storeData);
+                syncStatus.textContent = "✅ Na-clear na ang notification banner.";
+            } catch (err) {
+                console.error("Error clearing banner:", err);
+                syncStatus.textContent = "⚠️ Nabigo sa pag-clear ng banner.";
+            }
+        });
 
         document.getElementById('sendChatBtn').addEventListener('click', async () => {
             const inputField = document.getElementById('chatMessageInput');
@@ -352,7 +415,6 @@
             }
         });
 
-        // Tiyak na naisasama sa activeRequests array para makita sa Admin panel banner
         document.getElementById('requestRestockBtn').addEventListener('click', async () => {
             if (globalStoreIndex === -1 || !globalAllData) {
                 alert("Mangyaring hanapin muna ang iyong tindahan.");
@@ -370,7 +432,6 @@
                 storeData.activeRequests = [];
             }
 
-            // Nagdadagdag sa activeRequests array ng partikular na tindahan
             storeData.activeRequests.push({
                 qty: requestedQty
             });
