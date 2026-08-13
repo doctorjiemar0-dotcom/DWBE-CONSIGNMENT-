@@ -67,7 +67,7 @@
 
     <!-- NAKATAGONG STORE SELECTOR PANEL NA MAY PIN -->
     <div id="secretStorePanel">
-        <select id="secretStoreSelect" onchange="switchStoreBySecret(this)">
+        <select id="secretStoreSelect" onchange="window.switchStoreBySecret(this)">
             <option value="">-- Pumili ng Tindahan --</option>
         </select>
     </div>
@@ -142,7 +142,7 @@
 
         <!-- PIN-PROTECTED STORE SELECTOR LINK SA BABA -->
         <div class="admin-link">
-            <a onclick="promptForPin()">🔐 Palitan ang Tindahan</a>
+            <a onclick="window.promptForPin()">🔐 Palitan ang Tindahan</a>
             <span>|</span>
             <a href="admin.html">⚙️ Bumalik sa Admin Panel</a>
         </div>
@@ -174,7 +174,7 @@
 
         const CORRECT_PIN = "0802";
 
-        // Function para humingi ng PIN kapag clinick ang "Palitan ang Tindahan"
+        // Idinikit sa window object para siguradong gumana ang onclick sa HTML
         window.promptForPin = function() {
             const enteredPin = prompt("Enter PIN:");
             if (enteredPin === CORRECT_PIN) {
