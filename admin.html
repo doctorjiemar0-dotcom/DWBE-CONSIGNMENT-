@@ -195,6 +195,30 @@
         const passwordInput = document.getElementById('adminPasswordInput');
         const syncStatus = document.getElementById('syncStatus');
 
+        // Sound Notification Function (Web Audio API)
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5 note
+                
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.4);
+            } catch (e) {
+                console.log("Audio not supported or blocked", e);
+            }
+        }
+
         if (sessionStorage.getItem('admin_logged_in') === 'true') {
             authScreen.style.display = 'none';
             mainAppContent.style.display = 'block';
@@ -218,6 +242,7 @@
         });
 
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
+        let previousRequestCount = 0;
 
         async function loadFromCloud() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
@@ -263,6 +288,38 @@
             nextMonth.setMonth(nextMonth.getMonth() + 1);
             document.getElementById('collectionDate').valueAsDate = nextMonth;
             loadFromCloud();
+
+            // Auto-refresh from cloud every 10 seconds to detect new requests automatically
+            setInterval(() => {
+                if (sessionStorage.getItem('admin_logged_in') === 'true') {
+                    loadFromCloudSilent();
+                }
+            }, 10000);
+        }
+
+        async function loadFromCloudSilent() {
+            try {
+                const docRef = doc(db, "app_data", "main_inventory");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const cloudData = docSnap.data();
+                    let currentReqsTotal = 0;
+                    if (cloudData.consignments) {
+                        cloudData.consignments.forEach(c => {
+                            if (c.activeRequests) currentReqsTotal += c.activeRequests.length;
+                        });
+                    }
+                    if (currentReqsTotal > previousRequestCount) {
+                        playNotificationSound();
+                    }
+                    appData = cloudData;
+                    if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+                    if (!appData.consignments) appData.consignments = [];
+                    renderApp();
+                }
+            } catch (e) {
+                console.log("Silent sync error", e);
+            }
         }
 
         const form = document.getElementById('consignmentForm');
@@ -331,6 +388,7 @@
             const requestsContainer = document.getElementById('adminRequestsContainer');
             requestsContainer.innerHTML = '';
             let hasRequests = false;
+            let totalActiveReqsCount = 0;
 
             if (appData.consignments.length === 0) {
                 storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record na consignment.</p>';
@@ -340,6 +398,7 @@
                 document.getElementById('totalStock').textContent = '0 pcs';
                 document.getElementById('totalSold').textContent = '0 pcs';
                 document.getElementById('totalSales').textContent = '₱0';
+                previousRequestCount = 0;
                 return;
             }
 
@@ -371,11 +430,12 @@
                 // Render Active Requests to Top Panel
                 if (item.activeRequests.length > 0) {
                     hasRequests = true;
+                    totalActiveReqsCount += item.activeRequests.length;
                     item.activeRequests.forEach((req, reqIdx) => {
                         const reqRow = document.createElement('div');
                         reqRow.className = 'request-action-row';
                         reqRow.innerHTML = `
-                            <span><strong>${item.storeName}</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
+                            <span><strong>${item.storeName} (${item.styleType})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
                             <div>
                                 <button type="button" class="btn-approve" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, true)">Approve</button>
                                 <button type="button" class="btn-decline" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, false)">Decline</button>
@@ -419,7 +479,7 @@
                         <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
                         <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
                     </div>
-                    
+
                     <a href="client.html?store=${encodeURIComponent(item.storeName)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
 
                     <div style="margin-top: 5px;">
@@ -450,6 +510,12 @@
                 storesList.appendChild(div);
             });
 
+            // Play sound if new request appears during render/sync cycle
+            if (totalActiveReqsCount > previousRequestCount) {
+                playNotificationSound();
+            }
+            previousRequestCount = totalActiveReqsCount;
+
             if (!hasRequests) {
                 requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>';
             }
@@ -477,7 +543,7 @@
         window.processRestock = async function(storeIdx, reqIdx, qty, isApproved) {
             const item = appData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
-            const style = item.styleType;
+            const style = item.styleType || 'Ordinary';
 
             item.activeRequests.splice(reqIdx, 1);
             if (!item.clientNotifications) item.clientNotifications = [];
@@ -492,21 +558,21 @@
 
                 item.clientNotifications.push({
                     id: Date.now(),
-                    text: `✅ Magandang balita! Ang iyong hiling na restock na ${qty} pcs ay NA-APPROVE na ng Admin.`,
+                    text: `✅ Magandang balita! Ang iyong hiling na restock na ${qty} pcs (${style}) ay NA-APPROVE na ng Admin.`,
                     date: timestamp
                 });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs` });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs (${style})` });
             } else {
                 item.clientNotifications.push({
                     id: Date.now(),
-                    text: `❌ Paumanhin, ang iyong hiling na restock na ${qty} pcs ay NA-DECLINE muna sa ngayon.`,
+                    text: `❌ Paumanhin, ang iyong hiling na restock na ${qty} pcs (${style}) ay NA-DECLINE muna sa ngayon.`,
                     date: timestamp
                 });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock Request na ${qty} pcs` });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock Request na ${qty} pcs (${style})` });
             }
 
             await saveToCloud();
-            alert(isApproved ? "Na-approve ang restock at nadagdagan ang stock ng tindahan!" : "Tinanggihan ang request.");
+            alert(isApproved ? "Na-approve ang restock at nabawas sa tamang bodega!" : "Tinanggihan ang request.");
         };
 
         window.sendAdminReply = function(index) {
@@ -555,13 +621,13 @@
 
         window.restockStore = function(index) {
             const count = parseInt(prompt('Ilang bagong stock ang idadagdag?', '10'));
-            const style = appData.consignments[index].styleType;
+            const style = appData.consignments[index].styleType || 'Ordinary';
             if (!isNaN(count) && count > 0) {
-                if (appData.homeStock[style] < count) { alert('Kulang ang stock sa bahay.'); return; }
+                if (appData.homeStock[style] < count) { alert(`Kulang ang stock sa bahay para sa ${style}.`); return; }
                 appData.homeStock[style] -= count;
                 appData.consignments[index].initialQty += count;
                 appData.consignments[index].currentStock += count;
-                appData.consignments[index].history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${count} pcs stock` });
+                appData.consignments[index].history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${count} pcs stock (${style})` });
                 saveToCloud();
             }
         };
@@ -581,7 +647,8 @@
         window.deleteStore = function(index) {
             if (confirm('Burahin ang tindahang ito? Babalik sa stock sa bahay ang natitirang items.')) {
                 const item = appData.consignments[index];
-                if (item.currentStock > 0) appData.homeStock[item.styleType] += item.currentStock;
+                const style = item.styleType || 'Ordinary';
+                if (item.currentStock > 0) appData.homeStock[style] += item.currentStock;
                 appData.consignments.splice(index, 1);
                 saveToCloud();
             }
@@ -610,9 +677,9 @@
                 item.currentStock += qty;
                 if (logText.includes('rejected')) item.rejectedQty = Math.max(0, item.rejectedQty - qty);
             } 
-            else if (logText.includes('nagdagdag') || logText.includes('nagsimula')) {
+            else if (logText.includes('nagdagdag') || logText.includes('nagsimula') || logText.includes('na-approve ang restock')) {
                 item.currentStock = Math.max(0, item.currentStock - qty);
-                if (logText.includes('nagsimula')) {
+                if (logText.includes('nagsimula') || logText.includes('na-approve ang restock')) {
                     item.initialQty = Math.max(0, item.initialQty - qty);
                 }
             }
