@@ -46,16 +46,107 @@
         }
         .install-btn:hover { background-color: #1b5e20; }
 
-        /* Store List & Requests */
-        .store-admin-item {
-            background: #fafafa;
+        /* Store Card Layout (Gaya ng sa larawan) */
+        .store-card {
+            background: #ffffff;
             border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 6px;
+            border-left: 5px solid #d32f2f;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0px 1px 3px rgba(0,0,0,0.05);
+        }
+        .store-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .store-title { font-weight: bold; font-size: 0.95rem; color: #222; }
+        .badge-due { background-color: #d32f2f; color: white; font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
+        
+        .store-dates { font-size: 0.75rem; color: #555; background: #f9f9f9; padding: 5px 8px; border-radius: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        
+        .stock-info-box {
+            background: #fffde7;
+            border: 1px solid #ffe082;
+            padding: 8px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .payment-info-box {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
             margin-bottom: 10px;
         }
-        .store-admin-title { font-weight: bold; color: #2e7d32; font-size: 0.95rem; margin-bottom: 6px; }
-        
+
+        /* Action Buttons Row */
+        .action-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .btn-action {
+            flex: 1;
+            padding: 6px 4px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.7rem;
+            cursor: pointer;
+            color: white;
+            text-align: center;
+        }
+        .btn-koleksyon { background-color: #0288d1; }
+        .btn-magbayad { background-color: #00897b; }
+        .btn-bawas { background-color: #fb8c00; }
+        .btn-restock { background-color: #2e7d32; }
+        .btn-edit { background-color: #6d4c41; }
+        .btn-delete { background-color: #d32f2f; width: 100%; margin-top: 4px; }
+
+        .toggle-btn {
+            width: 100%;
+            background-color: #546e7a;
+            color: white;
+            border: none;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .toggle-btn:hover { background-color: #455a64; }
+
+        /* History & Chat Section inside Card */
+        .collapsible-content {
+            background: #fdfdfd;
+            border: 1px dashed #ccc;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+            display: none;
+        }
+        .history-item {
+            border-bottom: 1px solid #eee;
+            padding: 4px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Request Row */
         .request-action-row {
             display: flex;
             justify-content: space-between;
@@ -77,8 +168,6 @@
             cursor: pointer;
             font-size: 0.75rem;
         }
-        .btn-approve:hover { background-color: #1b5e20; }
-        
         .btn-decline {
             background-color: #c62828;
             color: white;
@@ -90,20 +179,17 @@
             font-size: 0.75rem;
             margin-left: 4px;
         }
-        .btn-decline:hover { background-color: #b71c1c; }
-
         .client-link-btn {
             display: inline-block;
             background-color: #0288d1;
             color: white;
             text-decoration: none;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: bold;
-            margin-top: 6px;
+            margin-top: 4px;
         }
-        .client-link-btn:hover { background-color: #0277bd; }
     </style>
 </head>
 <body>
@@ -113,7 +199,7 @@
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- PWA Install Banner para sa Admin -->
+        <!-- PWA Install Banner -->
         <div class="install-card" id="installCard">
             <div style="font-size: 0.9rem; font-weight: bold; color: #2e7d32;">📲 I-install ang Admin App sa iyong Device</div>
             <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">Para mas mabilis na ma-access ang panel nang direkta sa iyong home screen.</div>
@@ -128,7 +214,7 @@
         </div>
 
         <div class="card">
-            <h2>🏪 Lahat ng Tindahan at Status</h2>
+            <h2>🏪 Lahat ng Tindahan at Status (Consignment Monitoring)</h2>
             <div id="adminStoresList">
                 <p style="font-size: 0.85rem; color: #666;">Naglo-load ng mga tindahan...</p>
             </div>
@@ -189,17 +275,64 @@
             let hasRequests = false;
 
             globalAllData.consignments.forEach((store, storeIndex) => {
-                // Render Store List Item
+                const initialStock = store.initialStock || store.currentStock || 0;
+                const currentStock = store.currentStock || 0;
+                const soldStock = Math.max(0, initialStock - currentStock);
+                const price = store.price || 140;
+                const balance = store.balance || (soldStock * price);
+                const paidDP = store.paidDP || 0;
+                const mode = store.paymentMode || 'COD';
+                const startDate = store.startDate || '2026-06-22';
+                const collectionDate = store.collectionDate || '2026-08-21';
+
+                // Render Store Card (Gaya ng sa larawan)
                 const storeDiv = document.createElement('div');
-                storeDiv.className = 'store-admin-item';
+                storeDiv.className = 'store-card';
                 storeDiv.innerHTML = `
-                    <div class="store-admin-title">🏪 ${store.storeName}</div>
-                    <div style="font-size: 0.85rem; color: #555;">Natitirang Stock: <strong>${store.currentStock} pcs</strong> | Presyo: ₱${store.price}</div>
+                    <div class="store-header-row">
+                        <span class="store-title">🏪 ${store.storeName} (Ordinary) - ₱${price}</span>
+                        <span class="badge-due">Due Na!</span>
+                    </div>
+                    <div class="store-dates">
+                        <span>📅 Start: ${startDate}</span>
+                        <span>🎯 Collection: ${collectionDate}</span>
+                    </div>
+                    <div class="stock-info-box">
+                        <span>📦 Simula: <strong>${initialStock}</strong></span>
+                        <span>✨ Natitira: <strong>${currentStock}</strong></span>
+                        <span>🛒 Nabenta: <strong>${soldStock}</strong></span>
+                    </div>
+                    <div class="payment-info-box">
+                        <div>💳 Mode: <strong>${mode}</strong></div>
+                        <div style="margin-top: 3px;">💰 Nabayaran/DP: ₱${paidDP} | ⚠️ Balanse: ₱${balance}</div>
+                    </div>
+                    
                     <a href="client.html?store=${encodeURIComponent(store.storeName)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
+
+                    <div style="margin-top: 8px;">
+                        <button type="button" class="toggle-btn" onclick="toggleSection('chat_${storeIndex}')">💬 Ipakita ang Chatbox</button>
+                        <div id="chat_${storeIndex}" class="collapsible-content">
+                            <p style="color: #666; font-style: italic;">Walang active na mensahe sa chatbox.</p>
+                        </div>
+
+                        <button type="button" class="toggle-btn" onclick="toggleSection('history_${storeIndex}')">📜 Ipakita ang History</button>
+                        <div id="history_${storeIndex}" class="collapsible-content">
+                            ${renderHistoryList(store.history)}
+                        </div>
+                    </div>
+
+                    <div class="action-row" style="margin-top: 8px;">
+                        <button type="button" class="btn-action btn-koleksyon" onclick="alert('Feature para sa Koleksyon')">Koleksyon</button>
+                        <button type="button" class="btn-action btn-magbayad" onclick="alert('Feature para sa Pagbayad')">Magbayad</button>
+                        <button type="button" class="btn-action btn-bawas" onclick="alert('Feature para sa Bawas Stock')">Bawas</button>
+                        <button type="button" class="btn-action btn-restock" onclick="alert('Feature para sa Restock')">Restock</button>
+                        <button type="button" class="btn-action btn-edit" onclick="alert('Feature para sa Pag-edit')">I-edit</button>
+                    </div>
+                    <button type="button" class="btn-action btn-delete" onclick="alert('Feature para sa pagbura ng tindahan')">Burahin</button>
                 `;
                 storesContainer.appendChild(storeDiv);
 
-                // Render Active / Pending Requests kung mayroon man
+                // Render Active / Pending Requests
                 if (store.activeRequests && store.activeRequests.length > 0) {
                     hasRequests = true;
                     store.activeRequests.forEach((req, reqIndex) => {
@@ -221,7 +354,7 @@
                 requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>';
             }
 
-            // Magkabit ng Event Listeners sa mga Approve / Decline buttons
+            // Event Listeners para sa Approve / Decline buttons
             document.querySelectorAll('.btn-approve').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const storeIdx = parseInt(e.target.getAttribute('data-store'));
@@ -241,6 +374,33 @@
             });
         }
 
+        function renderHistoryList(historyArray) {
+            if (!historyArray || historyArray.length === 0) {
+                return '<p style="color: #666; font-style: italic;">Walang kasaysayan ng transaksyon.</p>';
+            }
+            let html = '';
+            historyArray.forEach(item => {
+                html += `
+                    <div class="history-item">
+                        <span>▪️ [${item.date}] ${item.text}</span>
+                        <div>
+                            <span style="cursor:pointer;" title="I-edit">✏️</span>
+                            <span style="cursor:pointer; color:red; margin-left:4px;" title="Burahin">❌</span>
+                        </div>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        // Global toggle function para sa Collapsible sections
+        window.toggleSection = function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+            }
+        };
+
         async function processRestockRequest(storeIdx, reqIdx, qty, isApproved) {
             if (!globalAllData || !globalAllData.consignments[storeIdx]) return;
 
@@ -253,15 +413,20 @@
                 storeData.clientNotifications = [];
             }
 
-            const notifText = isApproved 
-                ? `✅ Magandang balita! Na-approve ang iyong restock request na ${qty} pcs.` 
-                : `❌ Paumanhin, tinanggihan ang iyong restock request na ${qty} pcs.`;
-
-            storeData.clientNotifications.push({
-                id: Date.now(),
-                text: notifText,
-                date: timestamp
-            });
+            if (isApproved) {
+                storeData.currentStock += qty; 
+                storeData.clientNotifications.push({
+                    id: Date.now(),
+                    text: `✅ Magandang balita! Ang iyong hiling na restock na ${qty} pcs ay NA-APPROVE na ng Admin.`,
+                    date: timestamp
+                });
+            } else {
+                storeData.clientNotifications.push({
+                    id: Date.now(),
+                    text: `❌ Paumanhin, ang iyong hiling na restock na ${qty} pcs ay NA-DECLINE muna sa ngayon.`,
+                    date: timestamp
+                });
+            }
 
             if (!storeData.history) storeData.history = [];
             storeData.history.unshift({
@@ -276,13 +441,14 @@
                 await setDoc(docRef, globalAllData);
                 renderAdminPanel();
                 syncStatus.textContent = "✅ Matagumpay na naitala ang aksyon!";
-                alert(isApproved ? "Na-approve na ang request!" : "Na-decline ang request.");
+                alert(isApproved ? "Na-approve na ang request at nadagdagan ang stock!" : "Na-decline ang request.");
             } catch (err) {
                 console.error("Error processing request:", err);
                 syncStatus.textContent = "⚠️ Nabigo sa pag-save sa Cloud.";
             }
         }
 
+        // PWA Install Prompt Logic
         let deferredPrompt;
         const installCard = document.getElementById('installCard');
         const installBtn = document.getElementById('installBtn');
