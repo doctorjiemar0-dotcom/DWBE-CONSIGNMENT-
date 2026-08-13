@@ -61,28 +61,49 @@
 
     <div class="container">
 
+        <!-- PASSWORD PROTECTION SCREEN -->
         <div id="authScreen" class="card">
             <h2>🔒 Security Login</h2>
-            <div class="form-group"><input type="password" id="adminPasswordInput" placeholder="I-type ang password..."></div>
+            <div class="form-group" style="width: 100%;">
+                <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
+            </div>
             <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
         </div>
 
+        <!-- MAIN APP CONTENT -->
         <div id="mainAppContent">
-            <div id="syncStatus">Kumokonekta...</div>
+
+            <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
+
+            <!-- INSTALL APP BANNER -->
             <div class="card install-banner" id="installCard">
-                <h2>📱 I-install ang App</h2>
-                <button id="installBtn" type="button">📲 I-install</button>
+                <h2>📱 I-install bilang Mobile App</h2>
+                <button id="installBtn" type="button">📲 I-install ang Admin App</button>
             </div>
 
+            <!-- BACKUP & RECOVERY -->
+            <details class="card sync-card">
+                <summary style="cursor:pointer; font-size:0.9rem; font-weight:bold; color:#555;">📱 Data Backup & Recovery</summary>
+                <div style="margin-top: 10px;">
+                    <div class="form-group">
+                        <textarea id="backupTextarea" rows="3" placeholder="I-paste dito ang JSON code..."></textarea>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download ang Data</button>
+                        <button type="button" id="importTextBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load ang Naka-paste</button>
+                    </div>
+                </div>
+            </details>
+
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
-                <h2>🏠 Home Stock Inventory</h2>
+                <h2>🏠 Home Stock Inventory (Bodega / Bahay)</h2>
                 <div style="font-size: 0.9rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
                     <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
                     <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0;">➕ Ordinary</button>
-                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0;">➕ Premium</button>
+                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0;">➕ Magdagdag Ordinary</button>
+                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0;">➕ Magdagdag Premium</button>
                 </div>
             </div>
 
@@ -92,43 +113,165 @@
                 <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
                 <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
                 <div class="summary-row"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
-                <div class="summary-row summary-row-highlight"><span>Nolekta:</span><span id="totalCollected">₱0</span></div>
+                <div class="summary-row summary-row-highlight"><span>Nolekta / Natanggap:</span><span id="totalCollected">₱0</span></div>
             </div>
 
             <div class="card">
                 <h2>Magdagdag ng Consignment</h2>
                 <form id="consignmentForm">
-                    <div class="form-group"><label>Tindahan:</label><input type="text" id="storeName" required></div>
-                    <div class="form-group"><label>Style:</label><select id="styleType"><option value="Ordinary">Ordinary</option><option value="Premium">Premium</option></select></div>
-                    <div class="form-group"><label>Quantity:</label><input type="number" id="quantity" required></div>
-                    <div class="form-group"><label>Presyo (₱):</label><input type="number" id="price" required></div>
-                    <div class="form-group"><label>Termino:</label><select id="paymentType"><option value="COD">COD</option><option value="GCash">GCash</option><option value="Downpayment">Downpayment</option></select></div>
-                    <div class="form-group" id="initialPaymentGroup" style="display:none;"><label>DP Amount (₱):</label><input type="number" id="initialPayment"></div>
-                    <button type="submit">I-save</button>
+                    <div class="form-group">
+                        <label for="storeName">Pangalan ng Tindahan:</label>
+                        <input type="text" id="storeName" required placeholder="Hal. Aling Nena Store">
+                    </div>
+                    <div class="form-group">
+                        <label for="styleType">Uri ng Estilo (Variation):</label>
+                        <select id="styleType" required>
+                            <option value="Ordinary">Ordinary Style</option>
+                            <option value="Premium">Premium Style</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Bilang ng Item (Simulang Stock):</label>
+                        <input type="number" id="quantity" required placeholder="Hal. 10">
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Presyo bawat Isa (₱):</label>
+                        <input type="number" id="price" required placeholder="Hal. 150">
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentType">Paraan ng Bayad / Termino:</label>
+                        <select id="paymentType" required>
+                            <option value="COD">Cash on Delivery (COD)</option>
+                            <option value="GCash">GCash Payment</option>
+                            <option value="Downpayment">Down Payment (DP) + Balanse</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="initialPaymentGroup" style="display:none;">
+                        <label for="initialPayment">Halaga ng Down Payment (₱):</label>
+                        <input type="number" id="initialPayment" placeholder="Hal. 500">
+                    </div>
+                    <div class="form-group">
+                        <label for="dateDelivered">Petsa ng Simula (Start):</label>
+                        <input type="date" id="dateDelivered" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="collectionDate">Target na Petsa ng Koleksyon:</label>
+                        <input type="date" id="collectionDate" required>
+                    </div>
+                    <button type="submit">I-save ang Consignment</button>
                 </form>
             </div>
 
             <div class="card">
                 <h2>Listahan ng mga Tindahan</h2>
-                <div id="storesList"></div>
+                <div id="storesList">
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">Kinukuha ang data sa Cloud...</p>
+                </div>
             </div>
+
         </div>
+
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us", projectId: "dwbe-consignment" };
+        const firebaseConfig = {
+          apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+          authDomain: "dwbe-consignment.firebaseapp.com",
+          projectId: "dwbe-consignment",
+          storageBucket: "dwbe-consignment.firebasestorage.app",
+          messagingSenderId: "205759197252",
+          appId: "1:205759197252:web:b04400821f81791d10cc11"
+        };
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        const ADMIN_PASSWORD = "0802"; 
+        const authScreen = document.getElementById('authScreen');
+        const mainAppContent = document.getElementById('mainAppContent');
+        const loginBtn = document.getElementById('loginBtn');
+        const passwordInput = document.getElementById('adminPasswordInput');
+        const syncStatus = document.getElementById('syncStatus');
+        const paymentTypeSelect = document.getElementById('paymentType');
+        const initialPaymentGroup = document.getElementById('initialPaymentGroup');
+
+        paymentTypeSelect.addEventListener('change', () => {
+            if (paymentTypeSelect.value === 'Downpayment') {
+                initialPaymentGroup.style.display = 'block';
+            } else {
+                initialPaymentGroup.style.display = 'none';
+            }
+        });
+
+        if (sessionStorage.getItem('admin_logged_in') === 'true') {
+            authScreen.style.display = 'none';
+            mainAppContent.style.display = 'block';
+            initApp();
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                sessionStorage.setItem('admin_logged_in', 'true');
+                authScreen.style.display = 'none';
+                mainAppContent.style.display = 'block';
+                initApp();
+            } else {
+                alert('Mali ang password! Subukan muli.');
+                passwordInput.value = '';
+            }
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { loginBtn.click(); }
+        });
+
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
 
-        async function saveToCloud() {
-            await setDoc(doc(db, "app_data", "main_inventory"), appData);
-            renderApp();
+        async function loadFromCloud() {
+            syncStatus.textContent = "Kumukuha ng data sa Cloud...";
+            try {
+                const docRef = doc(db, "app_data", "main_inventory");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    appData = docSnap.data();
+                    if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+                    if (!appData.consignments) appData.consignments = [];
+                }
+                renderApp();
+                syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+            } catch (err) {
+                syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
+                const local = localStorage.getItem('consignments_v3');
+                if (local) { appData = JSON.parse(local); renderApp(); }
+            }
         }
+
+        async function saveToCloud() {
+            try {
+                await setDoc(doc(db, "app_data", "main_inventory"), appData);
+                localStorage.setItem('consignments_v3', JSON.stringify(appData));
+                renderApp();
+            } catch (err) { alert('Error sa pag-save sa cloud.'); }
+        }
+
+        function initApp() {
+            document.getElementById('dateDelivered').valueAsDate = new Date();
+            let nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            document.getElementById('collectionDate').valueAsDate = nextMonth;
+            loadFromCloud();
+        }
+
+        window.addSpecificHomeStock = function(styleType) {
+            const qtyStr = prompt(`Ilang piraso ng ${styleType} ang idadagdag?`, '10');
+            if (qtyStr !== null && !isNaN(qtyStr)) {
+                appData.homeStock[styleType] += parseInt(qtyStr);
+                saveToCloud();
+            }
+        };
 
         window.approveRestock = function(index) {
             const item = appData.consignments[index];
@@ -155,23 +298,46 @@
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
             const storesList = document.getElementById('storesList');
             storesList.innerHTML = '';
+            
             appData.consignments.forEach((item, index) => {
                 let requestHtml = item.pendingRestock ? `
                     <div class="request-banner">
                         <span>📦 Restock Request: ${item.pendingRestock} pcs</span>
-                        <div>
-                            <button onclick="approveRestock(${index})" style="background:#2e7d32; padding:4px 8px; width:auto;">Approve</button>
-                            <button onclick="declineRestock(${index})" style="background:#d32f2f; padding:4px 8px; width:auto;">Decline</button>
+                        <div style="display:flex; gap:4px;">
+                            <button onclick="approveRestock(${index})" style="background:#2e7d32; padding:4px 8px; width:auto; font-size:0.75rem;">Approve</button>
+                            <button onclick="declineRestock(${index})" style="background:#d32f2f; padding:4px 8px; width:auto; font-size:0.75rem;">Decline</button>
                         </div>
                     </div>` : '';
+                
                 const div = document.createElement('div');
                 div.className = 'store-card';
-                div.innerHTML = `<strong>${item.storeName}</strong> ${requestHtml}`;
+                div.innerHTML = `<strong>🏪 ${item.storeName}</strong> ${requestHtml}`;
                 storesList.appendChild(div);
             });
         }
         
-        // ... (Other functions like login, addSpecificHomeStock, etc remain consistent)
+        document.getElementById('consignmentForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const sName = document.getElementById('storeName').value;
+            const styleType = document.getElementById('styleType').value;
+            const qty = parseInt(document.getElementById('quantity').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const paymentType = document.getElementById('paymentType').value;
+            const initialPayment = parseFloat(document.getElementById('initialPayment').value) || 0;
+            
+            appData.consignments.push({
+                storeName: sName,
+                styleType: styleType,
+                initialQty: qty,
+                currentStock: qty,
+                price: price,
+                paymentType: paymentType,
+                amountPaid: initialPayment,
+                history: [{ date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs` }]
+            });
+            saveToCloud();
+            document.getElementById('consignmentForm').reset();
+        });
     </script>
 </body>
 </html>
