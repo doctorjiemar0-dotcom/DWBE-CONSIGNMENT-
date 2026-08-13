@@ -18,54 +18,38 @@
             font-weight: bold; 
         }
 
-        /* Face Recognition Security Modal / Panel */
-        #faceAuthPanel {
-            display: none;
+        /* Search Bar Security Panel (Pinalit sa Face ID Panel) */
+        .search-panel {
             background: #1b5e20;
             padding: 15px;
             text-align: center;
             border-bottom: 2px solid #388e3c;
-            color: white;
         }
-        #faceAuthPanel video {
-            width: 100%;
-            max-width: 280px;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid #4caf50;
-            margin-bottom: 10px;
-            background: #000;
+        .search-box-group {
+            display: flex;
+            gap: 8px;
+            max-width: 400px;
+            margin: 0 auto;
         }
-        .auth-btn {
+        .search-box-group input {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.95rem;
+            border-radius: 4px;
+            border: none;
+            outline: none;
+        }
+        .search-box-group button {
             background-color: #ff9800;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 10px 16px;
             border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
             font-size: 0.9rem;
         }
-        .auth-btn:hover { background-color: #f57c00; }
-
-        /* Store Selector Panel (Nakatago hangga't hindi na-verify ng Face ID) */
-        #secretStorePanel {
-            display: none;
-            background: #2e7d32;
-            padding: 12px;
-            text-align: center;
-            border-bottom: 2px solid #1b5e20;
-        }
-        #secretStorePanel select {
-            padding: 8px;
-            font-size: 0.9rem;
-            border-radius: 4px;
-            border: none;
-            width: 85%;
-            max-width: 350px;
-            outline: none;
-        }
+        .search-box-group button:hover { background-color: #f57c00; }
 
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
@@ -90,102 +74,96 @@
         .restock-action-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
         .restock-btn { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
         .restock-btn:hover { background-color: #f57c00; }
+        
+        /* Nakatago default ang main content hangga't hindi nase-search nang tama ang tindahan */
+        #mainContentArea { display: none; }
     </style>
 </head>
 <body>
 
-    <header>🧹 Doctor's Whisk Broom - Client</header>
+    <header>🧹 Doctor's Whisk Broom - Client Portal</header>
 
-    <!-- FACE RECOGNITION AUTH PANEL -->
-    <div id="faceAuthPanel">
-        <div style="font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">📸 Face Recognition Security</div>
-        <video id="authVideo" autoplay playsinline></video>
-        <div>
-            <button type="button" class="auth-btn" id="verifyFaceBtn">I-scan ang Mukha</button>
-            <button type="button" style="background: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-left: 5px;" onclick="closeFaceAuth()">Kanselahin</button>
+    <!-- SEARCH BAR SECURITY PANEL (Pinalit sa Face ID Panel) -->
+    <div class="search-panel">
+        <div style="font-size: 0.9rem; color: white; margin-bottom: 8px; font-weight: bold;">🔍 I-type ang Eksaktong Pangalan ng Tindahan</div>
+        <div class="search-box-group">
+            <input type="text" id="storeSearchInput" placeholder="Halimbawa: Aling Nena Store">
+            <button type="button" id="searchStoreBtn">Hanapin</button>
         </div>
-        <div id="authStatus" style="font-size: 0.75rem; margin-top: 5px; font-style: italic;">I-pwesto ang mukha sa harap ng camera at pindutin ang i-scan.</div>
-    </div>
-
-    <!-- NAKATAGONG STORE SELECTOR PANEL (Lalabas pagkatapos ng Face ID) -->
-    <div id="secretStorePanel">
-        <select id="secretStoreSelect" onchange="window.switchStoreBySecret(this)">
-            <option value="">-- Pumili ng Tindahan --</option>
-        </select>
+        <div id="searchMessage" style="font-size: 0.75rem; color: #ffccbc; margin-top: 5px; font-style: italic;">Lalabas lamang ang impormasyon kapag eksaktong tumugma ang pangalan.</div>
     </div>
 
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <div class="card" id="clientCard">
-            <h2 id="storeTitle">🏪 Tindahan</h2>
-            <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
-                <div class="summary-row"><span>Uri ng Estilo:</span><span id="styleType">-</span></div>
-                <div class="summary-row"><span>Presyo bawat Isa:</span><span id="price">-</span></div>
-                <div class="summary-row"><span>Simulang Stock:</span><span id="initialQty">-</span></div>
-                <div class="summary-row"><span>Natitirang Stock:</span><span id="currentStock" style="color: #2e7d32; font-weight: bold;">-</span></div>
-                <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="soldQty" style="color: #c2185b; font-weight: bold;">-</span></div>
-                <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
-            </div>
-        </div>
-
-        <!-- PAYMENT / PORTAL INFO CARD -->
-        <div class="portal-box" id="paymentPortalCard">
-            <div class="portal-title">💳 Payment & Terms Portal</div>
-            <div class="portal-detail"><span>Paraan ng Bayad:</span> <strong id="portalPaymentType">-</strong></div>
-            <div class="portal-detail"><span>Nabayaran / Down Payment:</span> <strong id="portalPaid">₱0</strong></div>
-            <div class="portal-detail"><span>Naiwang Balanse:</span> <strong id="portalBalance" style="color: #c62828;">₱0</strong></div>
-            
-            <div id="gcashDetails" style="display: none; margin-top: 10px;">
-                <div style="font-size: 0.85rem; color: #0d47a1; margin-bottom: 5px;">Maaaring magbayad sa pamamagitan ng GCash:</div>
-                <div style="font-size: 0.9rem; font-weight: bold; background: #fff; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #90caf9;">
-                    📱 GCash Name: Jiemar Doctor<br>
-                    📞 Number: 0912-345-6789
+        <div id="mainContentArea">
+            <div class="card" id="clientCard">
+                <h2 id="storeTitle">🏪 Tindahan</h2>
+                <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
+                    <div class="summary-row"><span>Uri ng Estilo:</span><span id="styleType">-</span></div>
+                    <div class="summary-row"><span>Presyo bawat Isa:</span><span id="price">-</span></div>
+                    <div class="summary-row"><span>Simulang Stock:</span><span id="initialQty">-</span></div>
+                    <div class="summary-row"><span>Natitirang Stock:</span><span id="currentStock" style="color: #2e7d32; font-weight: bold;">-</span></div>
+                    <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="soldQty" style="color: #c2185b; font-weight: bold;">-</span></div>
+                    <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
                 </div>
             </div>
 
-            <div id="codDetails" style="display: none; margin-top: 10px;">
-                <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
-                    💵 <strong>Cash on Delivery (COD):</strong> Ang koleksyon ng bayad ay gagawin sa takdang araw ng pagkolekta kasama ang ating authorized partner.
+            <!-- PAYMENT / PORTAL INFO CARD -->
+            <div class="portal-box" id="paymentPortalCard">
+                <div class="portal-title">💳 Payment & Terms Portal</div>
+                <div class="portal-detail"><span>Paraan ng Bayad:</span> <strong id="portalPaymentType">-</strong></div>
+                <div class="portal-detail"><span>Nabayaran / Down Payment:</span> <strong id="portalPaid">₱0</strong></div>
+                <div class="portal-detail"><span>Naiwang Balanse:</span> <strong id="portalBalance" style="color: #c62828;">₱0</strong></div>
+                
+                <div id="gcashDetails" style="display: none; margin-top: 10px;">
+                    <div style="font-size: 0.85rem; color: #0d47a1; margin-bottom: 5px;">Maaaring magbayad sa pamamagitan ng GCash:</div>
+                    <div style="font-size: 0.9rem; font-weight: bold; background: #fff; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #90caf9;">
+                        📱 GCash Name: Jiemar Doctor<br>
+                        📞 Number: 0912-345-6789
+                    </div>
+                </div>
+
+                <div id="codDetails" style="display: none; margin-top: 10px;">
+                    <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
+                        💵 <strong>Cash on Delivery (COD):</strong> Ang koleksyon ng bayad ay gagawin sa takdang araw ng pagkolekta kasama ang ating authorized partner.
+                    </div>
+                </div>
+
+                <div id="dpDetails" style="display: none; margin-top: 10px;">
+                    <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
+                        📊 <strong>Down Payment Terms:</strong> Ang natitirang balanse ay kailangang bayaran sa susunod na hulog o takdang petsa ng koleksyon.
+                    </div>
                 </div>
             </div>
 
-            <div id="dpDetails" style="display: none; margin-top: 10px;">
-                <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
-                    📊 <strong>Down Payment Terms:</strong> Ang natitirang balanse ay kailangang bayaran sa susunod na hulog o takdang petsa ng koleksyon.
+            <!-- REQUEST RESTOCK SECTION -->
+            <div class="restock-action-box">
+                <div style="font-size: 0.85rem; color: #2e7d32; margin-bottom: 8px; font-weight: bold;">Nauubusan na ba ng walis? Humiling ng karagdagang stock dito:</div>
+                <button type="button" class="restock-btn" id="requestRestockBtn">📦 Humiling ng Restock (Request Restock)</button>
+            </div>
+
+            <!-- CLIENT CHAT / NOTES SECTION -->
+            <div class="card">
+                <h2>💬 Mensahe / Paalala sa Admin</h2>
+                <div class="chat-box" id="clientChatBox">
+                    <div style="color: #778; font-size: 0.8rem;">Wala pang mensahe. Mag-iwan ng mensahe o tanong para sa admin dito.</div>
+                </div>
+                <div class="chat-input-group">
+                    <input type="text" id="chatMessageInput" placeholder="I-type ang iyong mensahe...">
+                    <button type="button" id="sendChatBtn">Ipadala</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📜 Kasaysayan ng Transaksyon</h2>
+                <div id="historyList">
+                    <p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>
                 </div>
             </div>
         </div>
 
-        <!-- REQUEST RESTOCK SECTION -->
-        <div class="restock-action-box">
-            <div style="font-size: 0.85rem; color: #2e7d32; margin-bottom: 8px; font-weight: bold;">Nauubusan na ba ng walis? Humiling ng karagdagang stock dito:</div>
-            <button type="button" class="restock-btn" id="requestRestockBtn">📦 Humiling ng Restock (Request Restock)</button>
-        </div>
-
-        <!-- CLIENT CHAT / NOTES SECTION -->
-        <div class="card">
-            <h2>💬 Mensahe / Paalala sa Admin</h2>
-            <div class="chat-box" id="clientChatBox">
-                <div style="color: #778; font-size: 0.8rem;">Wala pang mensahe. Mag-iwan ng mensahe o tanong para sa admin dito.</div>
-            </div>
-            <div class="chat-input-group">
-                <input type="text" id="chatMessageInput" placeholder="I-type ang iyong mensahe...">
-                <button type="button" id="sendChatBtn">Ipadala</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>📜 Kasaysayan ng Transaksyon</h2>
-            <div id="historyList">
-                <p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>
-            </div>
-        </div>
-
-        <!-- FACE ID PROTECTED STORE SELECTOR LINK SA BABA -->
         <div class="admin-link">
-            <a onclick="window.openFaceAuth()">📷 Palitan ang Tindahan (Face ID)</a>
-            <span>|</span>
             <a href="admin.html">⚙️ Bumalik sa Admin Panel</a>
         </div>
     </div>
@@ -213,93 +191,25 @@
 
         let globalStoreData = null;
         let globalAllData = null;
-        let mediaStream = null;
 
-        // Buksan ang Camera para sa Face Recognition
-        window.openFaceAuth = async function() {
-            const panel = document.getElementById('faceAuthPanel');
-            const video = document.getElementById('authVideo');
-            panel.style.display = 'block';
+        if (storeName) {
+            document.getElementById('storeSearchInput').value = storeName;
+            loadAndSearchStore(storeName);
+        } else {
+            syncStatus.textContent = "I-type ang pangalan ng tindahan sa itaas para hanapin.";
+        }
 
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-                video.srcObject = mediaStream;
-            } catch (err) {
-                console.error("Camera access error:", err);
-                alert("Hindi ma-access ang camera. Pakitiyak na pinahintulutan mo ang browser.");
-                panel.style.display = 'none';
+        document.getElementById('searchStoreBtn').addEventListener('click', () => {
+            const query = document.getElementById('storeSearchInput').value.trim();
+            if (!query) {
+                alert("Mangyaring maglagay ng pangalan ng tindahan.");
+                return;
             }
-        };
-
-        window.closeFaceAuth = function() {
-            const panel = document.getElementById('faceAuthPanel');
-            panel.style.display = 'none';
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-            }
-        };
-
-        // Pindutin ang Scan para i-verify ang mukha at ilantad ang drop-down list
-        document.getElementById('verifyFaceBtn').addEventListener('click', () => {
-            const statusEl = document.getElementById('authStatus');
-            statusEl.textContent = "Sina-scan ang mukha...";
-            
-            setTimeout(() => {
-                // Kuning matagumpay ang biometric capture simulation/verification
-                statusEl.textContent = "✅ Matagumpay na nakilala ang mukha!";
-                setTimeout(() => {
-                    closeFaceAuth();
-                    const storePanel = document.getElementById('secretStorePanel');
-                    storePanel.style.display = 'block';
-                    populateSecretDropdown();
-                }, 800);
-            }, 1200);
+            loadAndSearchStore(query);
         });
 
-        function populateSecretDropdown() {
-            if (!globalAllData || !globalAllData.consignments) return;
-            const select = document.getElementById('secretStoreSelect');
-            select.innerHTML = '<option value="">-- Pumili ng Tindahan --</option>';
-            
-            globalAllData.consignments.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.storeName;
-                opt.textContent = `${item.storeName} (${item.styleType || 'Ordinary'})`;
-                if (storeName && item.storeName.toLowerCase() === storeName.toLowerCase()) {
-                    opt.selected = true;
-                }
-                select.appendChild(opt);
-            });
-        }
-
-        window.switchStoreBySecret = function(selectEl) {
-            const selectedStore = selectEl.value;
-            if (!selectedStore) return;
-            storeName = selectedStore;
-            document.getElementById('storeTitle').textContent = `🏪 ${storeName}`;
-            
-            const consignments = globalAllData.consignments || [];
-            const storeData = consignments.find(item => 
-                item.storeName.toLowerCase() === storeName.toLowerCase()
-            );
-
-            if (storeData) {
-                globalStoreData = storeData;
-                renderClient(storeData);
-                syncStatus.textContent = `✅ Lumipat sa ${storeName}`;
-            }
-        };
-
-        if (!storeName) {
-            document.getElementById('storeTitle').textContent = "⚠️ Walang Napiling Tindahan";
-            syncStatus.textContent = "Pakitukoy ang tindahan gamit ang tamang link mula sa Admin Panel.";
-        } else {
-            document.getElementById('storeTitle').textContent = `🏪 ${storeName}`;
-            loadClientData(storeName);
-        }
-
-        async function loadClientData(targetStore) {
-            syncStatus.textContent = "Kumukuha ng data sa Cloud...";
+        async function loadAndSearchStore(targetStore) {
+            syncStatus.textContent = "Naghahanap sa Cloud Database...";
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 const docSnap = await getDoc(docRef);
@@ -314,16 +224,22 @@
 
                     if (storeData) {
                         globalStoreData = storeData;
+                        storeName = storeData.storeName;
                         renderClient(storeData);
-                        syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+                        
+                        document.getElementById('mainContentArea').style.display = 'block';
+                        document.getElementById('searchMessage').textContent = "✅ Natagpuan ang tindahan!";
+                        syncStatus.textContent = `✅ Nakakonekta sa ${storeName}`;
                     } else {
-                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahang ito sa database.";
+                        document.getElementById('mainContentArea').style.display = 'none';
+                        document.getElementById('searchMessage').textContent = "⚠️ Walang nakitang tindahan na eksaktong tumutugma sa pangalang ito.";
+                        syncStatus.textContent = "⚠️ Hindi natagpuan.";
                     }
                 } else {
                     syncStatus.textContent = "⚠️ Walang makitang record sa database.";
                 }
             } catch (err) {
-                console.error("Error loading client data:", err);
+                console.error("Error searching store data:", err);
                 syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
             }
         }
@@ -336,6 +252,7 @@
             const balance = Math.max(0, sales - amountPaid);
             const paymentType = item.paymentType || 'COD';
 
+            document.getElementById('storeTitle').textContent = `🏪 ${item.storeName}`;
             document.getElementById('styleType').textContent = item.styleType || 'Ordinary';
             document.getElementById('price').textContent = '₱' + item.price;
             document.getElementById('initialQty').textContent = item.initialQty + ' pcs';
