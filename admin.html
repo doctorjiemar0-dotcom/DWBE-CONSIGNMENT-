@@ -324,6 +324,7 @@
                 amountPaid: initialPayment,
                 dateDelivered: startD,
                 collectionDate: collD,
+                hasActiveRequest: false, // Flag para matukoy kung may aktibong request
                 pendingRestock: 5,
                 messages: [],
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) | Mode: ${paymentType} | Bayad/DP: ₱${initialPayment}` }]
@@ -339,7 +340,17 @@
             saveToCloud();
         });
 
-        // Function para makuha ang pinakabagong hiningi sa history kung meron man
+        // Function para malaman kung may pending restock request batay sa flag o history
+        function hasActiveRestockRequest(item) {
+            if (item.hasActiveRequest === false) return false;
+            if (item.hasActiveRequest === true) return true;
+            
+            // Fallback: tingnan ang pinakataas na history log kung ito ay restock request
+            if (!item.history || item.history.length === 0) return false;
+            const latestLog = item.history[0].text.toLowerCase();
+            return latestLog.includes('restock request') || latestLog.includes('humiling ng karagdagang');
+        }
+
         function getLatestRequestedQty(item) {
             if (!item.history) return 5;
             for (let h of item.history) {
@@ -383,8 +394,10 @@
                 if (!item.collectionDate) item.collectionDate = 'N/A';
                 if (!item.paymentType) item.paymentType = 'COD';
                 if (item.amountPaid === undefined) item.amountPaid = 0;
+                if (item.hasActiveRequest === undefined) {
+                    item.hasActiveRequest = hasActiveRestockRequest(item);
+                }
                 
-                // Awtomatikong kunin ang pinakabagong request bilang default value ng input box
                 const activeRestockQty = getLatestRequestedQty(item);
                 if (item.pendingRestock === undefined || item.pendingRestock === null || item.pendingRestock === 5) {
                     item.pendingRestock = activeRestockQty;
@@ -423,15 +436,19 @@
                 });
                 if (!messagesHtml) messagesHtml = '<div style="color:#778;">Wala pang mensahe.</div>';
 
-                let requestHtml = `
-                    <div class="request-banner">
-                        <span>📦 <strong>Restock Request:</strong> <input type="number" id="reqQty_${index}" value="${item.pendingRestock}" onchange="updatePendingRestockValue(${index}, this.value)" style="width: 60px; display:inline-block; padding:2px 4px; font-size:0.8rem;" min="1"> pcs</span>
-                        <div style="display:flex; gap:4px;">
-                            <button type="button" onclick="approveRestock(${index})" style="background:#2e7d32; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Approve</button>
-                            <button type="button" onclick="declineRestock(${index})" style="background:#d32f2f; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Decline</button>
+                // Ipakita lamang ang request-banner kung may aktibong request pa
+                let requestHtml = '';
+                if (hasActiveRestockRequest(item)) {
+                    requestHtml = `
+                        <div class="request-banner">
+                            <span>📦 <strong>Restock Request:</strong> <input type="number" id="reqQty_${index}" value="${item.pendingRestock}" onchange="updatePendingRestockValue(${index}, this.value)" style="width: 60px; display:inline-block; padding:2px 4px; font-size:0.8rem;" min="1"> pcs</span>
+                            <div style="display:flex; gap:4px;">
+                                <button type="button" onclick="approveRestock(${index})" style="background:#2e7d32; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Approve</button>
+                                <button type="button" onclick="declineRestock(${index})" style="background:#d32f2f; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Decline</button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
 
                 const div = document.createElement('div');
                 div.className = `store-card ${isDue ? 'due' : ''}`;
@@ -541,7 +558,7 @@
             appData.homeStock[style] -= qty;
             item.initialQty += qty;
             item.currentStock += qty;
-            item.pendingRestock = 5;
+            item.hasActiveRequest = false; // Agarang itago ang banner pagka-approve
 
             const timestamp = new Date().toLocaleString();
             item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs` });
@@ -556,6 +573,8 @@
             const qtyInput = document.getElementById(`reqQty_${index}`);
             const qty = qtyInput ? parseInt(qtyInput.value) || getLatestRequestedQty(item) : getLatestRequestedQty(item);
             
+            item.hasActiveRequest = false; // Agarang itago ang banner pagka-decline
+
             const timestamp = new Date().toLocaleString();
             item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock Request na ${qty} pcs` });
             item.messages.push({ date: timestamp, text: `Admin: Paumanhin, tinanggihan muna ang iyong restock request na ${qty} pcs.` });
