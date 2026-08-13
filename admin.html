@@ -46,6 +46,11 @@
         .dates-info { background: #f1f3f5; padding: 6px 8px; border-radius: 4px; margin: 6px 0; font-size: 0.8rem; color: #495057; display: flex; justify-content: space-between; }
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         .payment-box { background: #e3f2fd; border: 1px solid #bbdefb; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; color: #0d47a1; }
+        
+        /* New Admin Additions Styles */
+        .chat-admin-box { background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 4px; max-height: 100px; overflow-y: auto; margin-bottom: 6px; font-size: 0.8rem; display: none; }
+        .request-banner { background: #fff3e0; border: 1px solid #ffe0b2; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; color: #e65100; display: flex; justify-content: space-between; align-items: center; }
+
         .btn-group { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
@@ -320,6 +325,8 @@
                 amountPaid: initialPayment,
                 dateDelivered: startD,
                 collectionDate: collD,
+                pendingRestock: null, // New field for restock request
+                messages: [],
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) | Mode: ${paymentType} | Bayad/DP: ₱${initialPayment}` }]
             });
             form.reset();
@@ -358,6 +365,7 @@
                 if (item.rejectedQty === undefined) item.rejectedQty = 0;
                 if (!item.styleType) item.styleType = 'Ordinary';
                 if (!item.history) item.history = [];
+                if (!item.messages) item.messages = [];
                 if (!item.dateDelivered) item.dateDelivered = 'N/A';
                 if (!item.collectionDate) item.collectionDate = 'N/A';
                 if (!item.paymentType) item.paymentType = 'COD';
@@ -390,6 +398,25 @@
                 });
                 if (!historyHtml) historyHtml = '<div class="history-item">Wala pang tala.</div>';
 
+                let messagesHtml = '';
+                item.messages.forEach(m => {
+                    messagesHtml += `<div style="margin-bottom: 4px;">💬 <strong>[${m.date}]</strong> ${m.text}</div>`;
+                });
+                if (!messagesHtml) messagesHtml = '<div style="color:#778;">Wala pang mensahe.</div>';
+
+                let requestHtml = '';
+                if (item.pendingRestock) {
+                    requestHtml = `
+                        <div class="request-banner">
+                            <span>📦 <strong>Restock Request:</strong> Humiling ng ${item.pendingRestock} pcs</span>
+                            <div style="display:flex; gap:4px;">
+                                <button type="button" onclick="approveRestock(${index})" style="background:#2e7d32; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Approve</button>
+                                <button type="button" onclick="declineRestock(${index})" style="background:#d32f2f; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Decline</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 const div = document.createElement('div');
                 div.className = `store-card ${isDue ? 'due' : ''}`;
                 div.innerHTML = `
@@ -401,6 +428,7 @@
                         <span>📅 Start: <strong>${item.dateDelivered}</strong></span>
                         <span>🎯 Collection: <strong>${item.collectionDate}</strong></span>
                     </div>
+                    ${requestHtml}
                     <div class="highlight-box">
                         <span>📦 Simula: <strong>${item.initialQty}</strong></span>
                         <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
@@ -410,6 +438,18 @@
                         <div>💳 Mode: <strong>${item.paymentType}</strong></div>
                         <div>💰 Nabayaran/DP: <strong>₱${item.amountPaid.toLocaleString()}</strong> | ⚠️ Balanse: <strong style="color:#d32f2f;">₱${balance.toLocaleString()}</strong></div>
                     </div>
+
+                    <!-- CHATBOX TOGGLE & SECTION -->
+                    <button type="button" onclick="toggleChat(${index})" id="chatBtn_${index}" style="background-color: #0288d1; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">💬 Ipakita ang Chatbox</button>
+                    <div class="chat-admin-box" id="chatBox_${index}">
+                        <div style="font-weight:bold; margin-bottom:4px;">💬 Chat / Paalala:</div>
+                        <div id="chatMessages_${index}" style="max-height:80px; overflow-y:auto; margin-bottom:6px;">${messagesHtml}</div>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="adminChatInput_${index}" placeholder="Mag-reply sa client..." style="font-size:0.8rem; padding:4px;">
+                            <button type="button" onclick="sendAdminChat(${index})" style="background:#2e7d32; font-size:0.75rem; padding:4px 8px; width:auto; margin:0;">Ipadala</button>
+                        </div>
+                    </div>
+
                     <button type="button" onclick="toggleHistory(${index})" id="historyBtn_${index}" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">📜 Ipakita ang History</button>
                     <div class="history-box" id="historyBox_${index}">
                         <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History:</div>
@@ -434,6 +474,72 @@
             document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
             document.getElementById('totalCollected').textContent = '₱' + tCollected.toLocaleString();
         }
+
+        window.toggleChat = function(index) {
+            const box = document.getElementById(`chatBox_${index}`);
+            const btn = document.getElementById(`chatBtn_${index}`);
+            if (box.style.display === 'block') {
+                box.style.display = 'none';
+                btn.textContent = '💬 Ipakita ang Chatbox';
+            } else {
+                box.style.display = 'block';
+                btn.textContent = '💬 Itago ang Chatbox';
+            }
+        };
+
+        window.sendAdminChat = function(index) {
+            const input = document.getElementById(`adminChatInput_${index}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            const item = appData.consignments[index];
+            const timestamp = new Date().toLocaleString();
+
+            if (!item.messages) item.messages = [];
+            item.messages.push({ date: timestamp, text: `Admin: ${text}` });
+
+            if (!item.history) item.history = [];
+            item.history.unshift({ id: Date.now(), date: timestamp, text: `Admin Message: "${text}"` });
+
+            input.value = '';
+            saveToCloud();
+        };
+
+        window.approveRestock = function(index) {
+            const item = appData.consignments[index];
+            const qty = item.pendingRestock;
+            const style = item.styleType;
+
+            if (appData.homeStock[style] < qty) {
+                alert(`Hindi ma-approve: Kulang ang stock sa bodega/bahay para sa ${style} (${appData.homeStock[style]} pcs natitira).`);
+                return;
+            }
+
+            appData.homeStock[style] -= qty;
+            item.initialQty += qty;
+            item.currentStock += qty;
+            item.pendingRestock = null;
+
+            const timestamp = new Date().toLocaleString();
+            item.history.unshift({ id: Date.now(), date: timestamp, text: `Aprubado ang Restock Request: +${qty} pcs` });
+            item.messages.push({ date: timestamp, text: `Admin: Na-approve ang iyong restock request na ${qty} pcs.` });
+
+            saveToCloud();
+            alert('Na-approve na ang restock request at nabawasan ang stock sa bahay!');
+        };
+
+        window.declineRestock = function(index) {
+            const item = appData.consignments[index];
+            const qty = item.pendingRestock;
+            item.pendingRestock = null;
+
+            const timestamp = new Date().toLocaleString();
+            item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock Request na ${qty} pcs` });
+            item.messages.push({ date: timestamp, text: `Admin: Paumanhin, tinanggihan muna ang iyong restock request na ${qty} pcs.` });
+
+            saveToCloud();
+            alert('Na-decline ang restock request.');
+        };
 
         window.toggleHistory = function(index) {
             const box = document.getElementById(`historyBox_${index}`);
