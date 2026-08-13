@@ -52,6 +52,7 @@
 
         .container { padding: 15px; max-width: 600px; margin: auto; }
 
+        /* Istilo para sa Request & Approval Banners ng Client */
         .client-banner {
             background: #fff8e1;
             border: 1px solid #ffe082;
@@ -117,6 +118,7 @@
         .restock-btn { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
         .restock-btn:hover { background-color: #f57c00; }
 
+        /* Modal para sa Restock Request gamit ang Dropdown / Selection */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -167,13 +169,9 @@
     <header>🧹 Doctor's Whisk Broom - Client</header>
 
     <div class="search-panel">
-        <div style="font-size: 0.85rem; color: white; margin-bottom: 6px; font-weight: bold;">🔍 I-type ang Pangalan ng Tindahan at Estilo:</div>
+        <div style="font-size: 0.85rem; color: white; margin-bottom: 6px; font-weight: bold;">🔍 I-type ang Pangalan ng Tindahan:</div>
         <div class="search-box-group">
             <input type="text" id="storeSearchInput" placeholder="Pangalan ng Tindahan...">
-            <select id="styleSearchSelect" style="padding: 8px; border-radius: 4px; border: none; font-size: 0.85rem; outline: none; background: #fff;">
-                <option value="Ordinary">Ordinary</option>
-                <option value="Premium">Premium</option>
-            </select>
             <button type="button" id="searchStoreBtn">Hanapin</button>
         </div>
     </div>
@@ -181,12 +179,14 @@
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
+        <!-- Banner para sa mga Pending Restock Requests -->
         <div class="client-banner" id="clientRequestBanner">
             <div class="client-banner-title">📦 Mga Nakabinbing Restock Request</div>
             <div class="client-banner-text">Ang mga sumusunod na kahilingan ay naghihintay pa ng aksyon o pag-apruba mula sa Admin:</div>
             <div id="pendingRequestsList" style="margin-bottom: 8px;"></div>
         </div>
 
+        <!-- Banner para sa Admin Approvals / Notifications -->
         <div class="client-banner approved" id="clientApprovalBanner">
             <div class="client-banner-title">🎉 Update mula sa Admin!</div>
             <div class="client-banner-text" id="approvalBannerText">Na-approve na ang iyong restock request.</div>
@@ -260,6 +260,7 @@
         </div>
     </div>
 
+    <!-- Restock Request Modal (May Dropdown Selection na para madali) -->
     <div class="modal-overlay" id="restockModal">
         <div class="modal-content">
             <h3>📦 Humiling ng Restock</h3>
@@ -300,36 +301,34 @@
         const syncStatus = document.getElementById('syncStatus');
         const urlParams = new URLSearchParams(window.location.search);
         let storeNameParam = urlParams.get('store');
-        let styleParam = urlParams.get('style');
 
         let globalStoreIndex = -1;
         let globalAllData = null;
         let unsubscribeListener = null;
+        let activeTargetStoreName = "";
 
         window.addEventListener('DOMContentLoaded', () => {
             if (storeNameParam) {
                 const decodedStore = decodeURIComponent(storeNameParam);
                 document.getElementById('storeSearchInput').value = decodedStore;
-                if (styleParam) {
-                    document.getElementById('styleSearchSelect').value = styleParam;
-                }
-                setupRealtimeListener(decodedStore, styleParam || document.getElementById('styleSearchSelect').value);
+                activeTargetStoreName = decodedStore;
+                setupRealtimeListener(decodedStore);
             } else {
-                syncStatus.textContent = "✅ Ilagay ang pangalan ng tindahan at piliin ang estilo upang magsimula.";
+                syncStatus.textContent = "✅ Ilagay o i-type ang pangalan ng tindahan upang magsimula.";
             }
         });
 
         document.getElementById('searchStoreBtn').addEventListener('click', () => {
             const query = document.getElementById('storeSearchInput').value.trim();
-            const selectedStyle = document.getElementById('styleSearchSelect').value;
             if (!query) {
-                alert("Mangyaring ilagay ang pangalan ng tindahan.");
+                alert("Ilagay ang pangalan ng tindahan.");
                 return;
             }
-            setupRealtimeListener(query, selectedStyle);
+            activeTargetStoreName = query;
+            setupRealtimeListener(query);
         });
 
-        function setupRealtimeListener(targetStore, targetStyle) {
+        function setupRealtimeListener(targetStore) {
             syncStatus.textContent = "Kumokonekta sa live updates ng tindahan...";
 
             if (unsubscribeListener) {
@@ -344,21 +343,18 @@
                     const consignments = globalAllData.consignments;
                     const cleanTarget = targetStore.toLowerCase().trim();
 
-                    // Paghahanap batay sa kombinasyon ng Tindahan AT Estilo para eksaktong tumugma sa admin
                     globalStoreIndex = consignments.findIndex(item => {
                         const sName = (item.storeName || "").toLowerCase().trim();
-                        const sType = (item.styleType || "Ordinary").toLowerCase().trim();
-                        return sName === cleanTarget && sType === targetStyle.toLowerCase().trim();
+                        return sName === cleanTarget || sName.includes(cleanTarget);
                     });
 
                     if (globalStoreIndex !== -1) {
                         const storeData = consignments[globalStoreIndex];
                         renderClient(storeData);
-                        syncStatus.textContent = `🟢 Live Connected: ${storeData.storeName} (${storeData.styleType})`;
+                        syncStatus.textContent = `🟢 Live Connected: ${storeData.storeName}`;
                     } else {
                         globalStoreIndex = -1;
-                        syncStatus.textContent = `⚠️ Walang nakitang record para sa "${targetStore}" (${targetStyle}). Siguraduhing naisama na ito ng Admin.`;
-                        clearClientDisplay();
+                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahan sa database.";
                     }
                 } else {
                     syncStatus.textContent = "⚠️ Walang makitang record sa database.";
@@ -367,20 +363,6 @@
                 console.error("Snapshot error:", err);
                 syncStatus.textContent = "⚠️ Nagkaaberya sa live connection.";
             });
-        }
-
-        function clearClientDisplay() {
-            document.getElementById('storeTitle').textContent = `🏪 Tindahan`;
-            document.getElementById('styleType').textContent = `-`;
-            document.getElementById('price').textContent = `-`;
-            document.getElementById('initialQty').textContent = `-`;
-            document.getElementById('currentStock').textContent = `-`;
-            document.getElementById('soldQty').textContent = `-`;
-            document.getElementById('totalSales').textContent = `₱0`;
-            document.getElementById('clientRequestBanner').style.display = 'none';
-            document.getElementById('clientApprovalBanner').style.display = 'none';
-            document.getElementById('historyList').innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>';
-            document.getElementById('clientChatBox').innerHTML = '<div style="color: #778; font-size: 0.8rem;">Wala pang mensahe.</div>';
         }
 
         function renderClient(item) {
@@ -411,9 +393,13 @@
             codDiv.style.display = 'none';
             dpDiv.style.display = 'none';
 
-            if (paymentType === 'GCash') gcashDiv.style.display = 'block';
-            else if (paymentType === 'COD') codDiv.style.display = 'block';
-            else if (paymentType === 'Downpayment') dpDiv.style.display = 'block';
+            if (paymentType === 'GCash') {
+                gcashDiv.style.display = 'block';
+            } else if (paymentType === 'COD') {
+                codDiv.style.display = 'block';
+            } else if (paymentType === 'Downpayment') {
+                dpDiv.style.display = 'block';
+            }
 
             const reqBanner = document.getElementById('clientRequestBanner');
             const pendingListContainer = document.getElementById('pendingRequestsList');
@@ -467,7 +453,7 @@
                     chatBox.appendChild(div);
                 });
             } else {
-                chatBox.innerHTML = '<div style="color: #778; font-size: 0.8rem;">Wala pang mensahe.</div>';
+                chatBox.innerHTML = '<div style="color: #778; font-size: 0.8rem;">Wala pang mensahe. Mag-iwan ng mensahe o tanong para sa admin dito.</div>';
             }
         }
 
@@ -497,10 +483,17 @@
             const timestamp = new Date().toLocaleString();
 
             if (!storeData.messages) storeData.messages = [];
-            storeData.messages.push({ sender: storeData.storeName, text: msgText, date: timestamp });
+            storeData.messages.push({
+                date: timestamp,
+                text: msgText
+            });
 
             if (!storeData.history) storeData.history = [];
-            storeData.history.unshift({ id: Date.now(), date: timestamp, text: `Mensahe mula sa Tindahan: "${msgText}"` });
+            storeData.history.unshift({
+                id: Date.now(),
+                date: timestamp,
+                text: `Mensahe mula sa Tindahan: "${msgText}"`
+            });
 
             syncStatus.textContent = "Nagpapadala ng mensahe...";
             try {
@@ -514,13 +507,15 @@
             }
         });
 
+        // Modal Controls para sa Restock Request
         const restockModal = document.getElementById('restockModal');
 
         document.getElementById('openRestockModalBtn').addEventListener('click', () => {
             if (globalStoreIndex === -1 || !globalAllData) {
-                alert("Mangyaring hanapin muna at i-load ang iyong tindahan.");
+                alert("Mangyaring hanapin muna ang iyong tindahan.");
                 return;
             }
+            // I-set ang default dropdown sa kasalukuyang styleType ng tindahan kung sakali
             const storeData = globalAllData.consignments[globalStoreIndex];
             if (storeData.styleType) {
                 const styleSelect = document.getElementById('modalStyleSelect');
@@ -538,6 +533,7 @@
             restockModal.style.display = 'none';
         });
 
+        // Submit Restock Request gamit ang dropdown choice
         document.getElementById('submitRestockBtn').addEventListener('click', async () => {
             if (globalStoreIndex === -1 || !globalAllData) return;
 
@@ -553,7 +549,9 @@
             const timestamp = new Date().toLocaleString();
             const storeData = globalAllData.consignments[globalStoreIndex];
 
-            if (!storeData.activeRequests) storeData.activeRequests = [];
+            if (!storeData.activeRequests) {
+                storeData.activeRequests = [];
+            }
 
             storeData.activeRequests.push({
                 reqId: Date.now(),
@@ -565,10 +563,17 @@
             const reqText = `📦 RESTOCK REQUEST: Humiling ng karagdagang ${requestedQty} pcs (${formattedStyle}).`;
 
             if (!storeData.history) storeData.history = [];
-            storeData.history.unshift({ id: Date.now(), date: timestamp, text: reqText });
+            storeData.history.unshift({
+                id: Date.now(),
+                date: timestamp,
+                text: reqText
+            });
 
             if (!storeData.messages) storeData.messages = [];
-            storeData.messages.push({ sender: storeData.storeName, text: reqText, date: timestamp });
+            storeData.messages.push({
+                date: timestamp,
+                text: reqText
+            });
 
             syncStatus.textContent = "Nire-request ang restock...";
             restockModal.style.display = 'none';
