@@ -587,12 +587,27 @@
             if (!item.clientNotifications) item.clientNotifications = [];
 
             if (isApproved) {
+                // HUMINGI NG TAMANG PRESYO BAGO GUMAWA NG BAGONG ENTRY
+                const inputPrice = prompt(`Ilagay ang tamang presyo bago i-approve ang ${qty} pcs (${style}) para sa ${item.storeName}:`, item.price);
+                if (inputPrice === null) {
+                    // Kinansela ng user ang pag-prompt, ibalik ang request para hindi mawala
+                    item.activeRequests.splice(reqIdx, 0, { reqId: Date.now(), qty: qty, styleType: style, date: timestamp });
+                    return;
+                }
+
+                const approvedPrice = parseFloat(inputPrice);
+                if (isNaN(approvedPrice) || approvedPrice <= 0) {
+                    alert("Invalid na presyo! Hindi natuloy ang pag-apruba.");
+                    item.activeRequests.splice(reqIdx, 0, { reqId: Date.now(), qty: qty, styleType: style, date: timestamp });
+                    return;
+                }
+
                 if (appData.homeStock[style] < qty) {
                     alert(`Babala: Ang Home stock para sa ${style} (${appData.homeStock[style]} pcs) ay kulang sa hiling na ${qty} pcs.`);
                 }
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
 
-                // GUMAWA NG PANIBAGONG RECORD (BATCH) PARA SA TINDAHAN NA ITO
+                // GUMAWA NG PANIBAGONG RECORD (BATCH) PARA SA TINDAHAN NA ITO GAMIT ANG BAGONG PRESYO
                 const todayStr = new Date().toISOString().slice(0, 10);
                 let nextMonth = new Date();
                 nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -605,21 +620,21 @@
                     initialQty: qty,
                     currentStock: qty,
                     rejectedQty: 0,
-                    price: item.price,
+                    price: approvedPrice,
                     dateDelivered: todayStr,
                     collectionDate: nextMonthStr,
                     activeRequests: [],
                     clientNotifications: [],
                     messages: [],
-                    history: [{ id: Date.now(), date: timestamp, text: `Bagong Batch mula sa Restock Request: +${qty} pcs (${style})` }]
+                    history: [{ id: Date.now(), date: timestamp, text: `Bagong Batch mula sa Restock Request: +${qty} pcs (${style}) sa presyong ₱${approvedPrice}` }]
                 });
 
                 item.clientNotifications.push({
                     id: Date.now(),
-                    text: `✅ Na-approve at nailagay na bilang bagong batch ang iyong hiling na restock na ${qty} pcs (${style}).`,
+                    text: `✅ Na-approve at nailagay na bilang bagong batch ang iyong hiling na restock na ${qty} pcs (${style}) sa presyong ₱${approvedPrice}.`,
                     date: timestamp
                 });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Inaprubahan ang restock request na ${qty} pcs (${style}) - Gumawa ng bagong batch.` });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Inaprubahan ang restock request na ${qty} pcs (${style}) sa presyong ₱${approvedPrice} - Gumawa ng bagong batch.` });
             } else {
                 item.clientNotifications.push({
                     id: Date.now(),
@@ -630,7 +645,7 @@
             }
 
             await saveToCloud();
-            alert(isApproved ? `Na-approve! Awtomatikong gumawa ng panibagong batch record para sa ${item.storeName} (${style}).` : "Tinanggihan ang request.");
+            alert(isApproved ? `Na-approve! Awtomatikong gumawa ng panibagong batch record para sa ${item.storeName} (${style}) sa halagang ₱${approvedPrice}.` : "Tinanggihan ang request.");
         };
 
         window.sendAdminReply = function(index) {
