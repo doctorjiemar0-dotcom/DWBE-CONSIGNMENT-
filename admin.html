@@ -301,7 +301,7 @@
             const qty = parseInt(document.getElementById('quantity').value);
             const price = parseFloat(document.getElementById('price').value);
             const paymentType = document.getElementById('paymentType').value;
-            const initialPayment = paymentType === 'Downpayment' ? parseFloat(document.getElementById('initialPayment').value) || 0 : (paymentType === 'GCash' || paymentType === 'COD' ? 0 : 0);
+            const initialPayment = paymentType === 'Downpayment' ? parseFloat(document.getElementById('initialPayment').value) || 0 : 0;
             const startD = document.getElementById('dateDelivered').value;
             const collD = document.getElementById('collectionDate').value;
 
@@ -325,7 +325,7 @@
                 amountPaid: initialPayment,
                 dateDelivered: startD,
                 collectionDate: collD,
-                pendingRestock: null,
+                pendingRestock: 5, // Naka-set sa 5 bilang default testing value o kung ano man ang ilagay mo
                 messages: [],
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) | Mode: ${paymentType} | Bayad/DP: ₱${initialPayment}` }]
             });
@@ -370,6 +370,7 @@
                 if (!item.collectionDate) item.collectionDate = 'N/A';
                 if (!item.paymentType) item.paymentType = 'COD';
                 if (item.amountPaid === undefined) item.amountPaid = 0;
+                if (item.pendingRestock === undefined || item.pendingRestock === null) item.pendingRestock = 5;
 
                 const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
                 const totalVal = sold * item.price;
@@ -404,11 +405,10 @@
                 });
                 if (!messagesHtml) messagesHtml = '<div style="color:#778;">Wala pang mensahe.</div>';
 
-                // Laging pinapakita ang request/approval section sa bawat tindahan para madaling mag-test o mag-aprub kahit walang external app request
-                let currentRequestQty = item.pendingRestock !== null && item.pendingRestock !== undefined ? item.pendingRestock : 10;
+                // Gagamitin ang eksaktong halaga na nakalagay sa item.pendingRestock (na pwedeng baguhin sa input box nang direkta)
                 let requestHtml = `
                     <div class="request-banner">
-                        <span>📦 <strong>Restock Request:</strong> <input type="number" id="reqQty_${index}" value="${currentRequestQty}" style="width: 60px; display:inline-block; padding:2px 4px; font-size:0.8rem;" min="1"> pcs</span>
+                        <span>📦 <strong>Restock Request:</strong> <input type="number" id="reqQty_${index}" value="${item.pendingRestock}" onchange="updatePendingRestockValue(${index}, this.value)" style="width: 60px; display:inline-block; padding:2px 4px; font-size:0.8rem;" min="1"> pcs</span>
                         <div style="display:flex; gap:4px;">
                             <button type="button" onclick="approveRestock(${index})" style="background:#2e7d32; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Approve</button>
                             <button type="button" onclick="declineRestock(${index})" style="background:#d32f2f; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Decline</button>
@@ -474,6 +474,13 @@
             document.getElementById('totalCollected').textContent = '₱' + tCollected.toLocaleString();
         }
 
+        window.updatePendingRestockValue = function(index, val) {
+            const num = parseInt(val);
+            if (!isNaN(num) && num > 0) {
+                appData.consignments[index].pendingRestock = num;
+            }
+        };
+
         window.toggleChat = function(index) {
             const box = document.getElementById(`chatBox_${index}`);
             const btn = document.getElementById(`chatBtn_${index}`);
@@ -507,7 +514,7 @@
         window.approveRestock = function(index) {
             const item = appData.consignments[index];
             const qtyInput = document.getElementById(`reqQty_${index}`);
-            const qty = qtyInput ? parseInt(qtyInput.value) || 10 : 10;
+            const qty = qtyInput ? parseInt(qtyInput.value) || item.pendingRestock || 5 : 5;
             const style = item.styleType;
 
             if (appData.homeStock[style] < qty) {
@@ -518,28 +525,27 @@
             appData.homeStock[style] -= qty;
             item.initialQty += qty;
             item.currentStock += qty;
-            item.pendingRestock = null;
+            item.pendingRestock = 5; // I-reset pabalik sa default o panatilihing handa para sa susunod
 
             const timestamp = new Date().toLocaleString();
             item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs` });
             item.messages.push({ date: timestamp, text: `Admin: Na-approve ang iyong restock request na ${qty} pcs.` });
 
             saveToCloud();
-            alert('Na-approve na ang restock at nabawasan ang stock sa bahay!');
+            alert(`Matagumpay na na-approve ang restock na ${qty} pcs!`);
         };
 
         window.declineRestock = function(index) {
             const item = appData.consignments[index];
             const qtyInput = document.getElementById(`reqQty_${index}`);
-            const qty = qtyInput ? parseInt(qtyInput.value) || 10 : 10;
-            item.pendingRestock = null;
-
+            const qty = qtyInput ? parseInt(qtyInput.value) || item.pendingRestock || 5 : 5;
+            
             const timestamp = new Date().toLocaleString();
             item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock Request na ${qty} pcs` });
             item.messages.push({ date: timestamp, text: `Admin: Paumanhin, tinanggihan muna ang iyong restock request na ${qty} pcs.` });
 
             saveToCloud();
-            alert('Na-decline ang restock request.');
+            alert(`Tinanggihan ang restock request na ${qty} pcs.`);
         };
 
         window.toggleHistory = function(index) {
