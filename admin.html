@@ -57,8 +57,7 @@
         .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; }
         .floating-add-btn:hover { background-color: #388e3c; }
 
-        .store-header-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
+        .store-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
         .store-body-content { margin-top: 8px; }
     </style>
 </head>
@@ -258,18 +257,6 @@
                 formCard.scrollIntoView({ behavior: 'smooth' });
             } else {
                 formCard.style.display = 'none';
-            }
-        };
-
-        window.toggleStoreDetails = function(index) {
-            const bodyContent = document.getElementById(`storeBody_${index}`);
-            const toggleBtn = document.getElementById(`storeToggleBtn_${index}`);
-            if (bodyContent.style.display === 'none') {
-                bodyContent.style.display = 'block';
-                toggleBtn.textContent = '➖';
-            } else {
-                bodyContent.style.display = 'none';
-                toggleBtn.textContent = '➕';
             }
         };
 
@@ -499,14 +486,11 @@
                 const div = document.createElement('div');
                 div.className = `store-card ${isDue ? 'due' : ''}`;
                 div.innerHTML = `
-                    <div class="store-header-row" onclick="toggleStoreDetails(${index})">
+                    <div class="store-header-row">
                         <strong>🏪 ${item.storeName} (${item.styleType}) - ₱${item.price}</strong>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span class="badge ${badgeClass}">${rating}</span>
-                            <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" title="I-expand / I-collapse">➕</button>
-                        </div>
+                        <span class="badge ${badgeClass}">${rating}</span>
                     </div>
-                    <div class="store-body-content" id="storeBody_${index}" style="display: none;">
+                    <div class="store-body-content">
                         <div class="dates-info">
                             <span>📅 Start: <strong>${item.dateDelivered}</strong></span>
                             <span>🎯 Collection: <strong>${item.collectionDate}</strong></span>
