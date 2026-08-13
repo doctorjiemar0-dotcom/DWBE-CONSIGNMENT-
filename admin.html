@@ -17,8 +17,8 @@
         input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn-approve { background-color: #2e7d32; color: white; padding: 5px 8px; width: auto; font-size: 0.75rem; }
-        .btn-decline { background-color: #c62828; color: white; padding: 5px 8px; width: auto; font-size: 0.75rem; margin-left: 4px; }
         .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .batch-row { background: #f9f9f9; padding: 8px; margin-top: 6px; border-radius: 4px; border: 1px solid #eee; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
         .request-action-row { background: #fff8e1; padding: 8px; border: 1px solid #ffe082; margin-bottom: 6px; font-size: 0.85rem; border-radius: 4px; }
         .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; border: none; }
     </style>
@@ -82,7 +82,6 @@
         
         let appData = { consignments: [], homeStock: { Ordinary: 0, Premium: 0 } };
 
-        // Login Logic
         document.getElementById('loginBtn').addEventListener('click', () => {
             if (document.getElementById('adminPasswordInput').value === "0802") {
                 document.getElementById('authScreen').style.display = 'none';
@@ -108,7 +107,6 @@
             renderApp();
         }
 
-        // Restock Logic (DITO ANG PAGHIHIWALAY NG PRESYO)
         window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApproved) {
             const item = appData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
@@ -119,7 +117,6 @@
                 if (!inputPrice) return;
                 const approvedPrice = parseFloat(inputPrice);
 
-                // Hanapin kung may existing batch na pareho ng Store, Style, at Price
                 const existingBatch = appData.consignments.find(c => 
                     c.storeName === item.storeName && 
                     c.styleType === reqStyle && 
@@ -150,7 +147,7 @@
             appData.consignments.push({
                 id: Date.now(),
                 storeName: document.getElementById('storeName').value,
-                styleType: document.getElementById('styleType').value,
+                styleType: document.getElementById('styleType5') ? document.getElementById('styleType5').value : document.getElementById('styleType').value,
                 initialQty: parseInt(document.getElementById('quantity').value),
                 currentStock: parseInt(document.getElementById('quantity').value),
                 price: parseFloat(document.getElementById('price').value),
@@ -165,14 +162,43 @@
             storesList.innerHTML = '';
             reqContainer.innerHTML = '';
             
-            appData.consignments.forEach((item, idx) => {
-                storesList.innerHTML += `<div class="store-card"><strong>${item.storeName} (${item.styleType})</strong> - ₱${item.price}<br>Stock: ${item.currentStock}</div>`;
+            // --- GROUPING LOGIC PARA SA MGA TINDAHAN ---
+            const groupedStores = {};
+            appData.consignments.forEach((item, originalIdx) => {
+                if (!groupedStores[item.storeName]) {
+                    groupedStores[item.storeName] = [];
+                }
+                groupedStores[item.storeName].push({ ...item, originalIdx });
             });
 
+            // I-display ang mga pinag-isang tindahan na may magkakahiwalay na presyo/item batches
+            for (const [storeName, batches] of Object.entries(groupedStores)) {
+                // Ayusin ang mga batches mula sa pinakamababang presyo papunta sa mataas
+                batches.sort((a, b) => a.price - b.price);
+
+                let batchesHTML = '';
+                batches.forEach(b => {
+                    batchesHTML += `
+                        <div class="batch-row">
+                            <div>
+                                <strong>${b.styleType}</strong> - ₱${b.price}<br>
+                                <small>Stock: ${b.currentStock} / Initial: ${b.initialQty}</small>
+                            </div>
+                        </div>`;
+                });
+
+                storesList.innerHTML += `
+                    <div class="store-card">
+                        <strong style="font-size: 1.05rem; color: var(--primary-color);">🛒 ${storeName}</strong>
+                        ${batchesHTML}
+                    </div>`;
+            }
+
+            // Pagpapakita ng mga pending requests
             appData.consignments.forEach((item, idx) => {
                 item.activeRequests?.forEach((req, rIdx) => {
                     reqContainer.innerHTML += `<div class="request-action-row">
-                        ${item.storeName} - ${req.qty} pcs 
+                        ${item.storeName} - ${req.qty} pcs (${req.styleType})
                         <button class="btn-approve" onclick="processRestock(${idx}, ${rIdx}, ${req.qty}, '${req.styleType}', true)">Approve</button>
                     </div>`;
                 });
