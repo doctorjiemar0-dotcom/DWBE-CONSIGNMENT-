@@ -117,6 +117,51 @@
         .restock-action-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
         .restock-btn { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
         .restock-btn:hover { background-color: #f57c00; }
+
+        /* Modal para sa Restock Request gamit ang Dropdown / Selection */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .modal-content h3 { font-size: 1rem; color: var(--primary-color); margin-bottom: 12px; text-align: center; }
+        .modal-group { margin-bottom: 12px; }
+        .modal-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; color: #444; }
+        .modal-group select, .modal-group input {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.9rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+        .modal-actions { display: flex; gap: 8px; margin-top: 15px; }
+        .modal-actions button {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .btn-cancel { background-color: #b0bec5; color: white; }
+        .btn-cancel:hover { background-color: #90a4ae; }
+        .btn-submit { background-color: var(--primary-color); color: white; }
+        .btn-submit:hover { background-color: #1b5e20; }
     </style>
 </head>
 <body>
@@ -189,7 +234,7 @@
 
         <div class="restock-action-box">
             <div style="font-size: 0.85rem; color: #2e7d32; margin-bottom: 8px; font-weight: bold;">Nauubusan na ba ng walis? Humiling ng karagdagang stock dito:</div>
-            <button type="button" class="restock-btn" id="requestRestockBtn">📦 Humiling ng Restock (Request Restock)</button>
+            <button type="button" class="restock-btn" id="openRestockModalBtn">📦 Humiling ng Restock (Request Restock)</button>
         </div>
 
         <div class="card">
@@ -212,6 +257,28 @@
 
         <div class="admin-link">
             <a href="admin.html">⚙️ Bumalik sa Admin Panel</a>
+        </div>
+    </div>
+
+    <!-- Restock Request Modal (May Dropdown Selection na para madali) -->
+    <div class="modal-overlay" id="restockModal">
+        <div class="modal-content">
+            <h3>📦 Humiling ng Restock</h3>
+            <div class="modal-group">
+                <label for="modalStyleSelect">Uri ng Estilo:</label>
+                <select id="modalStyleSelect">
+                    <option value="Ordinary">Ordinary</option>
+                    <option value="Premium">Premium</option>
+                </select>
+            </div>
+            <div class="modal-group">
+                <label for="modalQtyInput">Bilang ng Piraso (Quantity):</label>
+                <input type="number" id="modalQtyInput" min="1" value="10">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="closeModalBtn">Kanselahin</button>
+                <button type="button" class="btn-submit" id="submitRestockBtn">Ipadala ang Request</button>
+            </div>
         </div>
     </div>
 
@@ -440,30 +507,47 @@
             }
         });
 
-        // NA-UPDATE NA RESTOCK REQUEST LOGIC: Nagtatanong na ng Estilo at Bilang
-        document.getElementById('requestRestockBtn').addEventListener('click', async () => {
+        // Modal Controls para sa Restock Request
+        const restockModal = document.getElementById('restockModal');
+
+        document.getElementById('openRestockModalBtn').addEventListener('click', () => {
             if (globalStoreIndex === -1 || !globalAllData) {
                 alert("Mangyaring hanapin muna ang iyong tindahan.");
                 return;
             }
-
+            // I-set ang default dropdown sa kasalukuyang styleType ng tindahan kung sakali
             const storeData = globalAllData.consignments[globalStoreIndex];
+            if (storeData.styleType) {
+                const styleSelect = document.getElementById('modalStyleSelect');
+                for (let opt of styleSelect.options) {
+                    if (opt.value.toLowerCase() === storeData.styleType.toLowerCase()) {
+                        styleSelect.value = opt.value;
+                        break;
+                    }
+                }
+            }
+            restockModal.style.display = 'flex';
+        });
 
-            // 1. Tanungin ang Uri ng Estilo (Ordinary o Premium)
-            const styleChoice = prompt("Anong uri ng estilo ang gusto mong i-restock? I-type ang 'Ordinary' o 'Premium':", storeData.styleType || "Ordinary");
-            if (!styleChoice) return;
-            const formattedStyle = styleChoice.trim();
-            if (formattedStyle.toLowerCase() !== 'ordinary' && formattedStyle.toLowerCase() !== 'premium') {
-                alert("Mali ang nailagay na estilo. Mangyaring i-type ang 'Ordinary' o 'Premium'.");
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            restockModal.style.display = 'none';
+        });
+
+        // Submit Restock Request gamit ang dropdown choice
+        document.getElementById('submitRestockBtn').addEventListener('click', async () => {
+            if (globalStoreIndex === -1 || !globalAllData) return;
+
+            const formattedStyle = document.getElementById('modalStyleSelect').value;
+            const qtyInputVal = document.getElementById('modalQtyInput').value;
+
+            if (!qtyInputVal || isNaN(qtyInputVal) || parseInt(qtyInputVal) <= 0) {
+                alert("Ilagay ang tamang bilang ng piraso.");
                 return;
             }
 
-            // 2. Tanungin ang Bilang (Quantity)
-            const qtyReq = prompt(`Ilang piraso ng ${formattedStyle} ang nais mong i-request?`, '10');
-            if (qtyReq === null || isNaN(qtyReq) || parseInt(qtyReq) <= 0) return;
-
-            const requestedQty = parseInt(qtyReq);
+            const requestedQty = parseInt(qtyInputVal);
             const timestamp = new Date().toLocaleString();
+            const storeData = globalAllData.consignments[globalStoreIndex];
 
             if (!storeData.activeRequests) {
                 storeData.activeRequests = [];
@@ -492,6 +576,8 @@
             });
 
             syncStatus.textContent = "Nire-request ang restock...";
+            restockModal.style.display = 'none';
+
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 await setDoc(docRef, globalAllData);
