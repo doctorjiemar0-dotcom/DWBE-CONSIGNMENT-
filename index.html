@@ -180,7 +180,6 @@
         let globalStoreData = null;
         let globalAllData = null;
 
-        // Auto-load kapag may ?store= sa URL o kaya i-load ang buong database para sa search
         window.addEventListener('DOMContentLoaded', () => {
             if (storeName) {
                 document.getElementById('storeSearchInput').value = decodeURIComponent(storeName);
@@ -231,7 +230,6 @@
                 if (globalAllData && globalAllData.consignments) {
                     const consignments = globalAllData.consignments;
                     
-                    // Eksakto at madaling pag-match ng pangalan ng tindahan mula sa database array
                     const cleanTarget = targetStore.toLowerCase().trim();
                     const storeData = consignments.find(item => {
                         const sName = (item.storeName || "").toLowerCase().trim();
@@ -291,7 +289,6 @@
                 dpDiv.style.display = 'block';
             }
 
-            // Render History
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
             if (item.history && item.history.length > 0) {
@@ -305,7 +302,6 @@
                 historyList.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>';
             }
 
-            // Render Chat/Notes
             const chatBox = document.getElementById('clientChatBox');
             chatBox.innerHTML = '';
             if (item.messages && item.messages.length > 0) {
@@ -320,7 +316,6 @@
             }
         }
 
-        // Send Chat Button Event
         document.getElementById('sendChatBtn').addEventListener('click', async () => {
             const inputField = document.getElementById('chatMessageInput');
             const msgText = inputField.value.trim();
@@ -352,23 +347,38 @@
             }
         });
 
-        // Request Restock Button Event
+        // REVISED RESTOCK REQUEST LOGIC (Gumagamit na ng activeRequests array push)
         document.getElementById('requestRestockBtn').addEventListener('click', async () => {
             if (!globalStoreData || !globalAllData) return;
             const qtyReq = prompt('Ilang piraso ng stock ang nais mong i-request?', '10');
             if (qtyReq === null || isNaN(qtyReq) || parseInt(qtyReq) <= 0) return;
 
-            const reqText = `📦 RESTOCK REQUEST: Humiling ng karagdagang ${qtyReq} pcs ng stock.`;
+            const requestedQty = parseInt(qtyReq);
+            const timestamp = new Date().toLocaleString();
+
+            // Sisiguraduhing may activeRequests array
+            if (!globalStoreData.activeRequests) {
+                globalStoreData.activeRequests = [];
+            }
+
+            // I-push ang bawat bagong request sa array nang hindi pinapatungan ang mga nauna
+            globalStoreData.activeRequests.push({
+                reqId: Date.now(),
+                qty: requestedQty
+            });
+
+            const reqText = `📦 RESTOCK REQUEST: Humiling ng karagdagang ${requestedQty} pcs ng stock.`;
+            
             if (!globalStoreData.history) globalStoreData.history = [];
             globalStoreData.history.unshift({
                 id: Date.now(),
-                date: new Date().toLocaleString(),
+                date: timestamp,
                 text: reqText
             });
 
             if (!globalStoreData.messages) globalStoreData.messages = [];
             globalStoreData.messages.push({
-                date: new Date().toLocaleString(),
+                date: timestamp,
                 text: reqText
             });
 
