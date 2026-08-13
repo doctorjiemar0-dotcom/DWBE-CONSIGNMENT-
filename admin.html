@@ -47,7 +47,6 @@
         .highlight-box { background: #fffde7; border: 1px solid #ffee58; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; color: #f57f17; display: flex; justify-content: space-between; align-items: center; }
         .payment-box { background: #e3f2fd; border: 1px solid #bbdefb; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; color: #0d47a1; }
         
-        /* New Admin Additions Styles */
         .chat-admin-box { background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 4px; max-height: 100px; overflow-y: auto; margin-bottom: 6px; font-size: 0.8rem; display: none; }
         .request-banner { background: #fff3e0; border: 1px solid #ffe0b2; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; color: #e65100; display: flex; justify-content: space-between; align-items: center; }
 
@@ -325,7 +324,7 @@
                 amountPaid: initialPayment,
                 dateDelivered: startD,
                 collectionDate: collD,
-                pendingRestock: 5, // Naka-set sa 5 bilang default testing value o kung ano man ang ilagay mo
+                pendingRestock: 5,
                 messages: [],
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) | Mode: ${paymentType} | Bayad/DP: ₱${initialPayment}` }]
             });
@@ -339,6 +338,20 @@
 
             saveToCloud();
         });
+
+        // Function para makuha ang pinakabagong hiningi sa history kung meron man
+        function getLatestRequestedQty(item) {
+            if (!item.history) return 5;
+            for (let h of item.history) {
+                if (h.text.toLowerCase().includes('restock request') || h.text.toLowerCase().includes('humiling ng karagdagang')) {
+                    const match = h.text.match(/\d+/);
+                    if (match) {
+                        return parseInt(match[0]);
+                    }
+                }
+            }
+            return item.pendingRestock !== undefined ? item.pendingRestock : 5;
+        }
 
         function renderApp() {
             if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
@@ -370,7 +383,12 @@
                 if (!item.collectionDate) item.collectionDate = 'N/A';
                 if (!item.paymentType) item.paymentType = 'COD';
                 if (item.amountPaid === undefined) item.amountPaid = 0;
-                if (item.pendingRestock === undefined || item.pendingRestock === null) item.pendingRestock = 5;
+                
+                // Awtomatikong kunin ang pinakabagong request bilang default value ng input box
+                const activeRestockQty = getLatestRequestedQty(item);
+                if (item.pendingRestock === undefined || item.pendingRestock === null || item.pendingRestock === 5) {
+                    item.pendingRestock = activeRestockQty;
+                }
 
                 const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
                 const totalVal = sold * item.price;
@@ -405,7 +423,6 @@
                 });
                 if (!messagesHtml) messagesHtml = '<div style="color:#778;">Wala pang mensahe.</div>';
 
-                // Gagamitin ang eksaktong halaga na nakalagay sa item.pendingRestock (na pwedeng baguhin sa input box nang direkta)
                 let requestHtml = `
                     <div class="request-banner">
                         <span>📦 <strong>Restock Request:</strong> <input type="number" id="reqQty_${index}" value="${item.pendingRestock}" onchange="updatePendingRestockValue(${index}, this.value)" style="width: 60px; display:inline-block; padding:2px 4px; font-size:0.8rem;" min="1"> pcs</span>
@@ -438,7 +455,6 @@
                         <div>💰 Nabayaran/DP: <strong>₱${item.amountPaid.toLocaleString()}</strong> | ⚠️ Balanse: <strong style="color:#d32f2f;">₱${balance.toLocaleString()}</strong></div>
                     </div>
 
-                    <!-- CHATBOX TOGGLE & SECTION -->
                     <button type="button" onclick="toggleChat(${index})" id="chatBtn_${index}" style="background-color: #0288d1; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">💬 Ipakita ang Chatbox</button>
                     <div class="chat-admin-box" id="chatBox_${index}">
                         <div style="font-weight:bold; margin-bottom:4px;">💬 Chat / Paalala:</div>
@@ -514,7 +530,7 @@
         window.approveRestock = function(index) {
             const item = appData.consignments[index];
             const qtyInput = document.getElementById(`reqQty_${index}`);
-            const qty = qtyInput ? parseInt(qtyInput.value) || item.pendingRestock || 5 : 5;
+            const qty = qtyInput ? parseInt(qtyInput.value) || getLatestRequestedQty(item) : getLatestRequestedQty(item);
             const style = item.styleType;
 
             if (appData.homeStock[style] < qty) {
@@ -525,7 +541,7 @@
             appData.homeStock[style] -= qty;
             item.initialQty += qty;
             item.currentStock += qty;
-            item.pendingRestock = 5; // I-reset pabalik sa default o panatilihing handa para sa susunod
+            item.pendingRestock = 5;
 
             const timestamp = new Date().toLocaleString();
             item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs` });
@@ -538,7 +554,7 @@
         window.declineRestock = function(index) {
             const item = appData.consignments[index];
             const qtyInput = document.getElementById(`reqQty_${index}`);
-            const qty = qtyInput ? parseInt(qtyInput.value) || item.pendingRestock || 5 : 5;
+            const qty = qtyInput ? parseInt(qtyInput.value) || getLatestRequestedQty(item) : getLatestRequestedQty(item);
             
             const timestamp = new Date().toLocaleString();
             item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock Request na ${qty} pcs` });
