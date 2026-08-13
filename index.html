@@ -18,10 +18,10 @@
             font-weight: bold; 
         }
 
-        /* Search Bar Security Panel (Pinalit sa Face ID Panel) */
+        /* Search Bar Panel na pamalit sa Face ID */
         .search-panel {
             background: #1b5e20;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             border-bottom: 2px solid #388e3c;
         }
@@ -33,8 +33,8 @@
         }
         .search-box-group input {
             flex: 1;
-            padding: 10px;
-            font-size: 0.95rem;
+            padding: 8px 12px;
+            font-size: 0.9rem;
             border-radius: 4px;
             border: none;
             outline: none;
@@ -43,7 +43,7 @@
             background-color: #ff9800;
             color: white;
             border: none;
-            padding: 10px 16px;
+            padding: 8px 14px;
             border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
@@ -57,8 +57,8 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); }
         .history-item { border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 6px; font-size: 0.85rem; color: #555; }
-        .admin-link { text-align: center; margin-top: 20px; display: flex; justify-content: center; gap: 15px; align-items: center; }
-        .admin-link a { color: var(--primary-color); text-decoration: none; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+        .admin-link { text-align: center; margin-top: 20px; }
+        .admin-link a { color: var(--primary-color); text-decoration: none; font-size: 0.9rem; font-weight: bold; }
         .admin-link a:hover { text-decoration: underline; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
         
@@ -74,92 +74,86 @@
         .restock-action-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
         .restock-btn { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
         .restock-btn:hover { background-color: #f57c00; }
-        
-        /* Nakatago default ang main content hangga't hindi nase-search nang tama ang tindahan */
-        #mainContentArea { display: none; }
     </style>
 </head>
 <body>
 
-    <header>🧹 Doctor's Whisk Broom - Client Portal</header>
+    <header>🧹 Doctor's Whisk Broom - Client</header>
 
-    <!-- SEARCH BAR SECURITY PANEL (Pinalit sa Face ID Panel) -->
+    <!-- SEARCH BAR PANEL PAMALIT SA FACE ID -->
     <div class="search-panel">
-        <div style="font-size: 0.9rem; color: white; margin-bottom: 8px; font-weight: bold;">🔍 I-type ang Eksaktong Pangalan ng Tindahan</div>
+        <div style="font-size: 0.85rem; color: white; margin-bottom: 6px; font-weight: bold;">🔍 I-type ang Pangalan ng Tindahan:</div>
         <div class="search-box-group">
-            <input type="text" id="storeSearchInput" placeholder="Halimbawa: Aling Nena Store">
+            <input type="text" id="storeSearchInput" placeholder="Pangalan ng Tindahan...">
             <button type="button" id="searchStoreBtn">Hanapin</button>
         </div>
-        <div id="searchMessage" style="font-size: 0.75rem; color: #ffccbc; margin-top: 5px; font-style: italic;">Lalabas lamang ang impormasyon kapag eksaktong tumugma ang pangalan.</div>
     </div>
 
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <div id="mainContentArea">
-            <div class="card" id="clientCard">
-                <h2 id="storeTitle">🏪 Tindahan</h2>
-                <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
-                    <div class="summary-row"><span>Uri ng Estilo:</span><span id="styleType">-</span></div>
-                    <div class="summary-row"><span>Presyo bawat Isa:</span><span id="price">-</span></div>
-                    <div class="summary-row"><span>Simulang Stock:</span><span id="initialQty">-</span></div>
-                    <div class="summary-row"><span>Natitirang Stock:</span><span id="currentStock" style="color: #2e7d32; font-weight: bold;">-</span></div>
-                    <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="soldQty" style="color: #c2185b; font-weight: bold;">-</span></div>
-                    <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
+        <div class="card" id="clientCard">
+            <h2 id="storeTitle">🏪 Tindahan</h2>
+            <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
+                <div class="summary-row"><span>Uri ng Estilo:</span><span id="styleType">-</span></div>
+                <div class="summary-row"><span>Presyo bawat Isa:</span><span id="price">-</span></div>
+                <div class="summary-row"><span>Simulang Stock:</span><span id="initialQty">-</span></div>
+                <div class="summary-row"><span>Natitirang Stock:</span><span id="currentStock" style="color: #2e7d32; font-weight: bold;">-</span></div>
+                <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="soldQty" style="color: #c2185b; font-weight: bold;">-</span></div>
+                <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
+            </div>
+        </div>
+
+        <!-- PAYMENT / PORTAL INFO CARD -->
+        <div class="portal-box" id="paymentPortalCard">
+            <div class="portal-title">💳 Payment & Terms Portal</div>
+            <div class="portal-detail"><span>Paraan ng Bayad:</span> <strong id="portalPaymentType">-</strong></div>
+            <div class="portal-detail"><span>Nabayaran / Down Payment:</span> <strong id="portalPaid">₱0</strong></div>
+            <div class="portal-detail"><span>Naiwang Balanse:</span> <strong id="portalBalance" style="color: #c62828;">₱0</strong></div>
+            
+            <div id="gcashDetails" style="display: none; margin-top: 10px;">
+                <div style="font-size: 0.85rem; color: #0d47a1; margin-bottom: 5px;">Maaaring magbayad sa pamamagitan ng GCash:</div>
+                <div style="font-size: 0.9rem; font-weight: bold; background: #fff; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #90caf9;">
+                    📱 GCash Name: Jiemar Doctor<br>
+                    📞 Number: 0912-345-6789
                 </div>
             </div>
 
-            <!-- PAYMENT / PORTAL INFO CARD -->
-            <div class="portal-box" id="paymentPortalCard">
-                <div class="portal-title">💳 Payment & Terms Portal</div>
-                <div class="portal-detail"><span>Paraan ng Bayad:</span> <strong id="portalPaymentType">-</strong></div>
-                <div class="portal-detail"><span>Nabayaran / Down Payment:</span> <strong id="portalPaid">₱0</strong></div>
-                <div class="portal-detail"><span>Naiwang Balanse:</span> <strong id="portalBalance" style="color: #c62828;">₱0</strong></div>
-                
-                <div id="gcashDetails" style="display: none; margin-top: 10px;">
-                    <div style="font-size: 0.85rem; color: #0d47a1; margin-bottom: 5px;">Maaaring magbayad sa pamamagitan ng GCash:</div>
-                    <div style="font-size: 0.9rem; font-weight: bold; background: #fff; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #90caf9;">
-                        📱 GCash Name: Jiemar Doctor<br>
-                        📞 Number: 0912-345-6789
-                    </div>
-                </div>
-
-                <div id="codDetails" style="display: none; margin-top: 10px;">
-                    <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
-                        💵 <strong>Cash on Delivery (COD):</strong> Ang koleksyon ng bayad ay gagawin sa takdang araw ng pagkolekta kasama ang ating authorized partner.
-                    </div>
-                </div>
-
-                <div id="dpDetails" style="display: none; margin-top: 10px;">
-                    <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
-                        📊 <strong>Down Payment Terms:</strong> Ang natitirang balanse ay kailangang bayaran sa susunod na hulog o takdang petsa ng koleksyon.
-                    </div>
+            <div id="codDetails" style="display: none; margin-top: 10px;">
+                <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
+                    💵 <strong>Cash on Delivery (COD):</strong> Ang koleksyon ng bayad ay gagawin sa takdang araw ng pagkolekta kasama ang ating authorized partner.
                 </div>
             </div>
 
-            <!-- REQUEST RESTOCK SECTION -->
-            <div class="restock-action-box">
-                <div style="font-size: 0.85rem; color: #2e7d32; margin-bottom: 8px; font-weight: bold;">Nauubusan na ba ng walis? Humiling ng karagdagang stock dito:</div>
-                <button type="button" class="restock-btn" id="requestRestockBtn">📦 Humiling ng Restock (Request Restock)</button>
-            </div>
-
-            <!-- CLIENT CHAT / NOTES SECTION -->
-            <div class="card">
-                <h2>💬 Mensahe / Paalala sa Admin</h2>
-                <div class="chat-box" id="clientChatBox">
-                    <div style="color: #778; font-size: 0.8rem;">Wala pang mensahe. Mag-iwan ng mensahe o tanong para sa admin dito.</div>
-                </div>
-                <div class="chat-input-group">
-                    <input type="text" id="chatMessageInput" placeholder="I-type ang iyong mensahe...">
-                    <button type="button" id="sendChatBtn">Ipadala</button>
+            <div id="dpDetails" style="display: none; margin-top: 10px;">
+                <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
+                    📊 <strong>Down Payment Terms:</strong> Ang natitirang balanse ay kailangang bayaran sa susunod na hulog o takdang petsa ng koleksyon.
                 </div>
             </div>
+        </div>
 
-            <div class="card">
-                <h2>📜 Kasaysayan ng Transaksyon</h2>
-                <div id="historyList">
-                    <p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>
-                </div>
+        <!-- REQUEST RESTOCK SECTION -->
+        <div class="restock-action-box">
+            <div style="font-size: 0.85rem; color: #2e7d32; margin-bottom: 8px; font-weight: bold;">Nauubusan na ba ng walis? Humiling ng karagdagang stock dito:</div>
+            <button type="button" class="restock-btn" id="requestRestockBtn">📦 Humiling ng Restock (Request Restock)</button>
+        </div>
+
+        <!-- CLIENT CHAT / NOTES SECTION -->
+        <div class="card">
+            <h2>💬 Mensahe / Paalala sa Admin</h2>
+            <div class="chat-box" id="clientChatBox">
+                <div style="color: #778; font-size: 0.8rem;">Wala pang mensahe. Mag-iwan ng mensahe o tanong para sa admin dito.</div>
+            </div>
+            <div class="chat-input-group">
+                <input type="text" id="chatMessageInput" placeholder="I-type ang iyong mensahe...">
+                <button type="button" id="sendChatBtn">Ipadala</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📜 Kasaysayan ng Transaksyon</h2>
+            <div id="historyList">
+                <p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>
             </div>
         </div>
 
@@ -192,54 +186,71 @@
         let globalStoreData = null;
         let globalAllData = null;
 
+        // Load data automatically kung may store sa URL o kaya i-load ang buong database para sa search
         if (storeName) {
             document.getElementById('storeSearchInput').value = storeName;
-            loadAndSearchStore(storeName);
+            loadClientData(storeName);
         } else {
-            syncStatus.textContent = "I-type ang pangalan ng tindahan sa itaas para hanapin.";
+            loadAllDatabase();
         }
 
         document.getElementById('searchStoreBtn').addEventListener('click', () => {
             const query = document.getElementById('storeSearchInput').value.trim();
             if (!query) {
-                alert("Mangyaring maglagay ng pangalan ng tindahan.");
+                alert("Ilagay ang pangalan ng tindahan.");
                 return;
             }
-            loadAndSearchStore(query);
+            loadClientData(query);
         });
 
-        async function loadAndSearchStore(targetStore) {
-            syncStatus.textContent = "Naghahanap sa Cloud Database...";
+        async function loadAllDatabase() {
+            syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     globalAllData = docSnap.data();
-                    const consignments = globalAllData.consignments || [];
+                    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database. Mag-search ng tindahan.";
+                } else {
+                    syncStatus.textContent = "⚠️ Walang makitang record sa database.";
+                }
+            } catch (err) {
+                console.error("Error loading database:", err);
+                syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
+            }
+        }
 
+        async function loadClientData(targetStore) {
+            syncStatus.textContent = "Hinahanap ang tindahan...";
+            try {
+                if (!globalAllData) {
+                    const docRef = doc(db, "app_data", "main_inventory");
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        globalAllData = docSnap.data();
+                    }
+                }
+
+                if (globalAllData && globalAllData.consignments) {
+                    const consignments = globalAllData.consignments;
                     const storeData = consignments.find(item => 
                         item.storeName.toLowerCase() === targetStore.toLowerCase()
                     );
 
                     if (storeData) {
                         globalStoreData = storeData;
-                        storeName = storeData.storeName;
                         renderClient(storeData);
-                        
-                        document.getElementById('mainContentArea').style.display = 'block';
-                        document.getElementById('searchMessage').textContent = "✅ Natagpuan ang tindahan!";
-                        syncStatus.textContent = `✅ Nakakonekta sa ${storeName}`;
+                        syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
                     } else {
-                        document.getElementById('mainContentArea').style.display = 'none';
-                        document.getElementById('searchMessage').textContent = "⚠️ Walang nakitang tindahan na eksaktong tumutugma sa pangalang ito.";
-                        syncStatus.textContent = "⚠️ Hindi natagpuan.";
+                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahang ito.";
+                        alert("Walang natagpuang tindahan na may pangalang: " + targetStore);
                     }
                 } else {
                     syncStatus.textContent = "⚠️ Walang makitang record sa database.";
                 }
             } catch (err) {
-                console.error("Error searching store data:", err);
+                console.error("Error loading client data:", err);
                 syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
             }
         }
