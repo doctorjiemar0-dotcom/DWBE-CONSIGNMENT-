@@ -120,7 +120,7 @@
             </div>
 
             <div class="summary-box">
-                <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
+                <div class="summary-row"><span>Kabuuang Tindahan (Records):</span><span id="totalStores">0</span></div>
                 <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>
                 <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
                 <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
@@ -369,36 +369,70 @@
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const sName = document.getElementById('storeName').value;
+                const sName = document.getElementById('storeName').value.trim();
                 const styleType = document.getElementById('styleType').value;
                 const qty = parseInt(document.getElementById('quantity').value);
                 const price = parseFloat(document.getElementById('price').value);
                 const startD = document.getElementById('dateDelivered').value;
                 const collD = document.getElementById('collectionDate').value;
 
-                if (appData.homeStock[styleType] < qty) {
-                    if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
-                        return;
-                    }
+                if (!sName) {
+                    alert('Mangyaring ilagay ang pangalan ng tindahan.');
+                    return;
                 }
 
-                appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
+                // Suriin kung mayroon nang umiiral na record para sa parehong Tindahan AT parehong Estilo (Variation)
+                const existingIndex = appData.consignments.findIndex(
+                    c => c.storeName.toLowerCase() === sName.toLowerCase() && (c.styleType || 'Ordinary') === styleType
+                );
 
-                appData.consignments.push({
-                    id: Date.now(),
-                    storeName: sName,
-                    styleType: styleType,
-                    initialQty: qty,
-                    currentStock: qty,
-                    rejectedQty: 0,
-                    price: price,
-                    dateDelivered: startD,
-                    collectionDate: collD,
-                    activeRequests: [],
-                    clientNotifications: [],
-                    messages: [],
-                    history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) noong ${startD}` }]
-                });
+                if (existingIndex !== -1) {
+                    // Kung mayroon nang record para sa style na ito, i-update o idagdag ang stock sa umiiral na record
+                    const existingItem = appData.consignments[existingIndex];
+                    if (appData.homeStock[styleType] < qty) {
+                        if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
+                            return;
+                        }
+                    }
+
+                    appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
+                    existingItem.initialQty += qty;
+                    existingItem.currentStock += qty;
+                    existingItem.price = price; // I-update ang presyo sakaling binago
+                    if (!existingItem.history) existingItem.history = [];
+                    existingItem.history.unshift({ 
+                        id: Date.now(), 
+                        date: new Date().toLocaleString(), 
+                        text: `Nagdagdag ng bagong ${qty} pcs (${styleType}) sa umiiral na record` 
+                    });
+
+                } else {
+                    // Kung wala pang record para sa style na ito, gumawa ng hiwalay na entry
+                    if (appData.homeStock[styleType] < qty) {
+                        if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
+                            return;
+                        }
+                    }
+
+                    appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
+
+                    appData.consignments.push({
+                        id: Date.now(),
+                        storeName: sName,
+                        styleType: styleType,
+                        initialQty: qty,
+                        currentStock: qty,
+                        rejectedQty: 0,
+                        price: price,
+                        dateDelivered: startD,
+                        collectionDate: collD,
+                        activeRequests: [],
+                        clientNotifications: [],
+                        messages: [],
+                        history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) noong ${startD}` }]
+                    });
+                }
+
                 form.reset();
                 document.getElementById('dateDelivered').valueAsDate = new Date();
 
