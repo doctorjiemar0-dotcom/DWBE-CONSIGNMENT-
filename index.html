@@ -217,7 +217,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -237,14 +237,17 @@
 
         let globalStoreIndex = -1;
         let globalAllData = null;
+        let unsubscribeListener = null;
+        let activeTargetStoreName = "";
 
         window.addEventListener('DOMContentLoaded', () => {
             if (storeNameParam) {
                 const decodedStore = decodeURIComponent(storeNameParam);
                 document.getElementById('storeSearchInput').value = decodedStore;
-                fetchAndLoadStore(decodedStore);
+                activeTargetStoreName = decodedStore;
+                setupRealtimeListener(decodedStore);
             } else {
-                fetchAllDatabase();
+                syncStatus.textContent = "✅ Ilagay o i-type ang pangalan ng tindahan upang magsimula.";
             }
         });
 
@@ -254,39 +257,24 @@
                 alert("Ilagay ang pangalan ng tindahan.");
                 return;
             }
-            fetchAndLoadStore(query);
+            activeTargetStoreName = query;
+            setupRealtimeListener(query);
         });
 
-        async function fetchAllDatabase() {
-            syncStatus.textContent = "Kumukuha ng data sa Cloud...";
-            try {
-                const docRef = doc(db, "app_data", "main_inventory");
-                const docSnap = await getDoc(docRef);
+        function setupRealtimeListener(targetStore) {
+            syncStatus.textContent = "Kumokonekta sa live updates ng tindahan...";
+            
+            // Kung may nakaraang listener na aktibo, tanggalin muna para iwas doble
+            if (unsubscribeListener) {
+                unsubscribeListener();
+            }
 
+            const docRef = doc(db, "app_data", "main_inventory");
+            
+            // Real-time listener para kusang mag-update kapag nagbago ang data sa Cloud
+            unsubscribeListener = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     globalAllData = docSnap.data();
-                    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database. I-type ang pangalan ng tindahan.";
-                } else {
-                    syncStatus.textContent = "⚠️ Walang makitang record sa database.";
-                }
-            } catch (err) {
-                console.error("Error fetching database:", err);
-                syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-            }
-        }
-
-        async function fetchAndLoadStore(targetStore) {
-            syncStatus.textContent = "Hinahanap ang tindahan...";
-            try {
-                if (!globalAllData) {
-                    const docRef = doc(db, "app_data", "main_inventory");
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists()) {
-                        globalAllData = docSnap.data();
-                    }
-                }
-
-                if (globalAllData && globalAllData.consignments) {
                     const consignments = globalAllData.consignments;
                     const cleanTarget = targetStore.toLowerCase().trim();
                     
@@ -298,19 +286,18 @@
                     if (globalStoreIndex !== -1) {
                         const storeData = consignments[globalStoreIndex];
                         renderClient(storeData);
-                        syncStatus.textContent = `✅ Nakakonekta sa tindahan: ${storeData.storeName}`;
+                        syncStatus.textContent = `🟢 Live Connected: ${storeData.storeName}`;
                     } else {
                         globalStoreIndex = -1;
-                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahan.";
-                        alert("Walang natagpuang tindahan na may pangalang: " + targetStore);
+                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahan sa database.";
                     }
                 } else {
-                    syncStatus.textContent = "⚠️ Walang listahan ng mga tindahan sa database.";
+                    syncStatus.textContent = "⚠️ Walang makitang record sa database.";
                 }
-            } catch (err) {
-                console.error("Error loading store:", err);
-                syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-            }
+            }, (err) => {
+                console.error("Snapshot error:", err);
+                syncStatus.textContent = "⚠️ Nagkaaberya sa live connection.";
+            });
         }
 
         function renderClient(item) {
@@ -372,7 +359,8 @@
 
             if (item.clientNotifications && item.clientNotifications.length > 0) {
                 const notif = item.clientNotifications[item.clientNotifications.length - 1];
-                approvalText.innerHTML = notif.text;
+                const displayMsg = typeof notif === 'object' ? notif.text : notif;
+                approvalText.innerHTML = displayMsg;
                 approvalBanner.style.display = 'block';
             } else {
                 approvalBanner.style.display = 'none';
@@ -416,7 +404,7 @@
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 await setDoc(docRef, globalAllData);
-                renderClient(storeData);
+                // Ang onSnapshot ang bahalang mag-a-update ng UI pagkasave sa cloud
                 syncStatus.textContent = "✅ Na-clear na ang approval notification.";
             } catch (err) {
                 console.error("Error clearing notification:", err);
@@ -450,7 +438,6 @@
                 const docRef = doc(db, "app_data", "main_inventory");
                 await setDoc(docRef, globalAllData);
                 inputField.value = '';
-                renderClient(storeData);
                 syncStatus.textContent = "✅ Naipadala ang mensahe sa Cloud";
             } catch (err) {
                 console.error("Error sending message:", err);
@@ -500,7 +487,6 @@
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 await setDoc(docRef, globalAllData);
-                renderClient(storeData);
                 syncStatus.textContent = "✅ Matagumpay na naipadala ang Request Restock!";
                 alert('Naipadala na ang iyong kahilingan sa restock sa Admin!');
             } catch (err) {
