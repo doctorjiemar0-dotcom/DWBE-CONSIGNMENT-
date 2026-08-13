@@ -36,7 +36,6 @@
         .history-item { border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center; }
         .history-btns button { background: none; border: none; font-size: 0.7rem; cursor: pointer; padding: 2px 4px; margin-left: 2px; }
 
-        /* Request Row Alert Box */
         .request-action-row { display: flex; justify-content: space-between; align-items: center; background: #fff8e1; padding: 8px; border-radius: 4px; border: 1px solid #ffe082; margin-bottom: 6px; font-size: 0.85rem; }
         .btn-approve { background-color: #2e7d32; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.75rem; width: auto; margin-top: 0; }
         .btn-decline { background-color: #c62828; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.75rem; width: auto; margin-top: 0; margin-left: 4px; }
@@ -62,7 +61,6 @@
 
     <div class="container">
 
-        <!-- PASSWORD PROTECTION SCREEN -->
         <div id="authScreen" class="card">
             <h2>🔒 Security Login</h2>
             <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px; text-align: center;">Ilagay ang iyong password para mabuksan ang admin panel.</p>
@@ -72,19 +70,16 @@
             <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
         </div>
 
-        <!-- MAIN APP CONTENT -->
         <div id="mainAppContent">
 
             <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-            <!-- INSTALL APP BANNER -->
             <div class="card install-banner" id="installCard">
                 <h2>📱 I-install bilang Mobile App</h2>
                 <p style="font-size: 0.85rem; color: #333; margin-bottom: 5px;">Para mas mabilis ma-access sa iyong home screen.</p>
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
             </div>
 
-            <!-- PENDING REQUESTS SECTION -->
             <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
                 <h2>📦 Mga Pending Restock Request mula sa Tindahan</h2>
                 <div id="adminRequestsContainer">
@@ -92,7 +87,6 @@
                 </div>
             </div>
 
-            <!-- BACKUP & RECOVERY -->
             <details class="card sync-card">
                 <summary style="cursor:pointer; font-size:0.9rem; font-weight:bold; color:#555;">📱 Data Backup & Recovery (I-click para buksan)</summary>
                 <div style="margin-top: 10px;">
@@ -195,7 +189,6 @@
         const passwordInput = document.getElementById('adminPasswordInput');
         const syncStatus = document.getElementById('syncStatus');
 
-        // Sound Notification Function (Web Audio API)
         function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -203,8 +196,8 @@
                 const gainNode = audioCtx.createGain();
                 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5 note
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15);
                 
                 gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
@@ -276,7 +269,7 @@
                 renderApp();
             } catch (err) {
                 console.error("Error saving to cloud:", err);
-                syncStatus.textContent = "⚠️ Error sa pag-save sa cloud (Naka-save locally)";
+                syncStatus.textContent = "⚠️ Error sa pag-save sa cloud";
                 localStorage.setItem('consignments_v3', JSON.stringify(appData));
                 renderApp();
             }
@@ -289,7 +282,6 @@
             document.getElementById('collectionDate').valueAsDate = nextMonth;
             loadFromCloud();
 
-            // Auto-refresh from cloud every 10 seconds to detect new requests automatically
             setInterval(() => {
                 if (sessionStorage.getItem('admin_logged_in') === 'true') {
                     loadFromCloudSilent();
@@ -427,18 +419,19 @@
                 let rating = isDue ? 'Due Na!' : (sold === 0 ? 'Mabagal' : 'Maayos');
                 let badgeClass = isDue ? 'badge-due' : (sold === 0 ? 'badge-ok' : 'badge-good');
 
-                // Render Active Requests to Top Panel
                 if (item.activeRequests.length > 0) {
                     hasRequests = true;
                     totalActiveReqsCount += item.activeRequests.length;
                     item.activeRequests.forEach((req, reqIdx) => {
+                        // Kinuha ang tamang styleType mula sa request object o item para hindi magkamali sa Ordinary/Premium
+                        const reqStyle = req.styleType || item.styleType;
                         const reqRow = document.createElement('div');
                         reqRow.className = 'request-action-row';
                         reqRow.innerHTML = `
-                            <span><strong>${item.storeName} (${item.styleType})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
+                            <span><strong>${item.storeName} (${reqStyle})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
                             <div>
-                                <button type="button" class="btn-approve" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, true)">Approve</button>
-                                <button type="button" class="btn-decline" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, false)">Decline</button>
+                                <button type="button" class="btn-approve" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', true)">Approve</button>
+                                <button type="button" class="btn-decline" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', false)">Decline</button>
                             </div>
                         `;
                         requestsContainer.appendChild(reqRow);
@@ -510,7 +503,6 @@
                 storesList.appendChild(div);
             });
 
-            // Play sound if new request appears during render/sync cycle
             if (totalActiveReqsCount > previousRequestCount) {
                 playNotificationSound();
             }
@@ -540,17 +532,17 @@
             }
         };
 
-        window.processRestock = async function(storeIdx, reqIdx, qty, isApproved) {
+        window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApproved) {
             const item = appData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
-            const style = item.styleType || 'Ordinary';
+            const style = reqStyle || item.styleType || 'Ordinary';
 
             item.activeRequests.splice(reqIdx, 1);
             if (!item.clientNotifications) item.clientNotifications = [];
 
             if (isApproved) {
                 if (appData.homeStock[style] < qty) {
-                    alert(`Babala: Ang Home stock para sa ${style} (${appData.homeStock[style]} pcs) ay kulang sa hiling na ${qty} pcs. Na-approve pa rin pero maaaring magka-negatibong stock sa bahay.`);
+                    alert(`Babala: Ang Home stock para sa ${style} (${appData.homeStock[style]} pcs) ay kulang sa hiling na ${qty} pcs.`);
                 }
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
                 item.initialQty += qty;
@@ -572,7 +564,7 @@
             }
 
             await saveToCloud();
-            alert(isApproved ? "Na-approve ang restock at nabawas sa tamang bodega!" : "Tinanggihan ang request.");
+            alert(isApproved ? `Na-approve ang restock at nabawas sa ${style} bodega!` : "Tinanggihan ang request.");
         };
 
         window.sendAdminReply = function(index) {
