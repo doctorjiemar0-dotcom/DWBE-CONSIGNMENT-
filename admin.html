@@ -127,7 +127,6 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
-            <!-- Magdagdag ng Consignment Form, lilitaw lang kapag pinindot ang floating icon -->
             <div class="card" id="addStoreCard" style="display: none;">
                 <h2>Magdagdag ng Consignment</h2>
                 <form id="consignmentForm">
@@ -173,10 +172,8 @@
 
     </div>
 
-    <!-- Floating Action Button para lumitaw/itago ang Add Store Form -->
     <button class="floating-add-btn" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -381,13 +378,11 @@
                     return;
                 }
 
-                // Suriin kung mayroon nang umiiral na record para sa parehong Tindahan AT parehong Estilo (Variation)
                 const existingIndex = appData.consignments.findIndex(
                     c => c.storeName.toLowerCase() === sName.toLowerCase() && (c.styleType || 'Ordinary') === styleType
                 );
 
                 if (existingIndex !== -1) {
-                    // Kung mayroon nang record para sa style na ito, i-update o idagdag ang stock sa umiiral na record
                     const existingItem = appData.consignments[existingIndex];
                     if (appData.homeStock[styleType] < qty) {
                         if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
@@ -398,7 +393,7 @@
                     appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
                     existingItem.initialQty += qty;
                     existingItem.currentStock += qty;
-                    existingItem.price = price; // I-update ang presyo sakaling binago
+                    existingItem.price = price;
                     if (!existingItem.history) existingItem.history = [];
                     existingItem.history.unshift({ 
                         id: Date.now(), 
@@ -407,7 +402,6 @@
                     });
 
                 } else {
-                    // Kung wala pang record para sa style na ito, gumawa ng hiwalay na entry
                     if (appData.homeStock[styleType] < qty) {
                         if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
                             return;
@@ -551,7 +545,7 @@
                             <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
                         </div>
 
-                        <a href="client.html?store=${encodeURIComponent(item.storeName)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
+                        <a href="client.html?store=${encodeURIComponent(item.storeName)}&style=${encodeURIComponent(item.styleType)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
 
                         <div style="margin-top: 5px;">
                             <button type="button" onclick="toggleBox('chatBox_${index}', this)" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">💬 Ipakita ang Chatbox (${item.messages.length})</button>
@@ -616,24 +610,49 @@
             const timestamp = new Date().toLocaleString();
             const style = reqStyle || item.styleType || 'Ordinary';
 
+            // Hanapin o gumawa ng hiwalay na entry para sa partikular na estilo na ito
+            let targetIndex = appData.consignments.findIndex(
+                c => c.storeName.toLowerCase() === item.storeName.toLowerCase() && (c.styleType || 'Ordinary') === style
+            );
+
             item.activeRequests.splice(reqIdx, 1);
-            if (!item.clientNotifications) item.clientNotifications = [];
 
             if (isApproved) {
                 if (appData.homeStock[style] < qty) {
                     alert(`Babala: Ang Home stock para sa ${style} (${appData.homeStock[style]} pcs) ay kulang sa hiling na ${qty} pcs.`);
                 }
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-                item.initialQty += qty;
-                item.currentStock += qty;
 
-                item.clientNotifications.push({
-                    id: Date.now(),
-                    text: `✅ Magandang balita! Ang iyong hiling na restock na ${qty} pcs (${style}) ay NA-APPROVE na ng Admin.`,
-                    date: timestamp
-                });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs (${style})` });
+                if (targetIndex !== -1) {
+                    appData.consignments[targetIndex].initialQty += qty;
+                    appData.consignments[targetIndex].currentStock += qty;
+                    if (!appData.consignments[targetIndex].history) appData.consignments[targetIndex].history = [];
+                    appData.consignments[targetIndex].history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs (${style})` });
+                    if (!appData.consignments[targetIndex].clientNotifications) appData.consignments[targetIndex].clientNotifications = [];
+                    appData.consignments[targetIndex].clientNotifications.push({
+                        id: Date.now(),
+                        text: `✅ Magandang balita! Ang iyong hiling na restock na ${qty} pcs (${style}) ay NA-APPROVE na ng Admin.`,
+                        date: timestamp
+                    });
+                } else {
+                    appData.consignments.push({
+                        id: Date.now(),
+                        storeName: item.storeName,
+                        styleType: style,
+                        initialQty: qty,
+                        currentStock: qty,
+                        rejectedQty: 0,
+                        price: item.price,
+                        dateDelivered: new Date().toISOString().slice(0, 10),
+                        collectionDate: item.collectionDate,
+                        activeRequests: [],
+                        clientNotifications: [{ id: Date.now(), text: `✅ Magandang balita! Ang iyong hiling na restock na ${qty} pcs (${style}) ay NA-APPROVE na ng Admin.`, date: timestamp }],
+                        messages: [],
+                        history: [{ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs (${style})` }]
+                    });
+                }
             } else {
+                if (!item.clientNotifications) item.clientNotifications = [];
                 item.clientNotifications.push({
                     id: Date.now(),
                     text: `❌ Paumanhin, ang iyong hiling na restock na ${qty} pcs (${style}) ay NA-DECLINE muna sa ngayon.`,
@@ -643,7 +662,7 @@
             }
 
             await saveToCloud();
-            alert(isApproved ? `Na-approve ang restock at nabawas sa ${style} bodega!` : "Tinanggihan ang request.");
+            alert(isApproved ? `Na-approve ang restock at hiwalay na nailagay sa ${style} inventory!` : "Tinanggihan ang request.");
         };
 
         window.sendAdminReply = function(index) {
@@ -691,7 +710,6 @@
                     return;
                 }
                 
-                // Bawasan ang current stock sa tindahan at ibalik sa Home inventory
                 item.currentStock -= count;
                 appData.homeStock[style] += count;
                 
