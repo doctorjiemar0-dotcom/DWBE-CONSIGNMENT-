@@ -3,126 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor's Whisk Broom - CLIENT PORTAL</title>
-    <meta name="theme-color" content="#0288d1">
+    <title>Doctor's Whisk Broom - Tindahan Portal</title>
     <style>
-        :root { --primary-color: #0288d1; --bg-color: #f4f6f8; }
-        body { font-family: sans-serif; background-color: var(--bg-color); padding: 20px; color: #333; }
-        .container { max-width: 500px; margin: auto; }
-        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h1 { color: var(--primary-color); text-align: center; font-size: 1.4rem; }
-        .batch-card { border-left: 5px solid var(--primary-color); background: #e3f2fd; }
-        .batch-info { font-size: 0.9rem; margin-bottom: 5px; }
-        .btn { background: var(--primary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        #msgBoard { background: #fff8e1; padding: 10px; border-radius: 8px; font-size: 0.85rem; }
+        body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 10px; color: #333; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { color: #2e7d32; font-size: 1.1rem; margin-top: 0; border-bottom: 2px solid #2e7d32; padding-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #2e7d32; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #1b5e20; }
+        .batch-box { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        .notif-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem; }
+        .msg-box { background: #fff8e1; border: 1px solid #ffe082; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1 id="storeTitle">Tindahan Portal</h1>
-        <div id="batchesContainer">
-            <p style="text-align:center;">Kinukuha ang data...</p>
-        </div>
-
-        <div class="card">
-            <h3>💬 Mensahe sa Admin</h3>
-            <div id="msgBoard" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;">
-                <p>Walang bagong mensahe.</p>
-            </div>
-            <input type="text" id="clientMsg" style="width: 100%; padding: 8px;" placeholder="I-type ang mensahe...">
-            <button class="btn" onclick="sendMsg()">Ipadala sa Admin</button>
+<div class="container">
+    <div class="card">
+        <h2 id="portalTitle">🏪 Tindahan Portal</h2>
+        <div id="clientContent">
+            <p>Naglo-load ng data...</p>
         </div>
     </div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
-          authDomain: "dwbe-consignment.firebaseapp.com",
-          projectId: "dwbe-consignment",
-          storageBucket: "dwbe-consignment.firebasestorage.app",
-          messagingSenderId: "205759197252",
-          appId: "1:205759197252:web:b04400821f81791d10cc11"
-        };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+      authDomain: "dwbe-consignment.firebaseapp.com",
+      projectId: "dwbe-consignment",
+      storageBucket: "dwbe-consignment.firebasestorage.app",
+      messagingSenderId: "205759197252",
+      appId: "1:205759197252:web:b04400821f81791d10cc11"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const storeName = urlParams.get('store');
-        
-        let appData = { consignments: [] };
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentStoreName = urlParams.get('store');
 
-        async function loadData() {
-            try {
-                const docSnap = await getDoc(doc(db, "app_data", "main_inventory"));
-                if (docSnap.exists()) {
-                    appData = docSnap.data();
-                    renderBatches();
-                }
-            } catch (e) { console.error(e); }
+    let appData = { consignments: [] };
+
+    async function loadClientData() {
+        const contentDiv = document.getElementById('clientContent');
+        if (!currentStoreName) {
+            contentDiv.innerHTML = `<p style="color: red;">Walang natukoy na pangalan ng tindahan sa link.</p>`;
+            return;
         }
 
-        function renderBatches() {
-            const container = document.getElementById('batchesContainer');
-            const msgBoard = document.getElementById('msgBoard');
-            container.innerHTML = `<h2>Mga Batch ni: ${storeName}</h2>`;
-            
-            // I-filter lahat ng batch ng tindahang ito
-            const myBatches = appData.consignments.filter(c => c.storeName === storeName);
-            
-            if (myBatches.length === 0) {
-                container.innerHTML += `<p>Walang nahanap na data.</p>`;
-                return;
+        try {
+            const docSnap = await getDoc(doc(db, "app_data", "main_inventory"));
+            if (docSnap.exists()) {
+                appData = docSnap.data();
+                renderClientPortal();
+            } else {
+                contentDiv.innerHTML = `<p>Walang nahanap na data sa sistema.</p>`;
+            }
+        } catch (e) {
+            contentDiv.innerHTML = `<p style="color: red;">May error sa pagkonekta sa sistema.</p>`;
+            console.error(e);
+        }
+    }
+
+    function renderClientPortal() {
+        const contentDiv = document.getElementById('clientContent');
+        document.getElementById('portalTitle').innerText = `Mga Batch ni: ${currentStoreName}`;
+
+        // Salain ang lahat ng batch na pagmamay-ari ng tindahang ito
+        const storeBatches = appData.consignments.filter(c => c.storeName === currentStoreName);
+
+        if (storeBatches.length === 0) {
+            contentDiv.innerHTML = `<p>Walang nahanap na data para sa tindahang ito.</p>`;
+            return;
+        }
+
+        let batchesHTML = '';
+        storeBatches.forEach((b, idx) => {
+            batchesHTML += `
+                <div class="batch-box">
+                    <strong>Estilo: ${b.styleType}</strong><br>
+                    Presyo: ₱${b.price}<br>
+                    Kasalukuyang Stock: <strong>${b.currentStock}</strong> / Initial: ${b.initialQty}<br>
+                    <div style="margin-top: 8px;">
+                        <input type="number" id="reqQty_${idx}" placeholder="Dami ng hiling na restock" min="1" style="margin-bottom: 5px;">
+                        <button onclick="window.sendRestockRequest('${b.styleType}', ${idx})">Humiling ng Restock</button>
+                    </div>
+                </div>`;
+        });
+
+        // Kunin ang notifications at messages mula sa unang batch (o pagsama-samahin)
+        const primaryBatch = storeBatches[0];
+        if (!primaryBatch.clientNotifications) primaryBatch.clientNotifications = [];
+        if (!primaryBatch.messages) primaryBatch.messages = [];
+
+        let notifHTML = '';
+        if (primaryBatch.clientNotifications.length > 0) {
+            primaryBatch.clientNotifications.forEach(n => {
+                notifHTML += `<div class="notif-box"><small>${n.date}</small><br>${n.text}</div>`;
+            });
+        } else {
+            notifHTML = `<p style="font-size: 0.85rem; color: #666;">Walang bagong abiso.</p>`;
+        }
+
+        let msgHTML = '';
+        if (primaryBatch.messages.length > 0) {
+            primaryBatch.messages.forEach(m => {
+                msgHTML += `<div class="msg-box"><small>${m.date} - <strong>${m.sender}</strong></small><br>${m.text}</div>`;
+            });
+        } else {
+            msgHTML = `<p style="font-size: 0.85rem; color: #666;">Walang bagong mensahe.</p>`;
+        }
+
+        contentDiv.innerHTML = `
+            <div style="margin-bottom: 15px;">${batchesHTML}</div>
+
+            <div style="background: #fff8e1; border: 1px solid #ffe082; padding: 10px; border-radius: 6px; margin-top: 15px;">
+                <h4 style="margin: 0 0 8px 0; color: #b78103; font-size: 0.95rem;">📢 Mga Abiso at Mensahe</h4>
+                <div id="notifContainer">${notifHTML}</div>
+                <div id="msgContainer" style="margin-top: 10px;">${msgHTML}</div>
+                <textarea id="clientMsgInput" placeholder="I-type ang mensahe sa Admin..." style="margin-top: 8px;"></textarea>
+                <button onclick="window.sendClientMessage()">Ipadala sa Admin</button>
+            </div>
+        `;
+    }
+
+    // Function para sa pagpapadala ng Restock Request
+    window.sendRestockRequest = async function(styleType, batchIdx) {
+        const qtyInput = document.getElementById(`reqQty_${batchIdx}`);
+        const qty = parseInt(qtyInput.value);
+
+        if (isNaN(qty) || qty <= 0) {
+            alert("Ilagay ang tamang dami ng hiling.");
+            return;
+        }
+
+        const storeBatches = appData.consignments.filter(c => c.storeName === currentStoreName);
+        const targetBatch = storeBatches[batchIdx];
+        const realIdx = appData.consignments.findIndex(c => c === targetBatch);
+
+        if (realIdx !== -1) {
+            if (!appData.consignments[realIdx].activeRequests) {
+                appData.consignments[realIdx].activeRequests = [];
             }
 
-            myBatches.forEach((batch, idx) => {
-                const sold = Math.max(0, batch.initialQty - batch.currentStock - batch.rejectedQty);
-                container.innerHTML += `
-                    <div class="card batch-card">
-                        <h3 style="margin-top:0;">Style: ${batch.styleType}</h3>
-                        <div class="batch-info">📦 Simula: <strong>${batch.initialQty}</strong> | Nabenta: <strong>${sold}</strong></div>
-                        <div class="batch-info" style="color:#d32f2f;">✨ Natitira: <strong>${batch.currentStock} pcs</strong></div>
-                        <div class="batch-info">💰 Presyo: <strong>₱${batch.price}</strong></div>
-                        <div class="batch-info">📅 Due Date: ${batch.collectionDate}</div>
-                        <button class="btn" style="background:#388e3c;" onclick="requestRestock('${batch.styleType}')">Mag-Request ng Restock</button>
-                    </div>
-                `;
+            const timestamp = new Date().toLocaleString();
+            appData.consignments[realIdx].activeRequests.push({
+                qty: qty,
+                styleType: styleType,
+                date: timestamp
             });
 
-            // Ipakita ang messages (kunin sa unang batch na makita)
-            const firstBatch = myBatches[0];
-            if (firstBatch.messages && firstBatch.messages.length > 0) {
-                msgBoard.innerHTML = firstBatch.messages.map(m => `<div><strong>${m.sender}:</strong> ${m.text}</div>`).join('');
+            try {
+                await setDoc(doc(db, "app_data", "main_inventory"), appData);
+                alert("Matagumpay na naipadala ang hiling ng restock sa Admin!");
+                qtyInput.value = '';
+                loadClientData();
+            } catch (e) {
+                alert("Nagka-error sa pagpapadala.");
+                console.error(e);
             }
         }
+    };
 
-        window.requestRestock = async function(style) {
-            const qty = prompt(`Ilang piraso ng ${style} ang kailangan mo?`, '10');
-            if (qty && !isNaN(qty)) {
-                const batch = appData.consignments.find(c => c.storeName === storeName && c.styleType === style);
-                if (!batch.activeRequests) batch.activeRequests = [];
-                batch.activeRequests.push({ reqId: Date.now(), qty: parseInt(qty), styleType: style, date: new Date().toLocaleString() });
-                await setDoc(doc(db, "app_data", "main_inventory"), appData);
-                alert("Sent! Antayin ang approval ng Admin.");
+    // Function para sa pagpapadala ng Mensahe sa Admin
+    window.sendClientMessage = async function() {
+        const msgInput = document.getElementById('clientMsgInput');
+        const text = msgInput.value.trim();
+
+        if (!text) {
+            alert("Mag-type muna ng mensahe.");
+            return;
+        }
+
+        const storeBatches = appData.consignments.filter(c => c.storeName === currentStoreName);
+        if (storeBatches.length > 0) {
+            const primaryBatch = storeBatches[0];
+            const realIdx = appData.consignments.findIndex(c => c === primaryBatch);
+
+            if (!appData.consignments[realIdx].messages) {
+                appData.consignments[realIdx].messages = [];
             }
-        };
 
-        window.sendMsg = async function() {
-            const text = document.getElementById('clientMsg').value;
-            if (!text) return;
-            const batch = appData.consignments.find(c => c.storeName === storeName);
-            if (!batch.messages) batch.messages = [];
-            batch.messages.push({ sender: 'Tindahan', text: text, date: new Date().toLocaleString() });
-            await setDoc(doc(db, "app_data", "main_inventory"), appData);
-            document.getElementById('clientMsg').value = '';
-            loadData();
-        };
+            const timestamp = new Date().toLocaleString();
+            appData.consignments[realIdx].messages.unshift({
+                sender: currentStoreName,
+                text: text,
+                date: timestamp
+            });
 
-        loadData();
-    </script>
+            try {
+                await setDoc(doc(db, "app_data", "main_inventory"), appData);
+                alert("Naipadala na ang mensahe!");
+                msgInput.value = '';
+                loadClientData();
+            } catch (e) {
+                alert("Error sa pagpapadala ng mensahe.");
+                console.error(e);
+            }
+        }
+    };
+
+    loadClientData();
+</script>
+
 </body>
 </html>
