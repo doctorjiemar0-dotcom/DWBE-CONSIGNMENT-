@@ -120,35 +120,36 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
-            <div class="card">
+            <!-- Naka-hide na ang Magdagdag ng Consignment Form gamit ang style="display: none;" -->
+            <div class="card" style="display: none;">
                 <h2>Magdagdag ng Consignment</h2>
                 <form id="consignmentForm">
                     <div class="form-group">
                         <label for="storeName">Pangalan ng Tindahan:</label>
-                        <input type="text" id="storeName" required placeholder="Hal. Aling Nena Store">
+                        <input type="text" id="storeName" placeholder="Hal. Aling Nena Store">
                     </div>
                     <div class="form-group">
                         <label for="styleType">Uri ng Estilo (Variation):</label>
-                        <select id="styleType" required>
+                        <select id="styleType">
                             <option value="Ordinary">Ordinary Style</option>
                             <option value="Premium">Premium Style</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="quantity">Bilang ng Item (Simulang Stock):</label>
-                        <input type="number" id="quantity" required placeholder="Hal. 10">
+                        <input type="number" id="quantity" placeholder="Hal. 10">
                     </div>
                     <div class="form-group">
                         <label for="price">Presyo bawat Isa (₱):</label>
-                        <input type="number" id="price" required placeholder="Hal. 150">
+                        <input type="number" id="price" placeholder="Hal. 150">
                     </div>
                     <div class="form-group">
                         <label for="dateDelivered">Petsa ng Simula (Start):</label>
-                        <input type="date" id="dateDelivered" required>
+                        <input type="date" id="dateDelivered">
                     </div>
                     <div class="form-group">
                         <label for="collectionDate">Target na Petsa ng Koleksyon:</label>
-                        <input type="date" id="collectionDate" required>
+                        <input type="date" id="collectionDate">
                     </div>
                     <button type="submit">I-save ang Consignment</button>
                 </form>
@@ -276,10 +277,12 @@
         }
 
         function initApp() {
-            document.getElementById('dateDelivered').valueAsDate = new Date();
+            const dateDeliveredEl = document.getElementById('dateDelivered');
+            const collectionDateEl = document.getElementById('collectionDate');
+            if (dateDeliveredEl) dateDeliveredEl.valueAsDate = new Date();
             let nextMonth = new Date();
             nextMonth.setMonth(nextMonth.getMonth() + 1);
-            document.getElementById('collectionDate').valueAsDate = nextMonth;
+            if (collectionDateEl) collectionDateEl.valueAsDate = nextMonth;
             loadFromCloud();
 
             setInterval(() => {
@@ -328,47 +331,49 @@
             }
         };
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const sName = document.getElementById('storeName').value;
-            const styleType = document.getElementById('styleType').value;
-            const qty = parseInt(document.getElementById('quantity').value);
-            const price = parseFloat(document.getElementById('price').value);
-            const startD = document.getElementById('dateDelivered').value;
-            const collD = document.getElementById('collectionDate').value;
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const sName = document.getElementById('storeName').value;
+                const styleType = document.getElementById('styleType').value;
+                const qty = parseInt(document.getElementById('quantity').value);
+                const price = parseFloat(document.getElementById('price').value);
+                const startD = document.getElementById('dateDelivered').value;
+                const collD = document.getElementById('collectionDate').value;
 
-            if (appData.homeStock[styleType] < qty) {
-                if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
-                    return;
+                if (appData.homeStock[styleType] < qty) {
+                    if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
+                        return;
+                    }
                 }
-            }
 
-            appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
+                appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
 
-            appData.consignments.push({
-                id: Date.now(),
-                storeName: sName,
-                styleType: styleType,
-                initialQty: qty,
-                currentStock: qty,
-                rejectedQty: 0,
-                price: price,
-                dateDelivered: startD,
-                collectionDate: collD,
-                activeRequests: [],
-                clientNotifications: [],
-                messages: [],
-                history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) noong ${startD}` }]
+                appData.consignments.push({
+                    id: Date.now(),
+                    storeName: sName,
+                    styleType: styleType,
+                    initialQty: qty,
+                    currentStock: qty,
+                    rejectedQty: 0,
+                    price: price,
+                    dateDelivered: startD,
+                    collectionDate: collD,
+                    activeRequests: [],
+                    clientNotifications: [],
+                    messages: [],
+                    history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) noong ${startD}` }]
+                });
+                form.reset();
+                document.getElementById('dateDelivered').valueAsDate = new Date();
+
+                let nextMonth = new Date();
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                document.getElementById('collectionDate').valueAsDate = nextMonth;
+
+                saveToCloud();
             });
-            form.reset();
-            document.getElementById('dateDelivered').valueAsDate = new Date();
-
-            let nextMonth = new Date();
-            nextMonth.setMonth(nextMonth.getMonth() + 1);
-            document.getElementById('collectionDate').valueAsDate = nextMonth;
-
-            saveToCloud();
-        });
+        }
 
         function renderApp() {
             if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
@@ -423,7 +428,6 @@
                     hasRequests = true;
                     totalActiveReqsCount += item.activeRequests.length;
                     item.activeRequests.forEach((req, reqIdx) => {
-                        // Kinuha ang tamang styleType mula sa request object o item para hindi magkamali sa Ordinary/Premium
                         const reqStyle = req.styleType || item.styleType;
                         const reqRow = document.createElement('div');
                         reqRow.className = 'request-action-row';
