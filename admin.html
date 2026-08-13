@@ -56,6 +56,10 @@
         
         .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; }
         .floating-add-btn:hover { background-color: #388e3c; }
+
+        .store-header-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
+        .store-body-content { margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -123,7 +127,7 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
-            <!-- Naka-hide simula ang Magdagdag ng Consignment Form, lilitaw lang kapag pinindot ang floating icon -->
+            <!-- Magdagdag ng Consignment Form, lilitaw lang kapag pinindot ang floating icon -->
             <div class="card" id="addStoreCard" style="display: none;">
                 <h2>Magdagdag ng Consignment</h2>
                 <form id="consignmentForm">
@@ -254,6 +258,19 @@
                 formCard.scrollIntoView({ behavior: 'smooth' });
             } else {
                 formCard.style.display = 'none';
+            }
+        };
+
+        // General toggle function para sa bawat tindahan sa listahan (parehong mekanismo)
+        window.toggleStoreDetails = function(index) {
+            const bodyContent = document.getElementById(`storeBody_${index}`);
+            const toggleBtn = document.getElementById(`storeToggleBtn_${index}`);
+            if (bodyContent.style.display === 'none') {
+                bodyContent.style.display = 'block';
+                toggleBtn.textContent = '➖';
+            } else {
+                bodyContent.style.display = 'none';
+                toggleBtn.textContent = '➕';
             }
         };
 
@@ -483,45 +500,50 @@
                 const div = document.createElement('div');
                 div.className = `store-card ${isDue ? 'due' : ''}`;
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="store-header-row" onclick="toggleStoreDetails(${index})">
                         <strong>🏪 ${item.storeName} (${item.styleType}) - ₱${item.price}</strong>
-                        <div><span class="badge ${badgeClass}">${rating}</span></div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="badge ${badgeClass}">${rating}</span>
+                            <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" title="I-expand / I-collapse">➕</button>
+                        </div>
                     </div>
-                    <div class="dates-info">
-                        <span>📅 Start: <strong>${item.dateDelivered}</strong></span>
-                        <span>🎯 Collection: <strong>${item.collectionDate}</strong></span>
-                    </div>
-                    <div class="highlight-box">
-                        <span>📦 Simula: <strong>${item.initialQty}</strong></span>
-                        <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
-                        <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
-                    </div>
+                    <div class="store-body-content" id="storeBody_${index}" style="display: none;">
+                        <div class="dates-info">
+                            <span>📅 Start: <strong>${item.dateDelivered}</strong></span>
+                            <span>🎯 Collection: <strong>${item.collectionDate}</strong></span>
+                        </div>
+                        <div class="highlight-box">
+                            <span>📦 Simula: <strong>${item.initialQty}</strong></span>
+                            <span style="color: #2e7d32;">✨ Natitira: <strong>${item.currentStock}</strong></span>
+                            <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
+                        </div>
 
-                    <a href="client.html?store=${encodeURIComponent(item.storeName)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
+                        <a href="client.html?store=${encodeURIComponent(item.storeName)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
 
-                    <div style="margin-top: 5px;">
-                        <button type="button" onclick="toggleBox('chatBox_${index}', this)" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">💬 Ipakita ang Chatbox (${item.messages.length})</button>
-                        <div class="collapsible-box" id="chatBox_${index}">
-                            ${chatHtml}
-                            <div style="display:flex; gap:4px; margin-top:5px;">
-                                <input type="text" id="adminReply_${index}" placeholder="Mag-reply bilang Admin..." style="font-size:0.75rem; padding:4px;">
-                                <button type="button" onclick="sendAdminReply(${index})" style="width:auto; margin-top:0; font-size:0.75rem; padding:4px 8px;">Ipadala</button>
+                        <div style="margin-top: 5px;">
+                            <button type="button" onclick="toggleBox('chatBox_${index}', this)" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">💬 Ipakita ang Chatbox (${item.messages.length})</button>
+                            <div class="collapsible-box" id="chatBox_${index}">
+                                ${chatHtml}
+                                <div style="display:flex; gap:4px; margin-top:5px;">
+                                    <input type="text" id="adminReply_${index}" placeholder="Mag-reply bilang Admin..." style="font-size:0.75rem; padding:4px;">
+                                    <button type="button" onclick="sendAdminReply(${index})" style="width:auto; margin-top:0; font-size:0.75rem; padding:4px 8px;">Ipadala</button>
+                                </div>
+                            </div>
+
+                            <button type="button" onclick="toggleBox('historyBox_${index}', this)" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;" id="historyBtn_${index}">📜 Ipakita ang History</button>
+                            <div class="collapsible-box" id="historyBox_${index}">
+                                <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History:</div>
+                                ${historyHtml}
                             </div>
                         </div>
 
-                        <button type="button" onclick="toggleBox('historyBox_${index}', this)" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;" id="historyBtn_${index}">📜 Ipakita ang History</button>
-                        <div class="collapsible-box" id="historyBox_${index}">
-                            <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History:</div>
-                            ${historyHtml}
+                        <div class="btn-group">
+                            <button type="button" onclick="checkupStore(${index})" style="background-color: #0288d1;">Koleksyon</button>
+                            <button type="button" onclick="bawasStock(${index})" style="background-color: #ff9800;">Bawas</button>
+                            <button type="button" onclick="restockStore(${index})" style="background-color: #388e3c;">Restock</button>
+                            <button type="button" onclick="editStore(${index})" style="background-color: #6d4c41;">I-edit</button>
+                            <button type="button" onclick="deleteStore(${index})" style="background-color: #d32f2f;">Burahin</button>
                         </div>
-                    </div>
-
-                    <div class="btn-group">
-                        <button type="button" onclick="checkupStore(${index})" style="background-color: #0288d1;">Koleksyon</button>
-                        <button type="button" onclick="bawasStock(${index})" style="background-color: #ff9800;">Bawas</button>
-                        <button type="button" onclick="restockStore(${index})" style="background-color: #388e3c;">Restock</button>
-                        <button type="button" onclick="editStore(${index})" style="background-color: #6d4c41;">I-edit</button>
-                        <button type="button" onclick="deleteStore(${index})" style="background-color: #d32f2f;">Burahin</button>
                     </div>
                 `;
                 storesList.appendChild(div);
