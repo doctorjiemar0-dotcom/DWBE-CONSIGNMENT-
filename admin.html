@@ -324,7 +324,7 @@
                 amountPaid: initialPayment,
                 dateDelivered: startD,
                 collectionDate: collD,
-                activeRequests: [], // Array para sa multiple active requests ng client
+                activeRequests: [],
                 messages: [],
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType}) | Mode: ${paymentType} | Bayad/DP: ₱${initialPayment}` }]
             });
@@ -369,15 +369,7 @@
                 if (!item.collectionDate) item.collectionDate = 'N/A';
                 if (!item.paymentType) item.paymentType = 'COD';
                 if (item.amountPaid === undefined) item.amountPaid = 0;
-                
-                // Siguraduhing may activeRequests array, at i-migrate kung galing sa lumang data format
-                if (!item.activeRequests) {
-                    item.activeRequests = [];
-                    // Kung may lumang format sa history, subukang i-recover bilang active request kung nararapat
-                    if (item.history.some(h => h.text.toLowerCase().includes('restock request'))) {
-                        item.activeRequests.push({ reqId: Date.now(), qty: item.pendingRestock || 5 });
-                    }
-                }
+                if (!item.activeRequests) item.activeRequests = [];
 
                 const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
                 const totalVal = sold * item.price;
@@ -412,13 +404,12 @@
                 });
                 if (!messagesHtml) messagesHtml = '<div style="color:#778;">Wala pang mensahe.</div>';
 
-                // I-render ang lahat ng active requests na ginawa ng client nang sabay-sabay
                 let requestsHtml = '';
                 if (item.activeRequests && item.activeRequests.length > 0) {
                     item.activeRequests.forEach((req, reqIdx) => {
                         requestsHtml += `
-                            <div class="request-banner" style="margin-bottom: 6px;">
-                                <span>📦 <strong>Restock Req #${reqIdx + 1}:</strong> <input type="number" id="reqQty_${index}_${reqIdx}" value="${req.qty}" onchange="updateActiveReqQty(${index}, ${reqIdx}, this.value)" style="width: 60px; display:inline-block; padding:2px 4px; font-size:0.8rem;" min="1"> pcs</span>
+                            <div class="request-banner" style="margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>📦 <strong>Req #${reqIdx + 1}:</strong> <input type="number" id="reqQty_${index}_${reqIdx}" value="${req.qty}" onchange="updateActiveReqQty(${index}, ${reqIdx}, this.value)" style="width: 50px; display:inline-block; padding:2px 4px; font-size:0.8rem;" min="1"> pcs</span>
                                 <div style="display:flex; gap:4px;">
                                     <button type="button" onclick="approveSpecificRestock(${index}, ${reqIdx})" style="background:#2e7d32; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Approve</button>
                                     <button type="button" onclick="declineSpecificRestock(${index}, ${reqIdx})" style="background:#d32f2f; color:#fff; padding:4px 8px; font-size:0.75rem; width:auto; margin:0;">Decline</button>
@@ -539,7 +530,6 @@
             item.initialQty += qty;
             item.currentStock += qty;
 
-            // Alisin lamang ang partikular na request na ito sa active list
             item.activeRequests.splice(reqIdx, 1);
 
             const timestamp = new Date().toLocaleString();
@@ -547,7 +537,6 @@
             item.messages.push({ date: timestamp, text: `Admin: Na-approve ang iyong restock request na ${qty} pcs.` });
 
             saveToCloud();
-            alert(`Matagumpay na na-approve ang restock na ${qty} pcs!`);
         };
 
         window.declineSpecificRestock = function(storeIdx, reqIdx) {
@@ -557,7 +546,6 @@
 
             const qty = req.qty;
             
-            // Alisin lamang ang partikular na request na ito sa active list
             item.activeRequests.splice(reqIdx, 1);
 
             const timestamp = new Date().toLocaleString();
@@ -565,7 +553,6 @@
             item.messages.push({ date: timestamp, text: `Admin: Paumanhin, tinanggihan muna ang iyong restock request na ${qty} pcs.` });
 
             saveToCloud();
-            alert(`Tinanggihan ang restock request na ${qty} pcs.`);
         };
 
         window.toggleHistory = function(index) {
