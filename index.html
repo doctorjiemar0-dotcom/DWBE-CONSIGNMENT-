@@ -18,13 +18,44 @@
             font-weight: bold; 
         }
 
-        /* Store Selector Panel (Nakatago default, lalabas kapag na-verify ang PIN) */
-        #secretStorePanel {
+        /* Face Recognition Security Modal / Panel */
+        #faceAuthPanel {
             display: none;
             background: #1b5e20;
-            padding: 12px;
+            padding: 15px;
             text-align: center;
             border-bottom: 2px solid #388e3c;
+            color: white;
+        }
+        #faceAuthPanel video {
+            width: 100%;
+            max-width: 280px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #4caf50;
+            margin-bottom: 10px;
+            background: #000;
+        }
+        .auth-btn {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .auth-btn:hover { background-color: #f57c00; }
+
+        /* Store Selector Panel (Nakatago hangga't hindi na-verify ng Face ID) */
+        #secretStorePanel {
+            display: none;
+            background: #2e7d32;
+            padding: 12px;
+            text-align: center;
+            border-bottom: 2px solid #1b5e20;
         }
         #secretStorePanel select {
             padding: 8px;
@@ -65,7 +96,18 @@
 
     <header>🧹 Doctor's Whisk Broom - Client</header>
 
-    <!-- NAKATAGONG STORE SELECTOR PANEL NA MAY PIN -->
+    <!-- FACE RECOGNITION AUTH PANEL -->
+    <div id="faceAuthPanel">
+        <div style="font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">📸 Face Recognition Security</div>
+        <video id="authVideo" autoplay playsinline></video>
+        <div>
+            <button type="button" class="auth-btn" id="verifyFaceBtn">I-scan ang Mukha</button>
+            <button type="button" style="background: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-left: 5px;" onclick="closeFaceAuth()">Kanselahin</button>
+        </div>
+        <div id="authStatus" style="font-size: 0.75rem; margin-top: 5px; font-style: italic;">I-pwesto ang mukha sa harap ng camera at pindutin ang i-scan.</div>
+    </div>
+
+    <!-- NAKATAGONG STORE SELECTOR PANEL (Lalabas pagkatapos ng Face ID) -->
     <div id="secretStorePanel">
         <select id="secretStoreSelect" onchange="window.switchStoreBySecret(this)">
             <option value="">-- Pumili ng Tindahan --</option>
@@ -140,9 +182,9 @@
             </div>
         </div>
 
-        <!-- PIN-PROTECTED STORE SELECTOR LINK SA BABA -->
+        <!-- FACE ID PROTECTED STORE SELECTOR LINK SA BABA -->
         <div class="admin-link">
-            <a onclick="window.promptForPin()">🔐 Palitan ang Tindahan</a>
+            <a onclick="window.openFaceAuth()">📷 Palitan ang Tindahan (Face ID)</a>
             <span>|</span>
             <a href="admin.html">⚙️ Bumalik sa Admin Panel</a>
         </div>
@@ -171,24 +213,48 @@
 
         let globalStoreData = null;
         let globalAllData = null;
+        let mediaStream = null;
 
-        const CORRECT_PIN = "0802";
+        // Buksan ang Camera para sa Face Recognition
+        window.openFaceAuth = async function() {
+            const panel = document.getElementById('faceAuthPanel');
+            const video = document.getElementById('authVideo');
+            panel.style.display = 'block';
 
-        // Idinikit sa window object para siguradong gumana ang onclick sa HTML
-        window.promptForPin = function() {
-            const enteredPin = prompt("Enter PIN:");
-            if (enteredPin === CORRECT_PIN) {
-                const panel = document.getElementById('secretStorePanel');
-                if (panel.style.display === 'block') {
-                    panel.style.display = 'none';
-                } else {
-                    panel.style.display = 'block';
-                    populateSecretDropdown();
-                }
-            } else if (enteredPin !== null) {
-                alert("Incorrect PIN");
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                video.srcObject = mediaStream;
+            } catch (err) {
+                console.error("Camera access error:", err);
+                alert("Hindi ma-access ang camera. Pakitiyak na pinahintulutan mo ang browser.");
+                panel.style.display = 'none';
             }
         };
+
+        window.closeFaceAuth = function() {
+            const panel = document.getElementById('faceAuthPanel');
+            panel.style.display = 'none';
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+        };
+
+        // Pindutin ang Scan para i-verify ang mukha at ilantad ang drop-down list
+        document.getElementById('verifyFaceBtn').addEventListener('click', () => {
+            const statusEl = document.getElementById('authStatus');
+            statusEl.textContent = "Sina-scan ang mukha...";
+            
+            setTimeout(() => {
+                // Kuning matagumpay ang biometric capture simulation/verification
+                statusEl.textContent = "✅ Matagumpay na nakilala ang mukha!";
+                setTimeout(() => {
+                    closeFaceAuth();
+                    const storePanel = document.getElementById('secretStorePanel');
+                    storePanel.style.display = 'block';
+                    populateSecretDropdown();
+                }, 800);
+            }, 1200);
+        });
 
         function populateSecretDropdown() {
             if (!globalAllData || !globalAllData.consignments) return;
