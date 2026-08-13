@@ -53,7 +53,7 @@
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
         .client-link-btn { display: inline-block; background-color: #0288d1; color: white; text-decoration: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-top: 4px; }
-
+        
         .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; }
         .floating-add-btn:hover { background-color: #388e3c; }
 
@@ -127,7 +127,6 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
-            <!-- Magdagdag ng Consignment Form, lilitaw lang kapag pinindot ang floating icon -->
             <div class="card" id="addStoreCard" style="display: none;">
                 <h2>Magdagdag ng Consignment</h2>
                 <form id="consignmentForm">
@@ -173,10 +172,8 @@
 
     </div>
 
-    <!-- Floating Action Button para lumitaw/itago ang Add Store Form -->
     <button class="floating-add-btn" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -206,17 +203,17 @@
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
-
+                
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
                 oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15);
-
+                
                 gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-
+                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-
+                
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.4);
             } catch (e) {
@@ -369,12 +366,28 @@
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const sName = document.getElementById('storeName').value;
+                const sName = document.getElementById('storeName').value.trim();
                 const styleType = document.getElementById('styleType').value;
                 const qty = parseInt(document.getElementById('quantity').value);
                 const price = parseFloat(document.getElementById('price').value);
                 const startD = document.getElementById('dateDelivered').value;
                 const collD = document.getElementById('collectionDate').value;
+
+                if (!sName) {
+                    alert("Ilagay ang pangalan ng tindahan.");
+                    return;
+                }
+
+                // Check kung meron nang parehong tindahan at estilo
+                const existingIndex = appData.consignments.findIndex(item => 
+                    item.storeName.toLowerCase() === sName.toLowerCase() && 
+                    (item.styleType || 'Ordinary').toLowerCase() === styleType.toLowerCase()
+                );
+
+                if (existingIndex !== -1) {
+                    alert(`Mayroon nang record ang "${sName}" para sa estilong "${styleType}". Gamitin ang Restock kung nais magdagdag.`);
+                    return;
+                }
 
                 if (appData.homeStock[styleType] < qty) {
                     if (!confirm(`Babala: Ang Home stock para sa ${styleType} (${appData.homeStock[styleType]} pcs) ay kulang sa kailangan mo na ${qty} pcs. Ituloy pa rin ang pagbawas?`)) {
@@ -517,7 +530,7 @@
                             <span style="color: #c2185b;">🛒 Nabenta: <strong>${sold}</strong></span>
                         </div>
 
-                        <a href="client.html?store=${encodeURIComponent(item.storeName)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
+                        <a href="client.html?store=${encodeURIComponent(item.storeName)}&style=${encodeURIComponent(item.styleType)}" target="_blank" class="client-link-btn">🔗 Bisitahin ang Client Portal</a>
 
                         <div style="margin-top: 5px;">
                             <button type="button" onclick="toggleBox('chatBox_${index}', this)" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">💬 Ipakita ang Chatbox (${item.messages.length})</button>
@@ -650,23 +663,22 @@
             const item = appData.consignments[index];
             const style = item.styleType || 'Ordinary';
             const count = parseInt(prompt(`Ilang piraso ng natitirang stock ang ibabawas at ibabalik sa Home inventory (${style})?`, '1'));
-
+            
             if (!isNaN(count) && count > 0) {
                 if (count > item.currentStock) {
                     alert(`Hindi maaari! Ang hihilingin mong bawasan (${count}) ay mas malaki kaysa sa kasalukuyang natitirang stock sa tindahan (${item.currentStock}).`);
                     return;
                 }
-
-                // Bawasan ang current stock sa tindahan at ibalik sa Home inventory
+                
                 item.currentStock -= count;
                 appData.homeStock[style] += count;
-
+                
                 item.history.unshift({ 
                     id: Date.now(), 
                     date: new Date().toLocaleString(), 
                     text: `Nagbawas ng ${count} pcs stock at ibinalik sa Home inventory (${style})` 
                 });
-
+                
                 saveToCloud();
                 alert(`Matagumpay na naibalik ang ${count} pcs (${style}) sa Home inventory!`);
             }
