@@ -23,7 +23,7 @@
     <div class="card">
         <h2 id="portalTitle">🏪 Tindahan Portal</h2>
         <div id="clientContent">
-            <p>Naglo-load ng data...</p>
+            <p>Kinokonekta at sinusuri ang mga tindahan...</p>
         </div>
     </div>
 </div>
@@ -44,28 +44,24 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Automatic na kukunin sa URL o hihingin ang pangalan kung wala
     const urlParams = new URLSearchParams(window.location.search);
     let currentStoreName = urlParams.get('store');
 
-    if (!currentStoreName || currentStoreName.trim() === "") {
-        currentStoreName = prompt("Ilagay ang pangalan ng iyong tindahan para mabuksan ang portal:");
-    }
-
     let appData = { consignments: [] };
 
-    async function loadClientData() {
+    async function initPortal() {
         const contentDiv = document.getElementById('clientContent');
-        if (!currentStoreName) {
-            contentDiv.innerHTML = `<p style="color: red;">Walang naitalang pangalan ng tindahan. I-refresh ang pahina at ilagay ang tamang pangalan.</p>`;
-            return;
-        }
-
         try {
             const docSnap = await getDoc(doc(db, "app_data", "main_inventory"));
             if (docSnap.exists()) {
                 appData = docSnap.data();
-                renderClientPortal();
+
+                // Kung walang kasamang store sa URL, kusang kukunin ang mga unique na pangalan ng tindahan mula sa database para piliin nila
+                if (!currentStoreName || currentStoreName.trim() === "") {
+                    showStoreSelector();
+                } else {
+                    renderClientPortal();
+                }
             } else {
                 contentDiv.innerHTML = `<p>Walang nahanap na data sa sistema.</p>`;
             }
@@ -75,17 +71,48 @@
         }
     }
 
+    // Bagong feature: Awtomatikong magpapakita ng listahan ng mga tindahan para piliin ng kliyente kung walang naka-link
+    function showStoreSelector() {
+        const contentDiv = document.getElementById('clientContent');
+        const uniqueStores = [...new Set(appData.consignments.map(c => c.storeName).filter(Boolean))];
+
+        if (uniqueStores.length === 0) {
+            contentDiv.innerHTML = `<p>Wala pang nakatalang tindahan sa sistema.</p>`;
+            return;
+        }
+
+        let optionsHTML = uniqueStores.map(name => `<option value="${name}">${name}</option>`).join('');
+
+        contentDiv.innerHTML = `
+            <p>Piliin ang pangalan ng iyong tindahan para buksan ang portal:</p>
+            <select id="selectedStoreDropdown">
+                <option value="">-- Piliin ang Tindahan --</option>
+                ${optionsHTML}
+            </select>
+            <button onclick="window.proceedToStore()" style="margin-top: 10px;">Buksan ang Portal</button>
+        `;
+    }
+
+    window.proceedToStore = function() {
+        const dropdown = document.getElementById('selectedStoreDropdown');
+        if (!dropdown.value) {
+            alert("Pakipili ang iyong tindahan.");
+            return;
+        }
+        currentStoreName = dropdown.value;
+        renderClientPortal();
+    };
+
     function renderClientPortal() {
         const contentDiv = document.getElementById('clientContent');
         document.getElementById('portalTitle').innerText = `Mga Batch ni: ${currentStoreName}`;
 
-        // Salain ang lahat ng batch na may katugmang pangalan ng tindahan
         const storeBatches = appData.consignments.filter(c => c.storeName && c.storeName.toLowerCase() === currentStoreName.toLowerCase());
 
         if (storeBatches.length === 0) {
             contentDiv.innerHTML = `
                 <p>Walang nahanap na data para sa tindahang <strong>"${currentStoreName}"</strong>.</p>
-                <button onclick="location.reload()" style="margin-top:10px; background:#666;">Subukang Muli / Palitan ang Pangalan</button>
+                <button onclick="location.reload()" style="margin-top:10px; background:#666;">Pumili Uli ng Tindahan</button>
             `;
             return;
         }
@@ -136,6 +163,7 @@
                 <textarea id="clientMsgInput" placeholder="I-type ang mensahe sa Admin..." style="margin-top: 8px;"></textarea>
                 <button onclick="window.sendClientMessage()">Ipadala sa Admin</button>
             </div>
+            <button onclick="location.reload()" style="margin-top: 15px; background: #666; font-size: 0.8rem; padding: 6px;">Magpalit ng Tindahan</button>
         `;
     }
 
@@ -168,7 +196,7 @@
                 await setDoc(doc(db, "app_data", "main_inventory"), appData);
                 alert("Matagumpay na naipadala ang hiling ng restock sa Admin!");
                 qtyInput.value = '';
-                loadClientData();
+                initPortal();
             } catch (e) {
                 alert("Nagka-error sa pagpapadala.");
                 console.error(e);
@@ -205,7 +233,7 @@
                 await setDoc(doc(db, "app_data", "main_inventory"), appData);
                 alert("Naipadala na ang mensahe!");
                 msgInput.value = '';
-                loadClientData();
+                initPortal();
             } catch (e) {
                 alert("Error sa pagpapadala ng mensahe.");
                 console.error(e);
@@ -213,7 +241,7 @@
         }
     };
 
-    loadClientData();
+    initPortal();
 </script>
 
 </body>
