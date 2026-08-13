@@ -3,177 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor's Whisk Broom - ADMIN APP (Cloud Sync)</title>
-    <meta name="theme-color" content="#2e7d32">
+    <title>Doctor's Whisk Broom - ADMIN APP</title>
     <style>
-        :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
-        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-weight: bold; }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
-        .form-group { margin-bottom: 10px; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        .btn-approve { background-color: #2e7d32; color: white; padding: 5px 8px; width: auto; font-size: 0.75rem; }
-        .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .batch-row { background: #f9f9f9; padding: 8px; margin-top: 6px; border-radius: 4px; border: 1px solid #eee; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
-        .request-action-row { background: #fff8e1; padding: 8px; border: 1px solid #ffe082; margin-bottom: 6px; font-size: 0.85rem; border-radius: 4px; }
-        .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; border: none; }
+        body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 10px; color: #333; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { color: #2e7d32; font-size: 1.1rem; margin-top: 0; border-bottom: 2px solid #2e7d32; padding-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #2e7d32; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #1b5e20; }
+        .store-card { background: #fff; border-left: 5px solid #2e7d32; padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .batch-row { background: #f9f9f9; padding: 8px; margin-top: 6px; border-radius: 4px; border: 1px solid #eee; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+        .request-box { background: #fff8e1; border: 1px solid #ffe082; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; }
+        .btn-approve { background: #2e7d32; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8rem; margin-right: 5px; }
+        .btn-decline { background: #c62828; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <header>🧹 Doctor's Whisk Broom - ADMIN</header>
-    <div class="container">
-        <div id="authScreen" class="card">
-            <h2>🔒 Security Login</h2>
-            <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
-            <button id="loginBtn">Mag-login</button>
-        </div>
-
-        <div id="mainAppContent" style="display:none;">
-            <div id="syncStatus" style="font-size: 0.8rem; text-align: center; color: #666; margin-bottom: 10px;">Kumokonekta...</div>
-            
-            <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
-                <h2>📦 Pending Restock Requests</h2>
-                <div id="adminRequestsContainer"><p>Wala pang request.</p></div>
-            </div>
-
-            <div class="card" id="addStoreCard" style="display: none;">
-                <h2>Magdagdag ng Consignment</h2>
-                <form id="consignmentForm">
-                    <input type="text" id="storeName" placeholder="Pangalan ng Tindahan" required style="margin-bottom:10px;">
-                    <select id="styleType" style="margin-bottom:10px;">
-                        <option value="Ordinary">Ordinary Style</option>
-                        <option value="Premium">Premium Style</option>
-                    </select>
-                    <input type="number" id="quantity" placeholder="Simulang Stock" required style="margin-bottom:10px;">
-                    <input type="number" id="price" placeholder="Presyo bawat Isa (₱)" required style="margin-bottom:10px;">
-                    <button type="submit">I-save ang Consignment</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h2>Listahan ng mga Tindahan</h2>
-                <div id="storesList"></div>
-            </div>
-        </div>
+<div class="container">
+    <!-- LOGIN SCREEN -->
+    <div id="authScreen" class="card">
+        <h2>🔒 Admin Login</h2>
+        <input type="password" id="adminPasswordInput" placeholder="Ilagay ang password...">
+        <button id="loginBtn">Mag-login</button>
     </div>
 
-    <button class="floating-add-btn" id="toggleAddFormBtn" onclick="toggleAddStoreForm()">➕</button>
+    <!-- MAIN APP -->
+    <div id="mainAppContent" style="display:none;">
+        <div id="syncStatus" style="font-size: 0.8rem; text-align: center; color: #666; margin-bottom: 10px;"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        <!-- PENDING REQUESTS -->
+        <div class="card" style="background: #fffdf5; border: 1px solid #ffe082;">
+            <h2>📦 Mga Hiling na Restock</h2>
+            <div id="adminRequestsContainer">Wala pang hiling.</div>
+        </div>
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
-          authDomain: "dwbe-consignment.firebaseapp.com",
-          projectId: "dwbe-consignment",
-          storageBucket: "dwbe-consignment.firebasestorage.app",
-          messagingSenderId: "205759197252",
-          appId: "1:205759197252:web:b04400821f81791d10cc11"
-        };
+        <!-- MAGDAGDAG NG CONSIGNMENT -->
+        <div class="card">
+            <h2>➕ Magdagdag ng Consignment</h2>
+            <form id="consignmentForm">
+                <label>Pangalan ng Tindahan:</label>
+                <input type="text" id="storeName" required placeholder="Hal. Tindahan ni Aling Nena">
+                
+                <label>Estilo (Style):</label>
+                <select id="styleType">
+                    <option value="Ordinary">Ordinary</option>
+                    <option value="Premium">Premium</option>
+                </select>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+                <label>Dami (Quantity):</label>
+                <input type="number" id="quantity" required placeholder="0">
+
+                <label>Presyo (₱):</label>
+                <input type="number" id="price" required placeholder="0.00">
+
+                <button type="submit">I-save ang Consignment</button>
+            </form>
+        </div>
+
+        <!-- LISTAHAN NG MGA TINDAHAN -->
+        <div class="card">
+            <h2>📋 Listahan ng mga Tindahan</h2>
+            <div id="storesList">Wala pang nakatalang tindahan.</div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+      authDomain: "dwbe-consignment.firebaseapp.com",
+      projectId: "dwbe-consignment",
+      storageBucket: "dwbe-consignment.firebasestorage.app",
+      messagingSenderId: "205759197252",
+      appId: "1:205759197252:web:b04400821f81791d10cc11"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    let appData = { consignments: [], homeStock: { Ordinary: 0, Premium: 0 } };
+
+    // Login Authentication
+    document.getElementById('loginBtn').addEventListener('click', () => {
+        const pass = document.getElementById('adminPasswordInput').value;
+        if (pass === "0802") {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainAppContent').style.display = 'block';
+            loadFromCloud();
+        } else {
+            alert("Mali ang password!");
+        }
+    });
+
+    async function loadFromCloud() {
+        document.getElementById('syncStatus').innerText = "Kumokonekta sa Cloud...";
+        try {
+            const docSnap = await getDoc(doc(db, "app_data", "main_inventory"));
+            if (docSnap.exists()) {
+                appData = docSnap.data();
+            }
+            document.getElementById('syncStatus').innerText = "✅ Synchronized na sa Cloud";
+            renderApp();
+        } catch (e) {
+            document.getElementById('syncStatus').innerText = "❌ Nabigo ang pagkonekta sa Cloud";
+            console.error(e);
+        }
+    }
+
+    async function saveToCloud() {
+        document.getElementById('syncStatus').innerText = "Nag-a-update sa Cloud...";
+        try {
+            await setDoc(doc(db, "app_data", "main_inventory"), appData);
+            document.getElementById('syncStatus').innerText = "✅ Synchronized na sa Cloud";
+            renderApp();
+        } catch (e) {
+            document.getElementById('syncStatus').innerText = "❌ Error sa pag-save";
+            console.error(e);
+        }
+    }
+
+    // Pagproseso ng Restock Request
+    window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApproved) {
+        const item = appData.consignments[storeIdx];
+        const timestamp = new Date().toLocaleString();
         
-        let appData = { consignments: [], homeStock: { Ordinary: 0, Premium: 0 } };
+        if (!item.activeRequests) item.activeRequests = [];
+        const reqData = item.activeRequests[reqIdx];
+        item.activeRequests.splice(reqIdx, 1);
 
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            if (document.getElementById('adminPasswordInput').value === "0802") {
-                document.getElementById('authScreen').style.display = 'none';
-                document.getElementById('mainAppContent').style.display = 'block';
-                document.getElementById('toggleAddFormBtn').style.display = 'flex';
-                loadFromCloud();
-            } else { alert("Mali ang password!"); }
+        if (!item.clientNotifications) item.clientNotifications = [];
+
+        if (isApproved) {
+            const inputPrice = prompt(`Ilagay ang presyo para sa restock na ${qty} pcs (${reqStyle}):`, item.price);
+            if (inputPrice === null) {
+                // Ibalik kung kinansela ang prompt
+                item.activeRequests.splice(reqIdx, 0, reqData);
+                return;
+            }
+            const approvedPrice = parseFloat(inputPrice);
+
+            // Suriin kung may umiiral nang batch na magkapareho ang Store, Style, at Presyo
+            const existingBatch = appData.consignments.find(c => 
+                c.storeName === item.storeName && 
+                c.styleType === reqStyle && 
+                c.price === approvedPrice
+            );
+
+            if (existingBatch) {
+                existingBatch.initialQty += qty;
+                existingBatch.currentStock += qty;
+                if (!existingBatch.history) existingBatch.history = [];
+                existingBatch.history.unshift({ date: timestamp, text: `Na-approve ang Restock: +${qty} pcs sa presyong ₱${approvedPrice}` });
+            } else {
+                const todayStr = new Date().toISOString().slice(0, 10);
+                appData.consignments.push({
+                    id: Date.now(),
+                    storeName: item.storeName,
+                    styleType: reqStyle,
+                    initialQty: qty,
+                    currentStock: qty,
+                    price: approvedPrice,
+                    dateDelivered: todayStr,
+                    activeRequests: [],
+                    clientNotifications: [],
+                    history: [{ date: timestamp, text: `Bagong Batch mula sa Restock: +${qty} pcs sa presyong ₱${approvedPrice}` }]
+                });
+            }
+
+            item.clientNotifications.push({
+                text: `✅ Na-approve ang iyong restock na ${qty} pcs (${reqStyle}) sa presyong ₱${approvedPrice}.`,
+                date: timestamp
+            });
+        } else {
+            item.clientNotifications.push({
+                text: `❌ Tinanggihan ang iyong hiling na restock na ${qty} pcs (${reqStyle}).`,
+                date: timestamp
+            });
+        }
+
+        await saveToCloud();
+    };
+
+    // Pagdaragdag ng Bagong Consignment mula sa Form
+    document.getElementById('consignmentForm').onsubmit = (e) => {
+        e.preventDefault();
+        const storeName = document.getElementById('storeName').value.trim();
+        const styleType = document.getElementById('styleType').value;
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const price = parseFloat(document.getElementById('price').value);
+        const timestamp = new Date().toLocaleString();
+        const todayStr = new Date().toISOString().slice(0, 10);
+
+        appData.consignments.push({
+            id: Date.now(),
+            storeName: storeName,
+            styleType: styleType,
+            initialQty: quantity,
+            currentStock: quantity,
+            price: price,
+            dateDelivered: todayStr,
+            activeRequests: [],
+            clientNotifications: [],
+            history: [{ date: timestamp, text: `Nilikha ang simula ng consignment: ${quantity} pcs (${styleType}) sa presyong ₱${price}` }]
         });
 
-        window.toggleAddStoreForm = () => {
-            const c = document.getElementById('addStoreCard');
-            c.style.display = c.style.display === 'none' ? 'block' : 'none';
-        };
+        document.getElementById('consignmentForm').reset();
+        saveToCloud();
+    };
 
-        async function loadFromCloud() {
-            const docSnap = await getDoc(doc(db, "app_data", "main_inventory"));
-            if (docSnap.exists()) appData = docSnap.data();
-            renderApp();
-        }
+    // Render Function para i-display ang UI sa dating pormat na may kasamang Grouping
+    function renderApp() {
+        const storesList = document.getElementById('storesList');
+        const reqContainer = document.getElementById('adminRequestsContainer');
+        
+        storesList.innerHTML = '';
+        reqContainer.innerHTML = '';
 
-        async function saveToCloud() {
-            await setDoc(doc(db, "app_data", "main_inventory"), appData);
-            renderApp();
-        }
-
-        window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApproved) {
-            const item = appData.consignments[storeIdx];
-            const timestamp = new Date().toLocaleString();
-            item.activeRequests.splice(reqIdx, 1);
-
-            if (isApproved) {
-                const inputPrice = prompt(`Ilagay ang presyo para sa ${qty} pcs (${reqStyle}):`, item.price);
-                if (!inputPrice) return;
-                const approvedPrice = parseFloat(inputPrice);
-
-                const existingBatch = appData.consignments.find(c => 
-                    c.storeName === item.storeName && 
-                    c.styleType === reqStyle && 
-                    c.price === approvedPrice
-                );
-
-                if (existingBatch) {
-                    existingBatch.initialQty += qty;
-                    existingBatch.currentStock += qty;
-                } else {
-                    appData.consignments.push({
-                        id: Date.now(),
-                        storeName: item.storeName,
-                        styleType: reqStyle,
-                        initialQty: qty,
-                        currentStock: qty,
-                        price: approvedPrice,
-                        dateDelivered: new Date().toISOString().slice(0, 10),
-                        history: [{date: timestamp, text: `Bagong Batch: +${qty} pcs`}]
-                    });
-                }
+        // Grouping ng mga tindahan ayon sa pangalan
+        const groupedStores = {};
+        appData.consignments.forEach((item, originalIdx) => {
+            if (!groupedStores[item.storeName]) {
+                groupedStores[item.storeName] = [];
             }
-            saveToCloud();
-        };
+            groupedStores[item.storeName].push({ ...item, originalIdx });
+        });
 
-        document.getElementById('consignmentForm').onsubmit = (e) => {
-            e.preventDefault();
-            appData.consignments.push({
-                id: Date.now(),
-                storeName: document.getElementById('storeName').value,
-                styleType: document.getElementById('styleType5') ? document.getElementById('styleType5').value : document.getElementById('styleType').value,
-                initialQty: parseInt(document.getElementById('quantity').value),
-                currentStock: parseInt(document.getElementById('quantity').value),
-                price: parseFloat(document.getElementById('price').value),
-                history: []
-            });
-            saveToCloud();
-        };
-
-        function renderApp() {
-            const storesList = document.getElementById('storesList');
-            const reqContainer = document.getElementById('adminRequestsContainer');
-            storesList.innerHTML = '';
-            reqContainer.innerHTML = '';
-            
-            // --- GROUPING LOGIC PARA SA MGA TINDAHAN ---
-            const groupedStores = {};
-            appData.consignments.forEach((item, originalIdx) => {
-                if (!groupedStores[item.storeName]) {
-                    groupedStores[item.storeName] = [];
-                }
-                groupedStores[item.storeName].push({ ...item, originalIdx });
-            });
-
-            // I-display ang mga pinag-isang tindahan na may magkakahiwalay na presyo/item batches
+        // I-display ang mga pinag-isang tindahan at ayusin ang batches mula sa mababang presyo pataas
+        if (Object.keys(groupedStores).length === 0) {
+            storesList.innerHTML = "Wala pang nakatalang tindahan.";
+        } else {
             for (const [storeName, batches] of Object.entries(groupedStores)) {
-                // Ayusin ang mga batches mula sa pinakamababang presyo papunta sa mataas
+                // Pag-uuri ng presyo (mula sa mababa patungo sa mataas)
                 batches.sort((a, b) => a.price - b.price);
 
                 let batchesHTML = '';
@@ -181,29 +246,43 @@
                     batchesHTML += `
                         <div class="batch-row">
                             <div>
-                                <strong>${b.styleType}</strong> - ₱${b.price}<br>
-                                <small>Stock: ${b.currentStock} / Initial: ${b.initialQty}</small>
+                                <strong>${b.styleType}</strong><br>
+                                <small>Presyo: ₱${b.price} | Stock: ${b.currentStock} / Initial: ${b.initialQty}</small>
                             </div>
                         </div>`;
                 });
 
                 storesList.innerHTML += `
                     <div class="store-card">
-                        <strong style="font-size: 1.05rem; color: var(--primary-color);">🛒 ${storeName}</strong>
+                        <strong style="font-size: 1.05rem; color: #2e7d32;">🛒 ${storeName}</strong>
                         ${batchesHTML}
                     </div>`;
             }
-
-            // Pagpapakita ng mga pending requests
-            appData.consignments.forEach((item, idx) => {
-                item.activeRequests?.forEach((req, rIdx) => {
-                    reqContainer.innerHTML += `<div class="request-action-row">
-                        ${item.storeName} - ${req.qty} pcs (${req.styleType})
-                        <button class="btn-approve" onclick="processRestock(${idx}, ${rIdx}, ${req.qty}, '${req.styleType}', true)">Approve</button>
-                    </div>`;
-                });
-            });
         }
-    </script>
+
+        // Pag-display ng mga pending requests mula sa mga kliyente
+        let hasRequests = false;
+        appData.consignments.forEach((item, idx) => {
+            if (item.activeRequests && item.activeRequests.length > 0) {
+                item.activeRequests.forEach((req, rIdx) => {
+                    hasRequests = true;
+                    reqContainer.innerHTML += `
+                        <div class="request-box">
+                            <strong>${item.storeName}</strong> humihiling ng <strong>${req.qty} pcs</strong> (${req.styleType})<br>
+                            <div style="margin-top: 5px;">
+                                <button class="btn-approve" onclick="processRestock(${idx}, ${rIdx}, ${req.qty}, '${req.styleType}', true)">Approve</button>
+                                <button class="btn-decline" onclick="processRestock(${idx}, ${rIdx}, ${req.qty}, '${req.styleType}', false)">Decline</button>
+                            </div>
+                        </div>`;
+                });
+            }
+        });
+
+        if (!hasRequests) {
+            reqContainer.innerHTML = "Wala pang hiling.";
+        }
+    }
+</script>
+
 </body>
 </html>
