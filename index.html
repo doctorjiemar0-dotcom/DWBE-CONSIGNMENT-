@@ -52,7 +52,7 @@
 
         .container { padding: 15px; max-width: 600px; margin: auto; }
         
-        /* Istilo para sa Request Banner ng Client */
+        /* Istilo para sa Request & Approval Banners ng Client */
         .client-banner {
             background: #fff8e1;
             border: 1px solid #ffe082;
@@ -62,8 +62,28 @@
             margin-bottom: 15px;
             display: none;
         }
+        .client-banner.approved {
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-left: 5px solid #4caf50;
+        }
         .client-banner-title { font-weight: bold; color: #f57c00; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .client-banner.approved .client-banner-title { color: #2e7d32; }
         .client-banner-text { font-size: 0.85rem; color: #5d4037; margin-bottom: 8px; }
+        .client-banner.approved .client-banner-text { color: #1b5e20; }
+        
+        .request-list-item {
+            font-size: 0.85rem;
+            background: #fff;
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            border: 1px solid #ffe082;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .clear-banner-btn {
             background-color: #78909c;
             color: white;
@@ -114,11 +134,18 @@
     <div class="container">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- Banner para sa Request Status ng Client -->
+        <!-- Banner para sa mga Pending Restock Requests -->
         <div class="client-banner" id="clientRequestBanner">
-            <div class="client-banner-title">📦 Status ng Restock Request</div>
-            <div class="client-banner-text" id="clientBannerText">Mayroon kang isinumiteng kahilingan ng restock.</div>
-            <button type="button" class="clear-banner-btn" id="clearBannerBtn">✓ Nakita ko na / I-clear</button>
+            <div class="client-banner-title">📦 Mga Nakabinbing Restock Request</div>
+            <div class="client-banner-text">Ang mga sumusunod na kahilingan ay naghihintay pa ng aksyon o pag-apruba mula sa Admin:</div>
+            <div id="pendingRequestsList" style="margin-bottom: 8px;"></div>
+        </div>
+
+        <!-- Banner para sa Admin Approvals / Notifications -->
+        <div class="client-banner approved" id="clientApprovalBanner">
+            <div class="client-banner-title">🎉 Update mula sa Admin!</div>
+            <div class="client-banner-text" id="approvalBannerText">Na-approve na ang iyong restock request.</div>
+            <button type="button" class="clear-banner-btn" id="clearApprovalBtn">✓ Nakita ko na / I-clear</button>
         </div>
 
         <div class="card" id="clientCard">
@@ -322,16 +349,34 @@
                 dpDiv.style.display = 'block';
             }
 
-            // Pagpapakita o pagtatago ng Request Banner batay sa activeRequests
-            const banner = document.getElementById('clientRequestBanner');
-            const bannerText = document.getElementById('clientBannerText');
+            // 1. Paggawa ng listahan para sa lahat ng Pending Active Requests
+            const reqBanner = document.getElementById('clientRequestBanner');
+            const pendingListContainer = document.getElementById('pendingRequestsList');
+            pendingListContainer.innerHTML = '';
 
             if (item.activeRequests && item.activeRequests.length > 0) {
-                const req = item.activeRequests[item.activeRequests.length - 1];
-                bannerText.innerHTML = `Humiling ka ng karagdagang <strong>${req.qty} pcs</strong> ng stock. Naghihintay pa ng aksyon o pag-apruba mula sa Admin.`;
-                banner.style.display = 'block';
+                item.activeRequests.forEach(req => {
+                    const reqDiv = document.createElement('div');
+                    reqDiv.className = 'request-list-item';
+                    reqDiv.innerHTML = `<span>📦 <strong>${req.qty} pcs</strong> (Petsa: ${req.date || 'N/A'})</span> <span style="color: #f57c00; font-weight: bold;">Pending</span>`;
+                    pendingListContainer.appendChild(reqDiv);
+                });
+                reqBanner.style.display = 'block';
             } else {
-                banner.style.display = 'none';
+                reqBanner.style.display = 'none';
+            }
+
+            // 2. Pagpapakita ng Admin Approval Notification Banner kung mayroon man
+            const approvalBanner = document.getElementById('clientApprovalBanner');
+            const approvalText = document.getElementById('approvalBannerText');
+
+            if (item.clientNotifications && item.clientNotifications.length > 0) {
+                // Kunin ang pinakabagong approval notification galing sa admin
+                const notif = item.clientNotifications[item.clientNotifications.length - 1];
+                approvalText.innerHTML = notif.text;
+                approvalBanner.style.display = 'block';
+            } else {
+                approvalBanner.style.display = 'none';
             }
 
             const historyList = document.getElementById('historyList');
@@ -361,23 +406,23 @@
             }
         }
 
-        // Pindutan para i-clear ng client ang activeRequests banner nila kapag nakita na nila
-        document.getElementById('clearBannerBtn').addEventListener('click', async () => {
+        // Pindutan para i-clear ng client ang Approval Notification Banner
+        document.getElementById('clearApprovalBtn').addEventListener('click', async () => {
             if (globalStoreIndex === -1 || !globalAllData) return;
 
             const storeData = globalAllData.consignments[globalStoreIndex];
-            // Burahin o i-clear ang activeRequests para mawala ang banner
-            storeData.activeRequests = [];
+            // Burahin o i-clear ang clientNotifications para mawala ang approval banner
+            storeData.clientNotifications = [];
 
             syncStatus.textContent = "Ina-update ang status...";
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 await setDoc(docRef, globalAllData);
                 renderClient(storeData);
-                syncStatus.textContent = "✅ Na-clear na ang notification banner.";
+                syncStatus.textContent = "✅ Na-clear na ang approval notification.";
             } catch (err) {
-                console.error("Error clearing banner:", err);
-                syncStatus.textContent = "⚠️ Nabigo sa pag-clear ng banner.";
+                console.error("Error clearing notification:", err);
+                syncStatus.textContent = "⚠️ Nabigo sa pag-clear ng notification.";
             }
         });
 
@@ -432,8 +477,11 @@
                 storeData.activeRequests = [];
             }
 
+            // Nagdadagdag sa activeRequests array nang hindi tinatanggal ang mga nauna
             storeData.activeRequests.push({
-                qty: requestedQty
+                reqId: Date.now(),
+                qty: requestedQty,
+                date: timestamp
             });
 
             const reqText = `📦 RESTOCK REQUEST: Humiling ng karagdagang ${requestedQty} pcs ng stock.`;
