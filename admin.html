@@ -247,14 +247,12 @@
             const storeData = globalAllData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
 
-            // Alisin ang request na ito mula sa activeRequests array
             storeData.activeRequests.splice(reqIdx, 1);
 
             if (!storeData.clientNotifications) {
                 storeData.clientNotifications = [];
             }
 
-            // Pagtukoy sa mensahe ng notification para sa client panel
             const notifText = isApproved 
                 ? `✅ Magandang balita! Na-approve ang iyong restock request na ${qty} pcs.` 
                 : `❌ Paumanhin, tinanggihan ang iyong restock request na ${qty} pcs.`;
@@ -265,7 +263,6 @@
                 date: timestamp
             });
 
-            // Magdagdag din sa history ng tindahan
             if (!storeData.history) storeData.history = [];
             storeData.history.unshift({
                 id: Date.now(),
@@ -279,14 +276,13 @@
                 await setDoc(docRef, globalAllData);
                 renderAdminPanel();
                 syncStatus.textContent = "✅ Matagumpay na naitala ang aksyon!";
-                alert(isApproved ? "Na-approve na ang request at nadagdagan ang stock!" : "Na-decline ang request.");
+                alert(isApproved ? "Na-approve na ang request!" : "Na-decline ang request.");
             } catch (err) {
                 console.error("Error processing request:", err);
                 syncStatus.textContent = "⚠️ Nabigo sa pag-save sa Cloud.";
             }
         }
 
-        // PWA Install Prompt Logic
         let deferredPrompt;
         const installCard = document.getElementById('installCard');
         const installBtn = document.getElementById('installBtn');
