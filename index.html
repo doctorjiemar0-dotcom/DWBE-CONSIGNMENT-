@@ -44,15 +44,20 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Automatic na kukunin sa URL o hihingin ang pangalan kung wala
     const urlParams = new URLSearchParams(window.location.search);
-    const currentStoreName = urlParams.get('store');
+    let currentStoreName = urlParams.get('store');
+
+    if (!currentStoreName || currentStoreName.trim() === "") {
+        currentStoreName = prompt("Ilagay ang pangalan ng iyong tindahan para mabuksan ang portal:");
+    }
 
     let appData = { consignments: [] };
 
     async function loadClientData() {
         const contentDiv = document.getElementById('clientContent');
         if (!currentStoreName) {
-            contentDiv.innerHTML = `<p style="color: red;">Walang natukoy na pangalan ng tindahan sa link.</p>`;
+            contentDiv.innerHTML = `<p style="color: red;">Walang naitalang pangalan ng tindahan. I-refresh ang pahina at ilagay ang tamang pangalan.</p>`;
             return;
         }
 
@@ -74,11 +79,14 @@
         const contentDiv = document.getElementById('clientContent');
         document.getElementById('portalTitle').innerText = `Mga Batch ni: ${currentStoreName}`;
 
-        // Salain ang lahat ng batch na pagmamay-ari ng tindahang ito
-        const storeBatches = appData.consignments.filter(c => c.storeName === currentStoreName);
+        // Salain ang lahat ng batch na may katugmang pangalan ng tindahan
+        const storeBatches = appData.consignments.filter(c => c.storeName && c.storeName.toLowerCase() === currentStoreName.toLowerCase());
 
         if (storeBatches.length === 0) {
-            contentDiv.innerHTML = `<p>Walang nahanap na data para sa tindahang ito.</p>`;
+            contentDiv.innerHTML = `
+                <p>Walang nahanap na data para sa tindahang <strong>"${currentStoreName}"</strong>.</p>
+                <button onclick="location.reload()" style="margin-top:10px; background:#666;">Subukang Muli / Palitan ang Pangalan</button>
+            `;
             return;
         }
 
@@ -96,7 +104,6 @@
                 </div>`;
         });
 
-        // Kunin ang notifications at messages mula sa unang batch (o pagsama-samahin)
         const primaryBatch = storeBatches[0];
         if (!primaryBatch.clientNotifications) primaryBatch.clientNotifications = [];
         if (!primaryBatch.messages) primaryBatch.messages = [];
@@ -132,7 +139,6 @@
         `;
     }
 
-    // Function para sa pagpapadala ng Restock Request
     window.sendRestockRequest = async function(styleType, batchIdx) {
         const qtyInput = document.getElementById(`reqQty_${batchIdx}`);
         const qty = parseInt(qtyInput.value);
@@ -142,7 +148,7 @@
             return;
         }
 
-        const storeBatches = appData.consignments.filter(c => c.storeName === currentStoreName);
+        const storeBatches = appData.consignments.filter(c => c.storeName && c.storeName.toLowerCase() === currentStoreName.toLowerCase());
         const targetBatch = storeBatches[batchIdx];
         const realIdx = appData.consignments.findIndex(c => c === targetBatch);
 
@@ -170,7 +176,6 @@
         }
     };
 
-    // Function para sa pagpapadala ng Mensahe sa Admin
     window.sendClientMessage = async function() {
         const msgInput = document.getElementById('clientMsgInput');
         const text = msgInput.value.trim();
@@ -180,7 +185,7 @@
             return;
         }
 
-        const storeBatches = appData.consignments.filter(c => c.storeName === currentStoreName);
+        const storeBatches = appData.consignments.filter(c => c.storeName && c.storeName.toLowerCase() === currentStoreName.toLowerCase());
         if (storeBatches.length > 0) {
             const primaryBatch = storeBatches[0];
             const realIdx = appData.consignments.findIndex(c => c === primaryBatch);
