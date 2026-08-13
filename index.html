@@ -371,7 +371,6 @@
             const approvalText = document.getElementById('approvalBannerText');
 
             if (item.clientNotifications && item.clientNotifications.length > 0) {
-                // Kunin ang pinakabagong approval notification galing sa admin
                 const notif = item.clientNotifications[item.clientNotifications.length - 1];
                 approvalText.innerHTML = notif.text;
                 approvalBanner.style.display = 'block';
@@ -411,7 +410,6 @@
             if (globalStoreIndex === -1 || !globalAllData) return;
 
             const storeData = globalAllData.consignments[globalStoreIndex];
-            // Burahin o i-clear ang clientNotifications para mawala ang approval banner
             storeData.clientNotifications = [];
 
             syncStatus.textContent = "Ina-update ang status...";
@@ -477,7 +475,6 @@
                 storeData.activeRequests = [];
             }
 
-            // Nagdadagdag sa activeRequests array nang hindi tinatanggal ang mga nauna
             storeData.activeRequests.push({
                 reqId: Date.now(),
                 qty: requestedQty,
