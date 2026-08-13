@@ -18,7 +18,6 @@
             font-weight: bold; 
         }
 
-        /* Search Bar Panel pamalit sa Face ID */
         .search-panel {
             background: #1b5e20;
             padding: 12px;
@@ -175,15 +174,16 @@
 
         const syncStatus = document.getElementById('syncStatus');
         const urlParams = new URLSearchParams(window.location.search);
-        let storeName = urlParams.get('store');
+        let storeNameParam = urlParams.get('store');
 
-        let globalStoreData = null;
+        let globalStoreIndex = -1;
         let globalAllData = null;
 
         window.addEventListener('DOMContentLoaded', () => {
-            if (storeName) {
-                document.getElementById('storeSearchInput').value = decodeURIComponent(storeName);
-                fetchAndLoadStore(decodeURIComponent(storeName));
+            if (storeNameParam) {
+                const decodedStore = decodeURIComponent(storeNameParam);
+                document.getElementById('storeSearchInput').value = decodedStore;
+                fetchAndLoadStore(decodedStore);
             } else {
                 fetchAllDatabase();
             }
@@ -229,18 +229,20 @@
 
                 if (globalAllData && globalAllData.consignments) {
                     const consignments = globalAllData.consignments;
-                    
                     const cleanTarget = targetStore.toLowerCase().trim();
-                    const storeData = consignments.find(item => {
+                    
+                    // Hanapin ang index at exact match para maiwasan ang maling pag-update
+                    globalStoreIndex = consignments.findIndex(item => {
                         const sName = (item.storeName || "").toLowerCase().trim();
                         return sName === cleanTarget || sName.includes(cleanTarget);
                     });
 
-                    if (storeData) {
-                        globalStoreData = storeData;
+                    if (globalStoreIndex !== -1) {
+                        const storeData = consignments[globalStoreIndex];
                         renderClient(storeData);
                         syncStatus.textContent = `✅ Nakakonekta sa tindahan: ${storeData.storeName}`;
                     } else {
+                        globalStoreIndex = -1;
                         syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahan.";
                         alert("Walang natagpuang tindahan na may pangalang: " + targetStore);
                     }
@@ -319,18 +321,21 @@
         document.getElementById('sendChatBtn').addEventListener('click', async () => {
             const inputField = document.getElementById('chatMessageInput');
             const msgText = inputField.value.trim();
-            if (!msgText || !globalStoreData || !globalAllData) return;
+            if (!msgText || globalStoreIndex === -1 || !globalAllData) return;
 
-            if (!globalStoreData.messages) globalStoreData.messages = [];
-            globalStoreData.messages.push({
-                date: new Date().toLocaleString(),
+            const storeData = globalAllData.consignments[globalStoreIndex];
+            const timestamp = new Date().toLocaleString();
+
+            if (!storeData.messages) storeData.messages = [];
+            storeData.messages.push({
+                date: timestamp,
                 text: msgText
             });
 
-            if (!globalStoreData.history) globalStoreData.history = [];
-            globalStoreData.history.unshift({
+            if (!storeData.history) storeData.history = [];
+            storeData.history.unshift({
                 id: Date.now(),
-                date: new Date().toLocaleString(),
+                date: timestamp,
                 text: `Mensahe mula sa Tindahan: "${msgText}"`
             });
 
@@ -339,7 +344,7 @@
                 const docRef = doc(db, "app_data", "main_inventory");
                 await setDoc(docRef, globalAllData);
                 inputField.value = '';
-                renderClient(globalStoreData);
+                renderClient(storeData);
                 syncStatus.textContent = "✅ Naipadala ang mensahe sa Cloud";
             } catch (err) {
                 console.error("Error sending message:", err);
@@ -347,37 +352,40 @@
             }
         });
 
-        // REVISED RESTOCK REQUEST LOGIC (Gumagamit na ng activeRequests array push)
+        // Tiyak na naisasama sa activeRequests array para makita sa Admin panel banner
         document.getElementById('requestRestockBtn').addEventListener('click', async () => {
-            if (!globalStoreData || !globalAllData) return;
+            if (globalStoreIndex === -1 || !globalAllData) {
+                alert("Mangyaring hanapin muna ang iyong tindahan.");
+                return;
+            }
+            
             const qtyReq = prompt('Ilang piraso ng stock ang nais mong i-request?', '10');
             if (qtyReq === null || isNaN(qtyReq) || parseInt(qtyReq) <= 0) return;
 
             const requestedQty = parseInt(qtyReq);
             const timestamp = new Date().toLocaleString();
+            const storeData = globalAllData.consignments[globalStoreIndex];
 
-            // Sisiguraduhing may activeRequests array
-            if (!globalStoreData.activeRequests) {
-                globalStoreData.activeRequests = [];
+            if (!storeData.activeRequests) {
+                storeData.activeRequests = [];
             }
 
-            // I-push ang bawat bagong request sa array nang hindi pinapatungan ang mga nauna
-            globalStoreData.activeRequests.push({
-                reqId: Date.now(),
+            // Nagdadagdag sa activeRequests array ng partikular na tindahan
+            storeData.activeRequests.push({
                 qty: requestedQty
             });
 
             const reqText = `📦 RESTOCK REQUEST: Humiling ng karagdagang ${requestedQty} pcs ng stock.`;
             
-            if (!globalStoreData.history) globalStoreData.history = [];
-            globalStoreData.history.unshift({
+            if (!storeData.history) storeData.history = [];
+            storeData.history.unshift({
                 id: Date.now(),
                 date: timestamp,
                 text: reqText
             });
 
-            if (!globalStoreData.messages) globalStoreData.messages = [];
-            globalStoreData.messages.push({
+            if (!storeData.messages) storeData.messages = [];
+            storeData.messages.push({
                 date: timestamp,
                 text: reqText
             });
@@ -386,7 +394,7 @@
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 await setDoc(docRef, globalAllData);
-                renderClient(globalStoreData);
+                renderClient(storeData);
                 syncStatus.textContent = "✅ Matagumpay na naipadala ang Request Restock!";
                 alert('Naipadala na ang iyong kahilingan sa restock sa Admin!');
             } catch (err) {
