@@ -9,7 +9,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
         
-        /* Header na may Secret Long-Press Trigger */
         header { 
             background-color: var(--primary-color); 
             color: white; 
@@ -17,12 +16,9 @@
             text-align: center; 
             font-size: 1.2rem; 
             font-weight: bold; 
-            cursor: pointer; 
-            user-select: none; 
-            -webkit-user-select: none;
         }
 
-        /* Sekritong Store Selector Panel (Nakatago default) */
+        /* Store Selector Panel (Nakatago default, lalabas kapag na-verify ang PIN) */
         #secretStorePanel {
             display: none;
             background: #1b5e20;
@@ -46,8 +42,8 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
         .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); }
         .history-item { border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 6px; font-size: 0.85rem; color: #555; }
-        .admin-link { text-align: center; margin-top: 20px; }
-        .admin-link a { color: var(--primary-color); text-decoration: none; font-size: 0.9rem; font-weight: bold; }
+        .admin-link { text-align: center; margin-top: 20px; display: flex; justify-content: center; gap: 15px; align-items: center; }
+        .admin-link a { color: var(--primary-color); text-decoration: none; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
         .admin-link a:hover { text-decoration: underline; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
         
@@ -67,8 +63,7 @@
 </head>
 <body>
 
-    <!-- SECRET HEADER TRIGGER: Pindutin at i-hold nang 2 segundo -->
-    <header id="secretHeader">🧹 Doctor's Whisk Broom - Client</header>
+    <header>🧹 Doctor's Whisk Broom - Client</header>
 
     <!-- NAKATAGONG STORE SELECTOR PANEL NA MAY PIN -->
     <div id="secretStorePanel">
@@ -145,7 +140,10 @@
             </div>
         </div>
 
+        <!-- PIN-PROTECTED STORE SELECTOR LINK SA BABA -->
         <div class="admin-link">
+            <a onclick="promptForPin()">🔐 Palitan ang Tindahan</a>
+            <span>|</span>
             <a href="admin.html">⚙️ Bumalik sa Admin Panel</a>
         </div>
     </div>
@@ -174,36 +172,10 @@
         let globalStoreData = null;
         let globalAllData = null;
 
-        // Secret Feature Variables (Long Press Trigger)
         const CORRECT_PIN = "0802";
-        let pressTimer = null;
 
-        const headerEl = document.getElementById('secretHeader');
-
-        // Pindutin at i-hold (Touch / Mouse Down)
-        const startPress = (e) => {
-            pressTimer = setTimeout(() => {
-                triggerSecretAction();
-            }, 2000); // 2 segundo na hold
-        };
-
-        // Kapag binitiwan agad o inalis ang kamay (Cancel)
-        const cancelPress = (e) => {
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                pressTimer = null;
-            }
-        };
-
-        headerEl.addEventListener('mousedown', startPress);
-        headerEl.addEventListener('mouseup', cancelPress);
-        headerEl.addEventListener('mouseleave', cancelPress);
-
-        headerEl.addEventListener('touchstart', startPress);
-        headerEl.addEventListener('touchend', cancelPress);
-        headerEl.addEventListener('touchcancel', cancelPress);
-
-        function triggerSecretAction() {
+        // Function para humingi ng PIN kapag clinick ang "Palitan ang Tindahan"
+        window.promptForPin = function() {
             const enteredPin = prompt("Enter PIN:");
             if (enteredPin === CORRECT_PIN) {
                 const panel = document.getElementById('secretStorePanel');
@@ -216,7 +188,7 @@
             } else if (enteredPin !== null) {
                 alert("Incorrect PIN");
             }
-        }
+        };
 
         function populateSecretDropdown() {
             if (!globalAllData || !globalAllData.consignments) return;
