@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor's Whisk Broom - Client Portal</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2e7d32">
     <style>
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
@@ -14,332 +12,188 @@
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
         h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
-        .form-group { margin-bottom: 10px; }
-        label { display: block; font-size: 0.85rem; margin-bottom: 3px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
-        button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        button:hover { opacity: 0.9; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        .summary-row-highlight { border-top: 1px dashed #a5d6a7; padding-top: 8px; font-weight: bold; color: var(--primary-color); }
+        .history-item { border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 6px; font-size: 0.85rem; color: #555; }
+        .admin-link { text-align: center; margin-top: 20px; }
+        .admin-link a { color: var(--primary-color); text-decoration: none; font-size: 0.9rem; font-weight: bold; }
+        .admin-link a:hover { text-decoration: underline; }
+        #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
         
-        .install-banner { background: #e8f5e9; border: 2px dashed #4caf50; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: none; }
-        .install-banner button { background-color: #1b5e20; margin-top: 8px; width: auto; padding: 8px 16px; }
-
-        .chat-box { border: 1px solid #ddd; border-radius: 6px; padding: 8px; height: 200px; overflow-y: auto; background: #fafafa; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-        .chat-msg { padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; max-width: 80%; }
-        .chat-client { background: #e8f5e9; align-self: flex-end; border-left: 3px solid #388e3c; }
-        .chat-admin { background: #e3f2fd; align-self: flex-start; border-left: 3px solid #1976d2; }
-        
-        .payment-box { background: #fffde7; border: 1px solid #ffee58; padding: 10px; border-radius: 6px; margin-top: 8px; display: none; }
-        
-        /* Payment toggle buttons style */
-        .pay-btn-group { display: flex; gap: 10px; margin-top: 5px; }
-        .pay-btn { flex: 1; padding: 10px; border: 2px solid #ccc; background: #f1f1f1; color: #333; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .pay-btn.active-cod { border-color: #607d8b; background: #eceff1; color: #37474f; }
-        .pay-btn.active-gcash { border-color: #2196f3; background: #e3f2fd; color: #0d47a1; }
+        /* New Portal Styles */
+        .portal-box { background: #e3f2fd; border: 1px solid #bbdefb; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        .portal-title { font-weight: bold; color: #0d47a1; margin-bottom: 8px; font-size: 0.95rem; display: flex; align-items: center; gap: 5px; }
+        .portal-detail { font-size: 0.85rem; margin-bottom: 5px; color: #1565c0; display: flex; justify-content: space-between; }
+        .qr-placeholder { background: #fff; border: 2px dashed #90caf9; padding: 15px; text-align: center; border-radius: 6px; margin-top: 8px; font-size: 0.85rem; color: #555; }
     </style>
 </head>
 <body>
 
-    <header>🧹 DWBE - Portal ng Kliyente</header>
+    <header>🧹 Doctor's Whisk Broom - Client</header>
 
     <div class="container">
+        <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- INSTALL APP BANNER -->
-        <div class="card install-banner" id="installCard">
-            <h2>📱 I-install ang App</h2>
-            <p style="font-size: 0.85rem; color: #333; margin-bottom: 5px;">Para mas madaling ma-access ang restock at chat.</p>
-            <button id="installBtn" type="button">📲 I-install sa Phone</button>
+        <div class="card" id="clientCard">
+            <h2 id="storeTitle">🏪 Tindahan</h2>
+            <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
+                <div class="summary-row"><span>Uri ng Estilo:</span><span id="styleType">-</span></div>
+                <div class="summary-row"><span>Presyo bawat Isa:</span><span id="price">-</span></div>
+                <div class="summary-row"><span>Simulang Stock:</span><span id="initialQty">-</span></div>
+                <div class="summary-row"><span>Natitirang Stock:</span><span id="currentStock" style="color: #2e7d32; font-weight: bold;">-</span></div>
+                <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="soldQty" style="color: #c2185b; font-weight: bold;">-</span></div>
+                <div class="summary-row"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
+            </div>
         </div>
 
-        <!-- LOGIN / IDENTIFY STORE -->
-        <div class="card" id="loginCard">
-            <h2>🏪 Ilagay ang Pangalan ng Tindahan</h2>
-            <div class="form-group">
-                <input type="text" id="clientStoreNameInput" placeholder="Hal. Aling Nena Store">
-            </div>
-            <button type="button" onclick="loginClient()">Pumasok sa Portal</button>
-        </div>
-
-        <!-- MAIN CLIENT DASHBOARD -->
-        <div id="clientDashboard" style="display: none;">
-            <div class="card" style="background: #e8f5e9; border: 1px solid #c8e6c9;">
-                <h2 id="welcomeStoreTitle">Tindahan: </h2>
-                <div style="font-size: 0.9rem; margin-top: 5px;">
-                    <p>📦 Kasalukuyang Stock: <strong id="clientCurrentStock">0</strong> pcs</p>
-                    <p>🏷️ Uri ng Estilo: <strong id="clientStyleType">Ordinary</strong></p>
-                    <p>💰 Presyo: <strong id="clientPrice">₱0</strong></p>
+        <!-- PAYMENT / PORTAL INFO CARD -->
+        <div class="portal-box" id="paymentPortalCard">
+            <div class="portal-title">💳 Payment & Terms Portal</div>
+            <div class="portal-detail"><span>Paraan ng Bayad:</span> <strong id="portalPaymentType">-</strong></div>
+            <div class="portal-detail"><span>Nabayaran / Down Payment:</span> <strong id="portalPaid">₱0</strong></div>
+            <div class="portal-detail"><span>Naiwang Balanse:</span> <strong id="portalBalance" style="color: #c62828;">₱0</strong></div>
+            
+            <div id="gcashDetails" style="display: none; margin-top: 10px;">
+                <div style="font-size: 0.85rem; color: #0d47a1; margin-bottom: 5px;">Maaaring magbayad sa pamamagitan ng GCash:</div>
+                <div style="font-size: 0.9rem; font-weight: bold; background: #fff; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #90caf9;">
+                    📱 GCash Name: Jiemar Doctor<br>
+                    📞 Number: 0912-345-6789
                 </div>
-                <button type="button" onclick="logoutClient()" style="background-color: #d32f2f; margin-top: 10px; font-size: 0.8rem; padding: 6px;">Mag-log out</button>
             </div>
 
-            <!-- RESTOCK REQUEST WITH PAYMENT PORTAL -->
-            <div class="card">
-                <h2>📦 Mag-request ng Restock & Payment</h2>
-                <div class="form-group">
-                    <label for="requestQty">Bilang ng hihilinging Stock:</label>
-                    <input type="number" id="requestQty" placeholder="Hal. 10" value="10">
+            <div id="codDetails" style="display: none; margin-top: 10px;">
+                <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
+                    💵 <strong>Cash on Delivery (COD):</strong> Ang koleksyon ng bayad ay gagawin sa takdang araw ng pagkolekta kasama ang ating authorized partner.
                 </div>
-                
-                <div class="form-group">
-                    <label>Paraan ng Bayad (Payment Method):</label>
-                    <div class="pay-btn-group">
-                        <button type="button" id="btnCOD" class="pay-btn active-cod" onclick="selectPayment('COD')">💵 COD</button>
-                        <button type="button" id="btnGCash" class="pay-btn" onclick="selectPayment('GCash')">📱 GCash</button>
-                    </div>
-                    <input type="hidden" id="selectedPaymentMethod" value="COD">
-                </div>
-
-                <!-- GCash Reference Details -->
-                <div class="payment-box" id="gcashDetailsBox">
-                    <p style="font-size: 0.8rem; font-weight: bold; color: #f57f17; margin-bottom: 5px;">📱 Magpadala sa GCash:</p>
-                    <p style="font-size: 0.85rem; margin-bottom: 8px;">Pangalan: <strong>Jiemar D.</strong><br>Number: <strong>09XXXXXXXXX</strong></p>
-                    <div class="form-group">
-                        <label for="gcashRef">GCash Reference Number / Resibo Code:</label>
-                        <input type="text" id="gcashRef" placeholder="Ilagay ang 13-digit ref no.">
-                    </div>
-                </div>
-
-                <button type="button" onclick="submitRestockRequest()" style="background-color: #2e7d32; margin-top: 10px;">Ipadala ang Request at Bayad</button>
             </div>
 
-            <!-- CHAT WITH ADMIN -->
-            <div class="card">
-                <h2>💬 Mensahe sa Admin</h2>
-                <div class="chat-box" id="clientChatBox">
-                    <!-- Dynamic Messages -->
-                </div>
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="clientChatInput" placeholder="I-type ang mensahe..." onkeypress="checkEnter(event)">
-                    <button type="button" onclick="sendChatMessage()" style="width: 80px; margin-top:0;">Ipadala</button>
+            <div id="dpDetails" style="display: none; margin-top: 10px;">
+                <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
+                    📊 <strong>Down Payment Terms:</strong> Ang natitirang balanse ay kailangang bayaran sa susunod na hulog o takdang petsa ng koleksyon.
                 </div>
             </div>
         </div>
 
+        <div class="card">
+            <h2>📜 Kasaysayan ng Transaksyon</h2>
+            <div id="historyList">
+                <p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>
+            </div>
+        </div>
+
+        <div class="admin-link">
+            <a href="admin.html">⚙️ Bumalik sa Admin Panel</a>
+        </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
-          apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
-          authDomain: "dwbe-consignment.firebaseapp.com",
-          projectId: "dwbe-consignment",
-          storageBucket: "dwbe-consignment.firebasestorage.app",
-          messagingSenderId: "205759197252",
-          appId: "1:205759197252:web:b04400821f81791d10cc11"
+            apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+            authDomain: "dwbe-consignment.firebaseapp.com",
+            projectId: "dwbe-consignment",
+            storageBucket: "dwbe-consignment.firebasestorage.app",
+            messagingSenderId: "205759197252",
+            appId: "1:205759197252:web:b04400821f81791d10cc11"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let currentStoreName = localStorage.getItem('client_store_name') || '';
-        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [] };
+        const syncStatus = document.getElementById('syncStatus');
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeName = urlParams.get('store');
 
-        window.addEventListener('load', () => {
-            if (currentStoreName) {
-                document.getElementById('clientStoreNameInput').value = currentStoreName;
-                loginClient();
-            }
-        });
+        if (!storeName) {
+            document.getElementById('storeTitle').textContent = "⚠️ Walang Napiling Tindahan";
+            syncStatus.textContent = "Pakitukoy ang tindahan gamit ang tamang link mula sa Admin Panel.";
+        } else {
+            document.getElementById('storeTitle').textContent = `🏪 ${storeName}`;
+            loadClientData(storeName);
+        }
 
-        window.loginClient = async function() {
-            const nameInput = document.getElementById('clientStoreNameInput').value.trim();
-            if (!nameInput) {
-                alert('Ilagay ang pangalan ng tindahan.');
-                return;
-            }
-            currentStoreName = nameInput;
-            localStorage.setItem('client_store_name', currentStoreName);
-            await loadClientData(currentStoreName);
-        };
-
-        window.logoutClient = function() {
-            localStorage.removeItem('client_store_name');
-            currentStoreName = '';
-            document.getElementById('loginCard').style.display = 'block';
-            document.getElementById('clientDashboard').style.display = 'none';
-        };
-
-        // Button Toggle para sa COD at GCash
-        window.selectPayment = function(method) {
-            document.getElementById('selectedPaymentMethod').value = method;
-            const box = document.getElementById('gcashDetailsBox');
-            const btnCOD = document.getElementById('btnCOD');
-            const btnGCash = document.getElementById('btnGCash');
-
-            if (method === 'COD') {
-                btnCOD.className = "pay-btn active-cod";
-                btnGCash.className = "pay-btn";
-                box.style.display = 'none';
-            } else {
-                btnGCash.className = "pay-btn active-gcash";
-                btnCOD.className = "pay-btn";
-                box.style.display = 'block';
-            }
-        };
-
-        async function loadClientData(storeName) {
+        async function loadClientData(targetStore) {
+            syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 const docSnap = await getDoc(docRef);
+
                 if (docSnap.exists()) {
-                    appData = docSnap.data();
-                    const store = appData.consignments.find(c => c.storeName.toLowerCase() === storeName.toLowerCase());
-                    if (store) {
-                        document.getElementById('loginCard').style.display = 'none';
-                        document.getElementById('clientDashboard').style.display = 'block';
-                        document.getElementById('welcomeStoreTitle').textContent = `Tindahan: ${store.storeName}`;
-                        document.getElementById('clientCurrentStock').textContent = store.currentStock;
-                        document.getElementById('clientStyleType').textContent = store.styleType || 'Ordinary';
-                        document.getElementById('clientPrice').textContent = `₱${store.price}`;
-                        renderChat(store.history || []);
+                    const data = docSnap.data();
+                    const consignments = data.consignments || [];
+
+                    const storeData = consignments.find(item => 
+                        item.storeName.toLowerCase() === targetStore.toLowerCase()
+                    );
+
+                    if (storeData) {
+                        renderClient(storeData);
+                        syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
                     } else {
-                        alert('Hindi makita ang pangalan ng tindahan na ito sa sistema ng Admin. Pakisigurong tama ang baybay.');
+                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahang ito sa database.";
                     }
+                } else {
+                    syncStatus.textContent = "⚠️ Walang makitang record sa database.";
                 }
             } catch (err) {
-                console.error(err);
-                alert('Nabigo sa pagkonekta sa database.');
+                console.error("Error loading client data:", err);
+                syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
             }
         }
 
-        window.submitRestockRequest = async function() {
-            const qty = parseInt(document.getElementById('requestQty').value);
-            const method = document.getElementById('selectedPaymentMethod').value;
-            const refNo = document.getElementById('gcashRef').value.trim();
+        function renderClient(item) {
+            if (item.rejectedQty === undefined) item.rejectedQty = 0;
+            const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
+            const sales = sold * item.price;
+            const amountPaid = item.amountPaid || 0;
+            const balance = Math.max(0, sales - amountPaid);
+            const paymentType = item.paymentType || 'COD';
 
-            if (isNaN(qty) || qty <= 0) {
-                alert('Ilagay ang tamang bilang ng stock.');
-                return;
+            document.getElementById('styleType').textContent = item.styleType || 'Ordinary';
+            document.getElementById('price').textContent = '₱' + item.price;
+            document.getElementById('initialQty').textContent = item.initialQty + ' pcs';
+            document.getElementById('currentStock').textContent = item.currentStock + ' pcs';
+            document.getElementById('soldQty').textContent = sold + ' pcs';
+            document.getElementById('totalSales').textContent = '₱' + sales.toLocaleString();
+
+            // Portal data binding
+            document.getElementById('portalPaymentType').textContent = paymentType;
+            document.getElementById('portalPaid').textContent = '₱' + amountPaid.toLocaleString();
+            document.getElementById('portalBalance').textContent = '₱' + balance.toLocaleString();
+
+            // Toggle specific payment info views
+            const gcashDiv = document.getElementById('gcashDetails');
+            const codDiv = document.getElementById('codDetails');
+            const dpDiv = document.getElementById('dpDetails');
+
+            gcashDiv.style.display = 'none';
+            codDiv.style.display = 'none';
+            dpDiv.style.display = 'none';
+
+            if (paymentType === 'GCash') {
+                gcashDiv.style.display = 'block';
+            } else if (paymentType === 'COD') {
+                codDiv.style.display = 'block';
+            } else if (paymentType === 'Downpayment') {
+                dpDiv.style.display = 'block';
             }
 
-            if (method === 'GCash' && !refNo) {
-                alert('Pakilagay ang GCash Reference Number para patunay ng iyong bayad.');
-                return;
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            if (item.history && item.history.length > 0) {
+                item.history.forEach(h => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `▪️ [${h.date}] ${h.text}`;
+                    historyList.appendChild(div);
+                });
+            } else {
+                historyList.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>';
             }
-
-            try {
-                const docRef = doc(db, "app_data", "main_inventory");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    appData = docSnap.data();
-                    const storeIdx = appData.consignments.findIndex(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-                    
-                    if (storeIdx !== -1) {
-                        let paymentInfo = `[Payment: ${method}]`;
-                        if (method === 'GCash') {
-                            paymentInfo = `[Payment: GCash - Ref: ${refNo}]`;
-                        }
-
-                        const reqText = `🚨 RESTOCK REQUEST: +${qty} pcs ${paymentInfo}`;
-                        
-                        if (!appData.consignments[storeIdx].history) {
-                            appData.consignments[storeIdx].history = [];
-                        }
-
-                        appData.consignments[storeIdx].history.unshift({
-                            id: Date.now(),
-                            date: new Date().toLocaleString(),
-                            text: reqText
-                        });
-
-                        await setDoc(docRef, appData);
-                        alert('Matagumpay na naipadala ang iyong restock request at detalye ng bayad sa Admin!');
-                        document.getElementById('gcashRef').value = '';
-                        loadClientData(currentStoreName);
-                    }
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Nabigo sa pagpapadala ng request.');
-            }
-        };
-
-        function renderChat(history) {
-            const chatBox = document.getElementById('clientChatBox');
-            chatBox.innerHTML = '';
-            
-            const chatLogs = history.filter(h => h.type === 'chat' || (h.text && h.text.includes('RESTOCK REQUEST')));
-            if (chatLogs.length === 0) {
-                chatBox.innerHTML = '<div style="text-align:center; color:#888; font-size:0.8rem; margin-top:20px;">Wala pang mensahe o log.</div>';
-                return;
-            }
-
-            chatLogs.forEach(h => {
-                const isChat = h.type === 'chat';
-                const div = document.createElement('div');
-                div.className = `chat-msg ${isChat && h.sender === 'admin' ? 'chat-admin' : 'chat-client'}`;
-                
-                let senderLabel = '🏪 Ikaw (Client)';
-                if (isChat && h.sender === 'admin') senderLabel = '👨‍💼 Admin';
-                
-                div.innerHTML = `<b style="font-size:0.7rem; display:block; color:#444;">${senderLabel} - ${h.date || ''}</b>${h.text}`;
-                chatBox.appendChild(div);
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
         }
-
-        window.sendChatMessage = async function() {
-            const input = document.getElementById('clientChatInput');
-            const msg = input.value.trim();
-            if (!msg) return;
-
-            try {
-                const docRef = doc(db, "app_data", "main_inventory");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    appData = docSnap.data();
-                    const storeIdx = appData.consignments.findIndex(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-                    
-                    if (storeIdx !== -1) {
-                        if (!appData.consignments[storeIdx].history) {
-                            appData.consignments[storeIdx].history = [];
-                        }
-
-                        appData.consignments[storeIdx].history.push({
-                            id: Date.now(),
-                            type: 'chat',
-                            sender: 'client',
-                            text: msg,
-                            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (' + new Date().toLocaleDateString() + ')'
-                        });
-
-                        await setDoc(docRef, appData);
-                        input.value = '';
-                        loadClientData(currentStoreName);
-                    }
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Nabigo sa pagpapadala ng mensahe.');
-            }
-        };
-
-        window.checkEnter = function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
-            }
-        };
-
-        let deferredPrompt;
-        const installCard = document.getElementById('installCard');
-        const installBtn = document.getElementById('installBtn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installCard.style.display = 'block';
-        });
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                installCard.style.display = 'none';
-            }
-        });
     </script>
 </body>
 </html>
