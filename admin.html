@@ -261,7 +261,6 @@
             }
         };
 
-        // General toggle function para sa bawat tindahan sa listahan (parehong mekanismo)
         window.toggleStoreDetails = function(index) {
             const bodyContent = document.getElementById(`storeBody_${index}`);
             const toggleBtn = document.getElementById(`storeToggleBtn_${index}`);
@@ -648,12 +647,28 @@
         };
 
         window.bawasStock = function(index) {
-            const count = parseInt(prompt('Ilang piraso ang ibabawas (Rejected)?', '1'));
+            const item = appData.consignments[index];
+            const style = item.styleType || 'Ordinary';
+            const count = parseInt(prompt(`Ilang piraso ng natitirang stock ang ibabawas at ibabalik sa Home inventory (${style})?`, '1'));
+            
             if (!isNaN(count) && count > 0) {
-                appData.consignments[index].currentStock -= count;
-                appData.consignments[index].rejectedQty += count;
-                appData.consignments[index].history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Rejected: ${count} pcs` });
+                if (count > item.currentStock) {
+                    alert(`Hindi maaari! Ang hihilingin mong bawasan (${count}) ay mas malaki kaysa sa kasalukuyang natitirang stock sa tindahan (${item.currentStock}).`);
+                    return;
+                }
+                
+                // Bawasan ang current stock sa tindahan at ibalik sa Home inventory
+                item.currentStock -= count;
+                appData.homeStock[style] += count;
+                
+                item.history.unshift({ 
+                    id: Date.now(), 
+                    date: new Date().toLocaleString(), 
+                    text: `Nagbawas ng ${count} pcs stock at ibinalik sa Home inventory (${style})` 
+                });
+                
                 saveToCloud();
+                alert(`Matagumpay na naibalik ang ${count} pcs (${style}) sa Home inventory!`);
             }
         };
 
