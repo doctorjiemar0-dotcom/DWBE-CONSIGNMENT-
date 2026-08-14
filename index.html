@@ -20,7 +20,7 @@
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #388e3c; }
 
-        #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50vh; text-align: left; }
+        #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40vh; text-align: left; }
         #portalContent { display: none; }
 
         .store-item-box { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
@@ -30,7 +30,6 @@
         
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
         
-        /* Admin Link Style saibaba */
         .admin-link-container {
             text-align: center;
             margin-top: 20px;
@@ -57,18 +56,24 @@
 
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- Login / Store Selection Screen -->
+        <!-- Secure Login Screen (Wala nang dropdown ng ibang tindahan) -->
         <div id="loginScreen" class="card">
-            <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Piliin ang iyong Tindahan o Mag-apply</h2>
-            <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Kung ang iyong tindahan ay nakarehistro na, hanapin ito sa ibaba. Kung bago ka pa lamang, maaari kang mag-inquire.</p>
-            
-            <div class="form-group" style="width: 100%;">
-                <label for="registeredStoreSelect">Mag-select ng Aktibong Tindahan:</label>
-                <select id="registeredStoreSelect">
-                    <option value="">-- Piliin ang iyong tindahan --</option>
-                </select>
+            <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
+                🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. I-click ang button sa ibaba upang buksan ang iyong portal.
             </div>
-            <button type="button" id="enterPortalBtn" style="background-color: var(--secondary-color); margin-bottom: 15px;">Buksan ang Portal ng Tindahan</button>
+
+            <div id="manualLoginSection">
+                <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan</h2>
+                <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Para mabuksan ang iyong portal, i-type nang eksakto ang rehistradong Pangalan ng iyong Tindahan.</p>
+                
+                <div class="form-group" style="width: 100%;">
+                    <label for="manualStoreNameInput">Pangalan ng Tindahan:</label>
+                    <input type="text" id="manualStoreNameInput" placeholder="Hal. Aling Nena Store">
+                </div>
+                <button type="button" id="manualLoginBtn" style="background-color: var(--secondary-color); margin-bottom: 15px;">Buksan ang Aking Portal</button>
+            </div>
+
+            <button type="button" id="proceedLoginBtn" style="display:none; background-color: var(--secondary-color); margin-bottom: 15px;">Ituloy sa Aking Portal</button>
 
             <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
 
@@ -105,7 +110,7 @@
             </form>
         </div>
 
-        <!-- Main Portal Dashboard (Hidden until selected) -->
+        <!-- Main Portal Dashboard (Hidden until verified) -->
         <div id="portalContent">
             <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: #e8f5e9;">
                 <div>
@@ -162,7 +167,6 @@
             </div>
         </div>
 
-        <!-- Naayos na Admin Link sa Ibaba -->
         <div class="admin-link-container">
             <a href="index.html" id="adminPanelLink">
                 🔒 Pumunta sa Admin Panel
@@ -192,8 +196,6 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        // Dynamic setting ng admin link depende sa pangalan ng file mo (hal. index.html o admin.html)
-        // Pwede mong palitan ang "index.html" sa ibaba kung iba ang filename ng admin dashboard mo.
         const adminPageFileName = "index.html"; 
         document.getElementById('adminPanelLink').href = adminPageFileName;
 
@@ -229,17 +231,9 @@
         }
 
         function initPortalView() {
-            const selectEl = document.getElementById('registeredStoreSelect');
-            selectEl.innerHTML = '<option value="">-- Piliin ang iyong tindahan --</option>';
-            appData.consignments.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.storeName;
-                opt.textContent = c.storeName;
-                selectEl.appendChild(opt);
-            });
-
             const urlParams = new URLSearchParams(window.location.search);
             const paramStore = urlParams.get('store');
+            
             if (paramStore) {
                 currentStoreName = paramStore;
                 localStorage.setItem('client_logged_store', currentStoreName);
@@ -250,12 +244,18 @@
                 if (found) {
                     document.getElementById('loginScreen').style.display = 'none';
                     document.getElementById('portalContent').style.display = 'block';
+                    if (paramStore) {
+                        document.getElementById('directAccessNotice').style.display = 'block';
+                    }
                     renderClientDashboard(found);
                 } else {
                     localStorage.removeItem('client_logged_store');
                     currentStoreName = '';
                     document.getElementById('loginScreen').style.display = 'flex';
                     document.getElementById('portalContent').style.display = 'none';
+                    if (paramStore) {
+                        alert(`Ang tindahang "${paramStore}" ay hindi pa rehistrado o aktibo sa sistema.`);
+                    }
                 }
             } else {
                 document.getElementById('loginScreen').style.display = 'flex';
@@ -263,13 +263,20 @@
             }
         }
 
-        document.getElementById('enterPortalBtn').addEventListener('click', () => {
-            const selected = document.getElementById('registeredStoreSelect').value;
-            if (!selected) {
-                alert('Mangyaring pumili muna ng tindahan.');
+        document.getElementById('manualLoginBtn').addEventListener('click', () => {
+            const storeInput = document.getElementById('manualStoreNameInput').value.trim();
+            if (!storeInput) {
+                alert('Mangyaring ilagay ang pangalan ng iyong tindahan.');
                 return;
             }
-            currentStoreName = selected;
+
+            const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeInput.toLowerCase());
+            if (!found) {
+                alert('Hindi natagpuan ang rehistradong tindahan na ito. Siguraduhing tama ang baybay o mag-inquire kung bago ka pa lamang.');
+                return;
+            }
+
+            currentStoreName = found.storeName;
             localStorage.setItem('client_logged_store', currentStoreName);
             initPortalView();
         });
@@ -277,7 +284,7 @@
         window.logoutPortal = function() {
             localStorage.removeItem('client_logged_store');
             currentStoreName = '';
-            window.location.href = window.location.pathname;
+            window.location.href = window.location.pathname.split('?')[0];
         };
 
         const inquiryForm = document.getElementById('inquiryForm');
@@ -403,7 +410,7 @@
         window.sendClientMessage = async function() {
             const input = document.getElementById('clientChatInput');
             const text = input.value.trim();
-            if (!text) return;
+            if (!text.trim()) return;
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
