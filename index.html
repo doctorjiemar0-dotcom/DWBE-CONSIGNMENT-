@@ -35,15 +35,20 @@
             margin-top: 20px;
         }
         .admin-link-container a {
-            color: #666;
-            font-size: 0.85rem;
+            color: #2e7d32;
+            font-size: 0.9rem;
+            font-weight: bold;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            background: #e8f5e9;
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid #c8e6c9;
         }
         .admin-link-container a:hover {
-            color: var(--primary-color);
+            background: #c8e6c9;
             text-decoration: underline;
         }
     </style>
@@ -56,7 +61,7 @@
 
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- Secure Login Screen (Wala nang dropdown ng ibang tindahan) -->
+        <!-- Secure Login Screen -->
         <div id="loginScreen" class="card">
             <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
                 🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. I-click ang button sa ibaba upang buksan ang iyong portal.
@@ -110,7 +115,7 @@
             </form>
         </div>
 
-        <!-- Main Portal Dashboard (Hidden until verified) -->
+        <!-- Main Portal Dashboard -->
         <div id="portalContent">
             <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: #e8f5e9;">
                 <div>
@@ -167,9 +172,10 @@
             </div>
         </div>
 
+        <!-- ADMIN PORTAL LINK SA IBABA -->
         <div class="admin-link-container">
-            <a href="index.html" id="adminPanelLink">
-                🔒 Pumunta sa Admin Panel
+            <a href="https://doctorjiemar0-dotcom.github.io/DWBE-CONSIGNMENT-/admin" target="_blank">
+                🔒 ADMIN PORTAL
             </a>
         </div>
 
@@ -195,9 +201,6 @@
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
-
-        const adminPageFileName = "index.html"; 
-        document.getElementById('adminPanelLink').href = adminPageFileName;
 
         async function loadData() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
