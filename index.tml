@@ -220,7 +220,6 @@
             searchScreen.style.display = 'flex';
         };
 
-        // Pagpapadala ng New Client Inquiry papunta sa Admin database bilang isang special request/notification
         const inquiryForm = document.getElementById('inquiryForm');
         inquiryForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -240,7 +239,6 @@
                 }
                 if (!appData.consignments) appData.consignments = [];
 
-                // Suriin kung mayroon nang katulad na tindahan
                 let existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === sName.toLowerCase());
                 const timestamp = new Date().toLocaleString();
 
@@ -297,7 +295,6 @@
             }
         });
 
-        // Suriin kung may URL parameter o naka-save nang store session
         const urlParams = new URLSearchParams(window.location.search);
         const storeParam = urlParams.get('store');
         if (storeParam) {
@@ -438,9 +435,10 @@
             }
         }
 
+        // Nakaturo na ito ngayon sa index.html para gumana nang tama
         window.logoutClient = function() {
             localStorage.removeItem('client_logged_store');
-            window.location.href = 'client.html';
+            window.location.href = 'index.html';
         };
 
         window.switchTab = function(tabId, btn) {
