@@ -252,7 +252,6 @@
                         date: timestamp
                     });
                 } else {
-                    // Lumikha ng pansamantalang consignment profile o inquiry entry para makita agad ng admin
                     appData.consignments.push({
                         id: Date.now(),
                         storeName: sName,
@@ -410,7 +409,6 @@
             document.getElementById('clientTotalSold').textContent = totalSold + ' pcs';
             document.getElementById('clientTotalSales').textContent = '₱' + totalSales.toLocaleString();
 
-            // Notifications
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
             if (store.clientNotifications && store.clientNotifications.length > 0) {
@@ -424,7 +422,6 @@
                 notifContainer.innerHTML = '<p style="font-size: 0.8rem; color: #666;">Wala pang abiso.</p>';
             }
 
-            // Messages / Chat
             const msgContainer = document.getElementById('clientMessagesContainer');
             msgContainer.innerHTML = '';
             if (store.messages && store.messages.length > 0) {
@@ -443,7 +440,7 @@
 
         window.logoutClient = function() {
             localStorage.removeItem('client_logged_store');
-            window.location.href = 'client.html';
+            window.location.href = 'index.html';
         };
 
         window.switchTab = function(tabId, btn) {
@@ -453,7 +450,6 @@
             btn.classList.add('active');
         };
 
-        // Pagpapadala ng Restock Request
         const restockForm = document.getElementById('restockRequestForm');
         restockForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -490,7 +486,6 @@
             }
         });
 
-        // Pagpapadala ng Chat Message sa Admin
         window.sendClientMessage = async function() {
             const input = document.getElementById('clientMsgInput');
             const text = input.value.trim();
@@ -515,7 +510,6 @@
             }
         };
 
-        // Auto-refresh kada 10 segundo para makita ang update kung in-aprubahan na ng admin
         setInterval(() => {
             if (currentStoreName) {
                 loadClientDataSilent();
