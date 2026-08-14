@@ -6,6 +6,8 @@
     <title>Doctor's Whisk Broom - Client Portal</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
+    <!-- QR Code Library mula sa CDN para sa madaling pag-generate -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
@@ -51,6 +53,11 @@
             background: #c8e6c9;
             text-decoration: underline;
         }
+
+        /* Estilo para Install App Banner at QR Code Box */
+        #installAppCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
+        .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
+        #qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -60,6 +67,13 @@
     <div class="container">
 
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
+
+        <!-- Install App Banner (Lilitaw kung pwedeng i-install sa phone/PC) -->
+        <div id="installAppCard" class="card">
+            <h2 style="color: #0288d1;">📱 I-install ang App sa Device Mo</h2>
+            <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
+            <button id="installAppBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px;">I-install ang App Na Ito</button>
+        </div>
 
         <!-- Secure Login Screen -->
         <div id="loginScreen" class="card">
@@ -123,6 +137,14 @@
                     <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
                 </div>
                 <button type="button" onclick="logoutPortal()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0;">Mag-logout</button>
+            </div>
+
+            <!-- QR Code para sa Direktang Link ng Tindahan na ito -->
+            <div class="card qr-container">
+                <h2>📷 QR Code ng Tindahan Mo</h2>
+                <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px; text-align: center;">I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.</p>
+                <div id="qrcode"></div>
+                <span id="qrStoreLinkText" style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;"></span>
             </div>
 
             <!-- Notifications -->
@@ -201,6 +223,29 @@
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
+
+        // PWA Install Prompt Logic
+        let deferredPrompt;
+        const installCard = document.getElementById('installAppCard');
+        const installBtn = document.getElementById('installAppBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installCard.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('Na-install ang app');
+                }
+                deferredPrompt = null;
+                installCard.style.display = 'none';
+            }
+        });
 
         async function loadData() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
@@ -320,6 +365,22 @@
 
         function renderClientDashboard(store) {
             document.getElementById('displayStoreName').textContent = store.storeName;
+
+            // Generate QR Code for this store's direct link
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = ""; // I-clear muna kung meron nang luma
+            const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
+            
+            document.getElementById('qrStoreLinkText').textContent = currentUrl;
+            
+            new QRCode(qrContainer, {
+                text: currentUrl,
+                width: 128,
+                height: 128,
+                colorDark: "#2e7d32",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
 
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
