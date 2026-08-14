@@ -332,7 +332,7 @@
             loadFromCloud();
 
             setInterval(() => {
-                if (sessionStorage.getItem('admin_logged_in') === 'true') {
+                if (sessionStorage.getItem('admin_logged_in'] === 'true') {
                     loadFromCloudSilent();
                 }
             }, 10000);
@@ -622,8 +622,6 @@
                 if (!chatHtml) chatHtml = '<div class="history-item">Wala pang mensahe sa chatbox.</div>';
 
                 const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
-                const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
-                const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
 
                 const div = document.createElement('div');
                 div.className = `store-card ${storeIsDue ? 'due' : ''}`;
@@ -648,8 +646,8 @@
                         <a href="client.html?store=${encodeURIComponent(item.storeName)}" target="_blank" class="client-link-btn" style="margin-top: 8px;">🔗 Bisitahin ang Client Portal</a>
 
                         <div style="margin-top: 8px;">
-                            <button type="button" onclick="toggleBox('chatBox_${index}', this, 'chat_open_${index}')" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">${chatOpen ? '💬 Itago ang Chatbox' : `💬 Ipakita ang Chatbox (${item.messages.length})`}</button>
-                            <div class="collapsible-box" id="chatBox_${index}" style="display: ${chatOpen ? 'block' : 'none'};">
+                            <button type="button" onclick="toggleBox('chatBox_${index}', this)" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">💬 Ipakita ang Chatbox (${item.messages.length})</button>
+                            <div class="collapsible-box" id="chatBox_${index}">
                                 ${chatHtml}
                                 <div style="display:flex; gap:4px; margin-top:5px;">
                                     <input type="text" id="adminReply_${index}" placeholder="Mag-reply bilang Admin..." style="font-size:0.75rem; padding:4px;">
@@ -657,8 +655,8 @@
                                 </div>
                             </div>
 
-                            <button type="button" onclick="toggleBox('historyBox_${index}', this, 'history_open_${index}')" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;" id="historyBtn_${index}">${historyOpen ? '📜 Itago ang History' : '📜 Ipakita ang History'}</button>
-                            <div class="collapsible-box" id="historyBox_${index}" style="display: ${historyOpen ? 'block' : 'none'};">
+                            <button type="button" onclick="toggleBox('historyBox_${index}', this)" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;" id="historyBtn_${index}">📜 Ipakita ang History</button>
+                            <div class="collapsible-box" id="historyBox_${index}">
                                 <div style="font-weight:bold; margin-bottom:2px;">📜 Transaction History:</div>
                                 ${historyHtml}
                             </div>
@@ -749,24 +747,16 @@
             }
         };
 
-        window.toggleBox = function(id, btn, storageKey) {
+        window.toggleBox = function(id, btn) {
             const box = document.getElementById(id);
             if (box.style.display === 'block') {
                 box.style.display = 'none';
-                localStorage.setItem(storageKey, 'false');
-                if (btn.textContent.includes('Chatbox')) {
-                    btn.textContent = btn.textContent.replace('Itago', 'Ipakita');
-                } else if (btn.textContent.includes('History')) {
-                    btn.textContent = '📜 Ipakita ang History';
-                }
+                if (btn.textContent.includes('Chatbox')) btn.textContent = btn.textContent.replace('Itago', 'Ipakita');
+                if (btn.textContent.includes('History')) btn.textContent = '📜 Ipakita ang History';
             } else {
                 box.style.display = 'block';
-                localStorage.setItem(storageKey, 'true');
-                if (btn.textContent.includes('Chatbox')) {
-                    btn.textContent = btn.textContent.replace('Ipakita', 'Itago');
-                } else if (btn.textContent.includes('History')) {
-                    btn.textContent = '📜 Itago ang History';
-                }
+                if (btn.textContent.includes('Chatbox')) btn.textContent = btn.textContent.replace('Ipakita', 'Itago');
+                if (btn.textContent.includes('History')) btn.textContent = '📜 Itago ang History';
             }
         };
 
@@ -940,8 +930,6 @@
                 }
                 appData.consignments.splice(index, 1);
                 localStorage.removeItem(`store_open_${index}`);
-                localStorage.removeItem(`chat_open_${index}`);
-                localStorage.removeItem(`history_open_${index}`);
                 saveToCloud();
             }
         };
