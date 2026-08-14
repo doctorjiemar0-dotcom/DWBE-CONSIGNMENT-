@@ -78,6 +78,14 @@
         .messenger-btn:hover {
             background-color: #006dd6;
         }
+
+        /* Printable Style para Inquiry Form */
+        @media print {
+            body * { visibility: hidden; }
+            #printableInquirySection, #printableInquirySection * { visibility: visible; }
+            #printableInquirySection { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -116,37 +124,52 @@
 
             <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
 
-            <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Bagong Aplikasyon / Inquiry</h2>
-            <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
-                <div class="form-group">
-                    <label>Pangalan ng Tindahan:</label>
-                    <input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required>
+            <!-- Bagong Aplikasyon / Inquiry Section na pwedeng I-print -->
+            <div id="printableInquirySection" style="width: 100%;">
+                <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Bagong Aplikasyon / Inquiry</h2>
+                <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
+                    <div class="form-group">
+                        <label>Pangalan ng Tindahan:</label>
+                        <input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Pangalan ng May-ari:</label>
+                        <input type="text" id="inqOwnerName" placeholder="Hal. Juan Dela Cruz" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Numero ng Telepono / GCash:</label>
+                        <input type="text" id="inqContact" placeholder="Hal. 09123456789" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Lokasyon / Address:</label>
+                        <input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gusto mong Uri ng Walis (Style):</label>
+                        <select id="inqStyleType">
+                            <option value="Ordinary">Ordinary Style</option>
+                            <option value="Premium">Premium Style</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mensahe / Katanungan (Optional):</label>
+                        <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
+                    </div>
+                    
+                    <button type="submit" style="background-color: #0288d1;">Ipadala ang Aplikasyon / Inquiry</button>
+                </form>
+
+                <!-- Print Button para sa Inquiry Form -->
+                <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon / Inquiry Form</button>
+                
+                <!-- Applicant Messenger Alternative Link sa dulo ng login screen -->
+                <div class="no-print" style="margin-top: 15px; text-align: center;">
+                    <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">May katanungan ba bilang aplikante?</p>
+                    <a href="https://m.me/YOUR_APPLICANT_MESSENGER_USERNAME" target="_blank" class="messenger-btn" style="background-color: #0084ff; font-size: 0.85rem;">
+                        💬 Mag-message sa aming Applicant Messenger
+                    </a>
                 </div>
-                <div class="form-group">
-                    <label>Pangalan ng May-ari:</label>
-                    <input type="text" id="inqOwnerName" placeholder="Hal. Juan Dela Cruz" required>
-                </div>
-                <div class="form-group">
-                    <label>Numero ng Telepono / GCash:</label>
-                    <input type="text" id="inqContact" placeholder="Hal. 09123456789" required>
-                </div>
-                <div class="form-group">
-                    <label>Lokasyon / Address:</label>
-                    <input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required>
-                </div>
-                <div class="form-group">
-                    <label>Gusto mong Uri ng Walis (Style):</label>
-                    <select id="inqStyleType">
-                        <option value="Ordinary">Ordinary Style</option>
-                        <option value="Premium">Premium Style</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Mensahe / Katanungan (Optional):</label>
-                    <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
-                </div>
-                <button type="submit" style="background-color: #0288d1;">Ipadala ang Aplikasyon / Inquiry</button>
-            </form>
+            </div>
         </div>
 
         <!-- Main Portal Dashboard -->
@@ -206,8 +229,8 @@
                 <h2>💬 Makipag-ugnayan sa Admin</h2>
                 
                 <!-- Messenger Alternative Channel Button -->
-                <a href="https://m.me/YOUR_MESSENGER_USERNAME" target="_blank" class="messenger-btn">
-                    💬 Mag-chat sa aming Messenger Account
+                <a href="https://m.me/YOUR_APPLICANT_MESSENGER_USERNAME" target="_blank" class="messenger-btn">
+                    💬 Mag-chat sa aming Applicant Messenger
                 </a>
 
                 <div id="clientChatContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 8px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background: #fafafa;">
