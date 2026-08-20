@@ -58,8 +58,8 @@
             text-decoration: underline;
         }
 
-        /* Estilo para Install App Banner at QR Code Box */
-        #installAppCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
+        /* Estilo para Install App Card sa loob ng Dashboard */
+        #dashboardInstallCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
         .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
         #qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
 
@@ -79,13 +79,6 @@
     <div class="container">
 
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
-
-        <!-- Install App Banner (Lilitaw kung pwedeng i-install sa phone/PC) -->
-        <div id="installAppCard" class="card">
-            <h2 style="color: #0288d1;">📱 I-install ang App sa Device Mo</h2>
-            <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
-            <button id="installAppBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px;">I-install ang App Na Ito</button>
-        </div>
 
         <!-- Secure Login Screen -->
         <div id="loginScreen" class="card">
@@ -150,12 +143,17 @@
 
         <!-- Main Portal Dashboard -->
         <div id="portalContent">
-            <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: #e8f5e9;">
-                <div>
-                    <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
-                    <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
-                </div>
-                <button type="button" onclick="logoutPortal()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0;">Mag-logout</button>
+            <!-- Header ng Personal Dashboard (Wala nang Logout Button) -->
+            <div class="card" style="text-align: center; background: #e8f5e9;">
+                <h2 id="displayStoreName" style="margin-bottom: 2px; color: #2e7d32; font-size: 1.1rem;">Pangalan ng Tindahan</h2>
+                <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
+            </div>
+
+            <!-- Nakabukod na Install App Card para sa Personal Client Dashboard -->
+            <div id="dashboardInstallCard" class="card">
+                <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
+                <button id="dashboardInstallBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
             </div>
 
             <!-- QR Code para sa Direktang Link ng Tindahan na ito -->
@@ -166,7 +164,7 @@
                 <span id="qrStoreLinkText" style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;"></span>
             </div>
 
-            <!-- Kasunduan sa Consignment (Makikita lamang ng mga nakapasok na kliyente) -->
+            <!-- Kasunduan sa Consignment -->
             <div class="card" style="text-align: center; background: #e3f2fd; border: 1px solid #90caf9;">
                 <h2 style="color: #0288d1;">📄 Kasunduan sa Consignment</h2>
                 <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">I-click ang button sa ibaba upang basahin o i-print ang kasunduan at mga alituntunin.</p>
@@ -222,7 +220,7 @@
             </div>
         </div>
 
-        <!-- MGA LINKS SA IBABA (Inalis na ang Agreement dito para sa mga hindi pa naka-login) -->
+        <!-- MGA LINKS SA IBABA -->
         <div class="admin-link-container">
             <a href="https://doctorjiemar0-dotcom.github.io/DWBE-CONSIGNMENT-/admin" target="_blank">🔒 ADMIN PORTAL</a>
         </div>
@@ -250,28 +248,34 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        // PWA Install Prompt Logic
+        // PWA Install Prompt Logic para sa Nakabukod na Dashboard Install Card
         let deferredPrompt;
-        const installCard = document.getElementById('installAppCard');
-        const installBtn = document.getElementById('installAppBtn');
+        const dashboardInstallCard = document.getElementById('dashboardInstallCard');
+        const dashboardInstallBtn = document.getElementById('dashboardInstallBtn');
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            installCard.style.display = 'block';
-        });
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('Na-install ang app');
-                }
-                deferredPrompt = null;
-                installCard.style.display = 'none';
+            if (dashboardInstallCard) {
+                dashboardInstallCard.style.display = 'block';
             }
         });
+
+        if (dashboardInstallBtn) {
+            dashboardInstallBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        console.log('Na-install ang app');
+                    }
+                    deferredPrompt = null;
+                    if (dashboardInstallCard) {
+                        dashboardInstallCard.style.display = 'none';
+                    }
+                }
+            });
+        }
 
         async function loadData() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
@@ -354,12 +358,6 @@
             localStorage.setItem('client_logged_store', currentStoreName);
             initPortalView();
         });
-
-        window.logoutPortal = function() {
-            localStorage.removeItem('client_logged_store');
-            currentStoreName = '';
-            window.location.href = window.location.pathname.split('?')[0];
-        };
 
         const inquiryForm = document.getElementById('inquiryForm');
         if (inquiryForm) {
