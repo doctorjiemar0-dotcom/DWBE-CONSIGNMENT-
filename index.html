@@ -58,8 +58,8 @@
             text-decoration: underline;
         }
 
-        /* Estilo para Install App Card sa loob ng Dashboard */
-        #dashboardInstallCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
+        /* Estilo para Install App Banners */
+        #installAppCard, #dashboardInstallCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
         .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
         #qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
 
@@ -79,6 +79,13 @@
     <div class="container">
 
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
+
+        <!-- Install App Card para sa mga Hindi Pa Naka-log in (Login/Inquiry Page) -->
+        <div id="installAppCard" class="card">
+            <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
+            <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
+            <button id="installAppBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
+        </div>
 
         <!-- Secure Login Screen -->
         <div id="loginScreen" class="card">
@@ -143,13 +150,16 @@
 
         <!-- Main Portal Dashboard -->
         <div id="portalContent">
-            <!-- Header ng Personal Dashboard (Wala nang Logout Button) -->
-            <div class="card" style="text-align: center; background: #e8f5e9;">
-                <h2 id="displayStoreName" style="margin-bottom: 2px; color: #2e7d32; font-size: 1.1rem;">Pangalan ng Tindahan</h2>
-                <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
+            <!-- Header ng Personal Dashboard na may Log Out button na may password security -->
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: #e8f5e9;">
+                <div>
+                    <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
+                    <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
+                </div>
+                <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0;">Mag-logout</button>
             </div>
 
-            <!-- Nakabukod na Install App Card para sa Personal Client Dashboard -->
+            <!-- Install App Card para sa loob ng Dashboard -->
             <div id="dashboardInstallCard" class="card">
                 <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
                 <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
@@ -248,34 +258,50 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        // PWA Install Prompt Logic para sa Nakabukod na Dashboard Install Card
+        // PWA Install Prompt Logic para sa Login Screen at Dashboard
         let deferredPrompt;
+        const installAppCard = document.getElementById('installAppCard');
+        const installAppBtn = document.getElementById('installAppBtn');
         const dashboardInstallCard = document.getElementById('dashboardInstallCard');
         const dashboardInstallBtn = document.getElementById('dashboardInstallBtn');
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            if (dashboardInstallCard) {
-                dashboardInstallCard.style.display = 'block';
-            }
+            if (installAppCard) installAppCard.style.display = 'block';
+            if (dashboardInstallCard) dashboardInstallCard.style.display = 'block';
         });
 
-        if (dashboardInstallBtn) {
-            dashboardInstallBtn.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    if (outcome === 'accepted') {
-                        console.log('Na-install ang app');
-                    }
-                    deferredPrompt = null;
-                    if (dashboardInstallCard) {
-                        dashboardInstallCard.style.display = 'none';
-                    }
+        const handleInstallClick = async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('Na-install ang app');
                 }
-            });
-        }
+                deferredPrompt = null;
+                if (installAppCard) installAppCard.style.display = 'none';
+                if (dashboardInstallCard) dashboardInstallCard.style.display = 'none';
+            }
+        };
+
+        if (installAppBtn) installAppBtn.addEventListener('click', handleInstallClick);
+        if (dashboardInstallBtn) dashboardInstallBtn.addEventListener('click', handleInstallClick);
+
+        // Logout na may Password Verification (Walang Hint)
+        window.requestLogout = function() {
+            const pass = prompt("Ilagay ang password para mag-logout:");
+            if (pass === null) return;
+            
+            // Itakda ang security password (maaari mong baguhin dito kung kinakailangan)
+            if (pass === "admin123") {
+                localStorage.removeItem('client_logged_store');
+                currentStoreName = '';
+                window.location.href = window.location.pathname.split('?')[0];
+            } else {
+                alert("Maling password!");
+            }
+        };
 
         async function loadData() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
@@ -321,6 +347,7 @@
                 const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
                 if (found) {
                     document.getElementById('loginScreen').style.display = 'none';
+                    if (installAppCard) installAppCard.style.display = 'none';
                     document.getElementById('portalContent').style.display = 'block';
                     if (paramStore) {
                         document.getElementById('directAccessNotice').style.display = 'block';
