@@ -58,12 +58,10 @@
             text-decoration: underline;
         }
 
-        /* Estilo para Install App Banners */
         #installAppCard, #dashboardInstallCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
         .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
         #qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
 
-        /* Printable Style para Inquiry Form */
         @media print {
             body * { visibility: hidden; }
             #printableInquirySection, #printableInquirySection * { visibility: visible; }
@@ -80,7 +78,7 @@
 
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- Install App Card para sa mga Hindi Pa Naka-log in (Login/Inquiry Page) -->
+        <!-- Install App Card para sa Login/Inquiry Page -->
         <div id="installAppCard" class="card">
             <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
             <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
@@ -143,14 +141,12 @@
                     <button type="submit" style="background-color: #0288d1;">Ipadala ang Aplikasyon / Inquiry</button>
                 </form>
 
-                <!-- Print Button para sa Inquiry Form -->
                 <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon / Inquiry Form</button>
             </div>
         </div>
 
         <!-- Main Portal Dashboard -->
         <div id="portalContent">
-            <!-- Header ng Personal Dashboard na may Log Out button na may password security -->
             <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: #e8f5e9;">
                 <div>
                     <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
@@ -159,11 +155,18 @@
                 <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0;">Mag-logout</button>
             </div>
 
-            <!-- Install App Card para sa loob ng Dashboard -->
+            <!-- Install App Card para sa Dashboard -->
             <div id="dashboardInstallCard" class="card">
                 <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
                 <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
                 <button id="dashboardInstallBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
+            </div>
+
+            <!-- PIRMADONG KASUNDUAN SECTION (Lilitaw lang kung na-upload na ng admin) -->
+            <div class="card" id="signedAgreementCard" style="display: none; text-align: center; background: #e8f5e9; border: 1px solid #a5d6a7;">
+                <h2 style="color: #2e7d32;">📝 Pirmadong Kasunduan ng Tindahan</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Narito ang digital kopya ng inyong pirmadong kasunduan sa konsignment:</p>
+                <div id="signedAgreementContainer" style="margin-top: 8px;"></div>
             </div>
 
             <!-- QR Code para sa Direktang Link ng Tindahan na ito -->
@@ -174,12 +177,12 @@
                 <span id="qrStoreLinkText" style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;"></span>
             </div>
 
-            <!-- Kasunduan sa Consignment -->
+            <!-- Kasunduan sa Consignment (General Template Link) -->
             <div class="card" style="text-align: center; background: #e3f2fd; border: 1px solid #90caf9;">
-                <h2 style="color: #0288d1;">📄 Kasunduan sa Consignment</h2>
-                <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">I-click ang button sa ibaba upang basahin o i-print ang kasunduan at mga alituntunin.</p>
+                <h2 style="color: #0288d1;">📄 Gabay at Template ng Kasunduan</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">I-click ang button sa ibaba upang basahin o i-print ang pangkalahatang kasunduan at mga alituntunin.</p>
                 <a href="agreement.html" target="_blank" style="display: inline-block; background-color: #0288d1; color: white; padding: 10px 15px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">
-                    📂 Buksan ang Consignment Agreement
+                    📂 Buksan ang Consignment Agreement Template
                 </a>
             </div>
 
@@ -230,7 +233,6 @@
             </div>
         </div>
 
-        <!-- MGA LINKS SA IBABA -->
         <div class="admin-link-container">
             <a href="https://doctorjiemar0-dotcom.github.io/DWBE-CONSIGNMENT-/admin" target="_blank">🔒 ADMIN PORTAL</a>
         </div>
@@ -258,7 +260,6 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        // PWA Install Prompt Logic para sa Login Screen at Dashboard
         let deferredPrompt;
         const installAppCard = document.getElementById('installAppCard');
         const installAppBtn = document.getElementById('installAppBtn');
@@ -288,12 +289,9 @@
         if (installAppBtn) installAppBtn.addEventListener('click', handleInstallClick);
         if (dashboardInstallBtn) dashboardInstallBtn.addEventListener('click', handleInstallClick);
 
-        // Logout na may Password Verification (Walang Hint)
         window.requestLogout = function() {
             const pass = prompt("Ilagay ang password para mag-logout:");
             if (pass === null) return;
-            
-            // Itakda ang security password (maaari mong baguhin dito kung kinakailangan)
             if (pass === "admin123") {
                 localStorage.removeItem('client_logged_store');
                 currentStoreName = '';
@@ -417,7 +415,19 @@
         function renderClientDashboard(store) {
             document.getElementById('displayStoreName').textContent = store.storeName;
 
-            // Generate QR Code para sa Direktang Link ng Tindahan na ito
+            // Render Signed Agreement kung meron na
+            const signedAgreementCard = document.getElementById('signedAgreementCard');
+            const signedAgreementContainer = document.getElementById('signedAgreementContainer');
+            if (store.signedAgreementUrl) {
+                signedAgreementCard.style.display = 'block';
+                signedAgreementContainer.innerHTML = `
+                    <img src="${store.signedAgreementUrl}" alt="Pirmadong Kasunduan" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ccc; cursor: pointer;" onclick="window.open('${store.signedAgreementUrl}', '_blank')">
+                    <p style="font-size: 0.7rem; color: #666; margin-top: 5px;">I-click ang larawan upang palakihin o tingnan nang buo.</p>
+                `;
+            } else {
+                signedAgreementCard.style.display = 'none';
+            }
+
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = ""; 
             const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
