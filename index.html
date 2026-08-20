@@ -6,7 +6,6 @@
     <title>Doctor's Whisk Broom - Client Portal</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
-    <!-- QR Code Library mula sa CDN para sa madaling pag-generate -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
@@ -120,15 +119,6 @@
                 <button type="button" onclick="logoutPortal()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px;">Mag-logout</button>
             </div>
 
-            <!-- AGREEMENT CARD (Nasa loob na ng Portal) -->
-            <div class="card" style="text-align: center; background: #e3f2fd; border: 1px solid #90caf9;">
-                <h2 style="color: #0288d1;">📄 Kasunduan sa Consignment</h2>
-                <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Basahin ang mga alituntunin at kasunduan ng ating partnership.</p>
-                <a href="agreement.html" target="_blank" style="display: inline-block; background-color: #0288d1; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">
-                    Buksan ang Kasunduan
-                </a>
-            </div>
-
             <div class="card qr-container">
                 <h2>📷 QR Code ng Tindahan Mo</h2>
                 <div id="qrcode"></div>
@@ -164,7 +154,7 @@
         </div>
     </div>
 
-    <!-- Firebase Script (Eksaktong code mula sa nakaraan) -->
+    <!-- Firebase & Portal Logic Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -188,18 +178,33 @@
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
                 const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) { appData = docSnap.data(); initPortalView(); }
-            } catch (err) { console.error(err); }
+                if (docSnap.exists()) { 
+                    appData = docSnap.data(); 
+                    document.getElementById('syncStatus').style.display = 'none';
+                    initPortalView(); 
+                }
+            } catch (err) { 
+                console.error(err);
+                document.getElementById('syncStatustextContent') = "May problema sa pagkonekta sa database.";
+            }
         }
 
         async function saveData() {
-            try { await setDoc(doc(db, "app_data", "main_inventory"), appData); initPortalView(); } catch (err) { console.error(err); }
+            try { 
+                await setDoc(doc(db, "app_data", "main_inventory"), appData); 
+                initPortalView(); 
+            } catch (err) { 
+                console.error(err); 
+            }
         }
 
         function initPortalView() {
             const urlParams = new URLSearchParams(window.location.search);
             const paramStore = urlParams.get('store');
-            if (paramStore) { currentStoreName = paramStore; localStorage.setItem('client_logged_store', currentStoreName); }
+            if (paramStore) { 
+                currentStoreName = paramStore; 
+                localStorage.setItem('client_logged_store', currentStoreName); 
+            }
             
             if (currentStoreName) {
                 const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
@@ -224,10 +229,82 @@
             const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
             document.getElementById('qrStoreLinkText').textContent = currentUrl;
             new QRCode(qrContainer, { text: currentUrl, width: 128, height: 128 });
-            
-            // ... (I-paste dito ang rest ng render logic mula sa lumang file mo)
+
+            // Notifications
+            const notifContainer = document.getElementById('clientNotificationsContainer');
+            notifContainer.innerHTML = store.notifications && store.notifications.length > 0 
+                ? store.notifications.map(n => `<div class="notification-item">${n}</div>`).join('')
+                : '<p style="font-size:0.85rem; color:#666;">Walang bagong abiso.</p>';
+
+            // Items
+            const itemsContainer = document.getElementById('clientItemsContainer');
+            itemsContainer.innerHTML = store.items && store.items.length > 0
+                ? store.items.map(i => `<div class="store-item-box"><b>${i.type}</b> - Qty: ${i.qty} | Price: ₱${i.price}</div>`).join('')
+                : '<p style="font-size:0.85rem; color:#666;">Walang aktibong stock sa ngayon.</p>';
+
+            // Chat
+            const chatContainer = document.getElementById('clientChatContainer');
+            chatContainer.innerHTML = store.chats && store.chats.length > 0
+                ? store.chats.map(ch => `<div class="chat-msg ${ch.sender === 'admin' ? 'admin' : ''}"><b>${ch.sender === 'admin' ? 'Admin' : 'Ikaw'}:</b> ${ch.message}</div>`).join('')
+                : '<p style="font-size:0.85rem; color:#666;">Wala pang mensahe.</p>';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         };
-        
+
+        window.submitRestockRequest = function() {
+            const qty = document.getElementById('restockQtyInput').value;
+            const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (found) {
+                if (!found.chats) found.chats = [];
+                found.chats.push({ sender: 'client', message: `Humihiling ng restock na ${qty} piraso.` });
+                saveData();
+                alert('Naipadala na ang iyong request sa admin!');
+            }
+        };
+
+        window.sendClientMessage = function() {
+            const text = document.getElementById('clientChatInput').value.trim();
+            if (!text) return;
+            const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (found) {
+                if (!found.chats) found.chats = [];
+                found.chats.push({ sender: 'client', message: text });
+                document.getElementById('clientChatInput').value = '';
+                saveData();
+            }
+        };
+
+        document.getElementById('manualLoginBtn').addEventListener('click', () => {
+            const nameInput = document.getElementById('manualStoreNameInput').value.trim();
+            if (!nameInput) { alert('Ilagay ang pangalan ng tindahan.'); return; }
+            const found = appData.consignments.find(c => c.storeName.toLowerCase() === nameInput.toLowerCase());
+            if (found) {
+                localStorage.setItem('client_logged_store', found.storeName);
+                currentStoreName = found.storeName;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('portalContent').style.display = 'block';
+                renderClientDashboard(found);
+            } else {
+                alert('Hindi natagpuan ang pangalan ng tindahan na ito sa system.');
+            }
+        });
+
+        document.getElementById('inquiryForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newInq = {
+                storeName: document.getElementById('inqStoreName').value,
+                ownerName: document.getElementById('inqOwnerName').value,
+                contact: document.getElementById('inqContact').value,
+                address: document.getElementById('inqAddress').value,
+                styleType: document.getElementById('inqStyleType').value,
+                date: new Date().toLocaleDateString()
+            };
+            appData.pendingInquiries.push(newInq);
+            saveData().then(() => {
+                alert('Matagumpay na naipadala ang iyong aplikasyon!');
+                document.getElementById('inquiryForm').reset();
+            });
+        });
+
         loadData();
     </script>
 </body>
