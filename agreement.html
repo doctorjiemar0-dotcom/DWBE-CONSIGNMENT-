@@ -3,42 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasunduan sa Consignment - Doctor's Whisk Broom</title>
+    <title>Consignment Agreement - Doctor's Whisk Broom</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
-        .agreement-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
-        h1 { color: #2e7d32; font-size: 1.5rem; margin-bottom: 5px; }
-        h2 { color: #333; font-size: 1.1rem; margin-bottom: 20px; border-bottom: 2px solid #4caf50; padding-bottom: 5px; }
-        .qr-section { margin-top: 30px; padding: 15px; background: #e8f5e9; border-radius: 6px; border: 1px dashed #4caf50; display: inline-block; }
-        .qr-section img { width: 150px; height: 150px; margin-top: 10px; border: 2px solid #2e7d32; border-radius: 4px; background: white; padding: 5px; }
-        .no-print { text-align: center; margin-top: 20px; }
-        button { background-color: #2e7d32; color: white; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #1b5e20; }
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f8; color: #333; margin: 0; padding: 20px; }
+        .agreement-container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0px 2px 8px rgba(0,0,0,0.1); }
+        .header-section { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #2e7d32; padding-bottom: 15px; margin-bottom: 20px; }
+        .header-text { text-align: center; flex-grow: 1; }
+        .header-text h1 { color: #2e7d32; font-size: 1.3rem; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .header-text p { font-size: 0.8rem; color: #555; }
+        
+        .qr-box { text-align: center; font-size: 0.65rem; color: #333; width: 150px; }
+        .qr-label { font-weight: bold; margin-bottom: 4px; line-height: 1.2; text-align: center; }
+        #qrcode { background: white; padding: 4px; display: inline-block; }
+        
+        h2.title { text-align: center; color: #2e7d32; font-size: 1.05rem; margin-bottom: 15px; text-decoration: underline; }
+        p, li { font-size: 0.85rem; line-height: 1.5; text-align: justify; margin-bottom: 10px; }
+        ol { padding-left: 20px; margin-bottom: 20px; }
+        ol li { margin-bottom: 8px; }
+        
+        .table-title { font-weight: bold; font-size: 0.85rem; color: #2e7d32; margin-top: 20px; margin-bottom: 5px; background: #e8f5e9; padding: 5px 8px; border-left: 4px solid #2e7d32; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 0.8rem; text-align: center; }
+        th, td { border: 1px solid #333; padding: 6px 4px; }
+        th { background-color: #1a365d; color: white; font-weight: bold; }
+        
+        .signature-section { margin-top: 40px; display: flex; justify-content: space-between; page-break-inside: avoid; }
+        .sig-box { width: 40%; text-align: center; }
+        .sig-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; font-weight: bold; font-size: 0.85rem; }
+        .sig-title { font-size: 0.75rem; color: #555; }
+        
+        .print-btn-container { text-align: center; margin-bottom: 20px; }
+        .print-btn { background-color: #2e7d32; color: white; border: none; padding: 10px 20px; font-size: 0.9rem; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .print-btn:hover { background-color: #1b5e20; }
+
         @media print {
             body { background: white; padding: 0; }
-            .agreement-card { box-shadow: none; padding: 0; }
-            .no-print { display: none; }
+            .agreement-container { box-shadow: none; padding: 0; }
+            .print-btn-container { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <div class="agreement-card">
-        <h1>🧹 DOCTOR'S WHISK BROOM</h1>
-        <h2>KASUNDUAN SA CONSIGNMENT</h2>
-        
-        <p style="margin-bottom: 20px; font-size: 0.95rem;">I-scan ang QR code sa ibaba para sa direktang pag-access sa iyong store portal, imbentaryo, at restock request.</p>
+    <div class="print-btn-container">
+        <button class="print-btn" onclick="window.print()">🖨️ I-print / I-save bilang PDF</button>
+    </div>
 
-        <div class="qr-section">
-            <strong>QR Code ng Tindahan</strong><br>
-            <img src="QR.png" alt="QR Code ng Portal">
-            <p style="font-size: 0.8rem; color: #555; margin-top: 8px;">Doctor's Whisk Broom Client Portal</p>
+    <div class="agreement-container">
+        <div class="header-section">
+            <div class="header-text">
+                <h1>DOCTOR'S WHISK BROOM ETC.</h1>
+                <p>Bacon, Sorsogon • FB/Messenger: Jiemar Garais Doc. Tol • Call/Text: 09104057065</p>
+            </div>
+            <div class="qr-box">
+                <div class="qr-label">I-scan ang QR Code na ito para sa<br>Direktang Portal ng Tindahan:</div>
+                <div id="qrcode"></div>
+            </div>
+        </div>
+
+        <h2 class="title">CONSIGNMENT AGREEMENT (STORE PARTNER)</h2>
+
+        <p><strong>SA MGA KINAUUKULAN:</strong> Ang kasunduang ito ay pinagtibay ngayong ika-__________ ng ________________ 2026, sa pagitan nina <strong>OWNER (JIEMAR GARAIS DOCTOR)</strong> at ng <strong>STORE PARTNER / CONSIGNEE (_________________________________)</strong> upang pormal na itakda ang mga sumusunod na detalyadong alituntunin:</p>
+
+        <ol>
+            <li><strong>SISTEMA NG SUPPLY:</strong> Mag-iiwan ang Owner ng mga produktong Walis Tambo sa tindahan ng Store Partner nang walang anumang advance na bayad o deposito. Ang pagbaha ng bagong supply ay nakadepende sa takbo ng benta at space ng tindahan.</li>
+            <li><strong>SUPPLIER PRICE AT MARK-UP:</strong> Ang pinal na presyo ng bawat isang (1) piraso ng Walis Tambo mula sa Owner ay nagkakahalaga ng Php ________ (Supplier Price). Ang Store Partner ay may karapatang magtakda ng sarili nilang retail price o patong (mark-up) na magsisilbing direktang kita nila sa pagbebenta.</li>
+            <li><strong>REMITTANCE (ONE MONTH TO PAY):</strong> Ang cut-off ng bentahan ay buwanan. Tuwing katapusan ng buwan, ire-remit o babayaran ng Store Partner ang kabuuang halaga ng mga yanit na aktwal lamang na nabenta sa loob ng buwang iyon (Formula: Bilang ng Nabenta x Supplier Price). Ang mga hindi nabentang yunit ay mananatiling pag-aari ng Owner bilang consignment stocks.</li>
+            <li><strong>PHYSICAL INVENTORY AT RESTOCK:</strong> Obligasyon ng Owner o ng kanyang kinatawan na bumisita sa tindahan tuwing katapusan ng buwan o sa itinakdang araw ng bentahan upang magkasamang isagawa ang physical counting ng natiang stocks, kolektahin ang remittance at maghaha ng dagdag na supply kung kinakailangan.</li>
+            <li><strong>VALIDITY AT REPLENISHMENT (DALAWANG BUWAN):</strong> Ang kasunduang ito ay may pinal na bisa na dalawang (2) buwan lamang mula sa petsa ng pirmahan, alinsunod sa dalawang nakalaang log table sa ibaba (para sa Unang Buwan at Ikalawang Buwan). Ang Store Partner ay may buong pananagutan sa seguridad ng mga produkto; anumang nawala o nasira ay ituturing na benta. Pagkatapos ng dalawang buwan, awtomatikong magwawakas ang kasunduang ito at kinakailangang gumawa ng bagong kontrata para sa mga susunod na transaksyon.</li>
+            <li><strong>PAGWAWAKAS NG KASUNDUAN:</strong> Kung nais tapusin ng alinmang panig ang kasunduan bago lumipas ang dalawang buwan, maaari itong gawin sa anomang oras sa pamamagitan ng maayos na komunikasyon. Sa araw ng pagwawakas, gagawin ang pinal na kuventahan: babayaran ng Store Partner ang lahat ng aktwal na nabenta at ibabalik naman nang buo sa Owner ang lahat ng narirang walang sirang stocks.</li>
+        </ol>
+
+        <div class="table-title">TABLE 1: LOG NG UNANG BUWAN (MONTH 1)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>PETSA NG BAGSAK</th>
+                    <th>INWANG SUPPLY (QTY)</th>
+                    <th>PETSA NG KUWENTAHAN</th>
+                    <th>NATIRANG STOCKS (UNSOLD)</th>
+                    <th>HALAGA NG REMITTANCE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td style="height:28px;"></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td style="height:28px;"></td><td></td><td></td><td></td><td></td></tr>
+            </tbody>
+        </table>
+
+        <div class="table-title">TABLE 2: LOG NG IKALAWANG BUWAN (MONTH 2)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>PETSA NG BAGSAK</th>
+                    <th>INWANG SUPPLY (QTY)</th>
+                    <th>PETSA NG KUWENTAHAN</th>
+                    <th>NATIRANG STOCKS (UNSOLD)</th>
+                    <th>HALAGA NG REMITTANCE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td style="height:28px;"></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td style="height:28px;"></td><td></td><td></td><td></td><td></td></tr>
+            </tbody>
+        </table>
+
+        <p style="margin-top: 15px; font-weight: bold; font-size: 0.85rem;">MGA NAGKASUNDO:</p>
+
+        <div class="signature-section">
+            <div class="sig-box">
+                <div class="sig-line">JIEMAR GARAIS DOCTOR</div>
+                <div class="sig-title">Owner</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div class="sig-title">Store Partner / Consignee</div>
+            </div>
         </div>
     </div>
 
-    <div class="no-print">
-        <button onclick="window.print()">🖨️ I-print ang Kasunduang Ito</button>
-    </div>
-
+    <script>
+        // Palitan ang URL na ito ng eksaktong link ng iyong Store Portal kung kinakailangan
+        const storePortalUrl = "https://doctorjiemar0.github.io/"; 
+        
+        new QRCode(document.getElementById("qrcode"), {
+            text: storePortalUrl,
+            width: 64,
+            height: 64,
+            colorDark: "#2e7d32",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    </script>
 </body>
 </html>
