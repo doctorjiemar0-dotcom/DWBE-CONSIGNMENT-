@@ -62,6 +62,8 @@
         .store-header-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
         .store-body-content { margin-top: 8px; }
+        
+        .partner-card { background: #f1f8e9; border-left: 5px solid #558b2f; padding: 10px; margin-bottom: 8px; border-radius: 6px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -87,6 +89,26 @@
                 <h2>📱 I-install bilang Mobile App</h2>
                 <p style="font-size: 0.85rem; color: #333; margin-bottom: 5px;">Para mas mabilis ma-access sa iyong home screen.</p>
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
+            </div>
+
+            <!-- BAGONG MODULE: Independent Distribution Partners & Piece-Rate Payouts -->
+            <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
+                <h2>👥 Independent Distribution Partners (Piece-Rate Payouts)</h2>
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Subaybayan ang mga independent partner at ang kanilang flexible per-piece na komisyon.</p>
+                <div style="margin-bottom: 10px;">
+                    <button type="button" onclick="togglePartnerForm()" style="background-color: #2e7d32; font-size: 0.85rem;">➕ Magdagdag ng Distribution Partner</button>
+                </div>
+                <div id="partnerFormContainer" style="display:none; margin-bottom: 12px; padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px;">
+                    <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: #2e7d32;">Bagong Partner Assignment</h3>
+                    <div class="form-group"><label>Pangalan ng Partner:</label><input type="text" id="partnerNameInput" placeholder="Hal. Juan Dela Cruz"></div>
+                    <div class="form-group"><label>Uri ng Produkto:</label><select id="partnerStyleInput"><option value="Ordinary">Ordinary Style</option><option value="Premium">Premium Style</option></select></div>
+                    <div class="form-group"><label>Bilang ng Stock na Ibinigay:</label><input type="number" id="partnerQtyInput" placeholder="Hal. 20"></div>
+                    <div class="form-group"><label>Rate bawat Piraso (₱ Commission):</label><input type="number" id="partnerRateInput" placeholder="Hal. 20"></div>
+                    <button type="button" onclick="saveNewPartner()" style="background-color: #388e3c;">I-save ang Partner</button>
+                </div>
+                <div id="partnersListContainer">
+                    <p style="font-size: 0.85rem; color: #666;">Wala pang nakarehistrong distribution partner.</p>
+                </div>
             </div>
 
             <div class="card" style="background: #e3f2fd; border: 1px solid #90caf9;">
@@ -256,7 +278,7 @@
             if (e.key === 'Enter') { loginBtn.click(); }
         });
 
-        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
+        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [], distributionPartners: [] };
         let previousRequestCount = 0;
 
         window.toggleAddStoreForm = function() {
@@ -266,6 +288,82 @@
                 formCard.scrollIntoView({ behavior: 'smooth' });
             } else {
                 formCard.style.display = 'none';
+            }
+        };
+
+        window.togglePartnerForm = function() {
+            const f = document.getElementById('partnerFormContainer');
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        };
+
+        window.saveNewPartner = function() {
+            const name = document.getElementById('partnerNameInput').value.trim();
+            const style = document.getElementById('partnerStyleInput').value;
+            const qty = parseInt(document.getElementById('partnerQtyInput').value) || 0;
+            const rate = parseFloat(document.getElementById('partnerRateInput').value) || 0;
+
+            if (!name || qty <= 0) {
+                alert('Mangyaring ilagay ang pangalan ng partner at wastong dami ng stock.');
+                return;
+            }
+
+            if (appData.homeStock[style] < qty) {
+                alert(`Babala: Kulang ang stock sa bodega para sa ${style} (${appData.homeStock[style]} pcs).`);
+                return;
+            }
+
+            appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
+            if (!appData.distributionPartners) appData.distributionPartners = [];
+
+            appData.distributionPartners.push({
+                id: Date.now(),
+                partnerName: name,
+                styleType: style,
+                assignedQty: qty,
+                currentStock: qty,
+                soldQty: 0,
+                ratePerPiece: rate,
+                dateAssigned: new Date().toLocaleDateString()
+            });
+
+            document.getElementById('partnerNameInput').value = '';
+            document.getElementById('partnerQtyInput').value = '';
+            document.getElementById('partnerRateInput').value = '';
+            document.getElementById('partnerFormContainer').style.display = 'none';
+            saveToCloud();
+        };
+
+        window.recordPartnerSale = function(idx) {
+            const p = appData.distributionPartners[idx];
+            const soldCount = parseInt(prompt(`Ilang piraso ng ${p.styleType} ang nabenta ni ${p.partnerName}?`, '1'));
+            if (!isNaN(soldCount) && soldCount > 0) {
+                if (soldCount > p.currentStock) {
+                    alert('Ang bilang ng nabenta ay mas malaki kaysa sa natitirang hawak niya.');
+                    return;
+                }
+                p.currentStock -= soldCount;
+                p.soldQty += soldCount;
+                saveToCloud();
+            }
+        };
+
+        window.settlePartnerEarnings = function(idx) {
+            const p = appData.distributionPartners[idx];
+            const totalCommission = p.soldQty * p.ratePerPiece;
+            if (confirm(`Bayaran si ${p.partnerName} ng kabuuang ₱${totalCommission} para sa ${p.soldQty} nabentang piraso (${p.styleType})? Ise-zero nito ang bilang ng nabenta para sa susunod na kwenta.`)) {
+                p.soldQty = 0;
+                saveToCloud();
+            }
+        };
+
+        window.deletePartner = function(idx) {
+            if (confirm('Burahin ang partner na ito? Ang natitirang stock sa kanya ay ibabalik sa Home inventory.')) {
+                const p = appData.distributionPartners[idx];
+                if (p.currentStock > 0) {
+                    appData.homeStock[p.styleType] += p.currentStock;
+                }
+                appData.distributionPartners.splice(idx, 1);
+                saveToCloud();
             }
         };
 
@@ -293,6 +391,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                    if (!appData.distributionPartners) appData.distributionPartners = [];
                 }
                 renderApp();
                 syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
@@ -360,6 +459,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                    if (!appData.distributionPartners) appData.distributionPartners = [];
                     renderApp();
                 }
             } catch (e) {
@@ -471,6 +571,32 @@
 
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
+
+            // Render Distribution Partners
+            const partnersContainer = document.getElementById('partnersListContainer');
+            partnersContainer.innerHTML = '';
+            if (!appData.distributionPartners) appData.distributionPartners = [];
+
+            if (appData.distributionPartners.length > 0) {
+                appData.distributionPartners.forEach((p, pIdx) => {
+                    const commissionTotal = p.soldQty * p.ratePerPiece;
+                    const pDiv = document.createElement('div');
+                    pDiv.className = 'partner-card';
+                    pDiv.innerHTML = `
+                        <strong>👤 ${p.partnerName}</strong> (${p.styleType})<br>
+                        📦 Stock Hawak: <strong>${p.currentStock} pcs</strong> | Nabenta: <strong>${p.soldQty} pcs</strong><br>
+                        💰 Rate: ₱${p.ratePerPiece}/pc | <strong>Dapat Bayaran: ₱${commissionTotal}</strong><br>
+                        <div class="btn-group" style="margin-top: 6px;">
+                            <button type="button" onclick="recordPartnerSale(${pIdx})" style="background-color: #0288d1; font-size:0.75rem;">🏷️ Itala ang Benta</button>
+                            <button type="button" onclick="settlePartnerEarnings(${pIdx})" style="background-color: #388e3c; font-size:0.75rem;">💵 Bayaran ang Komisyon</button>
+                            <button type="button" onclick="deletePartner(${pIdx})" style="background-color: #d32f2f; font-size:0.75rem;">❌ Burahin</button>
+                        </div>
+                    `;
+                    partnersContainer.appendChild(pDiv);
+                });
+            } else {
+                partnersContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakarehistrong distribution partner.</p>';
+            }
 
             const inquiriesContainer = document.getElementById('adminInquiriesContainer');
             inquiriesContainer.innerHTML = '';
@@ -986,6 +1112,7 @@
                 const parsed = JSON.parse(document.getElementById('backupTextarea').value.trim());
                 appData = Array.isArray(parsed) ? { homeStock: { Ordinary: 0, Premium: 0 }, consignments: parsed, pendingInquiries: [] } : parsed;
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                if (!appData.distributionPartners) appData.distributionPartners = [];
                 saveToCloud();
                 document.getElementById('backupTextarea').value = '';
                 alert('Matagumpay na na-load at na-sync sa cloud ang data!');
