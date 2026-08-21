@@ -304,7 +304,7 @@
             reader.readAsDataURL(file);
         }
 
-        // Pag-upload ng Signed Agreement direkta sa isang tindahan gamit ang compression
+        // Pag-upload ng Signed Agreement na may proteksyon laban sa error sa laki ng data
         window.uploadStoreAgreement = function(storeIdx) {
             const store = appData.consignments[storeIdx];
             const fileInput = document.createElement('input');
@@ -314,17 +314,27 @@
                 const file = e.target.files[0];
                 if (file) {
                     compressAndUploadImage(file, function(compressedDataUrl) {
+                        // Siguraduhing hindi masyadong mabigat bago i-save (Firestore Limit Safety Check)
+                        if (compressedDataUrl.length > 800000) {
+                            alert('Masyadong malaki pa rin ang imahe kahit na-compress. Subukan pumili ng mas mababang resolution o ibang larawan.');
+                            return;
+                        }
+
                         store.signedAgreement = {
                             image: compressedDataUrl,
                             dateUploaded: new Date().toLocaleString()
                         };
+                        
+                        if (!store.history) store.history = [];
                         store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nag-upload ng Pirmadong Consignment Agreement` });
+                        
                         if (!store.clientNotifications) store.clientNotifications = [];
                         store.clientNotifications.push({
                             id: Date.now(),
                             text: `📄 Ang iyong Pirmadong Consignment Agreement ay na-upload na ng Admin. Maaari mo na itong makita rito.`,
                             date: new Date().toLocaleString()
                         });
+                        
                         saveToCloud();
                         alert(`Matagumpay na na-upload ang agreement para sa ${store.storeName}! Makikita na ito ng client sa kanilang portal.`);
                     });
