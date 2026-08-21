@@ -269,6 +269,43 @@
             }
         };
 
+        // Compression function para sa signed agreement image upload
+        function compressAndUploadImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    const MAX_SIZE = 800;
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(compressedDataUrl);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Pag-upload ng Signed Agreement direkta sa isang tindahan gamit ang compression
         window.uploadStoreAgreement = function(storeIdx) {
             const store = appData.consignments[storeIdx];
             const fileInput = document.createElement('input');
@@ -277,10 +314,9 @@
             fileInput.onchange = function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
+                    compressAndUploadImage(file, function(compressedDataUrl) {
                         store.signedAgreement = {
-                            image: event.target.result,
+                            image: compressedDataUrl,
                             dateUploaded: new Date().toLocaleString()
                         };
                         store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nag-upload ng Pirmadong Consignment Agreement` });
@@ -292,8 +328,7 @@
                         });
                         saveToCloud();
                         alert(`Matagumpay na na-upload ang agreement para sa ${store.storeName}! Makikita na ito ng client sa kanilang portal.`);
-                    };
-                    reader.readAsDataURL(file);
+                    });
                 }
             };
             fileInput.click();
