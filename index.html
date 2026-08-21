@@ -162,11 +162,13 @@
                 <button id="dashboardInstallBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
             </div>
 
-            <!-- PIRMADONG KASUNDUAN SECTION (Lilitaw lang kung na-upload na ng admin) -->
-            <div class="card" id="signedAgreementCard" style="display: none; text-align: center; background: #e8f5e9; border: 1px solid #a5d6a7;">
-                <h2 style="color: #2e7d32;">📝 Pirmadong Kasunduan ng Tindahan</h2>
-                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Narito ang digital kopya ng inyong pirmadong kasunduan sa konsignment:</p>
-                <div id="signedAgreementContainer" style="margin-top: 8px;"></div>
+            <!-- PIRMADONG KASUNDUAN SECTION -->
+            <div class="card" id="agreementSection" style="display: none; background: #f1f8e9; border: 1px solid #c5e1a5;">
+                <h2>📝 Ang iyong Pirmadong Consignment Agreement</h2>
+                <p style="font-size: 0.85rem; color: #555; margin-bottom: 8px;">Ito ang opisyal na kasunduan na naka-record sa sistema.</p>
+                <div id="agreementViewContainer" style="text-align: center;">
+                    <!-- Dito kusang i-render ang larawan ng agreement -->
+                </div>
             </div>
 
             <!-- QR Code para sa Direktang Link ng Tindahan na ito -->
@@ -415,17 +417,18 @@
         function renderClientDashboard(store) {
             document.getElementById('displayStoreName').textContent = store.storeName;
 
-            // Render Signed Agreement kung meron na
-            const signedAgreementCard = document.getElementById('signedAgreementCard');
-            const signedAgreementContainer = document.getElementById('signedAgreementContainer');
-            if (store.signedAgreementUrl) {
-                signedAgreementCard.style.display = 'block';
-                signedAgreementContainer.innerHTML = `
-                    <img src="${store.signedAgreementUrl}" alt="Pirmadong Kasunduan" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ccc; cursor: pointer;" onclick="window.open('${store.signedAgreementUrl}', '_blank')">
-                    <p style="font-size: 0.7rem; color: #666; margin-top: 5px;">I-click ang larawan upang palakihin o tingnan nang buo.</p>
+            // Render Signed Agreement mula sa Admin upload
+            const agreementSection = document.getElementById('agreementSection');
+            const agreementViewContainer = document.getElementById('agreementViewContainer');
+            if (store.signedAgreement && store.signedAgreement.image) {
+                agreementSection.style.display = 'block';
+                agreementViewContainer.innerHTML = `
+                    <img src="${store.signedAgreement.image}" alt="Pirmadong Kasunduan" style="max-width: 100%; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 8px; cursor: pointer;" onclick="window.open('${store.signedAgreement.image}', '_blank')">
+                    <br>
+                    <a href="${store.signedAgreement.image}" target="_blank" style="display: inline-block; background-color: #2e7d32; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: bold;">🔍 Tingnan sa Buong Screen</a>
                 `;
             } else {
-                signedAgreementCard.style.display = 'none';
+                agreementSection.style.display = 'none';
             }
 
             const qrContainer = document.getElementById('qrcode');
