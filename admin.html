@@ -62,8 +62,6 @@
         .store-header-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
         .store-body-content { margin-top: 8px; }
-        
-        .agreement-card { background: #f1f8e9; border-left: 5px solid #558b2f; padding: 10px; margin-bottom: 8px; border-radius: 6px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -89,29 +87,6 @@
                 <h2>📱 I-install bilang Mobile App</h2>
                 <p style="font-size: 0.85rem; color: #333; margin-bottom: 5px;">Para mas mabilis ma-access sa iyong home screen.</p>
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
-            </div>
-
-            <!-- BAGONG MODULE: Signed Consignment Agreements Upload -->
-            <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
-                <h2>📝 Mga Tindahang May Pirmadong Consignment Agreement</h2>
-                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">I-upload at i-record ang mga tindahang pumirma sa iyong kasunduan.</p>
-                <div style="margin-bottom: 10px;">
-                    <button type="button" onclick="toggleAgreementForm()" style="background-color: #2e7d32; font-size: 0.85rem;">➕ Mag-upload ng Signed Agreement</button>
-                </div>
-                <div id="agreementFormContainer" style="display:none; margin-bottom: 12px; padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px;">
-                    <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: #2e7d32;">Detalye ng Pumirmang Tindahan</h3>
-                    <div class="form-group"><label>Pangalan ng Tindahan:</label><input type="text" id="agreementStoreName" placeholder="Hal. Aling Nena Store"></div>
-                    <div class="form-group"><label>Pangalan ng May-ari:</label><input type="text" id="agreementOwnerName" placeholder="Hal. Maria Santos"></div>
-                    <div class="form-group"><label>Petsa ng Pirma:</label><input type="date" id="agreementDate"></div>
-                    <div class="form-group">
-                        <label>Larawan / Document ng Pirmadong Agreement:</label>
-                        <input type="file" id="agreementFileInput" accept="image/*" style="font-size: 0.8rem;">
-                    </div>
-                    <button type="button" onclick="saveSignedAgreement()" style="background-color: #388e3c;">I-save ang Kasunduan</button>
-                </div>
-                <div id="agreementsListContainer">
-                    <p style="font-size: 0.85rem; color: #666;">Wala pang naka-upload na signed agreement.</p>
-                </div>
             </div>
 
             <div class="card" style="background: #e3f2fd; border: 1px solid #90caf9;">
@@ -281,7 +256,7 @@
             if (e.key === 'Enter') { loginBtn.click(); }
         });
 
-        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [], signedAgreements: [] };
+        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let previousRequestCount = 0;
 
         window.toggleAddStoreForm = function() {
@@ -294,67 +269,41 @@
             }
         };
 
-        window.toggleAgreementForm = function() {
-            const f = document.getElementById('agreementFormContainer');
-            f.style.display = f.style.display === 'none' ? 'block' : 'none';
-            const dateEl = document.getElementById('agreementDate');
-            if (dateEl && !dateEl.value) dateEl.valueAsDate = new Date();
+        // Pag-upload ng Signed Agreement direkta sa isang tindahan
+        window.uploadStoreAgreement = function(storeIdx) {
+            const store = appData.consignments[storeIdx];
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        store.signedAgreement = {
+                            image: event.target.result,
+                            dateUploaded: new Date().toLocaleString()
+                        };
+                        store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nag-upload ng Pirmadong Consignment Agreement` });
+                        if (!store.clientNotifications) store.clientNotifications = [];
+                        store.clientNotifications.push({
+                            id: Date.now(),
+                            text: `📄 Ang iyong Pirmadong Consignment Agreement ay na-upload na ng Admin. Maaari mo na itong makita rito.`,
+                            date: new Date().toLocaleString()
+                        });
+                        saveToCloud();
+                        alert(`Matagumpay na na-upload ang agreement para sa ${store.storeName}! Makikita na ito ng client sa kanilang portal.`);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            fileInput.click();
         };
 
-        window.saveSignedAgreement = function() {
-            const storeName = document.getElementById('agreementStoreName').value.trim();
-            const ownerName = document.getElementById('agreementOwnerName').value.trim();
-            const dateSigned = document.getElementById('agreementDate').value;
-            const fileInput = document.getElementById('agreementFileInput');
-
-            if (!storeName) {
-                alert('Mangyaring ilagay ang pangalan ng tindahan.');
-                return;
-            }
-
-            if (fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    storeAgreementData(storeName, ownerName, dateSigned, e.target.result);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                storeAgreementData(storeName, ownerName, dateSigned, '');
-            }
-        };
-
-        function storeAgreementData(storeName, ownerName, dateSigned, imageBase64) {
-            if (!appData.signedAgreements) appData.signedAgreements = [];
-
-            appData.signedAgreements.push({
-                id: Date.now(),
-                storeName: storeName,
-                ownerName: ownerName || 'Hindi nakalagay',
-                dateSigned: dateSigned || new Date().toLocaleDateString(),
-                agreementImage: imageBase64
-            });
-
-            document.getElementById('agreementStoreName').value = '';
-            document.getElementById('agreementOwnerName').value = '';
-            document.getElementById('agreementFileInput').value = '';
-            document.getElementById('agreementFormContainer').style.display = 'none';
-            saveToCloud();
-        }
-
-        window.deleteSignedAgreement = function(idx) {
-            if (confirm('Burahin ang nakatalang signed agreement na ito?')) {
-                appData.signedAgreements.splice(idx, 1);
+        window.removeStoreAgreement = function(storeIdx) {
+            if (confirm('Tanggalin ang nakakabit na signed agreement ng tindahang ito?')) {
+                delete appData.consignments[storeIdx].signedAgreement;
                 saveToCloud();
-            }
-        };
-
-        window.viewAgreementImage = function(idx) {
-            const ag = appData.signedAgreements[idx];
-            if (ag && ag.agreementImage) {
-                const newWindow = window.open();
-                newWindow.document.write(`<iframe src="${ag.agreementImage}" style="width:100%; height:100%; border:none;"></iframe>`);
-            } else {
-                alert('Walang naka-upload na larawan para sa kasunduang ito.');
             }
         };
 
@@ -382,7 +331,6 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                    if (!appData.signedAgreements) appData.signedAgreements = [];
                 }
                 renderApp();
                 syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
@@ -450,7 +398,6 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                    if (!appData.signedAgreements) appData.signedAgreements = [];
                     renderApp();
                 }
             } catch (e) {
@@ -562,29 +509,6 @@
 
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
-
-            // Render Signed Agreements List
-            const agreementsContainer = document.getElementById('agreementsListContainer');
-            agreementsContainer.innerHTML = '';
-            if (!appData.signedAgreements) appData.signedAgreements = [];
-
-            if (appData.signedAgreements.length > 0) {
-                appData.signedAgreements.forEach((ag, agIdx) => {
-                    const agDiv = document.createElement('div');
-                    agDiv.className = 'agreement-card';
-                    agDiv.innerHTML = `
-                        <strong>🏪 ${ag.storeName}</strong> (May-ari: ${ag.ownerName})<br>
-                        📅 Petsa ng Pirma: ${ag.dateSigned}<br>
-                        <div class="btn-group" style="margin-top: 6px;">
-                            ${ag.agreementImage ? `<button type="button" onclick="viewAgreementImage(${agIdx})" style="background-color: #0288d1; font-size:0.75rem;">👁️ Tingnan ang Kasunduan</button>` : `<span style="font-size:0.75rem; color:#666;">Walang larawan</span>`}
-                            <button type="button" onclick="deleteSignedAgreement(${agIdx})" style="background-color: #d32f2f; font-size:0.75rem;">❌ Burahin</button>
-                        </div>
-                    `;
-                    agreementsContainer.appendChild(agDiv);
-                });
-            } else {
-                agreementsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang naka-upload na signed agreement.</p>';
-            }
 
             const inquiriesContainer = document.getElementById('adminInquiriesContainer');
             inquiriesContainer.innerHTML = '';
@@ -739,6 +663,14 @@
                 const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
                 const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
 
+                // Agreement status sa bawat tindahan
+                let agreementHtml = `
+                    <div style="background: #f1f8e9; border: 1px dashed #7cb342; padding: 8px; border-radius: 4px; margin-top: 8px; font-size: 0.8rem;">
+                        <strong>📝 Signed Consignment Agreement:</strong><br>
+                        ${item.signedAgreement ? `<span style="color:#2e7d32; font-weight:bold;">✅ Mayroon nang upload na agreement</span><br><div class="btn-group" style="margin-top:4px;"><button type="button" onclick="uploadStoreAgreement(${index})" style="background-color:#0288d1; font-size:0.7rem;">Palitan ang Agreement</button><button type="button" onclick="removeStoreAgreement(${index})" style="background-color:#d32f2f; font-size:0.7rem;">Tanggalin</button></div>` : `<span style="color:#666;">Wala pang naka-upload.</span><br><button type="button" onclick="uploadStoreAgreement(${index})" style="background-color:#388e3c; font-size:0.75rem; margin-top:4px;">📤 Mag-upload ng Agreement</button>`}
+                    </div>
+                `;
+
                 const div = document.createElement('div');
                 div.className = `store-card ${storeIsDue ? 'due' : ''}`;
                 div.innerHTML = `
@@ -753,6 +685,8 @@
                         <div style="margin-top: 10px;">
                             ${storeItemsHtml}
                         </div>
+
+                        ${agreementHtml}
 
                         <div style="margin-top: 8px; display: flex; gap: 4px;">
                             <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Pangalan</button>
@@ -1098,9 +1032,8 @@
         document.getElementById('importTextBtn').addEventListener('click', () => {
             try {
                 const parsed = JSON.parse(document.getElementById('backupTextarea').value.trim());
-                appData = Array.isArray(parsed) ? { homeStock: { Ordinary: 0, Premium: 0 }, consignments: parsed, pendingInquiries: [], signedAgreements: [] } : parsed;
+                appData = Array.isArray(parsed) ? { homeStock: { Ordinary: 0, Premium: 0 }, consignments: parsed, pendingInquiries: [] } : parsed;
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                if (!appData.signedAgreements) appData.signedAgreements = [];
                 saveToCloud();
                 document.getElementById('backupTextarea').value = '';
                 alert('Matagumpay na na-load at na-sync sa cloud ang data!');
