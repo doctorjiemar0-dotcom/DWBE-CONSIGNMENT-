@@ -268,7 +268,7 @@
             }
         };
 
-        // Compression function para sa signed agreement image upload
+        // PINALAKAS NA COMPRESSION: Pinasok sa ~500px at 0.5 quality para maging maliit ang file size pero basabasa pa rin sa client view
         function compressAndUploadImage(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -278,7 +278,7 @@
                     let width = img.width;
                     let height = img.height;
                     
-                    const MAX_SIZE = 1050;
+                    const MAX_SIZE = 550; 
                     if (width > height) {
                         if (width > MAX_SIZE) {
                             height *= MAX_SIZE / width;
@@ -296,7 +296,8 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    // Ginawang 0.5 (50% quality) para sa ligtas na Firestore limit
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
                     callback(compressedDataUrl);
                 };
                 img.src = e.target.result;
@@ -304,7 +305,7 @@
             reader.readAsDataURL(file);
         }
 
-        // Pag-upload ng Signed Agreement na may proteksyon laban sa error sa laki ng data
+        // Pag-upload ng Signed Agreement na may mas mahigpit na limit check
         window.uploadStoreAgreement = function(storeIdx) {
             const store = appData.consignments[storeIdx];
             const fileInput = document.createElement('input');
@@ -314,9 +315,9 @@
                 const file = e.target.files[0];
                 if (file) {
                     compressAndUploadImage(file, function(compressedDataUrl) {
-                        // Siguraduhing hindi masyadong mabigat bago i-save (Firestore Limit Safety Check)
-                        if (compressedDataUrl.length > 800000) {
-                            alert('Masyadong malaki pa rin ang imahe kahit na-compress. Subukan pumili ng mas mababang resolution o ibang larawan.');
+                        // Strict safety check (dapat bababa sa ~300KB ang Base64 string)
+                        if (compressedDataUrl.length > 300000) {
+                            alert('Masyadong malaki pa rin ang imahe. Subukan ang mas malayo o kuhaan ulit ng mas simple.');
                             return;
                         }
 
