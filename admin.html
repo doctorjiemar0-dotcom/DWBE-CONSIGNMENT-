@@ -63,7 +63,7 @@
         .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
         .store-body-content { margin-top: 8px; }
         
-        .partner-card { background: #f1f8e9; border-left: 5px solid #558b2f; padding: 10px; margin-bottom: 8px; border-radius: 6px; font-size: 0.85rem; }
+        .agreement-card { background: #f1f8e9; border-left: 5px solid #558b2f; padding: 10px; margin-bottom: 8px; border-radius: 6px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -91,23 +91,26 @@
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
             </div>
 
-            <!-- BAGONG MODULE: Independent Distribution Partners & Piece-Rate Payouts -->
+            <!-- BAGONG MODULE: Signed Consignment Agreements Upload -->
             <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
-                <h2>👥 Independent Distribution Partners (Piece-Rate Payouts)</h2>
-                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Subaybayan ang mga independent partner at ang kanilang flexible per-piece na komisyon.</p>
+                <h2>📝 Mga Tindahang May Pirmadong Consignment Agreement</h2>
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">I-upload at i-record ang mga tindahang pumirma sa iyong kasunduan.</p>
                 <div style="margin-bottom: 10px;">
-                    <button type="button" onclick="togglePartnerForm()" style="background-color: #2e7d32; font-size: 0.85rem;">➕ Magdagdag ng Distribution Partner</button>
+                    <button type="button" onclick="toggleAgreementForm()" style="background-color: #2e7d32; font-size: 0.85rem;">➕ Mag-upload ng Signed Agreement</button>
                 </div>
-                <div id="partnerFormContainer" style="display:none; margin-bottom: 12px; padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px;">
-                    <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: #2e7d32;">Bagong Partner Assignment</h3>
-                    <div class="form-group"><label>Pangalan ng Partner:</label><input type="text" id="partnerNameInput" placeholder="Hal. Juan Dela Cruz"></div>
-                    <div class="form-group"><label>Uri ng Produkto:</label><select id="partnerStyleInput"><option value="Ordinary">Ordinary Style</option><option value="Premium">Premium Style</option></select></div>
-                    <div class="form-group"><label>Bilang ng Stock na Ibinigay:</label><input type="number" id="partnerQtyInput" placeholder="Hal. 20"></div>
-                    <div class="form-group"><label>Rate bawat Piraso (₱ Commission):</label><input type="number" id="partnerRateInput" placeholder="Hal. 20"></div>
-                    <button type="button" onclick="saveNewPartner()" style="background-color: #388e3c;">I-save ang Partner</button>
+                <div id="agreementFormContainer" style="display:none; margin-bottom: 12px; padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px;">
+                    <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: #2e7d32;">Detalye ng Pumirmang Tindahan</h3>
+                    <div class="form-group"><label>Pangalan ng Tindahan:</label><input type="text" id="agreementStoreName" placeholder="Hal. Aling Nena Store"></div>
+                    <div class="form-group"><label>Pangalan ng May-ari:</label><input type="text" id="agreementOwnerName" placeholder="Hal. Maria Santos"></div>
+                    <div class="form-group"><label>Petsa ng Pirma:</label><input type="date" id="agreementDate"></div>
+                    <div class="form-group">
+                        <label>Larawan / Document ng Pirmadong Agreement:</label>
+                        <input type="file" id="agreementFileInput" accept="image/*" style="font-size: 0.8rem;">
+                    </div>
+                    <button type="button" onclick="saveSignedAgreement()" style="background-color: #388e3c;">I-save ang Kasunduan</button>
                 </div>
-                <div id="partnersListContainer">
-                    <p style="font-size: 0.85rem; color: #666;">Wala pang nakarehistrong distribution partner.</p>
+                <div id="agreementsListContainer">
+                    <p style="font-size: 0.85rem; color: #666;">Wala pang naka-upload na signed agreement.</p>
                 </div>
             </div>
 
@@ -278,7 +281,7 @@
             if (e.key === 'Enter') { loginBtn.click(); }
         });
 
-        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [], distributionPartners: [] };
+        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [], signedAgreements: [] };
         let previousRequestCount = 0;
 
         window.toggleAddStoreForm = function() {
@@ -291,79 +294,67 @@
             }
         };
 
-        window.togglePartnerForm = function() {
-            const f = document.getElementById('partnerFormContainer');
+        window.toggleAgreementForm = function() {
+            const f = document.getElementById('agreementFormContainer');
             f.style.display = f.style.display === 'none' ? 'block' : 'none';
+            const dateEl = document.getElementById('agreementDate');
+            if (dateEl && !dateEl.value) dateEl.valueAsDate = new Date();
         };
 
-        window.saveNewPartner = function() {
-            const name = document.getElementById('partnerNameInput').value.trim();
-            const style = document.getElementById('partnerStyleInput').value;
-            const qty = parseInt(document.getElementById('partnerQtyInput').value) || 0;
-            const rate = parseFloat(document.getElementById('partnerRateInput').value) || 0;
+        window.saveSignedAgreement = function() {
+            const storeName = document.getElementById('agreementStoreName').value.trim();
+            const ownerName = document.getElementById('agreementOwnerName').value.trim();
+            const dateSigned = document.getElementById('agreementDate').value;
+            const fileInput = document.getElementById('agreementFileInput');
 
-            if (!name || qty <= 0) {
-                alert('Mangyaring ilagay ang pangalan ng partner at wastong dami ng stock.');
+            if (!storeName) {
+                alert('Mangyaring ilagay ang pangalan ng tindahan.');
                 return;
             }
 
-            if (appData.homeStock[style] < qty) {
-                alert(`Babala: Kulang ang stock sa bodega para sa ${style} (${appData.homeStock[style]} pcs).`);
-                return;
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    storeAgreementData(storeName, ownerName, dateSigned, e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                storeAgreementData(storeName, ownerName, dateSigned, '');
             }
+        };
 
-            appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-            if (!appData.distributionPartners) appData.distributionPartners = [];
+        function storeAgreementData(storeName, ownerName, dateSigned, imageBase64) {
+            if (!appData.signedAgreements) appData.signedAgreements = [];
 
-            appData.distributionPartners.push({
+            appData.signedAgreements.push({
                 id: Date.now(),
-                partnerName: name,
-                styleType: style,
-                assignedQty: qty,
-                currentStock: qty,
-                soldQty: 0,
-                ratePerPiece: rate,
-                dateAssigned: new Date().toLocaleDateString()
+                storeName: storeName,
+                ownerName: ownerName || 'Hindi nakalagay',
+                dateSigned: dateSigned || new Date().toLocaleDateString(),
+                agreementImage: imageBase64
             });
 
-            document.getElementById('partnerNameInput').value = '';
-            document.getElementById('partnerQtyInput').value = '';
-            document.getElementById('partnerRateInput').value = '';
-            document.getElementById('partnerFormContainer').style.display = 'none';
+            document.getElementById('agreementStoreName').value = '';
+            document.getElementById('agreementOwnerName').value = '';
+            document.getElementById('agreementFileInput').value = '';
+            document.getElementById('agreementFormContainer').style.display = 'none';
             saveToCloud();
-        };
+        }
 
-        window.recordPartnerSale = function(idx) {
-            const p = appData.distributionPartners[idx];
-            const soldCount = parseInt(prompt(`Ilang piraso ng ${p.styleType} ang nabenta ni ${p.partnerName}?`, '1'));
-            if (!isNaN(soldCount) && soldCount > 0) {
-                if (soldCount > p.currentStock) {
-                    alert('Ang bilang ng nabenta ay mas malaki kaysa sa natitirang hawak niya.');
-                    return;
-                }
-                p.currentStock -= soldCount;
-                p.soldQty += soldCount;
+        window.deleteSignedAgreement = function(idx) {
+            if (confirm('Burahin ang nakatalang signed agreement na ito?')) {
+                appData.signedAgreements.splice(idx, 1);
                 saveToCloud();
             }
         };
 
-        window.settlePartnerEarnings = function(idx) {
-            const p = appData.distributionPartners[idx];
-            const totalCommission = p.soldQty * p.ratePerPiece;
-            if (confirm(`Bayaran si ${p.partnerName} ng kabuuang ₱${totalCommission} para sa ${p.soldQty} nabentang piraso (${p.styleType})? Ise-zero nito ang bilang ng nabenta para sa susunod na kwenta.`)) {
-                p.soldQty = 0;
-                saveToCloud();
-            }
-        };
-
-        window.deletePartner = function(idx) {
-            if (confirm('Burahin ang partner na ito? Ang natitirang stock sa kanya ay ibabalik sa Home inventory.')) {
-                const p = appData.distributionPartners[idx];
-                if (p.currentStock > 0) {
-                    appData.homeStock[p.styleType] += p.currentStock;
-                }
-                appData.distributionPartners.splice(idx, 1);
-                saveToCloud();
+        window.viewAgreementImage = function(idx) {
+            const ag = appData.signedAgreements[idx];
+            if (ag && ag.agreementImage) {
+                const newWindow = window.open();
+                newWindow.document.write(`<iframe src="${ag.agreementImage}" style="width:100%; height:100%; border:none;"></iframe>`);
+            } else {
+                alert('Walang naka-upload na larawan para sa kasunduang ito.');
             }
         };
 
@@ -391,7 +382,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                    if (!appData.distributionPartners) appData.distributionPartners = [];
+                    if (!appData.signedAgreements) appData.signedAgreements = [];
                 }
                 renderApp();
                 syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
@@ -459,7 +450,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                    if (!appData.distributionPartners) appData.distributionPartners = [];
+                    if (!appData.signedAgreements) appData.signedAgreements = [];
                     renderApp();
                 }
             } catch (e) {
@@ -572,30 +563,27 @@
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
 
-            // Render Distribution Partners
-            const partnersContainer = document.getElementById('partnersListContainer');
-            partnersContainer.innerHTML = '';
-            if (!appData.distributionPartners) appData.distributionPartners = [];
+            // Render Signed Agreements List
+            const agreementsContainer = document.getElementById('agreementsListContainer');
+            agreementsContainer.innerHTML = '';
+            if (!appData.signedAgreements) appData.signedAgreements = [];
 
-            if (appData.distributionPartners.length > 0) {
-                appData.distributionPartners.forEach((p, pIdx) => {
-                    const commissionTotal = p.soldQty * p.ratePerPiece;
-                    const pDiv = document.createElement('div');
-                    pDiv.className = 'partner-card';
-                    pDiv.innerHTML = `
-                        <strong>👤 ${p.partnerName}</strong> (${p.styleType})<br>
-                        📦 Stock Hawak: <strong>${p.currentStock} pcs</strong> | Nabenta: <strong>${p.soldQty} pcs</strong><br>
-                        💰 Rate: ₱${p.ratePerPiece}/pc | <strong>Dapat Bayaran: ₱${commissionTotal}</strong><br>
+            if (appData.signedAgreements.length > 0) {
+                appData.signedAgreements.forEach((ag, agIdx) => {
+                    const agDiv = document.createElement('div');
+                    agDiv.className = 'agreement-card';
+                    agDiv.innerHTML = `
+                        <strong>🏪 ${ag.storeName}</strong> (May-ari: ${ag.ownerName})<br>
+                        📅 Petsa ng Pirma: ${ag.dateSigned}<br>
                         <div class="btn-group" style="margin-top: 6px;">
-                            <button type="button" onclick="recordPartnerSale(${pIdx})" style="background-color: #0288d1; font-size:0.75rem;">🏷️ Itala ang Benta</button>
-                            <button type="button" onclick="settlePartnerEarnings(${pIdx})" style="background-color: #388e3c; font-size:0.75rem;">💵 Bayaran ang Komisyon</button>
-                            <button type="button" onclick="deletePartner(${pIdx})" style="background-color: #d32f2f; font-size:0.75rem;">❌ Burahin</button>
+                            ${ag.agreementImage ? `<button type="button" onclick="viewAgreementImage(${agIdx})" style="background-color: #0288d1; font-size:0.75rem;">👁️ Tingnan ang Kasunduan</button>` : `<span style="font-size:0.75rem; color:#666;">Walang larawan</span>`}
+                            <button type="button" onclick="deleteSignedAgreement(${agIdx})" style="background-color: #d32f2f; font-size:0.75rem;">❌ Burahin</button>
                         </div>
                     `;
-                    partnersContainer.appendChild(pDiv);
+                    agreementsContainer.appendChild(agDiv);
                 });
             } else {
-                partnersContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakarehistrong distribution partner.</p>';
+                agreementsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang naka-upload na signed agreement.</p>';
             }
 
             const inquiriesContainer = document.getElementById('adminInquiriesContainer');
@@ -1110,9 +1098,9 @@
         document.getElementById('importTextBtn').addEventListener('click', () => {
             try {
                 const parsed = JSON.parse(document.getElementById('backupTextarea').value.trim());
-                appData = Array.isArray(parsed) ? { homeStock: { Ordinary: 0, Premium: 0 }, consignments: parsed, pendingInquiries: [] } : parsed;
+                appData = Array.isArray(parsed) ? { homeStock: { Ordinary: 0, Premium: 0 }, consignments: parsed, pendingInquiries: [], signedAgreements: [] } : parsed;
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                if (!appData.distributionPartners) appData.distributionPartners = [];
+                if (!appData.signedAgreements) appData.signedAgreements = [];
                 saveToCloud();
                 document.getElementById('backupTextarea').value = '';
                 alert('Matagumpay na na-load at na-sync sa cloud ang data!');
