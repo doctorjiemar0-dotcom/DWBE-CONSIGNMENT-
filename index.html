@@ -211,12 +211,19 @@
                 </div>
             </div>
 
-            <!-- QR Code para sa Direktang Link ng Tindahan na ito -->
-            <div class="card qr-container">
-                <h2>📷 QR Code ng Tindahan Mo</h2>
-                <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px; text-align: center;">I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.</p>
-                <div id="qrcode"></div>
-                <span id="qrStoreLinkText" style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;"></span>
+            <!-- QR Code para sa Direktang Link ng Tindahan na ito (May Itago/Ipakita na Button) -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h2 style="margin-bottom: 0;">📷 QR Code ng Tindahan Mo</h2>
+                    <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #558b2f; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Itago</button>
+                </div>
+                <div id="qrContentWrapper">
+                    <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px; text-align: center;">I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.</p>
+                    <div class="qr-container" style="margin-top: 0;">
+                        <div id="qrcode"></div>
+                        <span id="qrStoreLinkText" style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;"></span>
+                    </div>
+                </div>
             </div>
 
             <!-- Notifications -->
@@ -347,6 +354,19 @@
         window.toggleAgreementVisibility = function() {
             const wrapper = document.getElementById('agreementContentWrapper');
             const btn = document.getElementById('toggleAgreementBtn');
+            if (wrapper.style.display === 'none') {
+                wrapper.style.display = 'block';
+                btn.textContent = 'Itago';
+            } else {
+                wrapper.style.display = 'none';
+                btn.textContent = 'Ipakita';
+            }
+        };
+
+        // Toggle para itago o ipakita ang QR Code section
+        window.toggleQrVisibility = function() {
+            const wrapper = document.getElementById('qrContentWrapper');
+            const btn = document.getElementById('toggleQrBtn');
             if (wrapper.style.display === 'none') {
                 wrapper.style.display = 'block';
                 btn.textContent = 'Itago';
