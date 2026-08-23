@@ -389,6 +389,7 @@
                             styleType: existingStore.styleType || 'Ordinary',
                             initialQty: existingStore.initialQty,
                             currentStock: existingStore.currentStock,
+                            returnedQty: existingStore.returnedQty || 0,
                             rejectedQty: existingStore.rejectedQty || 0,
                             price: existingStore.price,
                             dateDelivered: existingStore.dateDelivered,
@@ -397,15 +398,15 @@
                     }
                     existingStore.storeItems.push({
                         id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty,
-                        rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD
+                        returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD
                     });
                     if (!existingStore.history) existingStore.history = [];
                     existingStore.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${qty} pcs (${styleType}) noong ${startD}` });
                 } else {
                     appData.consignments.push({
                         id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
-                        currentStock: qty, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
-                        storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
+                        currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
+                        storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], clientNotifications: [], messages: [], lastClientAccess: null,
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
@@ -485,9 +486,10 @@
 
                 if (!item.storeItems || item.storeItems.length === 0) {
                     if (item.rejectedQty === undefined) item.rejectedQty = 0;
+                    if (item.returnedQty === undefined) item.returnedQty = 0;
                     item.storeItems = [{
                         id: item.id || Date.now(), styleType: item.styleType, initialQty: item.initialQty,
-                        currentStock: item.currentStock, rejectedQty: item.rejectedQty, price: item.price,
+                        currentStock: item.currentStock, returnedQty: item.returnedQty, rejectedQty: item.rejectedQty, price: item.price,
                         dateDelivered: item.dateDelivered, collectionDate: item.collectionDate
                     }];
                 }
@@ -495,7 +497,10 @@
                 let storeTotalStock = 0, storeTotalSold = 0, storeIsDue = false, storeItemsHtml = '';
                 item.storeItems.forEach((subItem, subIdx) => {
                     if (subItem.rejectedQty === undefined) subItem.rejectedQty = 0;
-                    const subSold = Math.max(0, subItem.initialQty - subItem.currentStock - subItem.rejectedQty);
+                    if (subItem.returnedQty === undefined) subItem.returnedQty = 0;
+                    
+                    // Ang bawas (returnedQty) ay hindi na ibinabawas sa benta, hiwalay na monitoring na lang
+                    const subSold = Math.max(0, subItem.initialQty - subItem.currentStock - subItem.returnedQty - subItem.rejectedQty);
                     const subSales = subSold * subItem.price;
 
                     storeTotalStock += subItem.currentStock;
@@ -507,11 +512,12 @@
                     const subIsDue = subItem.collectionDate && subItem.collectionDate.startsWith(currentYM);
                     if (subIsDue) storeIsDue = true;
 
+                    // Tinanggal na ang "Initial" sa display at naglagay ng monitoring para sa bawas (returnedQty)
                     storeItemsHtml += `
                         <div class="store-item-row">
                             <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between;">
                                 <span>${subItem.styleType || 'Ordinary'}</span>
-                                <span style="color: #333; font-weight: normal;">Presyo: ₱${subItem.price} | Stock: ${subItem.currentStock} / Initial: ${subItem.initialQty}</span>
+                                <span style="color: #333; font-weight: normal;">Presyo: ₱${subItem.price} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
                             </div>
                             <div style="font-size: 0.75rem; color: #666; margin-bottom: 6px;">
                                 Nabenta: <strong>${subSold} pcs</strong> | Start: ${subItem.dateDelivered || 'N/A'} | Target: ${subItem.collectionDate || 'N/A'}
@@ -683,8 +689,8 @@
 
             appData.consignments.push({
                 id: Date.now(), storeName: inq.storeName, address: inq.address || '', styleType: style, initialQty: initialStock,
-                currentStock: initialStock, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
-                storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
+                currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
+                storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
                 activeRequests: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!`, date: new Date().toLocaleString() }],
                 messages: [{ sender: 'Admin', text: `Welcome sa aming network!`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
@@ -726,7 +732,7 @@
                 let targetSub = item.storeItems.find(sub => sub.styleType.toLowerCase() === style.toLowerCase());
                 if (targetSub) { targetSub.initialQty += qty; targetSub.currentStock += qty; }
                 else {
-                    item.storeItems.push({ id: Date.now(), styleType: style, initialQty: qty, currentStock: qty, rejectedQty: 0, price: item.storeItems[0].price, dateDelivered: new Date().toISOString().slice(0, 10), collectionDate: new Date().toISOString().slice(0, 10) });
+                    item.storeItems.push({ id: Date.now(), styleType: style, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: item.storeItems[0].price, dateDelivered: new Date().toISOString().slice(0, 10), collectionDate: new Date().toISOString().slice(0, 10) });
                 }
                 item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs (${style})` });
@@ -770,6 +776,7 @@
             if (!isNaN(count) && count > 0) {
                 if (count > subItem.currentStock) { alert('Lampas sa kasalukuyang stock!'); return; }
                 subItem.currentStock -= count;
+                subItem.returnedQty = (subItem.returnedQty || 0) + count;
                 appData.homeStock[style] += count;
                 store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagbawas ng ${count} pcs (${style})` });
                 saveToCloud();
