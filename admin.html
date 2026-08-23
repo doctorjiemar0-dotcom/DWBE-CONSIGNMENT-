@@ -42,12 +42,16 @@
 
         .inquiry-card-box { background: #e3f2fd; border-left: 5px solid #0288d1; padding: 12px; margin-bottom: 10px; border-radius: 6px; font-size: 0.85rem; }
 
+        /* Orihinal na Store Card Design */
         .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
         .store-card.due { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
-        .badge { display: inline-block; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; color: white; }
+        .store-card.has-message { border-left: 6px solid #ff9800; background-color: #fffde7; }
+        
+        .badge { display: inline-block; padding: 3px 8px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; color: white; }
         .badge-due { background-color: #d32f2f; }
         .badge-ok { background-color: #ff9800; }
         .badge-good { background-color: #4caf50; }
+        .badge-msg { background-color: #ff9800; color: white; margin-left: 4px; font-size: 0.65rem; padding: 2px 5px; }
 
         .store-item-row { background: #fdfdfd; border: 1px solid #eee; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
 
@@ -58,7 +62,7 @@
         .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; }
         .floating-add-btn:hover { background-color: #388e3c; }
 
-        .store-header-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .store-header-row { display: flex; justify-content: space-between; align-items: center; }
         .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
         .store-body-content { margin-top: 8px; }
     </style>
@@ -378,7 +382,7 @@
                 let existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === sName.toLowerCase());
 
                 if (existingStore) {
-                    if (sAddress) existingStore.address = sAddress; // Update address if provided
+                    if (sAddress) existingStore.address = sAddress;
                     if (!existingStore.storeItems) {
                         existingStore.storeItems = [{
                             id: existingStore.id || Date.now(),
@@ -581,26 +585,41 @@
                     }
                 }
 
-                let statusDisplay = isOnline 
-                    ? `<span style="color: #2e7d32; font-weight: bold;">🟢 Online</span>` 
-                    : `<span style="color: #d32f2f; font-weight: bold;">🔴 Offline</span>`;
+                let statusDot = isOnline 
+                    ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
+                    : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
+
+                let hasClientMessage = false;
+                if (item.messages && item.messages.length > 0) {
+                    const lastMsg = item.messages[item.messages.length - 1];
+                    if (lastMsg.sender !== 'Admin') {
+                        hasClientMessage = true;
+                    }
+                }
+
+                let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
                 const div = document.createElement('div');
-                div.className = `store-card ${storeIsDue ? 'due' : ''}`;
+                div.className = storeCardClass;
                 div.innerHTML = `
-                    <div class="store-header-row" onclick="toggleStoreDetails(${index})">
-                        <strong>🏪 ${item.storeName}</strong>
+                    <div class="store-header-row">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 1rem;">🏢</span>
+                            ${statusDot}
+                            <strong style="font-size: 0.95rem;">${item.storeName}</strong>
+                            ${hasClientMessage ? '<span class="badge badge-msg">💬 May Mensahe</span>' : ''}
+                        </div>
                         <div style="display:flex; align-items:center; gap:6px;">
                             <span class="badge ${badgeClass}">${rating}</span>
-                            <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}">${isOpen ? '➖' : '➕'}</button>
+                            <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
+                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px; padding-left: 20px;">
                         📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong>
                     </div>
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
-                            👀 Status: ${statusDisplay} | Huling bista: <strong>${clientLastSeenText}</strong>
+                            👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
                         </div>
                         <div style="margin-top: 10px;">${storeItemsHtml}</div>
                         <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
