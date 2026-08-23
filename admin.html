@@ -138,7 +138,11 @@
                 <form id="consignmentForm">
                     <div class="form-group">
                         <label for="storeName">Pangalan ng Tindahan:</label>
-                        <input type="text" id="storeName" placeholder="Hal. Aling Nena Store">
+                        <input type="text" id="storeName" placeholder="Hal. Aling Nena Store" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="storeAddress">Address / Lokasyon:</label>
+                        <input type="text" id="storeAddress" placeholder="Hal. Brgy. Sirangan, Sorsogon">
                     </div>
                     <div class="form-group">
                         <label for="styleType">Uri ng Estilo (Variation):</label>
@@ -149,11 +153,11 @@
                     </div>
                     <div class="form-group">
                         <label for="quantity">Bilang ng Item (Simulang Stock):</label>
-                        <input type="number" id="quantity" placeholder="Hal. 10">
+                        <input type="number" id="quantity" placeholder="Hal. 10" required>
                     </div>
                     <div class="form-group">
                         <label for="price">Presyo bawat Isa (₱):</label>
-                        <input type="number" id="price" placeholder="Hal. 150">
+                        <input type="number" id="price" placeholder="Hal. 150" required>
                     </div>
                     <div class="form-group">
                         <label for="dateDelivered">Petsa ng Simula (Start):</label>
@@ -196,7 +200,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const ADMIN_PASSWORD = "0802"; // Protected admin password
+        const ADMIN_PASSWORD = "0802";
         const authScreen = document.getElementById('authScreen');
         const mainAppContent = document.getElementById('mainAppContent');
         const loginBtn = document.getElementById('loginBtn');
@@ -359,6 +363,7 @@
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const sName = document.getElementById('storeName').value.trim();
+                const sAddress = document.getElementById('storeAddress').value.trim();
                 const styleType = document.getElementById('styleType').value;
                 const qty = parseInt(document.getElementById('quantity').value);
                 const price = parseFloat(document.getElementById('price').value);
@@ -373,6 +378,7 @@
                 let existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === sName.toLowerCase());
 
                 if (existingStore) {
+                    if (sAddress) existingStore.address = sAddress; // Update address if provided
                     if (!existingStore.storeItems) {
                         existingStore.storeItems = [{
                             id: existingStore.id || Date.now(),
@@ -393,7 +399,7 @@
                     existingStore.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${qty} pcs (${styleType}) noong ${startD}` });
                 } else {
                     appData.consignments.push({
-                        id: Date.now(), storeName: sName, styleType: styleType, initialQty: qty,
+                        id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], clientNotifications: [], messages: [], lastClientAccess: null,
@@ -433,7 +439,7 @@
                     div.innerHTML = `
                         <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>
                         📞 Contact: ${inq.contact} | 📧 Email: <strong style="color:#0288d1;">${inq.email || 'Wala'}</strong><br>
-                        📍 Address: ${inq.address} | 🎁 Istilo: ${inq.styleType}<br>
+                        📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>
                         <div class="btn-group" style="margin-top: 6px;">
                             <button type="button" class="btn-approve" onclick="approveInquiry(${inqIdx})">✅ Aprubahan</button>
                             <button type="button" class="btn-decline" onclick="declineInquiry(${inqIdx})">❌ Tanggihan</button>
@@ -471,6 +477,7 @@
                 if (!item.history) item.history = [];
                 if (!item.activeRequests) item.activeRequests = [];
                 if (!item.messages) item.messages = [];
+                if (!item.address) item.address = '';
 
                 if (!item.storeItems || item.storeItems.length === 0) {
                     if (item.rejectedQty === undefined) item.rejectedQty = 0;
@@ -588,13 +595,17 @@
                             <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}">${isOpen ? '➖' : '➕'}</button>
                         </div>
                     </div>
+                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
+                        📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong>
+                    </div>
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
                             👀 Status: ${statusDisplay} | Huling bista: <strong>${clientLastSeenText}</strong>
                         </div>
                         <div style="margin-top: 10px;">${storeItemsHtml}</div>
-                        <div style="margin-top: 8px; display: flex; gap: 4px;">
+                        <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
                             <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Pangalan</button>
+                            <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Address</button>
                             <button type="button" onclick="deleteEntireStore(${index})" style="background-color: #d32f2f; font-size: 0.75rem; padding: 6px; flex: 1;">Burahin ang Tindahan</button>
                         </div>
                         <div style="margin-top: 8px;">
@@ -652,7 +663,7 @@
             const collDateStr = nextMonth.toISOString().slice(0, 10);
 
             appData.consignments.push({
-                id: Date.now(), storeName: inq.storeName, styleType: style, initialQty: initialStock,
+                id: Date.now(), storeName: inq.storeName, address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
                 activeRequests: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!`, date: new Date().toLocaleString() }],
@@ -766,6 +777,15 @@
             const newName = prompt('Bagong Pangalan ng Tindahan:', item.storeName);
             if (newName && newName.trim() !== '') {
                 item.storeName = newName.trim();
+                saveToCloud();
+            }
+        };
+
+        window.editStoreAddress = function(index) {
+            const item = appData.consignments[index];
+            const newAddress = prompt('Bagong Address / Lokasyon:', item.address || '');
+            if (newAddress !== null) {
+                item.address = newAddress.trim();
                 saveToCloud();
             }
         };
