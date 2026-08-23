@@ -490,7 +490,6 @@
                     const subIsDue = subItem.collectionDate && subItem.collectionDate.startsWith(currentYM);
                     if (subIsDue) storeIsDue = true;
 
-                    // TINANGGAL NA ANG BURAHIN BUTTON DITO SA MGA SUB-ITEMS
                     storeItemsHtml += `
                         <div class="store-item-row">
                             <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between;">
@@ -552,7 +551,29 @@
                 const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
                 const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
                 const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
-                const clientLastSeen = item.lastClientAccess ? item.lastClientAccess : 'Hindi pa nabubuksan';
+                
+                // --- KAKADAGDAG LANG: Pagsusuri sa Online o Offline Status at Oras ---
+                let isOnline = false;
+                let clientLastSeenText = 'Hindi pa nabubuksan';
+
+                if (item.lastClientAccess) {
+                    clientLastSeenText = item.lastClientAccess;
+                    const lastTime = Date.parse(item.lastClientAccess);
+                    if (!isNaN(lastTime)) {
+                        const diffMs = Date.now() - lastTime;
+                        // Kung wala pang 45 segundo ang huling heartbeat, ibig sabihin online pa
+                        if (diffMs < 45000) {
+                            isOnline = true;
+                        }
+                    } else if (item.clientStatus === "Online") {
+                        isOnline = true;
+                    }
+                }
+
+                let statusDisplay = isOnline 
+                    ? `<span style="color: #2e7d32; font-weight: bold;">🟢 Online</span>` 
+                    : `<span style="color: #d32f2f; font-weight: bold;">🔴 Offline</span>`;
+                // -----------------------------------------------------------------
 
                 const div = document.createElement('div');
                 div.className = `store-card ${storeIsDue ? 'due' : ''}`;
@@ -566,7 +587,7 @@
                     </div>
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
-                            👀 Huling bista ng kliyente: <strong>${clientLastSeen}</strong>
+                            👀 Status: ${statusDisplay} | Huling bista: <strong>${clientLastSeenText}</strong>
                         </div>
                         <div style="margin-top: 10px;">${storeItemsHtml}</div>
                         <div style="margin-top: 8px; display: flex; gap: 4px;">
