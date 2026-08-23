@@ -123,6 +123,10 @@
                         <input type="text" id="inqContact" placeholder="Hal. 09123456789" required>
                     </div>
                     <div class="form-group">
+                        <label>Gmail / Email Address (Opsyonal):</label>
+                        <input type="email" id="inqEmail" placeholder="Hal. alingenastore@gmail.com">
+                    </div>
+                    <div class="form-group">
                         <label>Lokasyon / Address:</label>
                         <input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required>
                     </div>
@@ -175,7 +179,7 @@
                 </iframe>
             </div>
 
-            <!-- Active Items Summary (Inilagay sa unahan bago ang QR, Abiso, atbp.) -->
+            <!-- Active Items Summary -->
             <div class="card">
                 <h2>📦 Aktibong Stock at mga Paninda</h2>
                 <div id="clientItemsContainer">
@@ -417,6 +421,7 @@
                 const storeName = document.getElementById('inqStoreName').value.trim();
                 const ownerName = document.getElementById('inqOwnerName').value.trim();
                 const contact = document.getElementById('inqContact').value.trim();
+                const email = document.getElementById('inqEmail').value.trim();
                 const address = document.getElementById('inqAddress').value.trim();
                 const styleType = document.getElementById('inqStyleType').value;
                 const message = document.getElementById('inqMessage').value.trim();
@@ -426,6 +431,7 @@
                     storeName,
                     ownerName,
                     contact,
+                    email,
                     address,
                     styleType,
                     message,
@@ -523,7 +529,7 @@
         }
 
         window.submitRestockRequest = async function() {
-            const styleType = document.getElementById('restockStyleType').value;
+            const styleType = document.getElementById('rest_StyleType')?.value || document.getElementById('restockStyleType').value;
             const qty = parseInt(document.getElementById('restockQtyInput').value);
             if (isNaN(qty) || qty <= 0) {
                 alert('Ilagay ang tamang bilang ng hiling na restock.');
@@ -554,7 +560,7 @@
         window.sendClientMessage = async function() {
             const input = document.getElementById('clientChatInput');
             const text = input.value.trim();
-            if (!text.trim()) return;
+            if (!text) return;
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
