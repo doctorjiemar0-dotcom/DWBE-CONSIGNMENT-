@@ -264,15 +264,49 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        // Tagapakinig para sa awtomatikong paghaba ng iframe galing sa kasunduan
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'resizeAgreement') {
-                const iframe = document.getElementById('storeAgreementFrame');
-                if (iframe) {
-                    iframe.style.height = event.data.height + 'px';
+        // Tagapakinig para sa iframe (Resize at pag-record sa History Log)
+        window.addEventListener('message', async function(event) {
+            if (event.data) {
+                if (event.data.type === 'resizeAgreement') {
+                    const iframe = document.getElementById('storeAgreementFrame');
+                    if (iframe) {
+                        iframe.style.height = event.data.height + 'px';
+                    }
+                }
+                
+                if (event.data.type === 'agreementOpened' && currentStoreName) {
+                    try {
+                        const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+                        if (store) {
+                            if (!store.history) store.history = [];
+                            
+                            const lastLog = store.history[0];
+                            const logText = "Tiningnan ang Pirmadong Consignment Agreement mula sa Repo";
+                            
+                            if (!lastLog || lastLog.text !== logText || (Date.now() - (lastLog.id || 0) > 60000)) {
+                                store.history.unshift({
+                                    id: Date.now(),
+                                    date: new Date().toLocaleString(),
+                                    text: logText
+                                });
+                                await saveDataSilentBackend();
+                                console.log("Agreement view recorded to history.");
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error saving agreement history:", e);
+                    }
                 }
             }
         });
+
+        async function saveDataSilentBackend() {
+            try {
+                await setDoc(doc(db, "app_data", "main_inventory"), appData);
+            } catch (err) {
+                console.error("Silent save error:", err);
+            }
+        }
 
         let deferredPrompt;
         const installAppCard = document.getElementById('installAppCard');
