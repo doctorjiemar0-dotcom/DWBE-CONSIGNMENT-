@@ -413,6 +413,13 @@
         function renderApp() {
             if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
 
+            // Isauli / i-save muna ang tina-type sa reply input bago mag-re-render
+            const savedReplies = {};
+            appData.consignments.forEach((_, idx) => {
+                const input = document.getElementById(`adminReply_${idx}`);
+                if (input) savedReplies[idx] = input.value;
+            });
+
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
 
@@ -552,7 +559,6 @@
                 const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
                 const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
                 
-                // --- KAKADAGDAG LANG: Pagsusuri sa Online o Offline Status at Oras ---
                 let isOnline = false;
                 let clientLastSeenText = 'Hindi pa nabubuksan';
 
@@ -561,7 +567,6 @@
                     const lastTime = Date.parse(item.lastClientAccess);
                     if (!isNaN(lastTime)) {
                         const diffMs = Date.now() - lastTime;
-                        // Kung wala pang 45 segundo ang huling heartbeat, ibig sabihin online pa
                         if (diffMs < 45000) {
                             isOnline = true;
                         }
@@ -573,7 +578,6 @@
                 let statusDisplay = isOnline 
                     ? `<span style="color: #2e7d32; font-weight: bold;">🟢 Online</span>` 
                     : `<span style="color: #d32f2f; font-weight: bold;">🔴 Offline</span>`;
-                // -----------------------------------------------------------------
 
                 const div = document.createElement('div');
                 div.className = `store-card ${storeIsDue ? 'due' : ''}`;
@@ -611,6 +615,12 @@
                     </div>
                 `;
                 storesList.appendChild(div);
+            });
+
+            // Ibalik ang tina-type sa mga reply input pagkatapos mag-render
+            Object.keys(savedReplies).forEach(idx => {
+                const input = document.getElementById(`adminReply_${idx}`);
+                if (input) input.value = savedReplies[idx];
             });
 
             if (totalActiveReqsCount > previousRequestCount) playNotificationSound();
