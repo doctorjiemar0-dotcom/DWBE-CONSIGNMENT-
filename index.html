@@ -6,7 +6,7 @@
     <title>Doctor's Whisk Broom - Client Portal</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
-    <!-- QR Code Library mula sa CDN para sa madaling pag-generate -->
+    <!-- QR Code Library mula sa CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
@@ -26,37 +26,11 @@
         #portalContent { display: none; }
 
         .store-item-box { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
-        .notification-item { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 8px; margin-bottom: 6px; font-size: 0.85rem; border-radius: 4px; }
+        .notification-item { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 8px; margin-bottom: 6px; font-size: 0.85rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: flex-start; }
         .chat-msg { background: #f1f8e9; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85rem; border: 1px solid #c5e1a5; }
         .chat-msg.admin { background: #e3f2fd; border-color: #90caf9; }
         
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
-        
-        .admin-link-container {
-            text-align: center;
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .admin-link-container a {
-            color: #2e7d32;
-            font-size: 0.9rem;
-            font-weight: bold;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: #e8f5e9;
-            padding: 8px 15px;
-            border-radius: 6px;
-            border: 1px solid #c8e6c9;
-        }
-        .admin-link-container a:hover {
-            background: #c8e6c9;
-            text-decoration: underline;
-        }
 
         #installAppCard, #dashboardInstallCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
         .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
@@ -106,7 +80,7 @@
 
             <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
 
-            <!-- Bagong Aplikasyon / Inquiry Section na pwedeng I-print -->
+            <!-- Bagong Aplikasyon / Inquiry Section -->
             <div id="printableInquirySection" style="width: 100%;">
                 <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Bagong Aplikasyon / Inquiry</h2>
                 <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
@@ -166,7 +140,7 @@
                 <button id="dashboardInstallBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
             </div>
 
-            <!-- STORE PARTNER AGREEMENTS IFRAME SECTION (Auto-resize enabled) -->
+            <!-- STORE PARTNER AGREEMENTS IFRAME SECTION -->
             <div style="margin-bottom: 15px;">
                 <iframe 
                     id="storeAgreementFrame"
@@ -202,9 +176,11 @@
                 </div>
             </div>
 
-            <!-- Notifications -->
+            <!-- Notifications na may Clear (✕) Button -->
             <div class="card">
-                <h2>📢 Mga Abiso at Update</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h2 style="margin-bottom: 0;">📢 Mga Abiso at Update</h2>
+                </div>
                 <div id="clientNotificationsContainer">
                     <p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>
                 </div>
@@ -241,10 +217,6 @@
             </div>
         </div>
 
-        <div class="admin-link-container">
-            <a href="https://doctorjiemar0-dotcom.github.io/DWBE-CONSIGNMENT-/admin" target="_blank">🔒 ADMIN PORTAL</a>
-        </div>
-
     </div>
 
     <!-- Firebase SDKs -->
@@ -268,7 +240,6 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        // Tagapakinig para sa awtomatikong paghaba ng iframe galing sa kasunduan
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'resizeAgreement') {
                 const iframe = document.getElementById('storeAgreementFrame');
@@ -331,6 +302,14 @@
             }
         };
 
+        window.dismissNotification = async function(index) {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store || !store.clientNotifications) return;
+            
+            store.clientNotifications.splice(index, 1);
+            await saveData();
+        };
+
         async function loadData() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
@@ -343,7 +322,6 @@
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
                 }
                 
-                // I-update ang status at timestamp para malaman ng admin na active ang kliyente
                 const urlParams = new URLSearchParams(window.location.search);
                 const paramStore = urlParams.get('store');
                 let storeToCheck = paramStore || localStorage.getItem('client_logged_store');
@@ -352,7 +330,7 @@
                     const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeToCheck.toLowerCase());
                     if (found) {
                         found.lastClientAccess = new Date().toLocaleString();
-                        found.clientStatus = "Online"; // Nagse-set ng Online status sa cloud
+                        found.clientStatus = "Online";
                         await setDoc(docRef, appData);
                     }
                 }
@@ -494,10 +472,16 @@
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
             if (store.clientNotifications && store.clientNotifications.length > 0) {
-                store.clientNotifications.forEach(n => {
+                store.clientNotifications.forEach((n, index) => {
                     const div = document.createElement('div');
                     div.className = 'notification-item';
-                    div.innerHTML = `<div>${n.text}</div><div style="font-size:0.7rem; color:#778; margin-top:2px;">${n.date}</div>`;
+                    div.innerHTML = `
+                        <div>
+                            <div>${n.text}</div>
+                            <div style="font-size:0.7rem; color:#778; margin-top:2px;">${n.date}</div>
+                        </div>
+                        <button type="button" onclick="dismissNotification(${index})" style="background: none; border: none; color: #d32f2f; font-size: 0.9rem; cursor: pointer; padding: 0 4px; margin-top: 0; width: auto; font-weight: bold;" title="I-clear ang abiso">✕</button>
+                    `;
                     notifContainer.appendChild(div);
                 });
             } else {
@@ -601,7 +585,6 @@
 
         loadData();
 
-        // --- HEARTBEAT: Nag-a-update ng timestamp at Online status kada 20 segundo habang bukas ang portal ---
         setInterval(() => {
             if (currentStoreName) {
                 sendHeartbeatSilent();
@@ -625,7 +608,6 @@
                 console.log("Heartbeat error", e);
             }
         }
-        // --------------------------------------------------------------------------------------------------
 
         setInterval(() => {
             if (currentStoreName) {
