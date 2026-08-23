@@ -500,13 +500,19 @@
                     styleType: store.styleType || 'Ordinary',
                     initialQty: store.initialQty,
                     currentStock: store.currentStock,
+                    returnedQty: store.returnedQty || 0,
+                    rejectedQty: store.rejectedQty || 0,
                     price: store.price,
                     collectionDate: store.collectionDate
                 }];
             }
 
             store.storeItems.forEach(sub => {
-                const subSold = Math.max(0, sub.initialQty - sub.currentStock - (sub.rejectedQty || 0));
+                if (sub.returnedQty === undefined) sub.returnedQty = 0;
+                if (sub.rejectedQty === undefined) sub.rejectedQty = 0;
+
+                // TAMA NA ANG KALKULASYON: Ibinabawas na ang returnedQty at rejectedQty para hindi sumama sa nabenta
+                const subSold = Math.max(0, sub.initialQty - sub.currentStock - sub.returnedQty - sub.rejectedQty);
                 const subSales = subSold * sub.price;
                 const div = document.createElement('div');
                 div.className = 'store-item-box';
