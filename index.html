@@ -343,7 +343,7 @@
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
                 }
                 
-                // --- INAYOS DITO: Awtomatikong ina-update at sinse-save ang lastClientAccess kapag binuksan ng client ---
+                // I-update ang status at timestamp para malaman ng admin na active ang kliyente
                 const urlParams = new URLSearchParams(window.location.search);
                 const paramStore = urlParams.get('store');
                 let storeToCheck = paramStore || localStorage.getItem('client_logged_store');
@@ -352,10 +352,10 @@
                     const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeToCheck.toLowerCase());
                     if (found) {
                         found.lastClientAccess = new Date().toLocaleString();
-                        await setDoc(docRef, appData); // I-save agad sa Cloud para magbago sa Admin portal
+                        found.clientStatus = "Online"; // Nagse-set ng Online status sa cloud
+                        await setDoc(docRef, appData);
                     }
                 }
-                // --------------------------------------------------------------------------------------------------
 
                 syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
                 initPortalView();
@@ -368,6 +368,11 @@
         async function saveData() {
             syncStatus.textContent = "Nagse-save sa Cloud...";
             try {
+                const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+                if (store) {
+                    store.lastClientAccess = new Date().toLocaleString();
+                    store.clientStatus = "Online";
+                }
                 await setDoc(doc(db, "app_data", "main_inventory"), appData);
                 syncStatus.textContent = "✅ Na-save at Nakakonekta sa Cloud";
                 initPortalView();
@@ -427,8 +432,8 @@
             currentStoreName = found.storeName;
             localStorage.setItem('client_logged_store', currentStoreName);
             
-            // I-update din ang access time kapag nag-manual login
             found.lastClientAccess = new Date().toLocaleString();
+            found.clientStatus = "Online";
             saveData();
         });
 
@@ -595,6 +600,32 @@
         };
 
         loadData();
+
+        // --- HEARTBEAT: Nag-a-update ng timestamp at Online status kada 20 segundo habang bukas ang portal ---
+        setInterval(() => {
+            if (currentStoreName) {
+                sendHeartbeatSilent();
+            }
+        }, 20000);
+
+        async function sendHeartbeatSilent() {
+            try {
+                const docRef = doc(db, "app_data", "main_inventory");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    let freshData = docSnap.data();
+                    let store = freshData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+                    if (store) {
+                        store.lastClientAccess = new Date().toLocaleString();
+                        store.clientStatus = "Online";
+                        await setDoc(docRef, freshData);
+                    }
+                }
+            } catch (e) {
+                console.log("Heartbeat error", e);
+            }
+        }
+        // --------------------------------------------------------------------------------------------------
 
         setInterval(() => {
             if (currentStoreName) {
