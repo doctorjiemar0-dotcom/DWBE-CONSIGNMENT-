@@ -268,89 +268,6 @@
             }
         };
 
-        // PINALAKAS NA COMPRESSION: Pinasok sa ~500px at 0.5 quality para maging maliit ang file size pero basabasa pa rin sa client view
-        function compressAndUploadImage(file, callback) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    const MAX_SIZE = 550; 
-                    if (width > height) {
-                        if (width > MAX_SIZE) {
-                            height *= MAX_SIZE / width;
-                            width = MAX_SIZE;
-                        }
-                    } else {
-                        if (height > MAX_SIZE) {
-                            width *= MAX_SIZE / height;
-                            height = MAX_SIZE;
-                        }
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Ginawang 0.5 (50% quality) para sa ligtas na Firestore limit
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
-                    callback(compressedDataUrl);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Pag-upload ng Signed Agreement na may mas mahigpit na limit check
-        window.uploadStoreAgreement = function(storeIdx) {
-            const store = appData.consignments[storeIdx];
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    compressAndUploadImage(file, function(compressedDataUrl) {
-                        // Strict safety check (dapat bababa sa ~300KB ang Base64 string)
-                        if (compressedDataUrl.length > 300000) {
-                            alert('Masyadong malaki pa rin ang imahe. Subukan ang mas malayo o kuhaan ulit ng mas simple.');
-                            return;
-                        }
-
-                        store.signedAgreement = {
-                            image: compressedDataUrl,
-                            dateUploaded: new Date().toLocaleString()
-                        };
-                        
-                        if (!store.history) store.history = [];
-                        store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nag-upload ng Pirmadong Consignment Agreement` });
-                        
-                        if (!store.clientNotifications) store.clientNotifications = [];
-                        store.clientNotifications.push({
-                            id: Date.now(),
-                            text: `📄 Ang iyong Pirmadong Consignment Agreement ay na-upload na ng Admin. Maaari mo na itong makita rito.`,
-                            date: new Date().toLocaleString()
-                        });
-                        
-                        saveToCloud();
-                        alert(`Matagumpay na na-upload ang agreement para sa ${store.storeName}! Makikita na ito ng client sa kanilang portal.`);
-                    });
-                }
-            };
-            fileInput.click();
-        };
-
-        window.removeStoreAgreement = function(storeIdx) {
-            if (confirm('Tanggalin ang nakakabit na signed agreement ng tindahang ito?')) {
-                delete appData.consignments[storeIdx].signedAgreement;
-                saveToCloud();
-            }
-        };
-
         window.toggleStoreDetails = function(index) {
             const bodyContent = document.getElementById(`storeBody_${index}`);
             const toggleBtn = document.getElementById(`storeToggleBtn_${index}`);
@@ -564,7 +481,8 @@
                     div.className = 'inquiry-card-box';
                     div.innerHTML = `
                         <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>
-                        📞 Contact: ${inq.contact} | 📍 Address: ${inq.address}<br>
+                        📞 Contact: ${inq.contact} | 📧 Email: <strong style="color:#0288d1;">${inq.email || 'Wala'}</strong><br>
+                        📍 Address: ${inq.address}<br>
                         🎁 Gustong Istilo: ${inq.styleType}<br>
                         💬 Mensahe: "${inq.message || 'Wala'}"<br>
                         <div style="font-size: 0.75rem; color: #666; margin-top: 3px;">Petsa ng Aplikasyon: ${inq.date}</div>
@@ -707,13 +625,6 @@
                 const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
                 const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
 
-                let agreementHtml = `
-                    <div style="background: #f1f8e9; border: 1px dashed #7cb342; padding: 8px; border-radius: 4px; margin-top: 8px; font-size: 0.8rem;">
-                        <strong>📝 Signed Consignment Agreement:</strong><br>
-                        ${item.signedAgreement ? `<span style="color:#2e7d32; font-weight:bold;">✅ Mayroon nang upload na agreement</span><br><div class="btn-group" style="margin-top:4px;"><button type="button" onclick="uploadStoreAgreement(${index})" style="background-color:#0288d1; font-size:0.7rem;">Palitan ang Agreement</button><button type="button" onclick="removeStoreAgreement(${index})" style="background-color:#d32f2f; font-size:0.7rem;">Tanggalin</button></div>` : `<span style="color:#666;">Wala pang naka-upload.</span><br><button type="button" onclick="uploadStoreAgreement(${index})" style="background-color:#388e3c; font-size:0.75rem; margin-top:4px;">📤 Mag-upload ng Agreement</button>`}
-                    </div>
-                `;
-
                 const div = document.createElement('div');
                 div.className = `store-card ${storeIsDue ? 'due' : ''}`;
                 div.innerHTML = `
@@ -728,8 +639,6 @@
                         <div style="margin-top: 10px;">
                             ${storeItemsHtml}
                         </div>
-
-                        ${agreementHtml}
 
                         <div style="margin-top: 8px; display: flex; gap: 4px;">
                             <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Pangalan</button>
@@ -827,7 +736,16 @@
 
             appData.pendingInquiries.splice(inqIdx, 1);
             await saveToCloud();
-            alert(`Matagumpay na na-aprube ang tindahan at nailipat na sa active stores!`);
+
+            if (inq.email) {
+                const storePortalUrl = window.location.origin + window.location.pathname.replace('admin', '') + "?store=" + encodeURIComponent(inq.storeName);
+                const emailSubject = encodeURIComponent("Na-aprube na ang iyong Aplikasyon - Doctor's Whisk Broom");
+                const emailBody = encodeURIComponent(`Magandang araw ${inq.ownerName},\n\nMagandang balita! Ang iyong aplikasyon para sa tindahang "${inq.storeName}" ay NA-APRUBE na.\n\nMaaari mo nang buksan at i-access ang iyong pribadong portal dito:\n${storePortalUrl}\n\nMaraming salamat at welcome sa ating partnership!`);
+                
+                window.open(`mailto:${inq.email}?subject=${emailSubject}&body=${emailBody}`, '_blank');
+            }
+
+            alert(`Matagumpay na na-aprube ang tindahan at nailipat na sa active stores! Nagbukas din ang email para masulatan ang inquirer.`);
         };
 
         window.declineInquiry = async function(inqIdx) {
