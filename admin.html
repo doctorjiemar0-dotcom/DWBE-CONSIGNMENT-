@@ -196,7 +196,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const ADMIN_PASSWORD = "0802"; 
+        const ADMIN_PASSWORD = "0802"; // Protected admin password
         const authScreen = document.getElementById('authScreen');
         const mainAppContent = document.getElementById('mainAppContent');
         const loginBtn = document.getElementById('loginBtn');
@@ -413,7 +413,6 @@
         function renderApp() {
             if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
 
-            // Isauli / i-save muna ang tina-type sa reply input bago mag-re-render
             const savedReplies = {};
             appData.consignments.forEach((_, idx) => {
                 const input = document.getElementById(`adminReply_${idx}`);
@@ -617,7 +616,6 @@
                 storesList.appendChild(div);
             });
 
-            // Ibalik ang tina-type sa mga reply input pagkatapos mag-render
             Object.keys(savedReplies).forEach(idx => {
                 const input = document.getElementById(`adminReply_${idx}`);
                 if (input) input.value = savedReplies[idx];
