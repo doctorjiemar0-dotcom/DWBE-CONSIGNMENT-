@@ -407,7 +407,7 @@
                         id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
-                        activeRequests: [], clientNotifications: [], messages: [], lastClientAccess: null,
+                        activeRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
                 }
@@ -481,6 +481,7 @@
                 if (!item.styleType) item.styleType = 'Ordinary';
                 if (!item.history) item.history = [];
                 if (!item.activeRequests) item.activeRequests = [];
+                if (!item.approvedRestocks) item.approvedRestocks = [];
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
 
@@ -701,7 +702,7 @@
                 id: Date.now(), storeName: inq.storeName, address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
-                activeRequests: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!`, date: new Date().toLocaleString() }],
+                activeRequests: [], approvedRestocks: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!`, date: new Date().toLocaleString() }],
                 messages: [{ sender: 'Admin', text: `Welcome sa aming network!`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon` }]
@@ -734,18 +735,24 @@
             const item = appData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
             const style = reqStyle || 'Ordinary';
+            const reqObj = item.activeRequests[reqIdx];
             item.activeRequests.splice(reqIdx, 1);
             if (!item.clientNotifications) item.clientNotifications = [];
+            if (!item.approvedRestocks) item.approvedRestocks = [];
 
             if (isApproved) {
+                // Binabawas muna sa home stock o ibinibigay sa pending delivery ng client
+                // Ayon sa bagong daloy, hindi agad idadagdag sa currentStock ng store kundi ilalagay sa approvedRestocks para makumpirma ng client
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-                let targetSub = item.storeItems.find(sub => sub.styleType.toLowerCase() === style.toLowerCase());
-                if (targetSub) { targetSub.initialQty += qty; targetSub.currentStock += qty; }
-                else {
-                    item.storeItems.push({ id: Date.now(), styleType: style, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: item.storeItems[0].price, dateDelivered: new Date().toISOString().slice(0, 10), collectionDate: new Date().toISOString().slice(0, 10) });
-                }
-                item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs (${style})` });
+                
+                item.approvedRestocks.push({
+                    styleType: style,
+                    qty: qty,
+                    date: timestamp
+                });
+
+                item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}). Nakabinbin ang pagtanggap.`, date: timestamp });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: ${qty} pcs (${style}) - Naghihintay ng kumpirmasyon` });
             } else {
                 item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock` });
