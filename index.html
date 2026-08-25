@@ -161,6 +161,13 @@
                 </div>
             </div>
 
+            <!-- Na-approve na Restock / Nakabinbing Tanggapin -->
+            <div class="card" id="pendingDeliveryCard" style="display:none; background: #e3f2fd; border: 1px solid #90caf9;">
+                <h2 style="color: #0288d1;">🚚 Mga Na-approve na Restock (Kailangan ng Kumpirmasyon)</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Naaprubahan na ito ng admin. I-click ang "Natanggap Ko Na" kapag naihatid na sa iyong tindahan upang madagdag sa iyong stock.</p>
+                <div id="pendingDeliveryContainer"></div>
+            </div>
+
             <!-- QR Code para sa Direktang Link ng Tindahan na ito -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -313,6 +320,46 @@
             
             store.clientNotifications.splice(index, 1);
             await saveData();
+        };
+
+        // Kumpirmasyon na natanggap na ang restock delivery mula sa admin
+        window.confirmReceiveRestock = async function(index) {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
+
+            const itemToReceive = store.approvedRestocks[index];
+
+            // Hanapin kung mayroon nang item na ganitong style sa storeItems
+            let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType);
+            if (existingItem) {
+                existingItem.currentStock += itemToReceive.qty;
+                existingItem.initialQty += itemToReceive.qty; // Idadagdag din sa simula o kabuuang baseline
+            } else {
+                // Kung wala pa, gumawa ng bagong entry
+                store.storeItems.push({
+                    styleType: itemToReceive.styleType,
+                    initialQty: itemToReceive.qty,
+                    currentStock: itemToReceive.qty,
+                    returnedQty: 0,
+                    rejectedQty: 0,
+                    price: store.price || 0,
+                    collectionDate: store.collectionDate || 'N/A'
+                });
+            }
+
+            // Alisin na sa listahan ng approved restocks dahil natanggap na
+            store.approvedRestocks.splice(index, 1);
+
+            // Mag-iwan ng mensahe sa chat / log sa admin
+            if (!store.messages) store.messages = [];
+            store.messages.push({
+                sender: currentStoreName,
+                text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`,
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert("Matagumpay na naidagdag sa iyong stock ang mga natanggap na walis!");
         };
 
         async function loadData() {
@@ -474,6 +521,27 @@
                 correctLevel: QRCode.CorrectLevel.H
             });
 
+            // Pagpapakita ng mga Na-approve na Restock na naghihintay ng kumpirmasyon
+            const pendingDeliveryCard = document.getElementById('pendingDeliveryCard');
+            const pendingDeliveryContainer = document.getElementById('pendingDeliveryContainer');
+            pendingDeliveryContainer.innerHTML = '';
+            
+            if (store.approvedRestocks && store.approvedRestocks.length > 0) {
+                pendingDeliveryCard.style.display = 'block';
+                store.approvedRestocks.forEach((req, index) => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
+                    div.innerHTML = `
+                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong></div>
+                        <div style="font-size: 0.75rem; color: #555; margin-bottom: 5px;">Na-approve noong: ${req.date || 'N/A'}</div>
+                        <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 0;">✅ Natanggap Ko Na (Idagdag sa Stock)</button>
+                    `;
+                    pendingDeliveryContainer.appendChild(div);
+                });
+            } else {
+                pendingDeliveryCard.style.display = 'none';
+            }
+
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
             if (store.clientNotifications && store.clientNotifications.length > 0) {
@@ -511,7 +579,6 @@
                 if (sub.returnedQty === undefined) sub.returnedQty = 0;
                 if (sub.rejectedQty === undefined) sub.rejectedQty = 0;
 
-                // TAMA NA ANG KALKULASYON: Ibinabawas na ang returnedQty at rejectedQty para hindi sumama sa nabenta
                 const subSold = Math.max(0, sub.initialQty - sub.currentStock - sub.returnedQty - sub.rejectedQty);
                 const subSales = subSold * sub.price;
                 const div = document.createElement('div');
