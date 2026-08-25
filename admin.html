@@ -499,7 +499,6 @@
                     if (subItem.rejectedQty === undefined) subItem.rejectedQty = 0;
                     if (subItem.returnedQty === undefined) subItem.returnedQty = 0;
                     
-                    // Ang bawas (returnedQty) ay hindi na ibinabawas sa benta, hiwalay na monitoring na lang
                     const subSold = Math.max(0, subItem.initialQty - subItem.currentStock - subItem.returnedQty - subItem.rejectedQty);
                     const subSales = subSold * subItem.price;
 
@@ -512,7 +511,6 @@
                     const subIsDue = subItem.collectionDate && subItem.collectionDate.startsWith(currentYM);
                     if (subIsDue) storeIsDue = true;
 
-                    // Tinanggal na ang "Initial" sa display at naglagay ng monitoring para sa bawas (returnedQty)
                     storeItemsHtml += `
                         <div class="store-item-row">
                             <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between;">
@@ -586,8 +584,6 @@
                         if (diffMs < 45000) {
                             isOnline = true;
                         }
-                    } else if (item.clientStatus === "Online") {
-                        isOnline = true;
                     }
                 }
 
