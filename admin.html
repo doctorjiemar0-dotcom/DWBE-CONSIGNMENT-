@@ -577,12 +577,25 @@
                 let clientLastSeenText = 'Hindi pa nabubuksan';
 
                 if (item.lastClientAccess) {
-                    clientLastSeenText = item.lastClientAccess;
-                    const lastTime = Date.parse(item.lastClientAccess);
+                    clientLastSeenText = typeof item.lastClientAccess === 'number' 
+                        ? new Date(item.lastClientAccess).toLocaleString() 
+                        : item.lastClientAccess;
+                        
+                    let lastTime = typeof item.lastClientAccess === 'number' 
+                        ? item.lastClientAccess 
+                        : Date.parse(item.lastClientAccess);
+
+                    if (isNaN(lastTime) && typeof item.lastClientAccess === 'string') {
+                        let parts = item.lastClientAccess.split(/[\/\s,:]+/);
+                        if (parts.length >= 6) {
+                            let d = new Date(parts[2], parts[1] - 1, parts[0], parts[3], parts[4], parts[5]);
+                            lastTime = d.getTime();
+                        }
+                    }
+
                     if (!isNaN(lastTime)) {
                         const diffMs = Date.now() - lastTime;
-                        // Inayos dito: 15 segundo na lang ang palugit para masigurong totoong active ang kliyente sa kasalukuyan
-                        if (diffMs < 15000) {
+                        if (diffMs >= 0 && diffMs < 30000) {
                             isOnline = true;
                         }
                     }
