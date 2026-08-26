@@ -371,14 +371,23 @@
             await saveData();
         };
 
+        // --- NAAYOS NA CONFIRM RECEIVE RESTOCK (HINDI NA MAG-MEREGE ANG MAY DP SA WALANG DP) ---
         window.confirmReceiveRestock = async function(index) {
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
 
             const itemToReceive = store.approvedRestocks[index];
 
-            // Hanapin kung may existing item na magkapareho ang styleType AT magkapareho ang downpayment status
-            let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType && !!i.requiresDownpayment === !!itemToReceive.requiresDownpayment);
+            // Awtomatikong suriin o kunin ang downpayment status (True kung may flag o higit sa 5 pcs)
+            const isDownpaymentRequired = itemToReceive.requiresDownpayment !== undefined 
+                ? itemToReceive.requiresDownpayment 
+                : (itemToReceive.qty > 5);
+
+            // Hanapin kung may existing item na magkapareho ang style AT magkapareho ang downpayment status
+            let existingItem = store.storeItems.find(i => 
+                i.styleType === itemToReceive.styleType && 
+                Boolean(i.requiresDownpayment) === Boolean(isDownpaymentRequired)
+            );
             
             if (existingItem) {
                 existingItem.currentStock += itemToReceive.qty;
@@ -392,7 +401,7 @@
                     rejectedQty: 0,
                     price: store.price || 0,
                     collectionDate: store.collectionDate || 'N/A',
-                    requiresDownpayment: itemToReceive.requiresDownpayment || false
+                    requiresDownpayment: isDownpaymentRequired
                 });
             }
 
@@ -401,12 +410,12 @@
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
-                text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType}) ${itemToReceive.requiresDownpayment ? '[May 50% Downpayment]' : '[Walang Advance Payment]'}`,
+                text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType}) ${isDownpaymentRequired ? '[May 50% Downpayment]' : '[Walang Advance Payment]'}`,
                 date: new Date().toLocaleString()
             });
 
             await saveData();
-            alert("Matagumpay na naidagdag sa iyong stock ang mga natanggap na walis!");
+            alert("Matagumpay na naidagdag sa iyong stock ang mga natanggap na walis nang may tamang pagkakahiwalay!");
         };
 
         async function loadData() {
