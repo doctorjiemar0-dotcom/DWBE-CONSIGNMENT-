@@ -145,22 +145,36 @@
                 <button id="dashboardInstallBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
             </div>
 
-            <!-- DIGITAL CONSIGNMENT AGREEMENT SECTION (MAY IFRAME) -->
+            <!-- DIGITAL CONSIGNMENT AGREEMENT SECTION (KATUTUBONG TEXT FORMAT) -->
             <div class="card" id="agreementCard" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0; color: #2e7d32;">🌐 Consignment Agreement</h2>
                     <button type="button" id="toggleAgreementBtn" onclick="toggleAgreementVisibility()" style="background-color: #558b2f; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Itago</button>
                 </div>
                 <div id="agreementContentWrapper">
-                    <iframe src="" 
-                            style="width: 100%; height: 50px; border: 1px solid #c8e6c9; border-radius: 4px; background: #fff; margin-bottom: 10px;" 
-                            id="agreementFrame" 
-                            title="Consignment Agreement">
-                    </iframe>
-                    <div id="agreementStatusText" style="font-size: 0.82rem; font-weight: bold; margin-bottom: 8px; color: #d32f2f;">
-                        Katayuan: Hindi pa tinatanggap ang kasunduan
+                    <div style="background: #fff; padding: 12px; border: 1px solid #c8e6c9; border-radius: 4px; max-height: 250px; overflow-y: auto; font-size: 0.85rem; line-height: 1.4; margin-bottom: 10px;" id="agreementTextView">
+                        <h3 style="text-align: center; color: #2e7d32; font-size: 0.95rem; margin-bottom: 8px;">KASUNDUAN SA CONSIGNMENT NG MGA PRODUKTO</h3>
+                        <p style="text-align: center; font-size: 0.75rem; color: #555; margin-bottom: 10px;"><strong>Doctor's Whisk Broom Enterprises (DWBE)</strong></p>
+                        <p style="margin-bottom: 8px;">Ang kasunduang ito ay ginawa at pinagtibay ngayong araw sa pagitan ng <strong>Doctor's Whisk Broom Enterprises</strong> (Tagapagtustos) at ng may-ari/kinatawan ng <strong id="agreementStoreNameSpan">Tindahan</strong> (Consignee).</p>
+                        
+                        <p style="font-weight: bold; color: #2e7d32; margin-top: 8px; margin-bottom: 4px;">I. MGA TUNTUNIN NG PRODUKTO</p>
+                        <p style="margin-bottom: 8px;">Ang Tagapagtustos ay mag-iiwan ng mga produktong Walis Tambo sa tindahan para ibenta sa mga kustomer. Ang lahat ng naiwang produkto ay mananatiling pag-aari ng Tagapagtustos hanggang sa ito ay tuluyang mabayaran o maibenta.</p>
+                        
+                        <p style="font-weight: bold; color: #2e7d32; margin-top: 8px; margin-bottom: 4px;">II. PRESYO AT KOLEKSYON</p>
+                        <ul style="margin-left: 18px; margin-bottom: 8px;">
+                            <li>Ang bawat produkto ay may nakatakdang halaga o presyo na napagkasunduan ng dalawang panig.</li>
+                            <li>Ang kabuuang bayad para sa mga nabentang walis ay kukunin ng Tagapagtustos sa takdang panahon ng pagbisita o pagkolekta.</li>
+                            <li>Ang mga hindi nabentang stock ay maaaring suriin, palitan, o bawiin ng Tagapagtustos kung kinakailangan.</li>
+                        </ul>
+
+                        <p style="font-weight: bold; color: #2e7d32; margin-top: 8px; margin-bottom: 4px;">III. PANANAGUTAN NG TINDAHAN</p>
+                        <p style="margin-bottom: 8px;">Ang tindahan ang magiging katiwala sa maayos na pag-iingat ng mga paninda habang ito ay nasa kanilang pangangalaga.</p>
                     </div>
-                    <button type="button" id="acceptAgreementBtn" onclick="acceptStoreAgreement()" style="background-color: #2e7d32;">✅ Basahin at Tanggapin ang Kasunduan</button>
+
+                    <div id="agreementStatusText" style="font-size: 0.82rem; font-weight: bold; margin-bottom: 8px; color: #2e7d32;">
+                        Katayuan: ✅ Tinanggap na ang Kasunduan
+                    </div>
+                    <button type="button" id="acceptAgreementBtn" onclick="acceptStoreAgreement()" style="background-color: #2e7d32; display: none;">✅ Basahin at Tanggapin ang Kasunduan</button>
                     <button type="button" id="cancelAgreementBtn" onclick="cancelStoreAgreement()" style="background-color: #d32f2f; display: none; margin-top: 6px;">❌ Kanselahin / Ayaw ko na sa Consignment</button>
                 </div>
             </div>
@@ -275,16 +289,6 @@
             deferredPrompt = e;
             if (installAppCard) installAppCard.style.display = 'block';
             if (dashboardInstallCard) dashboardInstallCard.style.display = 'block';
-        });
-
-        // Pakikinig sa sukat mula sa iframe (para sa smooth opening/closing ng kasunduan)
-        window.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'resizeAgreement') {
-                const agreementFrame = document.getElementById('agreementFrame');
-                if (agreementFrame) {
-                    agreementFrame.style.height = event.data.height + 'px';
-                }
-            }
         });
 
         const handleInstallClick = async () => {
@@ -555,28 +559,18 @@
 
         function renderClientDashboard(store) {
             document.getElementById('displayStoreName').textContent = store.storeName;
+            document.getElementById('agreementStoreNameSpan').textContent = store.storeName;
 
-            // Dito dynamic na ikinokonekta ang iframe papunta sa DWBE-AGREEMENTS kasama ang pangalan ng tindahan
-            const agreementFrame = document.getElementById('agreementFrame');
-            if (agreementFrame) {
-                agreementFrame.src = `https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/?store=${encodeURIComponent(store.storeName)}`;
-            }
-
-            // Update Agreement Status Display at Button Visibility
+            // Update Agreement Status Display at Button Visibility para sa Existing Customers at Restock
             const agreementStatusText = document.getElementById('agreementStatusText');
             const acceptAgreementBtn = document.getElementById('acceptAgreementBtn');
             const cancelAgreementBtn = document.getElementById('cancelAgreementBtn');
             
-            if (store.agreementAccepted === true) {
-                agreementStatusText.textContent = "Katayuan: ✅ Tinanggap na ang Kasunduan";
+            if (store.agreementAccepted === true || store.agreementAccepted === undefined) {
+                agreementStatusText.textContent = "Katayuan: ✅ Aktibo at Tinanggap na ang Kasunduan";
                 agreementStatusText.style.color = "#2e7d32";
                 acceptAgreementBtn.style.display = 'none';
                 if (cancelAgreementBtn) cancelAgreementBtn.style.display = 'block';
-            } else if (store.agreementAccepted === undefined) {
-                agreementStatusText.textContent = "Katayuan: ✅ Aktibo ang Kasalukuyang Kasunduan";
-                agreementStatusText.style.color = "#2e7d32";
-                acceptAgreementBtn.style.display = 'none';
-                if (cancelAgreementBtn) cancelAgreementBtn.style.display = 'none';
             } else {
                 agreementStatusText.textContent = "Katayuan: ❌ Kinakailangan ang bagong kasunduan para sa restock";
                 agreementStatusText.style.color = "#d32f2f";
@@ -701,11 +695,10 @@
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
-            // Patakaran: Kung lumang client (undefined) o kinansela/hindi pa tinatanggap ang bagong kasunduan, hihingi muna ng kasunduan bago makapaghiling
-            if (store.agreementAccepted === undefined || store.agreementAccepted === false) {
-                store.agreementAccepted = false;
+            // Kapag nag-apply ng bagong restock, dito hihingi/magpapalit ng kumpirmasyon sa kasunduan kung sakaling kailanganin
+            if (store.agreementAccepted === false) {
                 renderClientDashboard(store);
-                alert('Dahil ikaw ay humihiling ng bagong stock, kinakailangan munang basahin at tanggapin ang Bagong Consignment Agreement sa itaas.');
+                alert('Dahil ikaw ay humihiling ng bagong stock, kinakailangan munang basahin at tanggapin ang Consignment Agreement sa itaas.');
                 document.getElementById('agreementCard').scrollIntoView({ behavior: 'smooth' });
                 return;
             }
