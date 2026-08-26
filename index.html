@@ -206,10 +206,15 @@
                 </div>
             </div>
 
-            <!-- Request Restock Section -->
+            <!-- Request Restock Section (May Polisiya) -->
             <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
                 <h2>🔄 Humiling ng Karagdagang Restock</h2>
-                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Naubusan ka na ba o kailangan mo ng dagdag na walis tambo? Mag-request dito.</p>
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Naubusan ka na ba o kailangan mo ng dagdag na walis tambo? Mag-request dito.</p>
+                <div style="font-size: 0.75rem; color: #d84315; margin-bottom: 8px; line-height: 1.3; background: #fff3e0; padding: 6px; border-radius: 4px;">
+                    📌 <strong>Tuntunin sa Restock:</strong><br>
+                    • <strong>1 hanggang 5 pcs:</strong> Minimum & Maximum nang walang advance payment (1 beses bawat buwan).<br>
+                    • <strong>10, 15 hanggang 20 pcs:</strong> Kailangan ng 50% down payment advance.
+                </div>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
                     <select id="restockStyleType">
@@ -218,8 +223,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Ilang piraso ang kailangan?</label>
-                    <input type="number" id="restockQtyInput" value="10" min="1">
+                    <label>Ilang piraso ang kailangan? (Max 20)</label>
+                    <input type="number" id="restockQtyInput" value="5" min="1" max="20">
                 </div>
                 <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
             </div>
@@ -327,22 +332,19 @@
             }
         };
 
-        // FUNCTION PARA SA STOP BUTTON NG CONSIGNMENT AGREEMENT NA MAY YES/NO NOTICE
         window.promptStopAgreement = async function() {
             const confirmation = confirm("⚠️ BABALA: Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' (Yes) para kumpirmahin, o 'Cancel' (No) para ituloy ang kasunduan.");
             
             if (!confirmation) {
-                return; // Pinili ang No / Cancel, kaya hindi itutuloy ang pag-stop
+                return;
             }
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
-            // Baguhin ang status sa database
             store.agreementAccepted = false;
             store.consignmentStatus = "Stopped";
 
-            // Mag-iwan ng mensahe sa chat papunta sa Admin
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
@@ -350,7 +352,6 @@
                 date: new Date().toLocaleString()
             });
 
-            // Maglagay ng abiso
             if (!store.clientNotifications) store.clientNotifications = [];
             store.clientNotifications.unshift({
                 text: "Matagumpay na nai-submit ang hiling na itigil ang Consignment Agreement.",
@@ -574,7 +575,7 @@
                     const div = document.createElement('div');
                     div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
                     div.innerHTML = `
-                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong></div>
+                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong> ${req.requiresDownpayment ? '<span style="color:#c62828; font-weight:bold;">(May 50% DP)</span>' : ''}</div>
                         <div style="font-size: 0.75rem; color: #555; margin-bottom: 5px;">Na-approve noong: ${req.date || 'N/A'}</div>
                         <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 0;">✅ Natanggap Ko Na (Idagdag sa Stock)</button>
                     `;
@@ -655,33 +656,58 @@
             }
         }
 
+        // BAGONG RESTOCK REQUEST LOGIC (MAY INTERVAL AT DOWNPAYMENT RULES)
         window.submitRestockRequest = async function() {
             const styleType = document.getElementById('restockStyleType').value;
             const qty = parseInt(document.getElementById('restockQtyInput').value);
-            if (isNaN(qty) || qty <= 0) {
-                alert('Ilagay ang tamang bilang ng hiling na restock.');
+            
+            if (isNaN(qty) || qty < 1 || qty > 20) {
+                alert('Mangyaring ilagay ang tamang dami mula 1 hanggang 20 piraso lamang.');
                 return;
             }
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
+            // 1. Suriin ang Restock Interval (1 beses bawat buwan)
+            const currentDate = new Date();
+            const currentMonthYear = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}`;
+            
+            if (store.lastRestockMonth === currentMonthYear) {
+                alert('⚠️ Paalala: 1 beses lamang sa isang buwan pinapayagan ang pag-request ng restock. Nakapag-request ka na para sa buwang ito.');
+                return;
+            }
+
+            // 2. Suriin ang Dami at Down Payment Rule
+            let requiresDP = false;
+            if (qty > 5) {
+                requiresDP = true;
+                const confirmDP = confirm(`⚠️ Ang hiling na ${qty} pcs ay lumalagpas sa limit na 5 pcs para sa walang advance payment.\n\nAng order na ito ay mangangailangan ng 50% Down Payment Advance. Nais mo bang ituloy ang pagpapadala ng request na ito sa Admin?`);
+                if (!confirmDP) {
+                    return;
+                }
+            }
+
             if (!store.activeRequests) store.activeRequests = [];
             store.activeRequests.push({
                 styleType: styleType,
                 qty: qty,
+                requiresDownpayment: requiresDP,
                 date: new Date().toLocaleString()
             });
+
+            // Itala na nakapag-request na ngayong buwan
+            store.lastRestockMonth = currentMonthYear;
 
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
-                text: `Humiling ng restock: ${qty} pcs (${styleType})`,
+                text: `Humiling ng restock: ${qty} pcs (${styleType}) ${requiresDP ? '[May 50% Down Payment]' : '[Walang Advance Payment]'}`,
                 date: new Date().toLocaleString()
             });
 
             await saveData();
-            alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
+            alert(requiresDP ? 'Matagumpay na naipadala ang iyong kahilingan sa Admin na may abiso ng 50% Down Payment!' : 'Matagumpay na naipadala ang iyong kahilingan sa Admin!');
         };
 
         window.sendClientMessage = async function() {
