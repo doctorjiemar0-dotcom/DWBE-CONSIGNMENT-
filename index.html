@@ -161,6 +161,7 @@
                         Katayuan: Hindi pa tinatanggap ang kasunduan
                     </div>
                     <button type="button" id="acceptAgreementBtn" onclick="acceptStoreAgreement()" style="background-color: #2e7d32;">✅ Basahin at Tanggapin ang Kasunduan</button>
+                    <button type="button" id="cancelAgreementBtn" onclick="cancelStoreAgreement()" style="background-color: #d32f2f; display: none; margin-top: 6px;">❌ Kanselahin / Ayaw ko na sa Consignment</button>
                 </div>
             </div>
 
@@ -355,6 +356,25 @@
             alert("Salamat! Matagumpay mong tinanggap ang kasunduan.");
         };
 
+        window.cancelStoreAgreement = async function() {
+            if (!confirm("Sigurado ka bang gusto mong kanselahin ang kasunduan o itigil ang kasalukuyang consignment?")) return;
+            
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
+
+            store.agreementAccepted = false;
+            
+            if (!store.messages) store.messages = [];
+            store.messages.push({
+                sender: currentStoreName,
+                text: "Kinansela ang kasunduan (Nagbago ang isip sa Consignment Agreement).",
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert("Na-kansela na ang kasunduan. Maaari mo itong muling pag-isipan o tanggapin kung magpapatuloy ka.");
+        };
+
         window.dismissNotification = async function(index) {
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store || !store.clientNotifications) return;
@@ -542,17 +562,26 @@
                 agreementFrame.src = `https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/?store=${encodeURIComponent(store.storeName)}`;
             }
 
-            // Update Agreement Status Display sa mismong page
+            // Update Agreement Status Display at Button Visibility
             const agreementStatusText = document.getElementById('agreementStatusText');
             const acceptAgreementBtn = document.getElementById('acceptAgreementBtn');
-            if (store.agreementAccepted) {
+            const cancelAgreementBtn = document.getElementById('cancelAgreementBtn');
+            
+            if (store.agreementAccepted === true) {
                 agreementStatusText.textContent = "Katayuan: ✅ Tinanggap na ang Kasunduan";
                 agreementStatusText.style.color = "#2e7d32";
                 acceptAgreementBtn.style.display = 'none';
+                if (cancelAgreementBtn) cancelAgreementBtn.style.display = 'block';
+            } else if (store.agreementAccepted === undefined) {
+                agreementStatusText.textContent = "Katayuan: ✅ Aktibo ang Kasalukuyang Kasunduan";
+                agreementStatusText.style.color = "#2e7d32";
+                acceptAgreementBtn.style.display = 'none';
+                if (cancelAgreementBtn) cancelAgreementBtn.style.display = 'none';
             } else {
-                agreementStatusText.textContent = "Katayuan: ❌ Hindi pa tinatanggap ang kasunduan";
+                agreementStatusText.textContent = "Katayuan: ❌ Kinakailangan ang bagong kasunduan para sa restock";
                 agreementStatusText.style.color = "#d32f2f";
                 acceptAgreementBtn.style.display = 'block';
+                if (cancelAgreementBtn) cancelAgreementBtn.style.display = 'none';
             }
 
             const qrContainer = document.getElementById('qrcode');
@@ -672,9 +701,12 @@
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
-            // Patakaran: Kailangan munang tanggapin ang Digital Agreement bago mag-request
-            if (!store.agreementAccepted) {
-                alert('Mangyaring basahin at kumpirmahin muna ang Digital Consignment Agreement sa itaas bago ka makapaghiling ng restock.');
+            // Patakaran: Kung lumang client (undefined) o kinansela/hindi pa tinatanggap ang bagong kasunduan, hihingi muna ng kasunduan bago makapaghiling
+            if (store.agreementAccepted === undefined || store.agreementAccepted === false) {
+                store.agreementAccepted = false;
+                renderClientDashboard(store);
+                alert('Dahil ikaw ay humihiling ng bagong stock, kinakailangan munang basahin at tanggapin ang Bagong Consignment Agreement sa itaas.');
+                document.getElementById('agreementCard').scrollIntoView({ behavior: 'smooth' });
                 return;
             }
 
