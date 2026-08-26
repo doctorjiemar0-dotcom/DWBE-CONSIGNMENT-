@@ -212,8 +212,8 @@
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Naubusan ka na ba o kailangan mo ng dagdag na walis tambo? Mag-request dito.</p>
                 <div style="font-size: 0.75rem; color: #d84315; margin-bottom: 8px; line-height: 1.3; background: #fff3e0; padding: 6px; border-radius: 4px;">
                     📌 <strong>Tuntunin sa Restock:</strong><br>
-                    • <strong>1 hanggang 5 pcs:</strong> Minimum & Maximum nang walang advance payment (1 beses bawat buwan).<br>
-                    • <strong>10, 15 hanggang 20 pcs:</strong> Kailangan ng 50% down payment advance.
+                    • <strong>1 hanggang 5 pcs:</strong> Minimum nang walang advance payment (1 beses bawat buwan).<br>
+                    • <strong>Higit sa 5 pcs (Above Minimum):</strong> May 40% downpayment advance.
                 </div>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
@@ -575,7 +575,7 @@
                     const div = document.createElement('div');
                     div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
                     div.innerHTML = `
-                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong> ${req.requiresDownpayment ? '<span style="color:#c62828; font-weight:bold;">(May 50% DP)</span>' : ''}</div>
+                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong> ${req.requiresDownpayment ? '<span style="color:#c62828; font-weight:bold;">(May 40% DP)</span>' : ''}</div>
                         <div style="font-size: 0.75rem; color: #555; margin-bottom: 5px;">Na-approve noong: ${req.date || 'N/A'}</div>
                         <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 0;">✅ Natanggap Ko Na (Idagdag sa Stock)</button>
                     `;
@@ -656,7 +656,7 @@
             }
         }
 
-        // BAGONG RESTOCK REQUEST LOGIC (MAY INTERVAL AT DOWNPAYMENT RULES)
+        // BAGONG RESTOCK REQUEST LOGIC (1 BESES BAWAT BUWAN AT 40% DOWNPAYMENT SA HIGIT SA MINIMUM)
         window.submitRestockRequest = async function() {
             const styleType = document.getElementById('restockStyleType').value;
             const qty = parseInt(document.getElementById('restockQtyInput').value);
@@ -678,11 +678,11 @@
                 return;
             }
 
-            // 2. Suriin ang Dami at Down Payment Rule
+            // 2. Suriin ang Dami at 40% Down Payment Rule (Above Minimum)
             let requiresDP = false;
             if (qty > 5) {
                 requiresDP = true;
-                const confirmDP = confirm(`⚠️ Ang hiling na ${qty} pcs ay lumalagpas sa limit na 5 pcs para sa walang advance payment.\n\nAng order na ito ay mangangailangan ng 50% Down Payment Advance. Nais mo bang ituloy ang pagpapadala ng request na ito sa Admin?`);
+                const confirmDP = confirm(`⚠️ Ang hiling na ${qty} pcs ay lumalagpas sa minimum na 5 pcs.\n\nAng order na ito ay mangangailangan ng 40% Down Payment Advance. Nais mo bang ituloy ang pagpapadala ng request na ito sa Admin?`);
                 if (!confirmDP) {
                     return;
                 }
@@ -702,12 +702,12 @@
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
-                text: `Humiling ng restock: ${qty} pcs (${styleType}) ${requiresDP ? '[May 50% Down Payment]' : '[Walang Advance Payment]'}`,
+                text: `Humiling ng restock: ${qty} pcs (${styleType}) ${requiresDP ? '[May 40% Down Payment]' : '[Walang Advance Payment]'}`,
                 date: new Date().toLocaleString()
             });
 
             await saveData();
-            alert(requiresDP ? 'Matagumpay na naipadala ang iyong kahilingan sa Admin na may abiso ng 50% Down Payment!' : 'Matagumpay na naipadala ang iyong kahilingan sa Admin!');
+            alert(requiresDP ? 'Matagumpay na naipadala ang iyong kahilingan sa Admin na may abiso ng 40% Down Payment!' : 'Matagumpay na naipadala ang iyong kahilingan sa Admin!');
         };
 
         window.sendClientMessage = async function() {
