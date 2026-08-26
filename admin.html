@@ -123,9 +123,11 @@
                     <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
                     <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0;">➕ Ordinary</button>
-                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0;">➕ Premium</button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0; flex: 1;">➕ Ordinary</button>
+                    <button type="button" onclick="reduceSpecificHomeStock('Ordinary')" style="background-color: #c62828; font-size: 0.85rem; margin-top:0; flex: 1;">➖ Ordinary</button>
+                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0; flex: 1;">➕ Premium</button>
+                    <button type="button" onclick="reduceSpecificHomeStock('Premium')" style="background-color: #b71c1c; font-size: 0.85rem; margin-top:0; flex: 1;">➖ Premium</button>
                 </div>
             </div>
 
@@ -358,6 +360,21 @@
                 const qty = parseInt(qtyStr);
                 if (qty > 0) {
                     appData.homeStock[styleType] += qty;
+                    saveToCloud();
+                }
+            }
+        };
+
+        window.reduceSpecificHomeStock = function(styleType) {
+            const qtyStr = prompt(`Ilang piraso ng ${styleType} Style ang babawasan sa Bodega/Bahay?`, '1');
+            if (qtyStr !== null && !isNaN(qtyStr)) {
+                const qty = parseInt(qtyStr);
+                if (qty > 0) {
+                    if (qty > appData.homeStock[styleType]) {
+                        alert('Lampas sa kasalukuyang stock sa bodega!');
+                        return;
+                    }
+                    appData.homeStock[styleType] -= qty;
                     saveToCloud();
                 }
             }
@@ -741,8 +758,6 @@
             if (!item.approvedRestocks) item.approvedRestocks = [];
 
             if (isApproved) {
-                // Binabawas muna sa home stock o ibinibigay sa pending delivery ng client
-                // Ayon sa bagong daloy, hindi agad idadagdag sa currentStock ng store kundi ilalagay sa approvedRestocks para makumpirma ng client
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
                 
                 item.approvedRestocks.push({
