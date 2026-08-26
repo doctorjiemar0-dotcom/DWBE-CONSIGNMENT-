@@ -59,8 +59,23 @@
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
 
-        .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; }
-        .floating-add-btn:hover { background-color: #388e3c; }
+        /* Floating Floating Action Buttons (FABs) */
+        .floating-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: flex-end; }
+        .fab-btn { width: 52px; height: 52px; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; border: none; position: relative; }
+        .fab-add { background-color: var(--primary-color); }
+        .fab-add:hover { background-color: #388e3c; }
+        .fab-inquiry { background-color: #0288d1; display: none; }
+        .fab-inquiry:hover { background-color: #0277bd; }
+        .fab-request { background-color: #ff8f00; display: none; }
+        .fab-request:hover { background-color: #e65100; }
+
+        .fab-badge { position: absolute; top: -4px; right: -4px; background-color: #d32f2f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; display: none; }
+
+        /* Modal Popup para sa mga Bubbles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 8px; padding: 20px; max-height: 85vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .modal-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #555; width: auto; margin-top: 0; padding: 0; }
 
         .store-header-row { display: flex; justify-content: space-between; align-items: center; }
         .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
@@ -88,20 +103,6 @@
             <div class="card install-banner" id="installCard">
                 <h2>📱 I-install bilang Mobile App</h2>
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
-            </div>
-
-            <div class="card" style="background: #e3f2fd; border: 1px solid #90caf9;">
-                <h2 style="color: #0288d1;">📥 Mga Bagong Nag-inquire / Aplikasyon</h2>
-                <div id="adminInquiriesContainer">
-                    <p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>
-                </div>
-            </div>
-
-            <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
-                <h2>📦 Mga Pending Restock Request</h2>
-                <div id="adminRequestsContainer">
-                    <p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>
-                </div>
             </div>
 
             <details class="card sync-card">
@@ -188,7 +189,42 @@
 
     </div>
 
-    <button class="floating-add-btn" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
+    <!-- Floating Action Bubbles Container -->
+    <div class="floating-container">
+        <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock Request" onclick="openModal('requestModal')">
+            📦<span class="fab-badge" id="requestBadge">0</span>
+        </button>
+        <button class="fab-btn fab-inquiry" id="fabInquiryBtn" title="Mga Bagong Inquiry / Aplikasyon" onclick="openModal('inquiryModal')">
+            📥<span class="fab-badge" id="inquiryBadge">0</span>
+        </button>
+        <button class="fab-btn fab-add" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
+    </div>
+
+    <!-- Modal para sa Inquiries -->
+    <div class="modal-overlay" id="inquiryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📥 Mga Bagong Nag-inquire / Aplikasyon</h2>
+                <button class="modal-close" onclick="closeModal('inquiryModal')">✕</button>
+            </div>
+            <div id="adminInquiriesContainer">
+                <p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para sa Restock Requests -->
+    <div class="modal-overlay" id="requestModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📦 Mga Pending Restock Request</h2>
+                <button class="modal-close" onclick="closeModal('requestModal')">✕</button>
+            </div>
+            <div id="adminRequestsContainer">
+                <p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -257,6 +293,14 @@
 
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let previousRequestCount = 0;
+
+        window.openModal = function(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        };
+
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        };
 
         window.toggleAddStoreForm = function() {
             const formCard = document.getElementById('addStoreCard');
@@ -450,11 +494,19 @@
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
 
+            // Render Inquiries sa Modal
             const inquiriesContainer = document.getElementById('adminInquiriesContainer');
             inquiriesContainer.innerHTML = '';
             if (!appData.pendingInquiries) appData.pendingInquiries = [];
 
+            const fabInquiryBtn = document.getElementById('fabInquiryBtn');
+            const inquiryBadge = document.getElementById('inquiryBadge');
+
             if (appData.pendingInquiries.length > 0) {
+                fabInquiryBtn.style.display = 'flex';
+                inquiryBadge.style.display = 'block';
+                inquiryBadge.textContent = appData.pendingInquiries.length;
+
                 appData.pendingInquiries.forEach((inq, inqIdx) => {
                     const div = document.createElement('div');
                     div.className = 'inquiry-card-box';
@@ -470,6 +522,8 @@
                     inquiriesContainer.appendChild(div);
                 });
             } else {
+                fabInquiryBtn.style.display = 'none';
+                inquiryBadge.style.display = 'none';
                 inquiriesContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>';
             }
 
@@ -478,10 +532,16 @@
             requestsContainer.innerHTML = '';
             let hasRequests = false;
             let totalActiveReqsCount = appData.pendingInquiries.length;
+            let restockReqCount = 0;
+
+            const fabRequestBtn = document.getElementById('fabRequestBtn');
+            const requestBadge = document.getElementById('requestBadge');
 
             if (appData.consignments.length === 0) {
                 storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record.</p>';
                 requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>';
+                fabRequestBtn.style.display = 'none';
+                requestBadge.style.display = 'none';
                 document.getElementById('totalStores').textContent = '0';
                 document.getElementById('totalDue').textContent = '0';
                 document.getElementById('totalStock').textContent = '0 pcs';
@@ -553,6 +613,7 @@
 
                 if (item.activeRequests.length > 0) {
                     hasRequests = true;
+                    restockReqCount += item.activeRequests.length;
                     totalActiveReqsCount += item.activeRequests.length;
                     item.activeRequests.forEach((req, reqIdx) => {
                         const reqStyle = req.styleType || item.styleType;
@@ -685,6 +746,15 @@
                 if (input) input.value = savedReplies[idx];
             });
 
+            if (restockReqCount > 0) {
+                fabRequestBtn.style.display = 'flex';
+                requestBadge.style.display = 'block';
+                requestBadge.textContent = restockReqCount;
+            } else {
+                fabRequestBtn.style.display = 'none';
+                requestBadge.style.display = 'none';
+            }
+
             if (totalActiveReqsCount > previousRequestCount) playNotificationSound();
             previousRequestCount = totalActiveReqsCount;
 
@@ -727,6 +797,7 @@
 
             appData.pendingInquiries.splice(inqIdx, 1);
             await saveToCloud();
+            closeModal('inquiryModal');
             alert('Matagumpay na na-aprube!');
         };
 
