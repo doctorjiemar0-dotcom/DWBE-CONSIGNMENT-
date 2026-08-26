@@ -42,7 +42,6 @@
 
         .inquiry-card-box { background: #e3f2fd; border-left: 5px solid #0288d1; padding: 12px; margin-bottom: 10px; border-radius: 6px; font-size: 0.85rem; }
 
-        /* Orihinal na Store Card Design */
         .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
         .store-card.due { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
         .store-card.has-message { border-left: 6px solid #ff9800; background-color: #fffde7; }
@@ -59,7 +58,6 @@
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
 
-        /* Floating Floating Action Buttons (FABs) */
         .floating-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: flex-end; }
         .fab-btn { width: 52px; height: 52px; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; border: none; position: relative; }
         .fab-add { background-color: var(--primary-color); }
@@ -71,7 +69,6 @@
 
         .fab-badge { position: absolute; top: -4px; right: -4px; background-color: #d32f2f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; display: none; }
 
-        /* Modal Popup para sa mga Bubbles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 8px; padding: 20px; max-height: 85vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
@@ -381,7 +378,8 @@
                     let currentReqsTotal = 0;
                     if (cloudData.consignments) {
                         cloudData.consignments.forEach(c => {
-                            if (c.activeRequests) currentReqsTotal += c.activeRequests.length;
+                            const reqList = c.activeRequests || c.restockRequests;
+                            if (reqList) currentReqsTotal += reqList.length;
                         });
                     }
                     if (cloudData.pendingInquiries) currentReqsTotal += cloudData.pendingInquiries.length;
@@ -468,7 +466,7 @@
                         id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
-                        activeRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
+                        activeRequests: [], restockRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
                 }
@@ -558,6 +556,7 @@
                 if (!item.styleType) item.styleType = 'Ordinary';
                 if (!item.history) item.history = [];
                 if (!item.activeRequests) item.activeRequests = [];
+                if (!item.restockRequests) item.restockRequests = item.activeRequests; // Sync support
                 if (!item.approvedRestocks) item.approvedRestocks = [];
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
@@ -611,19 +610,21 @@
                 let rating = storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos');
                 let badgeClass = storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good');
 
-                if (item.activeRequests.length > 0) {
+                const currentReqList = item.activeRequests.length > 0 ? item.activeRequests : item.restockRequests;
+                if (currentReqList && currentReqList.length > 0) {
                     hasRequests = true;
-                    restockReqCount += item.activeRequests.length;
-                    totalActiveReqsCount += item.activeRequests.length;
-                    item.activeRequests.forEach((req, reqIdx) => {
+                    restockReqCount += currentReqList.length;
+                    totalActiveReqsCount += currentReqList.length;
+                    
+                    currentReqList.forEach((req, reqIdx) => {
                         const reqStyle = req.styleType || item.styleType;
                         const reqRow = document.createElement('div');
                         reqRow.className = 'request-action-row';
                         reqRow.innerHTML = `
-                            <span><strong>${item.storeName} (${reqStyle})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
+                            <span><strong>${item.storeName} (${reqStyle})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock. ${req.qty > 5 ? '<strong style="color:#d32f2f;">(May Downpayment)</strong>' : ''}</span>
                             <div>
-                                <button type="button" class="btn-approve" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', true)">Approve</button>
-                                <button type="button" class="btn-decline" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', false)">Decline</button>
+                                <button type="button" class="btn-approve" onclick="approveRestockRequest('${item.storeName.replace(/'/g, "\\'")}', ${reqIdx})">Approve</button>
+                                <button type="button" class="btn-decline" onclick="processRestockDecline(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}')">Decline</button>
                             </div>
                         `;
                         requestsContainer.appendChild(reqRow);
@@ -789,7 +790,7 @@
                 id: Date.now(), storeName: inq.storeName, address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
-                activeRequests: [], approvedRestocks: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!`, date: new Date().toLocaleString() }],
+                activeRequests: [], restockRequests: [], approvedRestocks: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!`, date: new Date().toLocaleString() }],
                 messages: [{ sender: 'Admin', text: `Welcome sa aming network!`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon` }]
@@ -808,6 +809,81 @@
             }
         };
 
+        // 🌟 Idinagdag at Inayos na approveRestockRequest function galing sa iyo
+        window.approveRestockRequest = async function(storeName, requestIndex) {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === storeName.toLowerCase());
+            if (!store) return;
+            
+            const reqList = store.restockRequests || store.activeRequests;
+            if (!reqList || !reqList[requestIndex]) return;
+
+            const req = reqList[requestIndex];
+            const needsDownpayment = req.qty > 5;
+            const style = req.styleType || store.styleType || 'Ordinary';
+
+            // Ibawas sa Home Stock kapag in-approve
+            if (appData.homeStock[style] < req.qty) {
+                if (!confirm(`Babala: Ang Home stock para sa ${style} ay kulang (${appData.homeStock[style]} pcs). Ituloy pa rin ang pag-approve?`)) return;
+            }
+            appData.homeStock[style] = Math.max(0, (appData.homeStock[style] || 0) - req.qty);
+
+            if (!store.approvedRestocks) store.approvedRestocks = [];
+            
+            store.approvedRestocks.push({
+                styleType: style,
+                qty: req.qty,
+                requiresDownpayment: needsDownpayment,
+                date: new Date().toLocaleString()
+            });
+
+            reqList.splice(requestIndex, 1);
+            if (store.activeRequests) store.activeRequests = reqList;
+            if (store.restockRequests) store.restockRequests = reqList;
+
+            if (!store.messages) store.messages = [];
+            store.messages.push({
+                sender: "Admin",
+                text: `Na-approve ang hiling na restock (${req.qty} pcs ${style}). Nakabinbin ang pagtanggap. ${needsDownpayment ? '(May Downpayment)' : ''}`,
+                date: new Date().toLocaleString()
+            });
+
+            if (!store.clientNotifications) store.clientNotifications = [];
+            store.clientNotifications.push({
+                id: Date.now(),
+                text: `✅ Na-approve ang hiling na restock (${req.qty} pcs ${style}). ${needsDownpayment ? '⚠️ May kalakip na Downpayment requirement.' : ''}`,
+                date: new Date().toLocaleString()
+            });
+
+            if (!store.history) store.history = [];
+            store.history.unshift({
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                text: `Na-approve ang Restock: ${req.qty} pcs (${style}) ${needsDownpayment ? '[May Downpayment]' : ''}`
+            });
+
+            await saveToCloud();
+            renderApp();
+        };
+
+        window.processRestockDecline = async function(storeIdx, reqIdx, qty, reqStyle) {
+            const item = appData.consignments[storeIdx];
+            const timestamp = new Date().toLocaleString();
+            const style = reqStyle || 'Ordinary';
+            const reqList = item.restockRequests || item.activeRequests;
+            
+            if (reqList && reqList[reqIdx]) {
+                reqList.splice(reqIdx, 1);
+            }
+
+            if (!item.clientNotifications) item.clientNotifications = [];
+            item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
+            
+            if (!item.history) item.history = [];
+            item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock (${qty} pcs ${style})` });
+            
+            await saveToCloud();
+        };
+
         window.toggleBox = function(id, btn, storageKey) {
             const box = document.getElementById(id);
             if (box.style.display === 'block') {
@@ -817,33 +893,6 @@
                 box.style.display = 'block';
                 localStorage.setItem(storageKey, 'true');
             }
-        };
-
-        window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApproved) {
-            const item = appData.consignments[storeIdx];
-            const timestamp = new Date().toLocaleString();
-            const style = reqStyle || 'Ordinary';
-            const reqObj = item.activeRequests[reqIdx];
-            item.activeRequests.splice(reqIdx, 1);
-            if (!item.clientNotifications) item.clientNotifications = [];
-            if (!item.approvedRestocks) item.approvedRestocks = [];
-
-            if (isApproved) {
-                appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-                
-                item.approvedRestocks.push({
-                    styleType: style,
-                    qty: qty,
-                    date: timestamp
-                });
-
-                item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}). Nakabinbin ang pagtanggap.`, date: timestamp });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: ${qty} pcs (${style}) - Naghihintay ng kumpirmasyon` });
-            } else {
-                item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock` });
-            }
-            await saveToCloud();
         };
 
         window.sendAdminReply = function(index) {
@@ -952,7 +1001,7 @@
 
         document.getElementById('importTextBtn').addEventListener('click', () => {
             try {
-                appData = JSON.parse(document.getElementById('backupTextarea').value.trim());
+                appData = JSON.parse(document.getElementById('backupTextarea'].value.trim());
                 saveToCloud();
                 alert('Na-load na!');
             } catch (err) { alert('Mali ang format.'); }
