@@ -213,7 +213,7 @@
                 <div style="font-size: 0.75rem; color: #d84315; margin-bottom: 8px; line-height: 1.3; background: #fff3e0; padding: 6px; border-radius: 4px;">
                     📌 <strong>Tuntunin sa Restock:</strong><br>
                     • <strong>1 hanggang 5 pcs:</strong> 1 beses lang bawat buwan (Walang advance payment).<br>
-                    • <strong>Above Minimum (Higit sa 5 pcs):</strong> May 40% downpayment advance (Maaaring mag-request kahit nakapag-avail na ng 5 pcs ngayong buwan).
+                    • <strong>Above Minimum (Higit sa 5 pcs):</strong> May <strong style="color: #c62828;">50% Downpayment</strong> advance (Maaaring mag-request kahit nakapag-request na ng 5 pcs ngayong buwan).
                 </div>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
@@ -377,7 +377,9 @@
 
             const itemToReceive = store.approvedRestocks[index];
 
-            let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType);
+            // Hanapin kung may existing item na magkapareho ang styleType AT magkapareho ang downpayment status
+            let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType && !!i.requiresDownpayment === !!itemToReceive.requiresDownpayment);
+            
             if (existingItem) {
                 existingItem.currentStock += itemToReceive.qty;
                 existingItem.initialQty += itemToReceive.qty;
@@ -389,7 +391,8 @@
                     returnedQty: 0,
                     rejectedQty: 0,
                     price: store.price || 0,
-                    collectionDate: store.collectionDate || 'N/A'
+                    collectionDate: store.collectionDate || 'N/A',
+                    requiresDownpayment: itemToReceive.requiresDownpayment || false
                 });
             }
 
@@ -398,7 +401,7 @@
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
-                text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`,
+                text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType}) ${itemToReceive.requiresDownpayment ? '[May 50% Downpayment]' : '[Walang Advance Payment]'}`,
                 date: new Date().toLocaleString()
             });
 
@@ -575,7 +578,7 @@
                     const div = document.createElement('div');
                     div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
                     div.innerHTML = `
-                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong> ${req.requiresDownpayment ? '<span style="color:#c62828; font-weight:bold;">(May 40% DP)</span>' : ''}</div>
+                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong> ${req.requiresDownpayment ? '<span style="color:#c62828; font-weight:bold;">(May 50% DP)</span>' : ''}</div>
                         <div style="font-size: 0.75rem; color: #555; margin-bottom: 5px;">Na-approve noong: ${req.date || 'N/A'}</div>
                         <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 0;">✅ Natanggap Ko Na (Idagdag sa Stock)</button>
                     `;
@@ -614,10 +617,12 @@
                     returnedQty: store.returnedQty || 0,
                     rejectedQty: store.rejectedQty || 0,
                     price: store.price,
-                    collectionDate: store.collectionDate
+                    collectionDate: store.collectionDate,
+                    requiresDownpayment: false
                 }];
             }
 
+            // I-render ang mga aktibong stock nang nakahiwalay (may DP o walang DP) at i-highlight ang DP percentage
             store.storeItems.forEach(sub => {
                 if (sub.returnedQty === undefined) sub.returnedQty = 0;
                 if (sub.rejectedQty === undefined) sub.rejectedQty = 0;
@@ -626,12 +631,19 @@
                 const subSales = subSold * sub.price;
                 const div = document.createElement('div');
                 div.className = 'store-item-box';
+
+                // Naka-highlight na badge para sa Downpayment o Libreng Restock
+                let dpBadge = sub.requiresDownpayment 
+                    ? `<span style="background: #ffebee; color: #c62828; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ef9a9a;">🏷️ 50% Downpayment Order</span>` 
+                    : `<span style="background: #e8f5e9; color: #2e7d32; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid #c8e6c9;">🆓 Walang Advance Payment (Libreng Restock)</span>`;
+
                 div.innerHTML = `
-                    <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between;">
+                    <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                         <span>${sub.styleType || 'Ordinary'}</span>
                         <span>Presyo: ₱${sub.price}</span>
                     </div>
-                    <div style="font-size: 0.85rem; margin-top: 4px; color: #444;">
+                    <div style="margin-bottom: 6px;">${dpBadge}</div>
+                    <div style="font-size: 0.85rem; color: #444;">
                         Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Simulang Dami: ${sub.initialQty} pcs<br>
                         Kabuuang Nabenta: <strong>${subSold} pcs</strong> (Benta: ₱${subSales.toLocaleString()})<br>
                         Target na Petsa ng Koleksyon: ${sub.collectionDate || 'N/A'}
@@ -656,9 +668,7 @@
             }
         }
 
-        // NA-UPDATE NA RESTOCK REQUEST LOGIC:
-        // - 1 to 5 pcs: 1 beses lang bawat buwan (Walang advance payment)
-        // - Above Minimum (> 5 pcs): May 40% DP, at PWEDE silang mag-request nito kahit nakapag-request na sila ng 5 pcs ngayong buwan.
+        // RESTOCK REQUEST LOGIC (50% DOWNPAYMENT & SEPARATION LOGIC)
         window.submitRestockRequest = async function() {
             const styleType = document.getElementById('restockStyleType').value;
             const qty = parseInt(document.getElementById('restockQtyInput').value);
@@ -677,16 +687,14 @@
             let requiresDP = false;
 
             if (qty <= 5) {
-                // Suriin kung nakagamit na ng libreng restock (1-5 pcs) ngayong buwan
                 if (store.lastFreeRestockMonth === currentMonthYear) {
-                    alert('⚠️ Paalala: 1 beses lamang sa isang buwan pinapayagan ang pag-request ng 1-5 pcs (walang advance payment). Nakagamit ka na ng iyong libreng restock ngayong buwan. Kung kailangan mo pa ng karagdagang stock, maaari kang mag-request ng Above Minimum (higit sa 5 pcs) na may 40% downpayment.');
+                    alert('⚠️ Paalala: 1 beses lamang sa isang buwan pinapayagan ang pag-request ng 1-5 pcs (walang advance payment). Nakagamit ka na ng iyong libreng restock ngayong buwan. Kung kailangan mo pa ng karagdagang stock, maaari kang mag-request ng Above Minimum (higit sa 5 pcs) na may 50% downpayment.');
                     return;
                 }
                 requiresDP = false;
             } else {
-                // Above minimum (> 5 pcs) ay pinapayagan kahit nakapag-request na ng 5 pcs noong buwang ito
                 requiresDP = true;
-                const confirmDP = confirm(`⚠️ Ang hiling na ${qty} pcs ay lumalagpas sa minimum (Above Minimum).\n\nAng order na ito ay may 40% Down Payment Advance (maaari kang mag-request nito kahit nakapag-avail ka na ng 5 pcs ngayong buwan). Nais mo bang ituloy ang pagpapadala ng request sa Admin?`);
+                const confirmDP = confirm(`⚠️ Ang hiling na ${qty} pcs ay lumalagpas sa minimum (Above Minimum).\n\nAng order na ito ay may 50% Down Payment Advance (maaari kang mag-request nito kahit nakapag-avail ka na ng 5 pcs ngayong buwan). Nais mo bang ituloy ang pagpapadala ng request sa Admin?`);
                 if (!confirmDP) {
                     return;
                 }
@@ -700,7 +708,6 @@
                 date: new Date().toLocaleString()
             });
 
-            // Kung 1-5 pcs ang ni-request, i-mark na nagamit na ang libreng restock ngayong buwan
             if (qty <= 5) {
                 store.lastFreeRestockMonth = currentMonthYear;
             }
@@ -708,12 +715,12 @@
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
-                text: `Humiling ng restock: ${qty} pcs (${styleType}) ${requiresDP ? '[May 40% Down Payment]' : '[Walang Advance Payment - Libreng Restock ng Buwan]'}`,
+                text: `Humiling ng restock: ${qty} pcs (${styleType}) ${requiresDP ? '[May 50% Downpayment]' : '[Walang Advance Payment - Libreng Restock ng Buwan]'}`,
                 date: new Date().toLocaleString()
             });
 
             await saveData();
-            alert(requiresDP ? 'Matagumpay na naipadala ang iyong kahilingan sa Admin (Above Minimum na may 40% Down Payment)!' : 'Matagumpay na naipadala ang iyong libreng restock request (1-5 pcs) para sa buwang ito!');
+            alert(requiresDP ? 'Matagumpay na naipadala ang iyong kahilingan sa Admin (Above Minimum na may 50% Downpayment)!' : 'Matagumpay na naipadala ang iyong libreng restock request (1-5 pcs) para sa buwang ito!');
         };
 
         window.sendClientMessage = async function() {
