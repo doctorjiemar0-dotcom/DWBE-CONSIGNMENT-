@@ -259,10 +259,18 @@
         const syncStatus = document.getElementById('syncStatus');
 
         window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'resizeAgreement') {
-                const iframe = document.getElementById('storeAgreementFrame');
-                if (iframe) {
-                    iframe.style.height = event.data.height + 'px';
+            if (event.data) {
+                if (event.data.type === 'resizeAgreement') {
+                    const iframe = document.getElementById('storeAgreementFrame');
+                    if (iframe) {
+                        iframe.style.height = event.data.height + 'px';
+                    }
+                } else if (event.data.type === 'agreementAccepted') {
+                    const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+                    if (store) {
+                        store.agreementAccepted = true;
+                        saveData();
+                    }
                 }
             }
         });
@@ -629,6 +637,12 @@
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
+
+            // Patakaran: Kailangan munang tanggapin ang Digital Agreement bago mag-request
+            if (!store.agreementAccepted) {
+                alert('Mangyaring basahin at kumpirmahin muna ang Digital Consignment Agreement sa itaas bago ka makapaghiling ng restock.');
+                return;
+            }
 
             if (!store.activeRequests) store.activeRequests = [];
             store.activeRequests.push({
