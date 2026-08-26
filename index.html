@@ -20,7 +20,7 @@
         label { display: block; font-size: 0.85rem; margin-bottom: 3px; font-weight: bold; }
         input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        button:hover { background-color: #388e3c; }
+        button:hover { opacity: 0.9; }
 
         #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40vh; text-align: left; }
         #portalContent { display: none; }
@@ -147,7 +147,7 @@
             </div>
 
             <!-- STORE PARTNER AGREEMENTS IFRAME SECTION -->
-            <div style="margin-bottom: 15px;">
+            <div style="margin-bottom: 10px;">
                 <iframe 
                     id="storeAgreementFrame"
                     src="" 
@@ -157,6 +157,13 @@
                     scrolling="no"
                     title="Store Partner Agreements">
                 </iframe>
+            </div>
+
+            <!-- STOP AGREEMENT / CONSIGNMENT SECTION (MAY CONFIRMATION NOTICE) -->
+            <div class="card" style="background: #ffebee; border: 1px solid #ef9a9a;">
+                <h2 style="color: #c62828; font-size: 0.95rem;">🛑 Pagpapahinto ng Consignment Agreement</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Kung nais mo nang itigil o tapusin ang kasunduan at consignment sa tindahang ito, i-click ang button sa ibaba.</p>
+                <button type="button" onclick="promptStopAgreement()" style="background-color: #d32f2f; font-size: 0.9rem; padding: 8px;">Itigil / I-cancel ang Kasunduan (Stop)</button>
             </div>
 
             <!-- Active Items Summary -->
@@ -320,6 +327,41 @@
             }
         };
 
+        // FUNCTION PARA SA STOP BUTTON NG CONSIGNMENT AGREEMENT NA MAY YES/NO NOTICE
+        window.promptStopAgreement = async function() {
+            const confirmation = confirm("⚠️ BABALA: Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' (Yes) para kumpirmahin, o 'Cancel' (No) para ituloy ang kasunduan.");
+            
+            if (!confirmation) {
+                return; // Pinili ang No / Cancel, kaya hindi itutuloy ang pag-stop
+            }
+
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
+
+            // Baguhin ang status sa database
+            store.agreementAccepted = false;
+            store.consignmentStatus = "Stopped";
+
+            // Mag-iwan ng mensahe sa chat papunta sa Admin
+            if (!store.messages) store.messages = [];
+            store.messages.push({
+                sender: currentStoreName,
+                text: "⚠️ Pinal na itinigil / kinansela ng kliyente ang Consignment Agreement.",
+                date: new Date().toLocaleString()
+            });
+
+            // Maglagay ng abiso
+            if (!store.clientNotifications) store.clientNotifications = [];
+            store.clientNotifications.unshift({
+                text: "Matagumpay na nai-submit ang hiling na itigil ang Consignment Agreement.",
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert("Matagumpay na naitala ang iyong pagpapahinto sa kasunduan. Naabisuhan na ang Admin.");
+            renderClientDashboard(store);
+        };
+
         window.dismissNotification = async function(index) {
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store || !store.clientNotifications) return;
@@ -328,20 +370,17 @@
             await saveData();
         };
 
-        // Kumpirmasyon na natanggap na ang restock delivery mula sa admin
         window.confirmReceiveRestock = async function(index) {
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
 
             const itemToReceive = store.approvedRestocks[index];
 
-            // Hanapin kung mayroon nang item na ganitong style sa storeItems
             let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType);
             if (existingItem) {
                 existingItem.currentStock += itemToReceive.qty;
-                existingItem.initialQty += itemToReceive.qty; // Idadagdag din sa simula o kabuuang baseline
+                existingItem.initialQty += itemToReceive.qty;
             } else {
-                // Kung wala pa, gumawa ng bagong entry
                 store.storeItems.push({
                     styleType: itemToReceive.styleType,
                     initialQty: itemToReceive.qty,
@@ -353,10 +392,8 @@
                 });
             }
 
-            // Alisin na sa listahan ng approved restocks dahil natanggap na
             store.approvedRestocks.splice(index, 1);
 
-            // Mag-iwan ng mensahe sa chat / log sa admin
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
@@ -527,7 +564,6 @@
                 correctLevel: QRCode.CorrectLevel.H
             });
 
-            // Pagpapakita ng mga Na-approve na Restock na naghihintay ng kumpirmasyon
             const pendingDeliveryCard = document.getElementById('pendingDeliveryCard');
             const pendingDeliveryContainer = document.getElementById('pendingDeliveryContainer');
             pendingDeliveryContainer.innerHTML = '';
