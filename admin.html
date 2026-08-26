@@ -819,23 +819,56 @@
             }
         };
 
-        window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApproved) {
+                window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApproved) {
             const item = appData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
             const style = reqStyle || 'Ordinary';
             const reqObj = item.activeRequests[reqIdx];
+            
             item.activeRequests.splice(reqIdx, 1);
             if (!item.clientNotifications) item.clientNotifications = [];
             if (!item.approvedRestocks) item.approvedRestocks = [];
 
             if (isApproved) {
+                const needsDownpayment = qty > 5;
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
                 
                 item.approvedRestocks.push({
                     styleType: style,
                     qty: qty,
+                    requiresDownpayment: needsDownpayment,
                     date: timestamp
                 });
+
+                // Abiso text na may kasamang 50% Downpayment kung mahigit sa 5 pcs
+                const downpaymentNotice = needsDownpayment ? " 🏷️ (May 50% Downpayment Required)" : "";
+
+                item.clientNotifications.push({ 
+                    id: Date.now(), 
+                    text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}). Nakabinbin ang pagtanggap.${downpaymentNotice}`, 
+                    date: timestamp 
+                });
+                
+                item.history.unshift({ 
+                    id: Date.now(), 
+                    date: timestamp, 
+                    text: `Na-approve ang Restock: ${qty} pcs (${style})${needsDownpayment ? ' [May 50% Downpayment]' : ''}` 
+                });
+            } else {
+                item.clientNotifications.push({ 
+                    id: Date.now(), 
+                    text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, 
+                    date: timestamp 
+                });
+                item.history.unshift({ 
+                    id: Date.now(), 
+                    date: timestamp, 
+                    text: `Tinanggihan ang Restock` 
+                });
+            }
+            await saveToCloud();
+        };
+
 
                 item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}). Nakabinbin ang pagtanggap.`, date: timestamp });
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: ${qty} pcs (${style}) - Naghihintay ng kumpirmasyon` });
