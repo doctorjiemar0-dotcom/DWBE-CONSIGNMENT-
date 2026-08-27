@@ -523,4 +523,2122 @@
                         I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.
                     </p>
 
-                    <
+                    <div class="qr-container"
+                        style="margin-top: 0;">
+
+                        <div id="qrcode"></div>
+
+                        <span id="qrStoreLinkText"
+                            style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;">
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- NOTIFICATIONS -->
+            <div class="card">
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+
+                    <h2 style="margin-bottom: 0;">
+                        📢 Mga Abiso at Update
+                    </h2>
+
+                    <button type="button"
+                        onclick="clearNotifications()"
+                        style="background-color: #78909c; width: auto; padding: 5px 10px; font-size: 0.72rem; margin-top: 0;">
+                        🗑️ Clear
+                    </button>
+
+                </div>
+
+                <div id="clientNotificationsContainer">
+
+                    <p style="font-size: 0.85rem; color: #666;">
+                        Wala pang bagong abiso.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- RESTOCK -->
+            <div class="card"
+                style="background: #fff8e1; border: 1px solid #ffe082;">
+
+                <h2>
+                    🔄 Humiling ng Karagdagang Restock
+                </h2>
+
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">
+                    Maximum <strong>5 pieces</strong> lamang at
+                    <strong>1 request bawat buwan</strong>.
+                </p>
+
+                <div id="restockLimitNotice"
+                    style="font-size: 0.78rem; color: #795548; margin-bottom: 8px; padding: 8px; background: #fff3cd; border-radius: 4px;">
+                    Sinusuri ang iyong restock eligibility...
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Piliin ang Uri ng Istilo:
+                    </label>
+
+                    <select id="restockStyleType">
+                        <option value="Ordinary">
+                            Ordinary Style
+                        </option>
+
+                        <option value="Premium">
+                            Premium Style
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Ilang piraso ang kailangan?
+                    </label>
+
+                    <input type="number"
+                        id="restockQtyInput"
+                        value="1"
+                        min="1"
+                        max="5">
+
+                </div>
+
+                <button type="button"
+                    onclick="submitRestockRequest()"
+                    style="background-color: #f57f17;">
+                    Ipadala ang Request sa Admin
+                </button>
+
+            </div>
+
+            <!-- CHAT -->
+            <div class="card">
+
+                <h2>
+                    💬 Makipag-ugnayan sa Admin
+                </h2>
+
+                <div id="clientChatContainer"
+                    style="max-height: 200px; overflow-y: auto; margin-bottom: 8px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background: #fafafa;">
+
+                    <p style="font-size: 0.85rem; color: #666;">
+                        Wala pang mensahe.
+                    </p>
+
+                </div>
+
+                <div class="form-group"
+                    style="margin-bottom: 5px;">
+
+                    <input type="text"
+                        id="clientChatInput"
+                        placeholder="I-type ang mensahe o tanong sa admin...">
+
+                </div>
+
+                <button type="button"
+                    onclick="sendClientMessage()"
+                    style="background-color: #0288d1;">
+                    Ipadala ang Mensahe
+                </button>
+
+            </div>
+
+            <!-- STOP CONSIGNMENT -->
+            <div class="card"
+                style="background: #ffebee; border: 1px solid #ef9a9a;">
+
+                <h2 style="color: #c62828;">
+                    🛑 Itigil ang Kasunduan sa Consignment
+                </h2>
+
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">
+                    Kung nais mo nang tapusin o ihinto ang kasunduan sa konsignment,
+                    i-click ang button sa ibaba upang abisuhan ang admin.
+                </p>
+
+                <button type="button"
+                    onclick="requestConsignmentStop()"
+                    style="background-color: #d32f2f;">
+                    I-request ang Pag-itigil ng Consignment
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- ADMIN PORTAL -->
+        <div class="admin-link-container">
+
+            <a href="https://doctorjiemar0-dotcom.github.io/DWBE-CONSIGNMENT-/admin"
+                target="_blank">
+                🔒 ADMIN PORTAL
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- FIREBASE -->
+    <script type="module">
+
+        import {
+            initializeApp
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+
+        const firebaseConfig = {
+
+            apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+
+            authDomain: "dwbe-consignment.firebaseapp.com",
+
+            projectId: "dwbe-consignment",
+
+            storageBucket: "dwbe-consignment.firebasestorage.app",
+
+            messagingSenderId: "205759197252",
+
+            appId: "1:205759197252:web:b04400821f81791d10cc11"
+
+        };
+
+
+        const app = initializeApp(firebaseConfig);
+
+        const db = getFirestore(app);
+
+
+        let appData = {
+
+            homeStock: {
+                Ordinary: 0,
+                Premium: 0
+            },
+
+            consignments: [],
+
+            pendingInquiries: []
+
+        };
+
+
+        let currentStoreName =
+            localStorage.getItem('client_logged_store') || '';
+
+
+        const syncStatus =
+            document.getElementById('syncStatus');
+
+
+        /* =========================================================
+           AGREEMENT IFRAME AUTO RESIZE
+        ========================================================= */
+
+        window.addEventListener('message', function(event) {
+
+            if (
+                event.data &&
+                event.data.type === 'resizeAgreement'
+            ) {
+
+                const iframe =
+                    document.getElementById('storeAgreementFrame');
+
+                if (iframe) {
+
+                    iframe.style.height =
+                        event.data.height + 'px';
+
+                }
+
+            }
+
+        });
+
+
+        /* =========================================================
+           PWA INSTALL
+        ========================================================= */
+
+        let deferredPrompt;
+
+        const installAppCard =
+            document.getElementById('installAppCard');
+
+        const installAppBtn =
+            document.getElementById('installAppBtn');
+
+        const dashboardInstallCard =
+            document.getElementById('dashboardInstallCard');
+
+        const dashboardInstallBtn =
+            document.getElementById('dashboardInstallBtn');
+
+
+        window.addEventListener(
+            'beforeinstallprompt',
+            (e) => {
+
+                e.preventDefault();
+
+                deferredPrompt = e;
+
+                if (installAppCard)
+                    installAppCard.style.display = 'block';
+
+                if (dashboardInstallCard)
+                    dashboardInstallCard.style.display = 'block';
+
+            }
+        );
+
+
+        const handleInstallClick =
+            async () => {
+
+                if (!deferredPrompt)
+                    return;
+
+                deferredPrompt.prompt();
+
+                const {
+                    outcome
+                } = await deferredPrompt.userChoice;
+
+                if (outcome === 'accepted') {
+
+                    console.log(
+                        'Na-install ang app'
+                    );
+
+                }
+
+                deferredPrompt = null;
+
+                if (installAppCard)
+                    installAppCard.style.display = 'none';
+
+                if (dashboardInstallCard)
+                    dashboardInstallCard.style.display = 'none';
+
+            };
+
+
+        if (installAppBtn)
+            installAppBtn.addEventListener(
+                'click',
+                handleInstallClick
+            );
+
+
+        if (dashboardInstallBtn)
+            dashboardInstallBtn.addEventListener(
+                'click',
+                handleInstallClick
+            );
+
+
+        /* =========================================================
+           LOGOUT
+        ========================================================= */
+
+        window.requestLogout = function() {
+
+            const pass =
+                prompt(
+                    "Ilagay ang password para mag-logout:"
+                );
+
+            if (pass === null)
+                return;
+
+            if (pass === "admin123") {
+
+                localStorage.removeItem(
+                    'client_logged_store'
+                );
+
+                currentStoreName = '';
+
+                window.location.href =
+                    window.location.pathname.split('?')[0];
+
+            } else {
+
+                alert("Maling password!");
+
+            }
+
+        };
+
+
+        /* =========================================================
+           QR CODE
+           DEFAULT = HIDDEN
+        ========================================================= */
+
+        window.toggleQrVisibility = function() {
+
+            const wrapper =
+                document.getElementById(
+                    'qrContentWrapper'
+                );
+
+            const btn =
+                document.getElementById(
+                    'toggleQrBtn'
+                );
+
+
+            if (wrapper.style.display === 'none') {
+
+                wrapper.style.display = 'block';
+
+                btn.textContent = 'Itago';
+
+            } else {
+
+                wrapper.style.display = 'none';
+
+                btn.textContent = 'Ipakita';
+
+            }
+
+        };
+
+
+        function resetQrClosed() {
+
+            const wrapper =
+                document.getElementById(
+                    'qrContentWrapper'
+                );
+
+            const btn =
+                document.getElementById(
+                    'toggleQrBtn'
+                );
+
+
+            if (wrapper) {
+
+                wrapper.style.display = 'none';
+
+            }
+
+            if (btn) {
+
+                btn.textContent = 'Ipakita';
+
+            }
+
+        }
+
+
+        /* =========================================================
+           LOAD DATA
+        ========================================================= */
+
+        async function loadData() {
+
+            syncStatus.textContent =
+                "Kumukuha ng data sa Cloud...";
+
+
+            try {
+
+                const docRef =
+                    doc(
+                        db,
+                        "app_data",
+                        "main_inventory"
+                    );
+
+
+                const docSnap =
+                    await getDoc(docRef);
+
+
+                if (docSnap.exists()) {
+
+                    appData =
+                        docSnap.data();
+
+
+                    if (!appData.homeStock)
+                        appData.homeStock = {
+                            Ordinary: 0,
+                            Premium: 0
+                        };
+
+
+                    if (!appData.consignments)
+                        appData.consignments = [];
+
+
+                    if (!appData.pendingInquiries)
+                        appData.pendingInquiries = [];
+
+                }
+
+
+                syncStatus.textContent =
+                    "✅ Nakakonekta sa Cloud Database";
+
+
+                initPortalView();
+
+
+            } catch (err) {
+
+                console.error(
+                    "Error loading cloud data:",
+                    err
+                );
+
+                syncStatus.textContent =
+                    "⚠️ Nabigo sa pagkonekta sa Cloud.";
+
+            }
+
+        }
+
+
+        /* =========================================================
+           SAVE DATA
+        ========================================================= */
+
+        async function saveData() {
+
+            syncStatus.textContent =
+                "Nagse-save sa Cloud...";
+
+
+            try {
+
+                await setDoc(
+                    doc(
+                        db,
+                        "app_data",
+                        "main_inventory"
+                    ),
+                    appData
+                );
+
+
+                syncStatus.textContent =
+                    "✅ Na-save at Nakakonekta sa Cloud";
+
+
+                initPortalView();
+
+
+            } catch (err) {
+
+                console.error(
+                    "Error saving cloud data:",
+                    err
+                );
+
+
+                syncStatus.textContent =
+                    "⚠️ Error sa pag-save sa cloud";
+
+            }
+
+        }
+
+
+        /* =========================================================
+           INITIALIZE PORTAL
+        ========================================================= */
+
+        function initPortalView() {
+
+            const urlParams =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+
+            const paramStore =
+                urlParams.get('store');
+
+
+            if (paramStore) {
+
+                currentStoreName =
+                    paramStore;
+
+                localStorage.setItem(
+                    'client_logged_store',
+                    currentStoreName
+                );
+
+            }
+
+
+            if (currentStoreName) {
+
+                const found =
+                    appData.consignments.find(
+                        c =>
+                            c.storeName &&
+                            c.storeName.toLowerCase() ===
+                            currentStoreName.toLowerCase()
+                    );
+
+
+                if (found) {
+
+                    document.getElementById(
+                        'loginScreen'
+                    ).style.display = 'none';
+
+
+                    if (installAppCard)
+                        installAppCard.style.display = 'none';
+
+
+                    document.getElementById(
+                        'portalContent'
+                    ).style.display = 'block';
+
+
+                    if (paramStore) {
+
+                        document.getElementById(
+                            'directAccessNotice'
+                        ).style.display = 'block';
+
+                    }
+
+
+                    renderClientDashboard(found);
+
+                } else {
+
+                    localStorage.removeItem(
+                        'client_logged_store'
+                    );
+
+                    currentStoreName = '';
+
+
+                    document.getElementById(
+                        'loginScreen'
+                    ).style.display = 'flex';
+
+
+                    document.getElementById(
+                        'portalContent'
+                    ).style.display = 'none';
+
+
+                    if (paramStore) {
+
+                        alert(
+                            `Ang tindahang "${paramStore}" ay hindi pa rehistrado o aktibo sa sistema.`
+                        );
+
+                    }
+
+                }
+
+            } else {
+
+                document.getElementById(
+                    'loginScreen'
+                ).style.display = 'flex';
+
+
+                document.getElementById(
+                    'portalContent'
+                ).style.display = 'none';
+
+            }
+
+        }
+
+
+        /* =========================================================
+           MANUAL LOGIN
+        ========================================================= */
+
+        document.getElementById(
+            'manualLoginBtn'
+        ).addEventListener(
+            'click',
+            () => {
+
+                const storeInput =
+                    document.getElementById(
+                        'manualStoreNameInput'
+                    ).value.trim();
+
+
+                if (!storeInput) {
+
+                    alert(
+                        'Mangyaring ilagay ang pangalan ng iyong tindahan.'
+                    );
+
+                    return;
+
+                }
+
+
+                const found =
+                    appData.consignments.find(
+                        c =>
+                            c.storeName &&
+                            c.storeName.toLowerCase() ===
+                            storeInput.toLowerCase()
+                    );
+
+
+                if (!found) {
+
+                    alert(
+                        'Hindi natagpuan ang rehistradong tindahan na ito. Siguraduhing tama ang baybay o mag-inquire kung bago ka pa lamang.'
+                    );
+
+                    return;
+
+                }
+
+
+                currentStoreName =
+                    found.storeName;
+
+
+                localStorage.setItem(
+                    'client_logged_store',
+                    currentStoreName
+                );
+
+
+                initPortalView();
+
+            }
+        );
+
+
+        /* =========================================================
+           NEW INQUIRY
+        ========================================================= */
+
+        const inquiryForm =
+            document.getElementById(
+                'inquiryForm'
+            );
+
+
+        if (inquiryForm) {
+
+            inquiryForm.addEventListener(
+                'submit',
+                async (e) => {
+
+                    e.preventDefault();
+
+
+                    const storeName =
+                        document.getElementById(
+                            'inqStoreName'
+                        ).value.trim();
+
+
+                    const ownerName =
+                        document.getElementById(
+                            'inqOwnerName'
+                        ).value.trim();
+
+
+                    const contact =
+                        document.getElementById(
+                            'inqContact'
+                        ).value.trim();
+
+
+                    const email =
+                        document.getElementById(
+                            'inqEmail'
+                        ).value.trim();
+
+
+                    const address =
+                        document.getElementById(
+                            'inqAddress'
+                        ).value.trim();
+
+
+                    const styleType =
+                        document.getElementById(
+                            'inqStyleType'
+                        ).value;
+
+
+                    const message =
+                        document.getElementById(
+                            'inqMessage'
+                        ).value.trim();
+
+
+                    if (!appData.pendingInquiries)
+                        appData.pendingInquiries = [];
+
+
+                    appData.pendingInquiries.unshift({
+
+                        storeName,
+
+                        ownerName,
+
+                        contact,
+
+                        email,
+
+                        address,
+
+                        styleType,
+
+                        message,
+
+                        date:
+                            new Date().toLocaleString()
+
+                    });
+
+
+                    await saveData();
+
+
+                    alert(
+                        'Matagumpay na naipadala ang iyong aplikasyon! Mangyaring hintayin ang pagsusuri ng admin.'
+                    );
+
+
+                    inquiryForm.reset();
+
+                }
+            );
+
+        }
+
+
+        /* =========================================================
+           CHECK MONTHLY RESTOCK
+        ========================================================= */
+
+        function isSameMonth(dateValue) {
+
+            if (!dateValue)
+                return false;
+
+
+            const requestDate =
+                new Date(dateValue);
+
+
+            if (isNaN(requestDate.getTime()))
+                return false;
+
+
+            const now =
+                new Date();
+
+
+            return (
+                requestDate.getFullYear() ===
+                now.getFullYear()
+            ) &&
+            (
+                requestDate.getMonth() ===
+                now.getMonth()
+            );
+
+        }
+
+
+        function hasRestockThisMonth(store) {
+
+            if (!store.activeRequests ||
+                !Array.isArray(store.activeRequests)) {
+
+                return false;
+
+            }
+
+
+            return store.activeRequests.some(
+                request =>
+                    isSameMonth(request.date)
+            );
+
+        }
+
+
+        function updateRestockEligibility(store) {
+
+            const notice =
+                document.getElementById(
+                    'restockLimitNotice'
+                );
+
+
+            const button =
+                document.querySelector(
+                    'button[onclick="submitRestockRequest()"]'
+                );
+
+
+            const qtyInput =
+                document.getElementById(
+                    'restockQtyInput'
+                );
+
+
+            if (!store) {
+
+                return;
+
+            }
+
+
+            if (hasRestockThisMonth(store)) {
+
+                notice.innerHTML =
+                    "🔒 <strong>Restock request used na ngayong buwan.</strong><br>" +
+                    "Maaari kang muling mag-request sa susunod na buwan.";
+
+
+                notice.style.background =
+                    "#ffebee";
+
+
+                notice.style.color =
+                    "#c62828";
+
+
+                if (button) {
+
+                    button.disabled = true;
+
+                    button.style.backgroundColor =
+                        "#9e9e9e";
+
+                    button.style.cursor =
+                        "not-allowed";
+
+                }
+
+
+                if (qtyInput) {
+
+                    qtyInput.disabled = true;
+
+                }
+
+
+            } else {
+
+                notice.innerHTML =
+                    "✅ Maaari kang mag-request ng restock ngayong buwan. Maximum <strong>5 pcs</strong>.";
+
+
+                notice.style.background =
+                    "#e8f5e9";
+
+
+                notice.style.color =
+                    "#2e7d32";
+
+
+                if (button) {
+
+                    button.disabled = false;
+
+                    button.style.backgroundColor =
+                        "#f57f17";
+
+                    button.style.cursor =
+                        "pointer";
+
+                }
+
+
+                if (qtyInput) {
+
+                    qtyInput.disabled = false;
+
+                    qtyInput.max = 5;
+
+                }
+
+            }
+
+        }
+
+
+        /* =========================================================
+           RENDER CLIENT DASHBOARD
+        ========================================================= */
+
+        function renderClientDashboard(store) {
+
+            /* Always close QR when dashboard renders */
+
+            resetQrClosed();
+
+
+            document.getElementById(
+                'displayStoreName'
+            ).textContent =
+                store.storeName;
+
+
+            /* Agreement */
+
+            const agreementFrame =
+                document.getElementById(
+                    'storeAgreementFrame'
+                );
+
+
+            const targetAgreementUrl =
+                "https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/?store=" +
+                encodeURIComponent(
+                    store.storeName
+                );
+
+
+            if (
+                agreementFrame.src !==
+                targetAgreementUrl
+            ) {
+
+                agreementFrame.src =
+                    targetAgreementUrl;
+
+            }
+
+
+            /* QR CODE */
+
+            const qrContainer =
+                document.getElementById(
+                    'qrcode'
+                );
+
+
+            qrContainer.innerHTML = "";
+
+
+            const currentUrl =
+                window.location.origin +
+                window.location.pathname +
+                "?store=" +
+                encodeURIComponent(
+                    store.storeName
+                );
+
+
+            document.getElementById(
+                'qrStoreLinkText'
+            ).textContent =
+                currentUrl;
+
+
+            new QRCode(
+                qrContainer,
+                {
+
+                    text: currentUrl,
+
+                    width: 128,
+
+                    height: 128,
+
+                    colorDark: "#2e7d32",
+
+                    colorLight: "#ffffff",
+
+                    correctLevel:
+                        QRCode.CorrectLevel.H
+
+                }
+            );
+
+
+            /* =====================================================
+               NOTIFICATIONS
+            ===================================================== */
+
+            const notifContainer =
+                document.getElementById(
+                    'clientNotificationsContainer'
+                );
+
+
+            notifContainer.innerHTML = '';
+
+
+            if (
+                store.clientNotifications &&
+                store.clientNotifications.length > 0
+            ) {
+
+                [...store.clientNotifications]
+                    .reverse()
+                    .forEach(
+                        n => {
+
+                            const div =
+                                document.createElement(
+                                    'div'
+                                );
+
+
+                            div.className =
+                                'notification-item';
+
+
+                            div.innerHTML = `
+
+                                <div>
+                                    ${escapeHtml(n.text)}
+                                </div>
+
+                                <div style="font-size:0.7rem; color:#778; margin-top:2px;">
+                                    ${escapeHtml(n.date || '')}
+                                </div>
+
+                            `;
+
+
+                            notifContainer.appendChild(
+                                div
+                            );
+
+                        }
+                    );
+
+            } else {
+
+                notifContainer.innerHTML =
+                    '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
+
+            }
+
+
+            /* =====================================================
+               PENDING SHIPMENTS
+            ===================================================== */
+
+            const pendingCard =
+                document.getElementById(
+                    'pendingShipmentCard'
+                );
+
+
+            const pendingContainer =
+                document.getElementById(
+                    'pendingShipmentsContainer'
+                );
+
+
+            pendingContainer.innerHTML = '';
+
+
+            if (
+                store.pendingShipments &&
+                store.pendingShipments.length > 0
+            ) {
+
+                pendingCard.style.display =
+                    'block';
+
+
+                store.pendingShipments.forEach(
+                    (pend, index) => {
+
+                        const pDiv =
+                            document.createElement(
+                                'div'
+                            );
+
+
+                        pDiv.className =
+                            'pending-shipment-box';
+
+
+                        pDiv.innerHTML = `
+
+                            <div style="font-weight: bold; color: #f57f17; display: flex; justify-content: space-between;">
+
+                                <span>
+                                    ${escapeHtml(pend.styleType || 'Ordinary')}
+                                    (Naaprubahan na)
+                                </span>
+
+                                <span>
+                                    Qty: ${Number(pend.initialQty || 0)} pcs
+                                </span>
+
+                            </div>
+
+
+                            <div style="font-size: 0.85rem; margin-top: 4px; color: #444;">
+
+                                Presyo:
+                                ₱${Number(pend.price || 0).toLocaleString()}
+
+                                |
+
+                                Target Koleksyon:
+                                ${escapeHtml(pend.collectionDate || 'N/A')}
+
+                                <br>
+
+                                Petsa ng Pag-apruba:
+                                ${escapeHtml(pend.date || 'N/A')}
+
+                            </div>
+
+
+                            <button type="button"
+                                onclick="confirmOrderReceived(${index})"
+                                style="background-color: #388e3c; margin-top: 8px;">
+
+                                📦 Order Received
+
+                            </button>
+
+                            <div style="font-size:0.72rem; color:#795548; margin-top:5px; text-align:center;">
+
+                                I-click lamang kapag aktwal mo nang natanggap ang order.
+
+                            </div>
+
+                        `;
+
+
+                        pendingContainer.appendChild(
+                            pDiv
+                        );
+
+                    }
+                );
+
+            } else {
+
+                pendingCard.style.display =
+                    'none';
+
+            }
+
+
+            /* =====================================================
+               ACTIVE ITEMS
+            ===================================================== */
+
+            const itemsContainer =
+                document.getElementById(
+                    'clientItemsContainer'
+                );
+
+
+            itemsContainer.innerHTML = '';
+
+
+            if (
+                !store.storeItems ||
+                store.storeItems.length === 0
+            ) {
+
+                /*
+                 * IMPORTANT:
+                 * Hindi natin ia-activate dito ang pendingShipments.
+                 * Ang pending shipment ay mananatiling pending
+                 * hanggang sa Order Received.
+                 */
+
+                if (
+                    store.initialQty !== undefined &&
+                    store.currentStock !== undefined
+                ) {
+
+                    store.storeItems = [{
+
+                        styleType:
+                            store.styleType ||
+                            'Ordinary',
+
+                        initialQty:
+                            store.initialQty,
+
+                        currentStock:
+                            store.currentStock,
+
+                        price:
+                            store.price,
+
+                        collectionDate:
+                            store.collectionDate
+
+                    }];
+
+                }
+
+            }
+
+
+            if (
+                store.storeItems &&
+                store.storeItems.length > 0
+            ) {
+
+                store.storeItems.forEach(
+                    sub => {
+
+                        const subSold =
+                            Math.max(
+                                0,
+                                Number(sub.initialQty || 0) -
+                                Number(sub.currentStock || 0) -
+                                Number(sub.rejectedQty || 0)
+                            );
+
+
+                        const subSales =
+                            subSold *
+                            Number(sub.price || 0);
+
+
+                        const div =
+                            document.createElement(
+                                'div'
+                            );
+
+
+                        div.className =
+                            'store-item-box';
+
+
+                        div.innerHTML = `
+
+                            <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between;">
+
+                                <span>
+                                    ${escapeHtml(sub.styleType || 'Ordinary')}
+                                </span>
+
+                                <span>
+                                    Presyo:
+                                    ₱${Number(sub.price || 0).toLocaleString()}
+                                </span>
+
+                            </div>
+
+
+                            <div style="font-size: 0.85rem; margin-top: 4px; color: #444;">
+
+                                Natitirang Stock:
+                                <strong>
+                                    ${Number(sub.currentStock || 0)} pcs
+                                </strong>
+
+                                /
+
+                                Simulang Dami:
+                                ${Number(sub.initialQty || 0)} pcs
+
+                                <br>
+
+                                Kabuuang Nabenta:
+                                <strong>
+                                    ${subSold} pcs
+                                </strong>
+
+                                (Benta:
+                                ₱${subSales.toLocaleString()})
+
+                                <br>
+
+                                Target na Petsa ng Koleksyon:
+                                ${escapeHtml(sub.collectionDate || 'N/A')}
+
+                            </div>
+
+                        `;
+
+
+                        itemsContainer.appendChild(
+                            div
+                        );
+
+                    }
+                );
+
+            } else {
+
+                itemsContainer.innerHTML =
+                    '<p style="font-size: 0.85rem; color: #666;">Wala pang aktibong stock.</p>';
+
+            }
+
+
+            /* =====================================================
+               CHAT
+            ===================================================== */
+
+            const chatContainer =
+                document.getElementById(
+                    'clientChatContainer'
+                );
+
+
+            chatContainer.innerHTML = '';
+
+
+            if (
+                store.messages &&
+                store.messages.length > 0
+            ) {
+
+                [...store.messages]
+                    .reverse()
+                    .forEach(
+                        m => {
+
+                            const isAdmin =
+                                m.sender === 'Admin';
+
+
+                            const div =
+                                document.createElement(
+                                    'div'
+                                );
+
+
+                            div.className =
+                                `chat-msg ${isAdmin ? 'admin' : ''}`;
+
+
+                            div.innerHTML = `
+
+                                <strong>
+                                    ${escapeHtml(m.sender || '')}:
+                                </strong>
+
+                                ${escapeHtml(m.text || '')}
+
+                                <div style="font-size:0.65rem; color:#778; text-align:right;">
+                                    ${escapeHtml(m.date || '')}
+                                </div>
+
+                            `;
+
+
+                            chatContainer.appendChild(
+                                div
+                            );
+
+                        }
+                    );
+
+            } else {
+
+                chatContainer.innerHTML =
+                    '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
+
+            }
+
+
+            /* Restock eligibility */
+
+            updateRestockEligibility(
+                store
+            );
+
+        }
+
+
+        /* =========================================================
+           CLEAR NOTIFICATIONS
+        ========================================================= */
+
+        window.clearNotifications =
+            async function() {
+
+                const confirmation =
+                    confirm(
+                        "Sigurado ka bang gusto mong i-clear ang lahat ng iyong Abiso at Update?"
+                    );
+
+
+                if (!confirmation)
+                    return;
+
+
+                const store =
+                    appData.consignments.find(
+                        c =>
+                            c.storeName &&
+                            c.storeName.toLowerCase() ===
+                            currentStoreName.toLowerCase()
+                    );
+
+
+                if (!store)
+                    return;
+
+
+                if (
+                    !store.clientNotifications ||
+                    store.clientNotifications.length === 0
+                ) {
+
+                    alert(
+                        "Wala pang abisong maaaring i-clear."
+                    );
+
+                    return;
+
+                }
+
+
+                store.clientNotifications = [];
+
+
+                await saveData();
+
+
+                alert(
+                    "Matagumpay na na-clear ang mga Abiso at Update."
+                );
+
+            };
+
+
+        /* =========================================================
+           ORDER RECEIVED
+           YES / NO CONFIRMATION
+        ========================================================= */
+
+        window.confirmOrderReceived =
+            async function(index) {
+
+                const store =
+                    appData.consignments.find(
+                        c =>
+                            c.storeName &&
+                            c.storeName.toLowerCase() ===
+                            currentStoreName.toLowerCase()
+                    );
+
+
+                if (
+                    !store ||
+                    !store.pendingShipments ||
+                    !store.pendingShipments[index]
+                ) {
+
+                    alert(
+                        "Hindi makita ang pending order."
+                    );
+
+                    return;
+
+                }
+
+
+                const itemToActivate =
+                    store.pendingShipments[index];
+
+
+                const quantity =
+                    Number(
+                        itemToActivate.initialQty || 0
+                    );
+
+
+                const style =
+                    itemToActivate.styleType ||
+                    'Ordinary';
+
+
+                /*
+                 * YES / NO PROMPT
+                 */
+
+                const confirmation =
+                    confirm(
+                        `📦 ORDER RECEIVED\n\n` +
+
+                        `Style: ${style}\n` +
+
+                        `Quantity: ${quantity} pcs\n\n` +
+
+                        `Natanggap mo na ba talaga ang order na ito?\n\n` +
+
+                        `YES = I-activate sa Active Stock\n` +
+
+                        `NO = Mananatiling Pending`
+                    );
+
+
+                /*
+                 * NO
+                 */
+
+                if (!confirmation) {
+
+                    alert(
+                        "Ang order ay nananatiling Pending. Hindi ito naging Active Stock."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * YES
+                 */
+
+                store.pendingShipments.splice(
+                    index,
+                    1
+                );
+
+
+                if (!store.storeItems)
+                    store.storeItems = [];
+
+
+                store.storeItems.push({
+
+                    styleType:
+                        itemToActivate.styleType,
+
+                    initialQty:
+                        itemToActivate.initialQty,
+
+                    currentStock:
+                        itemToActivate.initialQty,
+
+                    price:
+                        itemToActivate.price,
+
+                    collectionDate:
+                        itemToActivate.collectionDate,
+
+                    activatedDate:
+                        new Date().toLocaleString()
+
+                });
+
+
+                if (!store.messages)
+                    store.messages = [];
+
+
+                store.messages.push({
+
+                    sender:
+                        currentStoreName,
+
+                    text:
+                        `Na-confirm ko nang natanggap ang order: ${quantity} pcs (${style}). Aktibo na ito sa stock.`,
+
+                    date:
+                        new Date().toLocaleString()
+
+                });
+
+
+                if (!store.clientNotifications)
+                    store.clientNotifications = [];
+
+
+                store.clientNotifications.push({
+
+                    text:
+                        `Matagumpay na na-activate sa iyong stock ang ${quantity} pcs (${style}) dahil kinumpirma mong natanggap mo na ang order.`,
+
+                    date:
+                        new Date().toLocaleString()
+
+                });
+
+
+                await saveData();
+
+
+                alert(
+                    `✅ Matagumpay!\n\n` +
+                    `${quantity} pcs (${style}) ay nailipat na sa Active Stock.`
+                );
+
+            };
+
+
+        /* =========================================================
+           RESTOCK REQUEST
+           MAXIMUM 5 PCS
+           ONE TIME PER MONTH
+        ========================================================= */
+
+        window.submitRestockRequest =
+            async function() {
+
+                const styleType =
+                    document.getElementById(
+                        'restockStyleType'
+                    ).value;
+
+
+                const qty =
+                    parseInt(
+                        document.getElementById(
+                            'restockQtyInput'
+                        ).value
+                    );
+
+
+                /* Quantity validation */
+
+                if (
+                    isNaN(qty) ||
+                    qty <= 0
+                ) {
+
+                    alert(
+                        'Ilagay ang tamang bilang ng hiling na restock.'
+                    );
+
+                    return;
+
+                }
+
+
+                /* Maximum 5 */
+
+                if (qty > 5) {
+
+                    alert(
+                        '⚠️ Maximum 5 pieces lamang ang maaaring i-request sa isang restock.'
+                    );
+
+                    document.getElementById(
+                        'restockQtyInput'
+                    ).value = 5;
+
+                    return;
+
+                }
+
+
+                const store =
+                    appData.consignments.find(
+                        c =>
+                            c.storeName &&
+                            c.storeName.toLowerCase() ===
+                            currentStoreName.toLowerCase()
+                    );
+
+
+                if (!store) {
+
+                    alert(
+                        'Hindi makita ang iyong store account.'
+                    );
+
+                    return;
+
+                }
+
+
+                /* Monthly limit */
+
+                if (
+                    hasRestockThisMonth(store)
+                ) {
+
+                    alert(
+                        '🔒 Nakapag-request ka na ng restock ngayong buwan.\n\nMaaari kang muling mag-request sa susunod na buwan.'
+                    );
+
+                    updateRestockEligibility(
+                        store
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * YES / NO confirmation BEFORE submitting
+                 */
+
+                const confirmation =
+                    confirm(
+                        `🔄 RESTOCK REQUEST\n\n` +
+
+                        `Style: ${styleType}\n` +
+
+                        `Quantity: ${qty} pcs\n\n` +
+
+                        `Sigurado ka bang gusto mong ipadala ang request na ito sa Admin?\n\n` +
+
+                        `YES = Ipadala\n` +
+
+                        `NO = Kanselahin`
+                    );
+
+
+                if (!confirmation) {
+
+                    alert(
+                        "Nakansela ang restock request."
+                    );
+
+                    return;
+
+                }
+
+
+                if (!store.activeRequests)
+                    store.activeRequests = [];
+
+
+                store.activeRequests.push({
+
+                    styleType:
+                        styleType,
+
+                    qty:
+                        qty,
+
+                    date:
+                        new Date().toLocaleString(),
+
+                    requestMonth:
+                        new Date().getMonth(),
+
+                    requestYear:
+                        new Date().getFullYear(),
+
+                    status:
+                        "Pending"
+
+                });
+
+
+                if (!store.messages)
+                    store.messages = [];
+
+
+                store.messages.push({
+
+                    sender:
+                        currentStoreName,
+
+                    text:
+                        `Humiling ng restock: ${qty} pcs (${styleType}).`,
+
+                    date:
+                        new Date().toLocaleString()
+
+                });
+
+
+                if (!store.clientNotifications)
+                    store.clientNotifications = [];
+
+
+                store.clientNotifications.push({
+
+                    text:
+                        `Naipadala sa Admin ang iyong restock request: ${qty} pcs (${styleType}).`,
+
+                    date:
+                        new Date().toLocaleString()
+
+                });
+
+
+                await saveData();
+
+
+                document.getElementById(
+                    'restockQtyInput'
+                ).value = 1;
+
+
+                alert(
+                    '✅ Matagumpay na naipadala ang iyong restock request sa Admin!'
+                );
+
+            };
+
+
+        /* =========================================================
+           CONSIGNMENT STOP
+        ========================================================= */
+
+        window.requestConsignmentStop =
+            async function() {
+
+                const confirmation =
+                    confirm(
+                        "Sigurado ka bang nais mong itigil ang iyong kasunduan sa consignment? Padadalhan nito ng abiso ang admin."
+                    );
+
+
+                if (!confirmation)
+                    return;
+
+
+                const store =
+                    appData.consignments.find(
+                        c =>
+                            c.storeName &&
+                            c.storeName.toLowerCase() ===
+                            currentStoreName.toLowerCase()
+                    );
+
+
+                if (!store)
+                    return;
+
+
+                if (!store.messages)
+                    store.messages = [];
+
+
+                store.messages.push({
+
+                    sender:
+                        currentStoreName,
+
+                    text:
+                        `⚠️ NAG-REQUEST NG CONSIGNMENT STOP: Nais ko nang itigil o tapusin ang aming kasunduan sa consignment.`,
+
+                    date:
+                        new Date().toLocaleString()
+
+                });
+
+
+                if (!store.clientNotifications)
+                    store.clientNotifications = [];
+
+
+                store.clientNotifications.push({
+
+                    text:
+                        `Naipadala na sa Admin ang kahilingan mong itigil ang consignment. Maghihintay sila para sa huling pag-areglo o pagkolekta.`,
+
+                    date:
+                        new Date().toLocaleString()
+
+                });
+
+
+                await saveData();
+
+
+                alert(
+                    'Naipadala na sa Admin ang kahilingan mong ihinto ang kasunduan. Makikipag-ugnayan sila sa iyo sa lalong madaling panahon.'
+                );
+
+            };
+
+
+        /* =========================================================
+           CLIENT CHAT
+        ========================================================= */
+
+        window.sendClientMessage =
+            async function() {
+
+                const input =
+                    document.getElementById(
+                        'clientChatInput'
+                    );
+
+
+                const text =
+                    input.value.trim();
+
+
+                if (!text)
+                    return;
+
+
+                const store =
+                    appData.consignments.find(
+                        c =>
+                            c.storeName &&
+                            c.storeName.toLowerCase() ===
+                            currentStoreName.toLowerCase()
+                    );
+
+
+                if (!store)
+                    return;
+
+
+                if (!store.messages)
+                    store.messages = [];
+
+
+                store.messages.push({
+
+                    sender:
+                        currentStoreName,
+
+                    text:
+                        text,
+
+                    date:
+                        new Date().toLocaleString()
+
+                });
+
+
+                input.value = '';
+
+
+                await saveData();
+
+            };
+
+
+        /* =========================================================
+           HTML ESCAPE
+           Para hindi makapag-inject ng HTML ang messages
+        ========================================================= */
+
+        function escapeHtml(value) {
+
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+
+        }
+
+
+        /* =========================================================
+           INITIAL LOAD
+        ========================================================= */
+
+        loadData();
+
+
+        /* =========================================================
+           SILENT CLOUD SYNC EVERY 10 SECONDS
+        ========================================================= */
+
+        setInterval(
+            () => {
+
+                if (currentStoreName) {
+
+                    loadDataSilent();
+
+                }
+
+            },
+            10000
+        );
+
+
+        async function loadDataSilent() {
+
+            try {
+
+                const docRef =
+                    doc(
+                        db,
+                        "app_data",
+                        "main_inventory"
+                    );
+
+
+                const docSnap =
+                    await getDoc(docRef);
+
+
+                if (docSnap.exists()) {
+
+                    appData =
+                        docSnap.data();
+
+
+                    if (!appData.consignments)
+                        appData.consignments = [];
+
+
+                    const found =
+                        appData.consignments.find(
+                            c =>
+                                c.storeName &&
+                                c.storeName.toLowerCase() ===
+                                currentStoreName.toLowerCase()
+                        );
+
+
+                    if (found) {
+
+                        renderClientDashboard(
+                            found
+                        );
+
+                    }
+
+                }
+
+            } catch (e) {
+
+                console.log(
+                    "Silent sync error",
+                    e
+                );
+
+            }
+
+        }
+
+    </script>
+
+</body>
+</html>
