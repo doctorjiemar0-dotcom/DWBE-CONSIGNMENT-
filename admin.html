@@ -1934,6 +1934,49 @@ if (form) {
 
 
 /* =========================================================
+   UPDATE SHIPMENT STATUS (Admin Feature)
+========================================================= */
+
+window.updateShipmentStatus = async function(storeName, shipmentId, newStatus) {
+    try {
+        const docRef = doc(db, "app_data", "main_inventory");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            let data = docSnap.data();
+            let storeFound = false;
+            
+            data.consignments = data.consignments.map(store => {
+                if (store.storeName && store.storeName.toLowerCase() === storeName.toLowerCase()) {
+                    storeFound = true;
+                    if (store.activeShipments) {
+                        store.activeShipments = store.activeShipments.map(ship => {
+                            if (ship.id === shipmentId) {
+                                ship.status = newStatus; // Halimbawa: "Delivered"
+                            }
+                            return ship;
+                        });
+                    }
+                }
+                return store;
+            });
+
+            if (storeFound) {
+                await setDoc(docRef, data);
+                alert("Tagumpay na na-update ang status ng order!");
+                loadFromCloud(); 
+            } else {
+                alert("Hindi nahanap ang tindahan sa database.");
+            }
+        }
+    } catch (error) {
+        console.error("Error sa pag-update ng status:", error);
+        alert("Nagka-error sa pag-update ng status.");
+    }
+};
+
+
+/* =========================================================
    RENDER
 ========================================================= */
 
