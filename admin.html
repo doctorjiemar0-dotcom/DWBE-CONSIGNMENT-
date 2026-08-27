@@ -42,7 +42,6 @@
 
         .inquiry-card-box { background: #e3f2fd; border-left: 5px solid #0288d1; padding: 12px; margin-bottom: 10px; border-radius: 6px; font-size: 0.85rem; }
 
-        /* Orihinal na Store Card Design */
         .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
         .store-card.due { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
         .store-card.has-message { border-left: 6px solid #ff9800; background-color: #fffde7; }
@@ -52,6 +51,7 @@
         .badge-ok { background-color: #ff9800; }
         .badge-good { background-color: #4caf50; }
         .badge-msg { background-color: #ff9800; color: white; margin-left: 4px; font-size: 0.65rem; padding: 2px 5px; }
+        .badge-dp { background-color: #8e44ad; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-left: 4px; }
 
         .store-item-row { background: #fdfdfd; border: 1px solid #eee; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
 
@@ -59,8 +59,21 @@
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
 
-        .floating-add-btn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; }
-        .floating-add-btn:hover { background-color: #388e3c; }
+        .floating-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: flex-end; }
+        .fab-btn { width: 52px; height: 52px; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; border: none; position: relative; }
+        .fab-add { background-color: var(--primary-color); }
+        .fab-add:hover { background-color: #388e3c; }
+        .fab-inquiry { background-color: #0288d1; display: none; }
+        .fab-inquiry:hover { background-color: #0277bd; }
+        .fab-request { background-color: #ff8f00; display: none; }
+        .fab-request:hover { background-color: #e65100; }
+
+        .fab-badge { position: absolute; top: -4px; right: -4px; background-color: #d32f2f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; display: none; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 8px; padding: 20px; max-height: 85vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .modal-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #555; width: auto; margin-top: 0; padding: 0; }
 
         .store-header-row { display: flex; justify-content: space-between; align-items: center; }
         .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; }
@@ -90,20 +103,6 @@
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
             </div>
 
-            <div class="card" style="background: #e3f2fd; border: 1px solid #90caf9;">
-                <h2 style="color: #0288d1;">📥 Mga Bagong Nag-inquire / Aplikasyon</h2>
-                <div id="adminInquiriesContainer">
-                    <p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>
-                </div>
-            </div>
-
-            <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
-                <h2>📦 Mga Pending Restock Request</h2>
-                <div id="adminRequestsContainer">
-                    <p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>
-                </div>
-            </div>
-
             <details class="card sync-card">
                 <summary style="cursor:pointer; font-size:0.9rem; font-weight:bold; color:#555;">📱 Data Backup & Recovery</summary>
                 <div style="margin-top: 10px;">
@@ -123,9 +122,11 @@
                     <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
                     <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0;">➕ Ordinary</button>
-                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0;">➕ Premium</button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0; flex: 1;">➕ Ordinary</button>
+                    <button type="button" onclick="reduceSpecificHomeStock('Ordinary')" style="background-color: #c62828; font-size: 0.85rem; margin-top:0; flex: 1;">➖ Ordinary</button>
+                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0; flex: 1;">➕ Premium</button>
+                    <button type="button" onclick="reduceSpecificHomeStock('Premium')" style="background-color: #b71c1c; font-size: 0.85rem; margin-top:0; flex: 1;">➖ Premium</button>
                 </div>
             </div>
 
@@ -139,6 +140,7 @@
 
             <div class="card" id="addStoreCard" style="display: none;">
                 <h2>Magdagdag ng Consignment</h2>
+                <p style="font-size:0.75rem; color:#666; margin-bottom:8px;">💡 Tandaan: May toggle para sa 50% Downpayment kapag higit sa 5 piraso ang quantity.</p>
                 <form id="consignmentForm">
                     <div class="form-group">
                         <label for="storeName">Pangalan ng Tindahan:</label>
@@ -186,7 +188,42 @@
 
     </div>
 
-    <button class="floating-add-btn" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
+    <!-- Floating Action Bubbles Container -->
+    <div class="floating-container">
+        <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock Request" onclick="openModal('requestModal')">
+            📦<span class="fab-badge" id="requestBadge">0</span>
+        </button>
+        <button class="fab-btn fab-inquiry" id="fabInquiryBtn" title="Mga Bagong Inquiry / Aplikasyon" onclick="openModal('inquiryModal')">
+            📥<span class="fab-badge" id="inquiryBadge">0</span>
+        </button>
+        <button class="fab-btn fab-add" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
+    </div>
+
+    <!-- Modal para sa Inquiries -->
+    <div class="modal-overlay" id="inquiryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📥 Mga Bagong Nag-inquire / Aplikasyon</h2>
+                <button class="modal-close" onclick="closeModal('inquiryModal')">✕</button>
+            </div>
+            <div id="adminInquiriesContainer">
+                <p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para sa Restock Requests -->
+    <div class="modal-overlay" id="requestModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📦 Mga Pending Restock Request</h2>
+                <button class="modal-close" onclick="closeModal('requestModal')">✕</button>
+            </div>
+            <div id="adminRequestsContainer">
+                <p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -256,6 +293,14 @@
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let previousRequestCount = 0;
 
+        window.openModal = function(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        };
+
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        };
+
         window.toggleAddStoreForm = function() {
             const formCard = document.getElementById('addStoreCard');
             formCard.style.display = formCard.style.display === 'none' ? 'block' : 'none';
@@ -274,6 +319,15 @@
                 toggleBtn.textContent = '➕';
                 localStorage.setItem(`store_open_${index}`, 'false');
             }
+        };
+
+        window.toggleDpPaid = async function(storeIdx, subIdx) {
+            const store = appData.consignments[storeIdx];
+            const subItem = store.storeItems[subIdx];
+            subItem.dpPaid = !subItem.dpPaid;
+            if (!store.history) store.history = [];
+            store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `${subItem.dpPaid ? 'Nakuha na ang' : 'Inalis ang marka ng'} 50% DP para sa ${subItem.styleType} (${subItem.initialQty} pcs)` });
+            await saveToCloud();
         };
 
         async function loadFromCloud() {
@@ -363,6 +417,21 @@
             }
         };
 
+        window.reduceSpecificHomeStock = function(styleType) {
+            const qtyStr = prompt(`Ilang piraso ng ${styleType} Style ang babawasan sa Bodega/Bahay?`, '1');
+            if (qtyStr !== null && !isNaN(qtyStr)) {
+                const qty = parseInt(qtyStr);
+                if (qty > 0) {
+                    if (qty > appData.homeStock[styleType]) {
+                        alert('Lampas sa kasalukuyang stock sa bodega!');
+                        return;
+                    }
+                    appData.homeStock[styleType] -= qty;
+                    saveToCloud();
+                }
+            }
+        };
+
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -393,12 +462,13 @@
                             rejectedQty: existingStore.rejectedQty || 0,
                             price: existingStore.price,
                             dateDelivered: existingStore.dateDelivered,
-                            collectionDate: existingStore.collectionDate
+                            collectionDate: existingStore.collectionDate,
+                            dpPaid: existingStore.dpPaid || false
                         }];
                     }
                     existingStore.storeItems.push({
                         id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty,
-                        returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD
+                        returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD, dpPaid: false
                     });
                     if (!existingStore.history) existingStore.history = [];
                     existingStore.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${qty} pcs (${styleType}) noong ${startD}` });
@@ -406,8 +476,8 @@
                     appData.consignments.push({
                         id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
-                        storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
-                        activeRequests: [], clientNotifications: [], messages: [], lastClientAccess: null,
+                        storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD, dpPaid: false }],
+                        activeRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
                 }
@@ -437,7 +507,14 @@
             inquiriesContainer.innerHTML = '';
             if (!appData.pendingInquiries) appData.pendingInquiries = [];
 
+            const fabInquiryBtn = document.getElementById('fabInquiryBtn');
+            const inquiryBadge = document.getElementById('inquiryBadge');
+
             if (appData.pendingInquiries.length > 0) {
+                fabInquiryBtn.style.display = 'flex';
+                inquiryBadge.style.display = 'block';
+                inquiryBadge.textContent = appData.pendingInquiries.length;
+
                 appData.pendingInquiries.forEach((inq, inqIdx) => {
                     const div = document.createElement('div');
                     div.className = 'inquiry-card-box';
@@ -453,6 +530,8 @@
                     inquiriesContainer.appendChild(div);
                 });
             } else {
+                fabInquiryBtn.style.display = 'none';
+                inquiryBadge.style.display = 'none';
                 inquiriesContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>';
             }
 
@@ -461,10 +540,16 @@
             requestsContainer.innerHTML = '';
             let hasRequests = false;
             let totalActiveReqsCount = appData.pendingInquiries.length;
+            let restockReqCount = 0;
+
+            const fabRequestBtn = document.getElementById('fabRequestBtn');
+            const requestBadge = document.getElementById('requestBadge');
 
             if (appData.consignments.length === 0) {
                 storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record.</p>';
                 requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>';
+                fabRequestBtn.style.display = 'none';
+                requestBadge.style.display = 'none';
                 document.getElementById('totalStores').textContent = '0';
                 document.getElementById('totalDue').textContent = '0';
                 document.getElementById('totalStock').textContent = '0 pcs';
@@ -481,6 +566,7 @@
                 if (!item.styleType) item.styleType = 'Ordinary';
                 if (!item.history) item.history = [];
                 if (!item.activeRequests) item.activeRequests = [];
+                if (!item.approvedRestocks) item.approvedRestocks = [];
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
 
@@ -490,7 +576,7 @@
                     item.storeItems = [{
                         id: item.id || Date.now(), styleType: item.styleType, initialQty: item.initialQty,
                         currentStock: item.currentStock, returnedQty: item.returnedQty, rejectedQty: item.rejectedQty, price: item.price,
-                        dateDelivered: item.dateDelivered, collectionDate: item.collectionDate
+                        dateDelivered: item.dateDelivered, collectionDate: item.collectionDate, dpPaid: item.dpPaid || false
                     }];
                 }
 
@@ -498,8 +584,8 @@
                 item.storeItems.forEach((subItem, subIdx) => {
                     if (subItem.rejectedQty === undefined) subItem.rejectedQty = 0;
                     if (subItem.returnedQty === undefined) subItem.returnedQty = 0;
+                    if (subItem.dpPaid === undefined) subItem.dpPaid = false;
                     
-                    // Ang bawas (returnedQty) ay hindi na ibinabawas sa benta, hiwalay na monitoring na lang
                     const subSold = Math.max(0, subItem.initialQty - subItem.currentStock - subItem.returnedQty - subItem.rejectedQty);
                     const subSales = subSold * subItem.price;
 
@@ -512,15 +598,44 @@
                     const subIsDue = subItem.collectionDate && subItem.collectionDate.startsWith(currentYM);
                     if (subIsDue) storeIsDue = true;
 
-                    // Tinanggal na ang "Initial" sa display at naglagay ng monitoring para sa bawas (returnedQty)
+                    const isBulk5 = subItem.initialQty > 5;
+                    const totalOrderAmount = subItem.initialQty * subItem.price;
+                    const downpaymentAmt = isBulk5 ? totalOrderAmount * 0.5 : 0;
+                    const balanceAmt = totalOrderAmount - downpaymentAmt;
+                    const halfPricePerPiece = subItem.price / 2;
+
                     storeItemsHtml += `
                         <div class="store-item-row">
-                            <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between;">
-                                <span>${subItem.styleType || 'Ordinary'}</span>
+                            <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>${subItem.styleType || 'Ordinary'} ${isBulk5 ? '<span class="badge-dp">🏷️ Bulk 5+</span>' : ''}</span>
                                 <span style="color: #333; font-weight: normal;">Presyo: ₱${subItem.price} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
                             </div>
-                            <div style="font-size: 0.75rem; color: #666; margin-bottom: 6px;">
-                                Nabenta: <strong>${subSold} pcs</strong> | Start: ${subItem.dateDelivered || 'N/A'} | Target: ${subItem.collectionDate || 'N/A'}
+                            <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">
+                                Initial Qty: ${subItem.initialQty} pcs | Nabenta: <strong>${subSold} pcs</strong> | Total: ₱${totalOrderAmount.toLocaleString()}
+                            </div>
+                            ${isBulk5 ? `
+                                <div style="background: ${subItem.dpPaid ? '#e8f5e9' : '#f3e5f5'}; border: 1px solid ${subItem.dpPaid ? '#81c784' : '#ce93d8'}; padding: 6px; border-radius: 4px; margin-bottom: 6px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                                        <span style="font-weight: bold; color: ${subItem.dpPaid ? '#2e7d32' : '#8e44ad'}; font-size: 0.75rem;">
+                                            ${subItem.dpPaid ? '✅ 50% DP Nakuha na (Paid)' : '⏳ 50% DP Pending'}
+                                        </span>
+                                        <button type="button" onclick="toggleDpPaid(${index}, ${subIdx})" style="background-color: ${subItem.dpPaid ? '#78909c' : '#8e44ad'}; color: white; border: none; padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; width: auto; margin-top: 0;">
+                                            ${subItem.dpPaid ? '↩️ I-undo ang DP' : '✔️ Markahang Nakuha ang DP'}
+                                        </button>
+                                    </div>
+                                    ${subItem.dpPaid ? `
+                                        <div style="font-size: 0.75rem; color: #2e7d32; font-weight: bold;">
+                                            💰 Natitirang Balanse: ₱${balanceAmt.toLocaleString()} | 🏷️ Half Price kada piraso: ₱${halfPricePerPiece}
+                                        </div>
+                                    ` : `
+                                        <div style="font-size: 0.75rem; color: #555;">
+                                            Downpayment (50%): ₱${downpaymentAmt.toLocaleString()} | Balanse: ₱${balanceAmt.toLocaleString()}
+                                        </div>
+                                    `}
+                                </div>
+                            ` : ''}
+                            <div style="font-size: 0.75rem; color: #555; margin-bottom: 6px;">
+                                Start: ${subItem.dateDelivered || 'N/A'} | Target: ${subItem.collectionDate || 'N/A'}
                             </div>
                             <div class="btn-group">
                                 <button type="button" onclick="checkupStoreSub(${index}, ${subIdx})" style="background-color: #0288d1;">Koleksyon</button>
@@ -537,13 +652,14 @@
 
                 if (item.activeRequests.length > 0) {
                     hasRequests = true;
+                    restockReqCount += item.activeRequests.length;
                     totalActiveReqsCount += item.activeRequests.length;
                     item.activeRequests.forEach((req, reqIdx) => {
                         const reqStyle = req.styleType || item.styleType;
                         const reqRow = document.createElement('div');
                         reqRow.className = 'request-action-row';
                         reqRow.innerHTML = `
-                            <span><strong>${item.storeName} (${reqStyle})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
+                            <span><strong>${item.storeName} (${reqStyle})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock. ${req.qty > 5 ? '<strong style="color:#8e44ad;">(May 50% DP)</strong>' : ''}</span>
                             <div>
                                 <button type="button" class="btn-approve" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', true)">Approve</button>
                                 <button type="button" class="btn-decline" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', false)">Decline</button>
@@ -579,15 +695,27 @@
                 let clientLastSeenText = 'Hindi pa nabubuksan';
 
                 if (item.lastClientAccess) {
-                    clientLastSeenText = item.lastClientAccess;
-                    const lastTime = Date.parse(item.lastClientAccess);
+                    clientLastSeenText = typeof item.lastClientAccess === 'number' 
+                        ? new Date(item.lastClientAccess).toLocaleString() 
+                        : item.lastClientAccess;
+                        
+                    let lastTime = typeof item.lastClientAccess === 'number' 
+                        ? item.lastClientAccess 
+                        : Date.parse(item.lastClientAccess);
+
+                    if (isNaN(lastTime) && typeof item.lastClientAccess === 'string') {
+                        let parts = item.lastClientAccess.split(/[\/\s,:]+/);
+                        if (parts.length >= 6) {
+                            let d = new Date(parts[2], parts[1] - 1, parts[0], parts[3], parts[4], parts[5]);
+                            lastTime = d.getTime();
+                        }
+                    }
+
                     if (!isNaN(lastTime)) {
                         const diffMs = Date.now() - lastTime;
-                        if (diffMs < 45000) {
+                        if (diffMs >= 0 && diffMs < 30000) {
                             isOnline = true;
                         }
-                    } else if (item.clientStatus === "Online") {
-                        isOnline = true;
                     }
                 }
 
@@ -657,6 +785,15 @@
                 if (input) input.value = savedReplies[idx];
             });
 
+            if (restockReqCount > 0) {
+                fabRequestBtn.style.display = 'flex';
+                requestBadge.style.display = 'block';
+                requestBadge.textContent = restockReqCount;
+            } else {
+                fabRequestBtn.style.display = 'none';
+                requestBadge.style.display = 'none';
+            }
+
             if (totalActiveReqsCount > previousRequestCount) playNotificationSound();
             previousRequestCount = totalActiveReqsCount;
 
@@ -687,18 +824,23 @@
             let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
             const collDateStr = nextMonth.toISOString().slice(0, 10);
 
+            const isBulk5 = initialStock > 5;
+            const totalAmt = initialStock * price;
+            const dpText = isBulk5 ? ` (May 50% Downpayment na ₱${(totalAmt * 0.5).toLocaleString()})` : '';
+
             appData.consignments.push({
                 id: Date.now(), storeName: inq.storeName, address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
-                storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
-                activeRequests: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!`, date: new Date().toLocaleString() }],
+                storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr, dpPaid: false }],
+                activeRequests: [], approvedRestocks: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!${dpText}`, date: new Date().toLocaleString() }],
                 messages: [{ sender: 'Admin', text: `Welcome sa aming network!`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
-                history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon` }]
+                history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs)` }]
             });
 
             appData.pendingInquiries.splice(inqIdx, 1);
             await saveToCloud();
+            closeModal('inquiryModal');
             alert('Matagumpay na na-aprube!');
         };
 
@@ -724,18 +866,36 @@
             const item = appData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
             const style = reqStyle || 'Ordinary';
+
             item.activeRequests.splice(reqIdx, 1);
             if (!item.clientNotifications) item.clientNotifications = [];
+            if (!item.approvedRestocks) item.approvedRestocks = [];
 
             if (isApproved) {
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-                let targetSub = item.storeItems.find(sub => sub.styleType.toLowerCase() === style.toLowerCase());
-                if (targetSub) { targetSub.initialQty += qty; targetSub.currentStock += qty; }
-                else {
-                    item.storeItems.push({ id: Date.now(), styleType: style, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: item.storeItems[0].price, dateDelivered: new Date().toISOString().slice(0, 10), collectionDate: new Date().toISOString().slice(0, 10) });
+                item.approvedRestocks.push({ styleType: style, qty: qty, date: timestamp });
+                
+                let basePrice = style === 'Premium' ? 180 : 150;
+                if (item.storeItems && item.storeItems.length > 0) {
+                    basePrice = item.storeItems[0].price;
                 }
-                item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: +${qty} pcs (${style})` });
+
+                const todayStr = new Date().toISOString().slice(0, 10);
+                let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+                const collDateStr = nextMonth.toISOString().slice(0, 10);
+
+                if (!item.storeItems) item.storeItems = [];
+                item.storeItems.push({
+                    id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
+                    returnedQty: 0, rejectedQty: 0, price: basePrice, dateDelivered: todayStr, collectionDate: collDateStr, dpPaid: false
+                });
+
+                const isBulk5 = qty > 5;
+                const totAmt = qty * basePrice;
+                const dpMsg = isBulk5 ? ` (May 50% DP na ₱${(totAmt * 0.5).toLocaleString()})` : '';
+
+                item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}).${dpMsg}`, date: timestamp });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: ${qty} pcs (${style})` });
             } else {
                 item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock` });
