@@ -613,10 +613,7 @@
                 notifContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
             }
 
-            const itemsContainer = document.getElementById('clientItemsContainer');
-            itemsContainer.innerHTML = '';
-            
-            // Auto-initialize storeItems kung wala pa o kung galing sa lumang data
+            // Auto-initialize storeItems kung wala pa
             if (!store.storeItems || store.storeItems.length === 0) {
                 store.storeItems = [{
                     styleType: store.styleType || 'Ordinary',
@@ -630,7 +627,29 @@
                 }];
             }
 
-            // 🛠️ FIX: Auto-correct o itakda ang tamang requiresDownpayment batay sa initialQty (> 5 pcs ay may Downpayment)
+            // 🛡️ BAGONG FIX: Alisin sa storeItems ang mga item na nasa approvedRestocks pa lang (hindi pa nire-receive)
+            if (store.approvedRestocks && store.approvedRestocks.length > 0 && store.storeItems) {
+                let dataChanged = false;
+                store.approvedRestocks.forEach(req => {
+                    const matchIndex = store.storeItems.findIndex(i => 
+                        i.styleType === req.styleType && 
+                        Boolean(i.requiresDownpayment) === Boolean(req.requiresDownpayment) &&
+                        i.initialQty === req.qty &&
+                        i.currentStock === req.qty
+                    );
+                    if (matchIndex !== -1) {
+                        store.storeItems.splice(matchIndex, 1);
+                        dataChanged = true;
+                    }
+                });
+                if (dataChanged) {
+                    saveData(); // Awtomatikong isave para mawala na sa active list ng database
+                }
+            }
+
+            const itemsContainer = document.getElementById('clientItemsContainer');
+            itemsContainer.innerHTML = '';
+
             store.storeItems.forEach(sub => {
                 if (sub.returnedQty === undefined) sub.returnedQty = 0;
                 if (sub.rejectedQty === undefined) sub.rejectedQty = 0;
@@ -639,8 +658,6 @@
                 }
 
                 const subSold = Math.max(0, sub.initialQty - sub.currentStock - sub.returnedQty - sub.rejectedQty);
-                
-                // 🏷️ Awtomatikong hinahati sa 2 ang presyo kung may 50% Downpayment (kung > 5 pcs)
                 const effectivePrice = sub.requiresDownpayment ? (sub.price / 2) : sub.price;
                 const subSales = subSold * effectivePrice;
 
