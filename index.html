@@ -602,25 +602,54 @@
             alert('Matagumpay na nakumpirma! Ang mga item ay nailipat na sa iyong mga aktibong stock.');
         };
 
+        // UPDATED: Restock Request na may YES / NO Confirmation
         window.submitRestockRequest = async function() {
             const styleType = document.getElementById('restockStyleType').value;
             const qty = parseInt(document.getElementById('restockQtyInput').value);
+
             if (isNaN(qty) || qty <= 0) {
                 alert('Ilagay ang tamang bilang ng hiling na restock.');
                 return;
             }
 
-            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-            if (!store) return;
+            // YES / NO PROMPT
+            const confirmation = confirm(
+                `Sigurado ka bang mag-request ng restock?\n\n` +
+                `Uri ng Walis: ${styleType}\n` +
+                `Dami: ${qty} pcs\n\n` +
+                `Pindutin ang OK para YES.\n` +
+                `Pindutin ang Cancel para NO.`
+            );
 
-            if (!store.activeRequests) store.activeRequests = [];
+            // Kapag NO / Cancel
+            if (!confirmation) {
+                alert('Hindi naipadala ang restock request.');
+                return;
+            }
+
+            const store = appData.consignments.find(
+                c => c.storeName.toLowerCase() === currentStoreName.toLowerCase()
+            );
+
+            if (!store) {
+                alert('Hindi makita ang iyong store account.');
+                return;
+            }
+
+            if (!store.activeRequests) {
+                store.activeRequests = [];
+            }
+
             store.activeRequests.push({
                 styleType: styleType,
                 qty: qty,
                 date: new Date().toLocaleString()
             });
 
-            if (!store.messages) store.messages = [];
+            if (!store.messages) {
+                store.messages = [];
+            }
+
             store.messages.push({
                 sender: currentStoreName,
                 text: `Humiling ng restock: ${qty} pcs (${styleType})`,
@@ -628,7 +657,12 @@
             });
 
             await saveData();
-            alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
+
+            alert(
+                `✅ Matagumpay na naipadala ang iyong Restock Request!\n\n` +
+                `${qty} pcs - ${styleType}\n\n` +
+                `Mangyaring hintayin ang approval ng Admin.`
+            );
         };
 
         window.requestConsignmentStop = async function() {
