@@ -558,15 +558,6 @@
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
 
-                // PAG-UURI NG REQUESTS: Una ang walang downpayment (qty <= 5), huli ang may downpayment (qty > 5)
-                if (item.activeRequests.length > 0) {
-                    item.activeRequests.sort((a, b) => {
-                        const aDP = a.qty > 5 ? 1 : 0;
-                        const bDP = b.qty > 5 ? 1 : 0;
-                        return aDP - bDP; // 0 (no DP) mauuna, 1 (with DP) mahuhuli
-                    });
-                }
-
                 if (!item.storeItems || item.storeItems.length === 0) {
                     if (item.rejectedQty === undefined) item.rejectedQty = 0;
                     if (item.returnedQty === undefined) item.returnedQty = 0;
@@ -828,53 +819,19 @@
             const item = appData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
             const style = reqStyle || 'Ordinary';
-            
-            // Hanapin ang presyo ng item na ito para sa eksaktong pagkalkula ng 50% downpayment
-            const targetSub = item.storeItems ? item.storeItems.find(s => s.styleType === style) : null;
-            const unitPrice = targetSub ? targetSub.price : (item.price || 150);
-            const totalPrice = qty * unitPrice;
-            const downpaymentAmount = totalPrice / 2;
 
             item.activeRequests.splice(reqIdx, 1);
             if (!item.clientNotifications) item.clientNotifications = [];
             if (!item.approvedRestocks) item.approvedRestocks = [];
 
             if (isApproved) {
-                const needsDownpayment = qty > 5;
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-                
-                item.approvedRestocks.push({
-                    styleType: style,
-                    qty: qty,
-                    requiresDownpayment: needsDownpayment,
-                    downpaymentAmount: needsDownpayment ? downpaymentAmount : 0,
-                    date: timestamp
-                });
-
-                const downpaymentNotice = needsDownpayment ? ` 🏷️ (May 50% Downpayment na ₱${downpaymentAmount.toLocaleString()} required)` : "";
-
-                item.clientNotifications.push({ 
-                    id: Date.now(), 
-                    text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}). Nakabinbin ang pagtanggap.${downpaymentNotice}`, 
-                    date: timestamp 
-                });
-                
-                item.history.unshift({ 
-                    id: Date.now(), 
-                    date: timestamp, 
-                    text: `Na-approve ang Restock: ${qty} pcs (${style})${needsDownpayment ? ` [50% Downpayment: ₱${downpaymentAmount.toLocaleString()}]` : ''}` 
-                });
+                item.approvedRestocks.push({ styleType: style, qty: qty, date: timestamp });
+                item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: ${qty} pcs (${style})` });
             } else {
-                item.clientNotifications.push({ 
-                    id: Date.now(), 
-                    text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, 
-                    date: timestamp 
-                });
-                item.history.unshift({ 
-                    id: Date.now(), 
-                    date: timestamp, 
-                    text: `Tinanggihan ang Restock` 
-                });
+                item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock` });
             }
             await saveToCloud();
         };
