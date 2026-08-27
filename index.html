@@ -427,7 +427,7 @@
                 const message = document.getElementById('inqMessage').value.trim();
 
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                appData.pendingInquiries.push({
+                appData.pendingInquiries.unshift({ // Inilagay sa unahan para sa pinakabagong inquiry
                     storeName,
                     ownerName,
                     contact,
@@ -468,10 +468,11 @@
                 correctLevel: QRCode.CorrectLevel.H
             });
 
+            // Notifications - Pabaliktad ang pag-loop (slice().reverse() o .forEach mula sa huli patungo sa una) para nasa unahan ang pinakabago
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
             if (store.clientNotifications && store.clientNotifications.length > 0) {
-                store.clientNotifications.forEach(n => {
+                [...store.clientNotifications].reverse().forEach(n => {
                     const div = document.createElement('div');
                     div.className = 'notification-item';
                     div.innerHTML = `<div>${n.text}</div><div style="font-size:0.7rem; color:#778; margin-top:2px;">${n.date}</div>`;
@@ -512,17 +513,17 @@
                 itemsContainer.appendChild(div);
             });
 
+            // Chat / Messages - Pabaliktad ang pag-loop para ang pinakabagong mensahe ay mapunta sa pinakataas
             const chatContainer = document.getElementById('clientChatContainer');
             chatContainer.innerHTML = '';
             if (store.messages && store.messages.length > 0) {
-                store.messages.forEach(m => {
+                [...store.messages].reverse().forEach(m => {
                     const isAdmin = m.sender === 'Admin';
                     const div = document.createElement('div');
                     div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
                     div.innerHTML = `<strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
                     chatContainer.appendChild(div);
                 });
-                chatContainer.scrollTop = chatContainer.scrollHeight;
             } else {
                 chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
             }
