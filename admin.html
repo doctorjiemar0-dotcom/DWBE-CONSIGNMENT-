@@ -4323,4 +4323,499 @@ function(storeIdx, subIdx) {
 
         if (
             count >
-            subItem
+            subItem.currentStock
+        ) {
+
+            alert(
+                "Lampas sa kasalukuyang stock!"
+            );
+
+            return;
+
+        }
+
+
+        subItem.currentStock -=
+            count;
+
+
+        subItem.returnedQty =
+            (subItem.returnedQty || 0) +
+            count;
+
+
+        appData.homeStock[style] +=
+            count;
+
+
+        store.history.unshift({
+
+            id:
+                Date.now(),
+
+            date:
+                new Date().toLocaleString(),
+
+            text:
+                `Nagbawas ng ${count} pcs (${style})`
+
+        });
+
+
+        saveToCloud();
+
+    }
+
+};
+
+
+/* =========================================================
+   MANUAL ADMIN RESTOCK
+========================================================= */
+
+window.restockStoreSub =
+function(storeIdx, subIdx) {
+
+    const store =
+        appData.consignments[storeIdx];
+
+    const subItem =
+        store.storeItems[subIdx];
+
+    const style =
+        subItem.styleType ||
+        "Ordinary";
+
+
+    const count =
+        parseInt(
+            prompt(
+                `Ilang stock ang idadagdag para sa ${style}?`,
+                "10"
+            )
+        );
+
+
+    if (
+        !isNaN(count) &&
+        count > 0
+    ) {
+
+        if (
+            appData.homeStock[style] <
+            count
+        ) {
+
+            alert(
+                "Kulang ang stock sa bahay."
+            );
+
+            return;
+
+        }
+
+
+        appData.homeStock[style] -=
+            count;
+
+
+        subItem.initialQty +=
+            count;
+
+
+        subItem.currentStock +=
+            count;
+
+
+        store.history.unshift({
+
+            id:
+                Date.now(),
+
+            date:
+                new Date().toLocaleString(),
+
+            text:
+                `Nagdagdag ng ${count} pcs (${style})`
+
+        });
+
+
+        saveToCloud();
+
+    }
+
+};
+
+
+/* =========================================================
+   EDIT STORE NAME
+========================================================= */
+
+window.editStoreName =
+function(index) {
+
+    const item =
+        appData.consignments[index];
+
+
+    const newName =
+        prompt(
+            "Bagong Pangalan ng Tindahan:",
+            item.storeName
+        );
+
+
+    if (
+        newName &&
+        newName.trim() !== ""
+    ) {
+
+        item.storeName =
+            newName.trim();
+
+        saveToCloud();
+
+    }
+
+};
+
+
+/* =========================================================
+   EDIT ADDRESS
+========================================================= */
+
+window.editStoreAddress =
+function(index) {
+
+    const item =
+        appData.consignments[index];
+
+
+    const newAddress =
+        prompt(
+            "Bagong Address / Lokasyon:",
+            item.address || ""
+        );
+
+
+    if (
+        newAddress !== null
+    ) {
+
+        item.address =
+            newAddress.trim();
+
+        saveToCloud();
+
+    }
+
+};
+
+
+/* =========================================================
+   DELETE STORE
+========================================================= */
+
+window.deleteEntireStore =
+function(index) {
+
+    if (
+        confirm(
+            "Burahin nang buo ang tindahang ito?"
+        )
+    ) {
+
+        const item =
+            appData.consignments[index];
+
+
+        if (
+            item.storeItems
+        ) {
+
+            item.storeItems.forEach(
+                sub => {
+
+                    if (
+                        sub.currentStock > 0
+                    ) {
+
+                        appData.homeStock[
+                            sub.styleType ||
+                            "Ordinary"
+                        ] +=
+                            sub.currentStock;
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /*
+         * Ibalik din ang mga approved orders
+         * na hindi pa natanggap kung kinakailangan.
+         */
+
+        if (
+            item.approvedRestocks
+        ) {
+
+            item.approvedRestocks.forEach(
+                order => {
+
+                    if (
+                        order.status ===
+                            "approved" &&
+                        order.received === false
+                    ) {
+
+                        const style =
+                            order.styleType ||
+                            "Ordinary";
+
+                        appData.homeStock[style] +=
+                            Number(order.qty || 0);
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        appData.consignments.splice(
+            index,
+            1
+        );
+
+
+        saveToCloud();
+
+    }
+
+};
+
+
+/* =========================================================
+   EDIT HISTORY
+========================================================= */
+
+window.editHistory =
+function(storeIdx, histIdx) {
+
+    const currentText =
+        appData
+            .consignments[storeIdx]
+            .history[histIdx]
+            .text;
+
+
+    const newText =
+        prompt(
+            "I-edit ang note:",
+            currentText
+        );
+
+
+    if (newText) {
+
+        appData
+            .consignments[storeIdx]
+            .history[histIdx]
+            .text =
+            newText.trim();
+
+        saveToCloud();
+
+    }
+
+};
+
+
+/* =========================================================
+   DELETE HISTORY
+========================================================= */
+
+window.deleteHistory =
+function(storeIdx, histIdx) {
+
+    if (
+        confirm(
+            "Burahin ang history log na ito?"
+        )
+    ) {
+
+        appData
+            .consignments[storeIdx]
+            .history.splice(
+                histIdx,
+                1
+            );
+
+        saveToCloud();
+
+    }
+
+};
+
+
+/* =========================================================
+   BACKUP
+========================================================= */
+
+document
+    .getElementById("exportBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById(
+                    "backupTextarea"
+                )
+                .value =
+                JSON.stringify(
+                    appData,
+                    null,
+                    2
+                );
+
+            alert(
+                "Kopyahin ang text."
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   IMPORT
+========================================================= */
+
+document
+    .getElementById("importTextBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            try {
+
+                appData =
+                    JSON.parse(
+                        document
+                            .getElementById(
+                                "backupTextarea"
+                            )
+                            .value
+                            .trim()
+                    );
+
+
+                normalizeData();
+
+                saveToCloud();
+
+                alert(
+                    "Na-load na!"
+                );
+
+            } catch (err) {
+
+                alert(
+                    "Mali ang format."
+                );
+
+            }
+
+        }
+    );
+
+
+/* =========================================================
+   PWA INSTALL
+========================================================= */
+
+let deferredPrompt;
+
+
+const installCard =
+    document.getElementById(
+        "installCard"
+    );
+
+
+const installBtn =
+    document.getElementById(
+        "installBtn"
+    );
+
+
+window.addEventListener(
+    "beforeinstallprompt",
+    e => {
+
+        e.preventDefault();
+
+        deferredPrompt =
+            e;
+
+        installCard.style.display =
+            "block";
+
+    }
+);
+
+
+installBtn.addEventListener(
+    "click",
+    async () => {
+
+        if (deferredPrompt) {
+
+            deferredPrompt.prompt();
+
+            deferredPrompt =
+                null;
+
+            installCard.style.display =
+                "none";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   BASIC HTML ESCAPING
+========================================================= */
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+
+function escapeAttr(value) {
+
+    return String(value ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'");
+
+}
+
+</script>
+
+</body>
+</html>
