@@ -102,6 +102,19 @@
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
             </div>
 
+            <!-- Overall Broadcast Chatbox -->
+            <div class="card" style="background: #e3f2fd; border: 1px solid #90caf9;">
+                <h2>📢 Overall Broadcast Chat (Anunsyo sa Lahat)</h2>
+                <div style="font-size: 0.8rem; color: #555; margin-bottom: 8px;">Magpadala ng mensahe sa lahat ng mga tindahan nang sabay-sabay.</div>
+                <div style="max-height: 120px; overflow-y: auto; background: white; padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 8px; font-size: 0.8rem;" id="broadcastHistoryContainer">
+                    <p style="color: #666; font-style: italic;">Wala pang broadcast na mensahe.</p>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="broadcastInput" placeholder="I-type ang mensahe para sa lahat..." style="font-size: 0.85rem;">
+                    <button type="button" onclick="sendBroadcastMessage()" style="width: auto; background-color: #0288d1; margin-top: 0; font-size: 0.85rem;">Ipadala sa Lahat</button>
+                </div>
+            </div>
+
             <details class="card sync-card">
                 <summary style="cursor:pointer; font-size:0.9rem; font-weight:bold; color:#555;">📱 Data Backup & Recovery</summary>
                 <div style="margin-top: 10px;">
@@ -288,7 +301,7 @@
             if (e.key === 'Enter') { loginBtn.click(); }
         });
 
-        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
+        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [], broadcastMessages: [] };
         let previousRequestCount = 0;
 
         window.openModal = function(modalId) {
@@ -329,6 +342,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                    if (!appData.broadcastMessages) appData.broadcastMessages = [];
                 }
                 renderApp();
                 syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
@@ -387,6 +401,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                    if (!appData.broadcastMessages) appData.broadcastMessages = [];
                     renderApp();
                 }
             } catch (e) {}
@@ -421,6 +436,28 @@
             }
         };
 
+        window.sendBroadcastMessage = async function() {
+            const input = document.getElementById('broadcastInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const timestamp = new Date().toLocaleString();
+            if (!appData.broadcastMessages) appData.broadcastMessages = [];
+            appData.broadcastMessages.unshift({ sender: 'Admin', text: text, date: timestamp });
+
+            if (appData.consignments) {
+                appData.consignments.forEach(c => {
+                    if (!c.messages) c.messages = [];
+                    if (!c.clientNotifications) c.clientNotifications = [];
+                    c.messages.push({ sender: 'Admin', text: `[Broadcast] ${text}`, date: timestamp });
+                    c.clientNotifications.push({ id: Date.now(), text: `📢 Anunsyo: "${text}"`, date: timestamp });
+                });
+            }
+
+            input.value = '';
+            await saveToCloud();
+            alert('Matagumpay na naipadala ang mensahe sa lahat ng tindahan!');
+        };
+
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -433,7 +470,8 @@
                 const collD = document.getElementById('collectionDate').value;
 
                 if (appData.homeStock[styleType] < qty) {
-                    if (!confirm(`Babala: Ang Home stock para sa ${styleType} ay kulang (${appData.homeStock[styleType]} pcs). Ituloy pa rin?`)) return;
+                    alert(`Babala: Ang Home stock para sa ${styleType} ay kulang (${appData.homeStock[styleType]} pcs). Hindi maidadagdag hangga't walang sapat na stock.`);
+                    return;
                 }
 
                 appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
@@ -490,6 +528,18 @@
 
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
+
+            // Render Broadcast History
+            const broadcastHistoryContainer = document.getElementById('broadcastHistoryContainer');
+            if (appData.broadcastMessages && appData.broadcastMessages.length > 0) {
+                let bHtml = '';
+                appData.broadcastMessages.slice(0, 5).forEach(bm => {
+                    bHtml += `<div style="border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 3px;"><strong>${bm.date}:</strong> ${bm.text}</div>`;
+                });
+                broadcastHistoryContainer.innerHTML = bHtml;
+            } else {
+                broadcastHistoryContainer.innerHTML = '<p style="color: #666; font-style: italic;">Wala pang broadcast na mensahe.</p>';
+            }
 
             const inquiriesContainer = document.getElementById('adminInquiriesContainer');
             inquiriesContainer.innerHTML = '';
@@ -601,9 +651,9 @@
                             </div>
                             <div class="btn-group">
                                 <button type="button" onclick="checkupStoreSub(${index}, ${subIdx})" style="background-color: #0288d1;">Koleksyon</button>
-                                <button type="button" onclick="markCollectedSub(${index}, ${subIdx})" style="background-color: #2e7d32;">✅ Nakolektahan Na</button>
                                 <button type="button" onclick="bawasStockSub(${index}, ${subIdx})" style="background-color: #ff9800;">Bawas</button>
                                 <button type="button" onclick="restockStoreSub(${index}, ${subIdx})" style="background-color: #388e3c;">Restock</button>
+                                <button type="button" onclick="markAsCollectedSub(${index}, ${subIdx})" style="background-color: #795548;" title="Markahan na nakolekta na para mawala ang Due">✅ Nakolekta Na</button>
                             </div>
                         </div>
                     `;
@@ -778,7 +828,7 @@
             const style = inq.styleType || 'Ordinary';
 
             if (appData.homeStock[style] < initialStock) {
-                alert(`Kulang ang Home stock para sa ${style}!`);
+                alert(`Kulang ang Home stock para sa ${style}! Hindi ma-apruba.`);
                 return;
             }
 
@@ -826,13 +876,18 @@
             const timestamp = new Date().toLocaleString();
             const style = reqStyle || 'Ordinary';
 
-            item.activeRequests.splice(reqIdx, 1);
-            if (!item.clientNotifications) item.clientNotifications = [];
-            if (!item.approvedRestocks) item.approvedRestocks = [];
-
             if (isApproved) {
-                // Dito lamang nagbabawas sa Home inventory kapag na-approve na ang restock request
+                // Check if home stock is sufficient before approving
+                if (appData.homeStock[style] < qty) {
+                    alert(`⚠️ Hindi ma-approve ang restock! Kulang ang stock sa Home Inventory para sa ${style}.\n(Available: ${appData.homeStock[style]} pcs, Hiling: ${qty} pcs)`);
+                    return; // Keep request in activeRequests, do not deduct
+                }
+
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
+                item.activeRequests.splice(reqIdx, 1); // Remove from pending only when successfully approved
+                if (!item.clientNotifications) item.clientNotifications = [];
+                if (!item.approvedRestocks) item.approvedRestocks = [];
+
                 item.approvedRestocks.push({ styleType: style, qty: qty, date: timestamp });
                 
                 let basePrice = style === 'Premium' ? 180 : 150;
@@ -853,6 +908,8 @@
                 item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: ${qty} pcs (${style})` });
             } else {
+                item.activeRequests.splice(reqIdx, 1);
+                if (!item.clientNotifications) item.clientNotifications = [];
                 item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock` });
             }
@@ -884,25 +941,6 @@
             }
         };
 
-        // Bagong function para i-mark bilang nakolektahan na at alisin ang "Due Na!" status
-        window.markCollectedSub = async function(storeIdx, subIdx) {
-            const store = appData.consignments[storeIdx];
-            const subItem = store.storeItems[subIdx];
-            if (confirm(`I-mark ba bilang nakolektahan na ang ${subItem.styleType || 'Ordinary'} para sa ${store.storeName}? Mawawala na ang Due status nito.`)) {
-                if (subItem.collectionDate) {
-                    let d = new Date(subItem.collectionDate);
-                    d.setMonth(d.getMonth() + 1);
-                    subItem.collectionDate = d.toISOString().slice(0, 10);
-                } else {
-                    let d = new Date();
-                    d.setMonth(d.getMonth() + 1);
-                    subItem.collectionDate = d.toISOString().slice(0, 10);
-                }
-                store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nakolektahan na ang ${subItem.styleType || 'Ordinary'}` });
-                await saveToCloud();
-            }
-        };
-
         window.bawasStockSub = function(storeIdx, subIdx) {
             const store = appData.consignments[storeIdx];
             const subItem = store.storeItems[subIdx];
@@ -931,6 +969,21 @@
                 store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${count} pcs (${style})` });
                 saveToCloud();
             }
+        };
+
+        window.markAsCollectedSub = async function(storeIdx, subIdx) {
+            const store = appData.consignments[storeIdx];
+            const subItem = store.storeItems[subIdx];
+            let nextColDate = new Date();
+            nextColDate.setMonth(nextColDate.getMonth() + 1);
+            subItem.collectionDate = nextColDate.toISOString().slice(0, 10);
+
+            store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nakolekta na ang ${subItem.styleType || 'Ordinary'} (Bagong Target: ${subItem.collectionDate})` });
+            if (!store.clientNotifications) store.clientNotifications = [];
+            store.clientNotifications.push({ id: Date.now(), text: `✅ Naitala na nakolekta na ang iyong ${subItem.styleType || 'Ordinary'}. Salamat!`, date: new Date().toLocaleString() });
+            
+            await saveToCloud();
+            alert('Tagumpay! Na-update na ang petsa ng koleksyon at nawala na ang Due status.');
         };
 
         window.editStoreName = function(index) {
