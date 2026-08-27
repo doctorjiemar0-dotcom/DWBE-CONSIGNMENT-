@@ -1936,8 +1936,7 @@ function renderClientDashboard(
 
 
     /* =====================================================
-       PENDING SHIPMENTS
-       UPDATED / FIXED
+       PENDING SHIPMENTS (UPDATED WITH LOGIC)
     ===================================================== */
 
     const pendingCard =
@@ -1956,13 +1955,6 @@ function renderClientDashboard(
         '';
 
 
-    /*
-     * IMPORTANT:
-     *
-     * Tinitiyak natin na array ang
-     * pendingShipments.
-     */
-
     if (
         !Array.isArray(
             store.pendingShipments
@@ -1977,12 +1969,6 @@ function renderClientDashboard(
 
     /*
      * COMPATIBILITY SA ADMIN DATA
-     *
-     * Kung ang Admin Code ay gumamit ng
-     * approvedShipments,
-     * approvedOrders,
-     * o pendingOrders,
-     * babasahin din natin.
      */
 
     if (
@@ -2088,7 +2074,7 @@ function renderClientDashboard(
 
 
     /*
-     * DISPLAY PENDING ORDERS
+     * DISPLAY PENDING ORDERS & ORDER RECEIVED BUTTON LOGIC
      */
 
     if (
@@ -2143,6 +2129,25 @@ function renderClientDashboard(
                     pend.approvedDate ||
                     pend.approvalDate ||
                     'N/A';
+
+                // I-normalize ang status para sa case-insensitive check
+                const statusLower = pend.status ? String(pend.status).toLowerCase() : '';
+                let actionButtonHTML = '';
+
+                // Kung delivered na o kaya ay nakasalin sa bagong format, i-render ang button
+                if (statusLower === 'delivered' || statusLower === '') {
+                    actionButtonHTML = `
+                        <button type="button"
+                            class="order-received-btn mt-3 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md"
+                            style="background-color: #388e3c; margin-top: 8px; display: block; width: 100%;">
+                            📦 Order Received (I-confirm)
+                        </button>
+                    `;
+                } else {
+                    actionButtonHTML = `
+                        <p class="mt-2 text-sm text-blue-600 font-medium">Status: ${escapeHtml(pend.status || 'Processing')}</p>
+                    `;
+                }
 
 
                 const pDiv =
@@ -2202,21 +2207,7 @@ function renderClientDashboard(
 
                     </div>
 
-
-                    <button
-                        type="button"
-                        class="order-received-btn"
-                        style="
-                            background-color: #388e3c;
-                            margin-top: 8px;
-                            display: block;
-                            width: 100%;
-                        "
-                    >
-
-                        📦 Order Received
-
-                    </button>
+                    ${actionButtonHTML}
 
 
                     <div style="
@@ -2234,29 +2225,24 @@ function renderClientDashboard(
                 `;
 
 
-                /*
-                 * IMPORTANT FIX
-                 *
-                 * Hindi inline onclick.
-                 * Direct event listener.
-                 */
-
                 const receivedBtn =
                     pDiv.querySelector(
                         '.order-received-btn'
                     );
 
 
-                receivedBtn.addEventListener(
-                    'click',
-                    function() {
+                if (receivedBtn) {
+                    receivedBtn.addEventListener(
+                        'click',
+                        function() {
 
-                        confirmOrderReceived(
-                            index
-                        );
+                            confirmOrderReceived(
+                                index
+                            );
 
-                    }
-                );
+                        }
+                    );
+                }
 
 
                 pendingContainer.appendChild(
@@ -2617,11 +2603,13 @@ window.clearNotifications =
 
 
 /* =========================================================
-   ORDER RECEIVED
+   ORDER RECEIVED (UPDATED FIREBASE PERSISTENCE LOGIC)
 ========================================================= */
 
 window.confirmOrderReceived =
     async function(index) {
+
+        if (!confirm("Sigurado ka bang natanggap mo na ang order na ito?")) return;
 
         const store =
             appData.consignments.find(
@@ -2670,49 +2658,14 @@ window.confirmOrderReceived =
             'Ordinary';
 
 
-        const confirmation =
-            confirm(
-
-                `📦 ORDER RECEIVED\n\n` +
-
-                `Style: ${style}\n` +
-
-                `Quantity: ${quantity} pcs\n\n` +
-
-                `Natanggap mo na ba talaga ang order na ito?\n\n` +
-
-                `YES = I-activate sa Active Stock\n\n` +
-
-                `NO = Mananatiling Pending`
-
-            );
-
-
-        if (!confirmation) {
-
-            alert(
-                "Ang order ay nananatiling Pending. Hindi ito naging Active Stock."
-            );
-
-            return;
-
-        }
-
-
-        /*
-         * REMOVE FROM PENDING
-         */
-
+        // Tanggalin mula sa pending shipments
         store.pendingShipments.splice(
             index,
             1
         );
 
 
-        /*
-         * CREATE ACTIVE STOCK
-         */
-
+        // Ilipat sa active stock
         if (!Array.isArray(
             store.storeItems
         )) {
@@ -2726,9 +2679,7 @@ window.confirmOrderReceived =
         store.storeItems.push({
 
             styleType:
-                itemToActivate.styleType ||
-                itemToActivate.style ||
-                'Ordinary',
+                style,
 
             initialQty:
                 quantity,
@@ -2756,71 +2707,34 @@ window.confirmOrderReceived =
         });
 
 
-        /*
-         * CHAT MESSAGE
-         */
-
-        if (!Array.isArray(
-            store.messages
-        )) {
-
-            store.messages =
-                [];
-
+        // Magdagdag ng mensahe sa chat at notification
+        if (!Array.isArray(store.messages)) {
+            store.messages = [];
         }
-
-
         store.messages.push({
-
-            sender:
-                currentStoreName,
-
-            text:
-                `Na-confirm ko nang natanggap ang order: ${quantity} pcs (${style}). Aktibo na ito sa stock.`,
-
-            date:
-                new Date()
-                    .toLocaleString()
-
+            sender: currentStoreName,
+            text: `Na-confirm ko nang natanggap ang order: ${quantity} pcs (${style}). Aktibo na ito sa stock.`,
+            date: new Date().toLocaleString()
         });
 
 
-        /*
-         * NOTIFICATION
-         */
-
-        if (!Array.isArray(
-            store.clientNotifications
-        )) {
-
-            store.clientNotifications =
-                [];
-
+        if (!Array.isArray(store.clientNotifications)) {
+            store.clientNotifications = [];
         }
-
-
         store.clientNotifications.push({
-
-            text:
-                `Matagumpay na na-activate sa iyong stock ang ${quantity} pcs (${style}) dahil kinumpirma mong natanggap mo na ang order.`,
-
-            date:
-                new Date()
-                    .toLocaleString()
-
+            text: `Matagumpay na na-activate sa iyong stock ang ${quantity} pcs (${style}) dahil kinumpirma mong natanggap mo na ang order.`,
+            date: new Date().toLocaleString()
         });
 
 
-        await saveData();
-
-
-        alert(
-
-            `✅ Matagumpay!\n\n` +
-
-            `${quantity} pcs (${style}) ay nailipat na sa Active Stock.`
-
-        );
+        try {
+            // Direktang i-sync at i-save ang updated state sa 'main_inventory' ng Firestore
+            await saveData();
+            alert("Maraming salamat! Na-update na ang iyong kumpirmasyon at nailipat na ito sa Active Stock.");
+        } catch (error) {
+            console.error("Error sa pag-confirm ng order:", error);
+            alert("Nagka-error sa pagsusumite ng kumpirmasyon.");
+        }
 
     };
 
@@ -3317,7 +3231,7 @@ async function loadDataSilent() {
                             .toLowerCase() ===
                         currentStoreName
                             .toLowerCase()
-                );
+            );
 
 
             if (found) {
