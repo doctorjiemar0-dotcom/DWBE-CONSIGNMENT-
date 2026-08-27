@@ -181,13 +181,13 @@
                 <div id="pendingDeliveryContainer"></div>
             </div>
 
-            <!-- QR Code para sa Direktang Link ng Tindahan na ito -->
+            <!-- QR Code para sa Direktang Link ng Tindahan na ito (Nakatago default) -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">📷 QR Code ng Tindahan Mo</h2>
-                    <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #558b2f; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Itago</button>
+                    <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #558b2f; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Ipakita</button>
                 </div>
-                <div id="qrContentWrapper">
+                <div id="qrContentWrapper" style="display: none;">
                     <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px; text-align: center;">I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.</p>
                     <div class="qr-container" style="margin-top: 0;">
                         <div id="qrcode"></div>
@@ -417,11 +417,10 @@
             alert("Matagumpay na naidagdag sa iyong stock ang mga natanggap na walis nang may tamang pagkakahiwalay!");
         };
 
-        // Ang client ay maaari lamang mag-update ng amount sa rectangular box kung hindi pa na-check ng admin
         window.updateDpAmount = async function(itemIndex, val) {
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store || !store.storeItems || !store.storeItems[itemIndex]) return;
-            if (store.storeItems[itemIndex].dpPaid) return; // Kung na-check na ng admin, bawal nang baguhin
+            if (store.storeItems[itemIndex].dpPaid) return;
             store.storeItems[itemIndex].dpAmountGiven = val;
             await saveData();
         };
@@ -625,7 +624,6 @@
                 notifContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
             }
 
-            // Auto-initialize storeItems kung wala pa
             if (!store.storeItems || store.storeItems.length === 0) {
                 store.storeItems = [{
                     styleType: store.styleType || 'Ordinary',
@@ -641,7 +639,6 @@
                 }];
             }
 
-            // Alisin sa storeItems ang mga item na nasa approvedRestocks pa lang (hindi pa nire-receive)
             if (store.approvedRestocks && store.approvedRestocks.length > 0 && store.storeItems) {
                 let dataChanged = false;
                 store.approvedRestocks.forEach(req => {
@@ -686,8 +683,6 @@
 
                 let dpRecordSection = '';
                 if (sub.requiresDownpayment) {
-                    // Ang maliit na box (checkbox) ay naka-disable para sa client at manggagaling ang tsek sa admin.
-                    // Ang rectangular input box ay naka-disable (hindi na ma-e-edit) kapag na-check na ng admin ang dpPaid.
                     dpRecordSection = `
                         <div style="margin-top: 8px; padding: 6px; background: #fff; border: 1px dashed #ef9a9a; border-radius: 4px; font-size: 0.8rem;">
                             <label style="display: flex; align-items: center; gap: 6px; cursor: default; font-weight: normal; margin-bottom: 4px; color: #c62828;">
@@ -718,17 +713,18 @@
                 itemsContainer.appendChild(div);
             });
 
+            // Chat / Message Admin Section - Pinakabago ay nasa pinakataas
             const chatContainer = document.getElementById('clientChatContainer');
             chatContainer.innerHTML = '';
             if (store.messages && store.messages.length > 0) {
-                store.messages.forEach(m => {
+                const reversedMessages = [...store.messages].reverse();
+                reversedMessages.forEach(m => {
                     const isAdmin = m.sender === 'Admin';
                     const div = document.createElement('div');
                     div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
                     div.innerHTML = `<strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
                     chatContainer.appendChild(div);
                 });
-                chatContainer.scrollTop = chatContainer.scrollHeight;
             } else {
                 chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
             }
@@ -754,6 +750,10 @@
             if (qty <= 5) {
                 if (store.lastFreeRestockMonth === currentMonthYear) {
                     alert('⚠️ Paalala: 1 beses lamang sa isang buwan pinapayagan ang pag-request ng 1-5 pcs (walang advance payment). Nakagamit ka na ng iyong libreng restock ngayong buwan. Kung kailangan mo pa ng karagdagang stock, maaari kang mag-request ng Above Minimum (higit sa 5 pcs) na may 50% downpayment.');
+                    return;
+                }
+                const confirmFree = confirm(`⚠️ Nais mo bang kumpirmahin ang pag-request ng ${qty} pcs (${styleType}) bilang Libreng Restock (Walang Advance Payment) para sa buwang ito?`);
+                if (!confirmFree) {
                     return;
                 }
                 requiresDP = false;
