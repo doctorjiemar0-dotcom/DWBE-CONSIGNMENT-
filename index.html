@@ -159,13 +159,6 @@
                 </iframe>
             </div>
 
-            <!-- STOP AGREEMENT / CONSIGNMENT SECTION (MAY CONFIRMATION NOTICE) -->
-            <div class="card" style="background: #ffebee; border: 1px solid #ef9a9a;">
-                <h2 style="color: #c62828; font-size: 0.95rem;">🛑 Pagpapahinto ng Consignment Agreement</h2>
-                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Kung nais mo nang itigil o tapusin ang kasunduan at consignment sa tindahang ito, i-click ang button sa ibaba.</p>
-                <button type="button" onclick="promptStopAgreement()" style="background-color: #d32f2f; font-size: 0.9rem; padding: 8px;">Itigil / I-cancel ang Kasunduan (Stop)</button>
-            </div>
-
             <!-- Active Items Summary -->
             <div class="card">
                 <h2>📦 Aktibong Stock at mga Paninda</h2>
@@ -185,9 +178,9 @@
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">📷 QR Code ng Tindahan Mo</h2>
-                    <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #558b2f; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Itago</button>
+                    <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #558b2f; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Ipakita</button>
                 </div>
-                <div id="qrContentWrapper">
+                <div id="qrContentWrapper" style="display: none;">
                     <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px; text-align: center;">I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.</p>
                     <div class="qr-container" style="margin-top: 0;">
                         <div id="qrcode"></div>
@@ -212,7 +205,7 @@
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Naubusan ka na ba o kailangan mo ng dagdag na walis tambo? Mag-request dito.</p>
                 <div style="font-size: 0.75rem; color: #d84315; margin-bottom: 8px; line-height: 1.3; background: #fff3e0; padding: 6px; border-radius: 4px;">
                     📌 <strong>Tuntunin sa Restock:</strong><br>
-                    • Mag-request lamang kung kinakailangan ng karagdagang paninda sa iyong tindahan (hanggang 20 pcs bawat hiling).
+                    • Mag-request lamang kung kinakailangan ng karagdagang paninda sa iyong tindahan (5 pcs bawat hiling).
                 </div>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
@@ -222,8 +215,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Ilang piraso ang kailangan? (Max 20)</label>
-                    <input type="number" id="restockQtyInput" value="5" min="1" max="20">
+                    <label>Ilang piraso ang kailangan? (5 pcs)</label>
+                    <input type="number" id="restockQtyInput" value="5" min="5" max="5">
                 </div>
                 <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
             </div>
@@ -238,6 +231,13 @@
                     <input type="text" id="clientChatInput" placeholder="I-type ang mensahe o tanong sa admin...">
                 </div>
                 <button type="button" onclick="sendClientMessage()" style="background-color: #0288d1;">Ipadala ang Mensahe</button>
+            </div>
+
+            <!-- STOP AGREEMENT / CONSIGNMENT SECTION (MAY CONFIRMATION NOTICE) -->
+            <div class="card" style="background: #ffebee; border: 1px solid #ef9a9a;">
+                <h2 style="color: #c62828; font-size: 0.95rem;">🛑 Pagpapahinto ng Consignment Agreement</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Kung nais mo nang itigil o tapusin ang kasunduan at consignment sa tindahang ito, i-click ang button sa ibaba.</p>
+                <button type="button" onclick="promptStopAgreement()" style="background-color: #d32f2f; font-size: 0.9rem; padding: 8px;">Itigil / I-cancel ang Kasunduan (Stop)</button>
             </div>
         </div>
 
@@ -666,14 +666,13 @@
             const chatContainer = document.getElementById('clientChatContainer');
             chatContainer.innerHTML = '';
             if (store.messages && store.messages.length > 0) {
-                store.messages.forEach(m => {
+                store.messages.slice().reverse().forEach(m => {
                     const isAdmin = m.sender === 'Admin';
                     const div = document.createElement('div');
                     div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
                     div.innerHTML = `<strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
                     chatContainer.appendChild(div);
                 });
-                chatContainer.scrollTop = chatContainer.scrollHeight;
             } else {
                 chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
             }
@@ -683,8 +682,8 @@
             const styleType = document.getElementById('restockStyleType').value;
             const qty = parseInt(document.getElementById('restockQtyInput').value);
             
-            if (isNaN(qty) || qty < 1 || qty > 20) {
-                alert('Mangyaring ilagay ang tamang dami mula 1 hanggang 20 piraso lamang.');
+            if (isNaN(qty) || qty < 5 || qty > 5) {
+                alert('Mangyaring ilagay ang tamang dami na 5 piraso lamang.');
                 return;
             }
 
