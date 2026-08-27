@@ -601,6 +601,7 @@
                             </div>
                             <div class="btn-group">
                                 <button type="button" onclick="checkupStoreSub(${index}, ${subIdx})" style="background-color: #0288d1;">Koleksyon</button>
+                                <button type="button" onclick="markCollectedSub(${index}, ${subIdx})" style="background-color: #2e7d32;">✅ Nakolektahan Na</button>
                                 <button type="button" onclick="bawasStockSub(${index}, ${subIdx})" style="background-color: #ff9800;">Bawas</button>
                                 <button type="button" onclick="restockStoreSub(${index}, ${subIdx})" style="background-color: #388e3c;">Restock</button>
                             </div>
@@ -830,6 +831,7 @@
             if (!item.approvedRestocks) item.approvedRestocks = [];
 
             if (isApproved) {
+                // Dito lamang nagbabawas sa Home inventory kapag na-approve na ang restock request
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
                 item.approvedRestocks.push({ styleType: style, qty: qty, date: timestamp });
                 
@@ -879,6 +881,25 @@
                 subItem.currentStock = Math.max(0, subItem.currentStock - count);
                 store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nabenta: ${count} pcs (${subItem.styleType})` });
                 saveToCloud();
+            }
+        };
+
+        // Bagong function para i-mark bilang nakolektahan na at alisin ang "Due Na!" status
+        window.markCollectedSub = async function(storeIdx, subIdx) {
+            const store = appData.consignments[storeIdx];
+            const subItem = store.storeItems[subIdx];
+            if (confirm(`I-mark ba bilang nakolektahan na ang ${subItem.styleType || 'Ordinary'} para sa ${store.storeName}? Mawawala na ang Due status nito.`)) {
+                if (subItem.collectionDate) {
+                    let d = new Date(subItem.collectionDate);
+                    d.setMonth(d.getMonth() + 1);
+                    subItem.collectionDate = d.toISOString().slice(0, 10);
+                } else {
+                    let d = new Date();
+                    d.setMonth(d.getMonth() + 1);
+                    subItem.collectionDate = d.toISOString().slice(0, 10);
+                }
+                store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nakolektahan na ang ${subItem.styleType || 'Ordinary'}` });
+                await saveToCloud();
             }
         };
 
