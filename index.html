@@ -1968,6 +1968,32 @@ function renderClientDashboard(
 
 
     /*
+     * AUTO-DETECT APPROVED RESTOCK REQUESTS PARA HINDI DIRETSONG PUMASOK SA ACTIVE STOCK
+     */
+    if (Array.isArray(store.activeRequests)) {
+        store.activeRequests.forEach(req => {
+            const status = String(req.status || '').toLowerCase();
+            if (status === 'approved' || status === 'na-approve' || status === 'delivered') {
+                const alreadyExists = store.pendingShipments.some(p => 
+                    (p.styleType === req.styleType || p.style === req.styleType) &&
+                    Number(p.initialQty ?? p.qty ?? p.quantity ?? 0) === Number(req.qty)
+                );
+                if (!alreadyExists) {
+                    store.pendingShipments.push({
+                        styleType: req.styleType || 'Ordinary',
+                        initialQty: req.qty || 1,
+                        price: req.price || 150,
+                        collectionDate: req.collectionDate || 'N/A',
+                        date: req.date || new Date().toLocaleString(),
+                        status: 'Delivered'
+                    });
+                }
+            }
+        });
+    }
+
+
+    /*
      * COMPATIBILITY SA ADMIN DATA
      */
 
@@ -2130,11 +2156,9 @@ function renderClientDashboard(
                     pend.approvalDate ||
                     'N/A';
 
-                // I-normalize ang status para sa case-insensitive check
                 const statusLower = pend.status ? String(pend.status).toLowerCase() : '';
                 let actionButtonHTML = '';
 
-                // Kung delivered na o kaya ay nakasalin sa bagong format, i-render ang button
                 if (statusLower === 'delivered' || statusLower === '') {
                     actionButtonHTML = `
                         <button type="button"
@@ -2707,6 +2731,16 @@ window.confirmOrderReceived =
         });
 
 
+        // Linisin din ang nauugnay na active request status kung galing sa activeRequests
+        if (Array.isArray(store.activeRequests)) {
+            store.activeRequests.forEach(req => {
+                if ((req.styleType === style) && Number(req.qty) === quantity && (req.status === 'Approved' || req.status === 'na-approve')) {
+                    req.status = 'Received';
+                }
+            });
+        }
+
+
         // Magdagdag ng mensahe sa chat at notification
         if (!Array.isArray(store.messages)) {
             store.messages = [];
@@ -2728,7 +2762,6 @@ window.confirmOrderReceived =
 
 
         try {
-            // Direktang i-sync at i-save ang updated state sa 'main_inventory' ng Firestore
             await saveData();
             alert("Maraming salamat! Na-update na ang iyong kumpirmasyon at nailipat na ito sa Active Stock.");
         } catch (error) {
