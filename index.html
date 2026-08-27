@@ -206,14 +206,13 @@
                 </div>
             </div>
 
-            <!-- Request Restock Section (May Polisiya) -->
+            <!-- Request Restock Section -->
             <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
                 <h2>🔄 Humiling ng Karagdagang Restock</h2>
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Naubusan ka na ba o kailangan mo ng dagdag na walis tambo? Mag-request dito.</p>
                 <div style="font-size: 0.75rem; color: #d84315; margin-bottom: 8px; line-height: 1.3; background: #fff3e0; padding: 6px; border-radius: 4px;">
                     📌 <strong>Tuntunin sa Restock:</strong><br>
-                    • <strong>1 hanggang 5 pcs:</strong> 1 beses lang bawat buwan (Walang advance payment).<br>
-                    • <strong>Above Minimum (Higit sa 5 pcs):</strong> May <strong style="color: #c62828;">50% Downpayment</strong> advance (Maaaring mag-request kahit nakapag-request na ng 5 pcs ngayong buwan).
+                    • Mag-request lamang kung kinakailangan ng karagdagang paninda sa iyong tindahan (hanggang 20 pcs bawat hiling).
                 </div>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
@@ -377,14 +376,7 @@
 
             const itemToReceive = store.approvedRestocks[index];
 
-            const isDownpaymentRequired = itemToReceive.requiresDownpayment !== undefined 
-                ? itemToReceive.requiresDownpayment 
-                : (itemToReceive.qty > 5);
-
-            let existingItem = store.storeItems.find(i => 
-                i.styleType === itemToReceive.styleType && 
-                Boolean(i.requiresDownpayment) === Boolean(isDownpaymentRequired)
-            );
+            let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType);
             
             if (existingItem) {
                 existingItem.currentStock += itemToReceive.qty;
@@ -397,8 +389,7 @@
                     returnedQty: 0,
                     rejectedQty: 0,
                     price: store.price || 0,
-                    collectionDate: store.collectionDate || 'N/A',
-                    requiresDownpayment: isDownpaymentRequired
+                    collectionDate: store.collectionDate || 'N/A'
                 });
             }
 
@@ -407,12 +398,12 @@
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
-                text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType}) ${isDownpaymentRequired ? '[May 50% Downpayment]' : '[Walang Advance Payment]'}`,
+                text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`,
                 date: new Date().toLocaleString()
             });
 
             await saveData();
-            alert("Matagumpay na naidagdag sa iyong stock ang mga natanggap na walis nang may tamang pagkakahiwalay!");
+            alert("Matagumpay na naidagdag sa iyong stock ang mga natanggap na walis!");
         };
 
         async function loadData() {
@@ -584,7 +575,7 @@
                     const div = document.createElement('div');
                     div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
                     div.innerHTML = `
-                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong> ${req.requiresDownpayment ? '<span style="color:#c62828; font-weight:bold;">(May 50% DP)</span>' : ''}</div>
+                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong></div>
                         <div style="font-size: 0.75rem; color: #555; margin-bottom: 5px;">Na-approve noong: ${req.date || 'N/A'}</div>
                         <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 0;">✅ Natanggap Ko Na (Idagdag sa Stock)</button>
                     `;
@@ -622,18 +613,16 @@
                     returnedQty: store.returnedQty || 0,
                     rejectedQty: store.rejectedQty || 0,
                     price: store.price,
-                    collectionDate: store.collectionDate,
-                    requiresDownpayment: (store.initialQty > 5)
+                    collectionDate: store.collectionDate
                 }];
             }
 
-            // 🛡️ BAGONG FIX: Alisin sa storeItems ang mga item na nasa approvedRestocks pa lang (hindi pa nire-receive)
+            // Alisin sa storeItems ang mga item na nasa approvedRestocks pa lang (hindi pa nire-receive)
             if (store.approvedRestocks && store.approvedRestocks.length > 0 && store.storeItems) {
                 let dataChanged = false;
                 store.approvedRestocks.forEach(req => {
                     const matchIndex = store.storeItems.findIndex(i => 
                         i.styleType === req.styleType && 
-                        Boolean(i.requiresDownpayment) === Boolean(req.requiresDownpayment) &&
                         i.initialQty === req.qty &&
                         i.currentStock === req.qty
                     );
@@ -643,7 +632,7 @@
                     }
                 });
                 if (dataChanged) {
-                    saveData(); // Awtomatikong isave para mawala na sa active list ng database
+                    saveData();
                 }
             }
 
@@ -653,27 +642,18 @@
             store.storeItems.forEach(sub => {
                 if (sub.returnedQty === undefined) sub.returnedQty = 0;
                 if (sub.rejectedQty === undefined) sub.rejectedQty = 0;
-                if (sub.requiresDownpayment === undefined) {
-                    sub.requiresDownpayment = (sub.initialQty > 5);
-                }
 
                 const subSold = Math.max(0, sub.initialQty - sub.currentStock - sub.returnedQty - sub.rejectedQty);
-                const effectivePrice = sub.requiresDownpayment ? (sub.price / 2) : sub.price;
-                const subSales = subSold * effectivePrice;
+                const subSales = subSold * (sub.price || 0);
 
                 const div = document.createElement('div');
                 div.className = 'store-item-box';
 
-                let dpBadge = sub.requiresDownpayment 
-                    ? `<span style="background: #ffebee; color: #c62828; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ef9a9a;">🏷️ 50% Downpayment Order</span>` 
-                    : `<span style="background: #e8f5e9; color: #2e7d32; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid #c8e6c9;">🆓 Walang Advance Payment (Libreng Restock)</span>`;
-
                 div.innerHTML = `
                     <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                         <span>${sub.styleType || 'Ordinary'}</span>
-                        <span>Presyo: ₱${effectivePrice}</span>
+                        <span>Presyo: ₱${sub.price || 0}</span>
                     </div>
-                    <div style="margin-bottom: 6px;">${dpBadge}</div>
                     <div style="font-size: 0.85rem; color: #444;">
                         Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Simulang Dami: ${sub.initialQty} pcs<br>
                         Kabuuang Nabenta: <strong>${subSold} pcs</strong> (Benta: ₱${subSales.toLocaleString()})<br>
@@ -711,46 +691,22 @@
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
-            const currentDate = new Date();
-            const currentMonthYear = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}`;
-            
-            let requiresDP = false;
-
-            if (qty <= 5) {
-                if (store.lastFreeRestockMonth === currentMonthYear) {
-                    alert('⚠️ Paalala: 1 beses lamang sa isang buwan pinapayagan ang pag-request ng 1-5 pcs (walang advance payment). Nakagamit ka na ng iyong libreng restock ngayong buwan. Kung kailangan mo pa ng karagdagang stock, maaari kang mag-request ng Above Minimum (higit sa 5 pcs) na may 50% downpayment.');
-                    return;
-                }
-                requiresDP = false;
-            } else {
-                requiresDP = true;
-                const confirmDP = confirm(`⚠️ Ang hiling na ${qty} pcs ay lumalagpas sa minimum (Above Minimum).\n\nAng order na ito ay may 50% Down Payment Advance (maaari kang mag-request kahit nakapag-avail ka na ng 5 pcs ngayong buwan). Nais mo bang ituloy ang pagpapadala ng request sa Admin?`);
-                if (!confirmDP) {
-                    return;
-                }
-            }
-
             if (!store.activeRequests) store.activeRequests = [];
             store.activeRequests.push({
                 styleType: styleType,
                 qty: qty,
-                requiresDownpayment: requiresDP,
                 date: new Date().toLocaleString()
             });
-
-            if (qty <= 5) {
-                store.lastFreeRestockMonth = currentMonthYear;
-            }
 
             if (!store.messages) store.messages = [];
             store.messages.push({
                 sender: currentStoreName,
-                text: `Humiling ng restock: ${qty} pcs (${styleType}) ${requiresDP ? '[May 50% Downpayment]' : '[Walang Advance Payment - Libreng Restock ng Buwan]'}`,
+                text: `Humiling ng restock: ${qty} pcs (${styleType})`,
                 date: new Date().toLocaleString()
             });
 
             await saveData();
-            alert(requiresDP ? 'Matagumpay na naipadala ang iyong kahilingan sa Admin (Above Minimum na may 50% Downpayment)!' : 'Matagumpay na naipadala ang iyong libreng restock request (1-5 pcs) para sa buwang ito!');
+            alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
         };
 
         window.sendClientMessage = async function() {
@@ -768,14 +724,9 @@
                 date: new Date().toLocaleString()
             });
 
-            input.value = andclearInput(input);
+            input.value = '';
             await saveData();
         };
-
-        function andclearInput(input) {
-            input.value = '';
-            return '';
-        }
 
         loadData();
 
