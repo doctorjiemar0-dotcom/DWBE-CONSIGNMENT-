@@ -371,19 +371,16 @@
             await saveData();
         };
 
-        // --- NAAYOS NA CONFIRM RECEIVE RESTOCK (HINDI NA MAG-MEREGE ANG MAY DP SA WALANG DP) ---
         window.confirmReceiveRestock = async function(index) {
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
 
             const itemToReceive = store.approvedRestocks[index];
 
-            // Awtomatikong suriin o kunin ang downpayment status (True kung may flag o higit sa 5 pcs)
             const isDownpaymentRequired = itemToReceive.requiresDownpayment !== undefined 
                 ? itemToReceive.requiresDownpayment 
                 : (itemToReceive.qty > 5);
 
-            // Hanapin kung may existing item na magkapareho ang style AT magkapareho ang downpayment status
             let existingItem = store.storeItems.find(i => 
                 i.styleType === itemToReceive.styleType && 
                 Boolean(i.requiresDownpayment) === Boolean(isDownpaymentRequired)
@@ -631,17 +628,20 @@
                 }];
             }
 
-            // I-render ang mga aktibong stock nang nakahiwalay (may DP o walang DP) at i-highlight ang DP percentage
+            // I-render ang mga aktibong stock kasama ang awtomatikong half price formula para sa 50% Downpayment items
             store.storeItems.forEach(sub => {
                 if (sub.returnedQty === undefined) sub.returnedQty = 0;
                 if (sub.rejectedQty === undefined) sub.rejectedQty = 0;
 
                 const subSold = Math.max(0, sub.initialQty - sub.currentStock - sub.returnedQty - sub.rejectedQty);
-                const subSales = subSold * sub.price;
+                
+                // 🏷️ DITO INILAGAY ANG FORMULA: Awtomatikong hinahati sa 2 ang presyo kung may 50% Downpayment
+                const effectivePrice = sub.requiresDownpayment ? (sub.price / 2) : sub.price;
+                const subSales = subSold * effectivePrice;
+
                 const div = document.createElement('div');
                 div.className = 'store-item-box';
 
-                // Naka-highlight na badge para sa Downpayment o Libreng Restock
                 let dpBadge = sub.requiresDownpayment 
                     ? `<span style="background: #ffebee; color: #c62828; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ef9a9a;">🏷️ 50% Downpayment Order</span>` 
                     : `<span style="background: #e8f5e9; color: #2e7d32; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid #c8e6c9;">🆓 Walang Advance Payment (Libreng Restock)</span>`;
@@ -649,7 +649,7 @@
                 div.innerHTML = `
                     <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                         <span>${sub.styleType || 'Ordinary'}</span>
-                        <span>Presyo: ₱${sub.price}</span>
+                        <span>Presyo: ₱${effectivePrice}</span>
                     </div>
                     <div style="margin-bottom: 6px;">${dpBadge}</div>
                     <div style="font-size: 0.85rem; color: #444;">
@@ -677,7 +677,6 @@
             }
         }
 
-        // RESTOCK REQUEST LOGIC (50% DOWNPAYMENT & SEPARATION LOGIC)
         window.submitRestockRequest = async function() {
             const styleType = document.getElementById('restockStyleType').value;
             const qty = parseInt(document.getElementById('restockQtyInput').value);
@@ -747,9 +746,14 @@
                 date: new Date().toLocaleString()
             });
 
-            input.value = '';
+            input.value = andclearInput(input);
             await saveData();
         };
+
+        function andclearInput(input) {
+            input.value = '';
+            return '';
+        }
 
         loadData();
 
