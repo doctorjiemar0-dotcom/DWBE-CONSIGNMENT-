@@ -196,7 +196,7 @@
                 </div>
             </div>
 
-            <!-- Notifications na may Clear (✕) Button -->
+            <!-- Notifications na may Clear (✕) Button (Latest sa Taas) -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">📢 Mga Abiso at Update</h2>
@@ -417,16 +417,11 @@
             alert("Matagumpay na naidagdag sa iyong stock ang mga natanggap na walis nang may tamang pagkakahiwalay!");
         };
 
-        window.updateDpPaid = async function(itemIndex, isChecked) {
-            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-            if (!store || !store.storeItems || !store.storeItems[itemIndex]) return;
-            store.storeItems[itemIndex].dpPaid = isChecked;
-            await saveData();
-        };
-
+        // Ang client ay maaari lamang mag-update ng amount sa rectangular box kung hindi pa na-check ng admin
         window.updateDpAmount = async function(itemIndex, val) {
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store || !store.storeItems || !store.storeItems[itemIndex]) return;
+            if (store.storeItems[itemIndex].dpPaid) return; // Kung na-check na ng admin, bawal nang baguhin
             store.storeItems[itemIndex].dpAmountGiven = val;
             await saveData();
         };
@@ -610,6 +605,7 @@
                 pendingDeliveryCard.style.display = 'none';
             }
 
+            // Abiso at Update - Pinakabago ay nasa pinakataas (unshift)
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
             if (store.clientNotifications && store.clientNotifications.length > 0) {
@@ -690,15 +686,17 @@
 
                 let dpRecordSection = '';
                 if (sub.requiresDownpayment) {
+                    // Ang maliit na box (checkbox) ay naka-disable para sa client at manggagaling ang tsek sa admin.
+                    // Ang rectangular input box ay naka-disable (hindi na ma-e-edit) kapag na-check na ng admin ang dpPaid.
                     dpRecordSection = `
                         <div style="margin-top: 8px; padding: 6px; background: #fff; border: 1px dashed #ef9a9a; border-radius: 4px; font-size: 0.8rem;">
-                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: normal; margin-bottom: 4px; color: #c62828;">
-                                <input type="checkbox" ${sub.dpPaid ? 'checked' : ''} onchange="updateDpPaid(${index}, this.checked)" style="width: auto; cursor: pointer;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: default; font-weight: normal; margin-bottom: 4px; color: #c62828;">
+                                <input type="checkbox" ${sub.dpPaid ? 'checked' : ''} disabled style="width: auto;">
                                 <span><strong>Naibigay na ang Downpayment</strong></span>
                             </label>
                             <div style="display: flex; align-items: center; gap: 6px;">
                                 <span style="font-size: 0.75rem; color: #555;">Halagang Binigay (₱):</span>
-                                <input type="number" value="${sub.dpAmountGiven}" placeholder="Ilagay ang halaga" onchange="updateDpAmount(${index}, this.value)" style="padding: 4px 6px; font-size: 0.8rem; width: 130px; border: 1px solid #ccc; border-radius: 4px;">
+                                <input type="number" value="${sub.dpAmountGiven}" placeholder="Ilagay ang halaga" ${sub.dpPaid ? 'disabled style="background: #f1f1f1; color: #555; cursor: not-allowed;"' : `onchange="updateDpAmount(${index}, this.value)"`} style="padding: 4px 6px; font-size: 0.8rem; width: 130px; border: 1px solid #ccc; border-radius: 4px;">
                             </div>
                         </div>
                     `;
