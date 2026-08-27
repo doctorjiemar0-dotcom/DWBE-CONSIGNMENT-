@@ -193,6 +193,7 @@
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">📢 Mga Abiso at Update</h2>
+                    <button type="button" onclick="clearAllNotifications()" style="background: none; border: none; color: #d32f2f; font-size: 0.75rem; cursor: pointer; padding: 2px 6px; font-weight: bold;" title="I-clear lahat ng abiso">I-clear Lahat</button>
                 </div>
                 <div id="clientNotificationsContainer">
                     <p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>
@@ -205,7 +206,7 @@
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Naubusan ka na ba o kailangan mo ng dagdag na walis tambo? Mag-request dito.</p>
                 <div style="font-size: 0.75rem; color: #d84315; margin-bottom: 8px; line-height: 1.3; background: #fff3e0; padding: 6px; border-radius: 4px;">
                     📌 <strong>Tuntunin sa Restock:</strong><br>
-                    • Mag-request lamang kung kinakailangan ng karagdagang paninda sa iyong tindahan (5 pcs bawat hiling).
+                    • Mag-request lamang kung kinakailangan ng karagdagang paninda sa iyong tindahan (eksaktong 5 pcs, 1 beses bawat buwan).
                 </div>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
@@ -215,7 +216,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Ilang piraso ang kailangan? (5 pcs)</label>
+                    <label>Ilang piraso ang kailangan? (Min/Max 5)</label>
                     <input type="number" id="restockQtyInput" value="5" min="5" max="5">
                 </div>
                 <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
@@ -345,7 +346,7 @@
             store.consignmentStatus = "Stopped";
 
             if (!store.messages) store.messages = [];
-            store.messages.push({
+            store.messages.unshift({
                 sender: currentStoreName,
                 text: "⚠️ Pinal na itinigil / kinansela ng kliyente ang Consignment Agreement.",
                 date: new Date().toLocaleString()
@@ -367,6 +368,14 @@
             if (!store || !store.clientNotifications) return;
             
             store.clientNotifications.splice(index, 1);
+            await saveData();
+        };
+
+        window.clearAllNotifications = async function() {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store || !store.clientNotifications || store.clientNotifications.length === 0) return;
+            if (!confirm("Sigurado ka bang gusto mong i-clear ang lahat ng abiso?")) return;
+            store.clientNotifications = [];
             await saveData();
         };
 
@@ -396,7 +405,7 @@
             store.approvedRestocks.splice(index, 1);
 
             if (!store.messages) store.messages = [];
-            store.messages.push({
+            store.messages.unshift({
                 sender: currentStoreName,
                 text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`,
                 date: new Date().toLocaleString()
@@ -524,7 +533,7 @@
                 const message = document.getElementById('inqMessage').value.trim();
 
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                appData.pendingInquiries.push({
+                appData.pendingInquiries.unshift({
                     storeName,
                     ownerName,
                     contact,
@@ -666,13 +675,14 @@
             const chatContainer = document.getElementById('clientChatContainer');
             chatContainer.innerHTML = '';
             if (store.messages && store.messages.length > 0) {
-                store.messages.slice().reverse().forEach(m => {
+                store.messages.forEach(m => {
                     const isAdmin = m.sender === 'Admin';
                     const div = document.createElement('div');
                     div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
                     div.innerHTML = `<strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
                     chatContainer.appendChild(div);
                 });
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             } else {
                 chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
             }
@@ -682,23 +692,45 @@
             const styleType = document.getElementById('restockStyleType').value;
             const qty = parseInt(document.getElementById('restockQtyInput').value);
             
-            if (isNaN(qty) || qty < 5 || qty > 5) {
-                alert('Mangyaring ilagay ang tamang dami na 5 piraso lamang.');
+            if (isNaN(qty) || qty !== 5) {
+                alert('Ang restock ay dapat eksaktong 5 piraso lamang (Minimum at Maximum ay 5 pcs).');
                 return;
             }
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
+            // Suriin kung nakapag-request na ngayong buwan (1 beses bawat buwan)
+            const now = new Date();
+            const currentMonthYear = `${now.getFullYear()}-${now.getMonth()}`;
+            
+            const alreadyRestockedThisMonth = (store.activeRequests || []).some(req => {
+                const reqDate = new Date(req.date);
+                return `${reqDate.getFullYear()}-${reqDate.getMonth()}` === currentMonthYear;
+            }) || (store.approvedRestocks || []).some(req => {
+                const reqDate = new Date(req.date);
+                return `${reqDate.getFullYear()}-${reqDate.getMonth()}` === currentMonthYear;
+            });
+
+            if (alreadyRestockedThisMonth) {
+                alert('Maaari lamang mag-request ng restock ng isang beses bawat buwan.');
+                return;
+            }
+
+            const confirmPrompt = confirm("Gusto mo bang ituloy ang pag-request ng 5 pirasong restock?");
+            if (!confirmPrompt) {
+                return;
+            }
+
             if (!store.activeRequests) store.activeRequests = [];
-            store.activeRequests.push({
+            store.activeRequests.unshift({
                 styleType: styleType,
                 qty: qty,
                 date: new Date().toLocaleString()
             });
 
             if (!store.messages) store.messages = [];
-            store.messages.push({
+            store.messages.unshift({
                 sender: currentStoreName,
                 text: `Humiling ng restock: ${qty} pcs (${styleType})`,
                 date: new Date().toLocaleString()
@@ -717,7 +749,7 @@
             if (!store) return;
 
             if (!store.messages) store.messages = [];
-            store.messages.push({
+            store.messages.unshift({
                 sender: currentStoreName,
                 text: text,
                 date: new Date().toLocaleString()
