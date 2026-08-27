@@ -26,6 +26,7 @@
         #portalContent { display: none; }
 
         .store-item-box { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
+        .pending-shipment-box { background: #fffde7; border: 1px solid #ffee58; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
         .notification-item { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 8px; margin-bottom: 6px; font-size: 0.85rem; border-radius: 4px; }
         .chat-msg { background: #f1f8e9; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85rem; border: 1px solid #c5e1a5; }
         .chat-msg.admin { background: #e3f2fd; border-color: #90caf9; }
@@ -179,6 +180,13 @@
                 </iframe>
             </div>
 
+            <!-- Pending Items / Naaprubahan ng Admin na Naghihintay ng "Order Received" -->
+            <div id="pendingShipmentCard" class="card" style="display: none; background: #fffde7; border: 1px solid #fbc02d;">
+                <h2 style="color: #f57f17;">⏳ Mga Naaprubahang Item na Naghihintay ng Kumpirmasyon</h2>
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">I-click ang "Order Received" kapag natanggap mo na ang mga item na ito para lumipat sila sa iyong mga aktibong stock.</p>
+                <div id="pendingShipmentsContainer"></div>
+            </div>
+
             <!-- Active Items Summary -->
             <div class="card">
                 <h2>📦 Aktibong Stock at mga Paninda</h2>
@@ -239,6 +247,13 @@
                 </div>
                 <button type="button" onclick="sendClientMessage()" style="background-color: #0288d1;">Ipadala ang Mensahe</button>
             </div>
+
+            <!-- Consignment Stop Section -->
+            <div class="card" style="background: #ffebee; border: 1px solid #ef9a9a;">
+                <h2 style="color: #c62828;">🛑 Itigil ang Kasunduan sa Consignment</h2>
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Kung nais mo nang tapusin o ihinto ang kasunduan sa konsignment (hal. magsasara na o ibabalik ang natitirang stock), i-click ang button sa ibaba upang abisuhan ang admin.</p>
+                <button type="button" onclick="requestConsignmentStop()" style="background-color: #d32f2f;">I-request ang Pag-itigil ng Consignment</button>
+            </div>
         </div>
 
         <div class="admin-link-container">
@@ -268,7 +283,6 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        // Tagapakinig para sa awtomatikong paghaba ng iframe galing sa kasunduan
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'resizeAgreement') {
                 const iframe = document.getElementById('storeAgreementFrame');
@@ -427,7 +441,7 @@
                 const message = document.getElementById('inqMessage').value.trim();
 
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                appData.pendingInquiries.unshift({ // Inilagay sa unahan para sa pinakabagong inquiry
+                appData.pendingInquiries.unshift({
                     storeName,
                     ownerName,
                     contact,
@@ -468,7 +482,7 @@
                 correctLevel: QRCode.CorrectLevel.H
             });
 
-            // Notifications - Pabaliktad ang pag-loop (slice().reverse() o .forEach mula sa huli patungo sa una) para nasa unahan ang pinakabago
+            // Notifications
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
             if (store.clientNotifications && store.clientNotifications.length > 0) {
@@ -482,6 +496,33 @@
                 notifContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
             }
 
+            // Pending Shipments / Naaprubahan na naghihintay ng "Order Received"
+            const pendingCard = document.getElementById('pendingShipmentCard');
+            const pendingContainer = document.getElementById('pendingShipmentsContainer');
+            pendingContainer.innerHTML = '';
+            if (store.pendingShipments && store.pendingShipments.length > 0) {
+                pendingCard.style.display = 'block';
+                store.pendingShipments.forEach((pend, index) => {
+                    const pDiv = document.createElement('div');
+                    pDiv.className = 'pending-shipment-box';
+                    pDiv.innerHTML = `
+                        <div style="font-weight: bold; color: #f57f17; display: flex; justify-content: space-between;">
+                            <span>${pend.styleType || 'Ordinary'} (Naaprubahan na)</span>
+                            <span>Qty: ${pend.initialQty} pcs</span>
+                        </div>
+                        <div style="font-size: 0.85rem; margin-top: 4px; color: #444;">
+                            Presyo: ₱${pend.price} | Target Koleksyon: ${pend.collectionDate || 'N/A'}<br>
+                            Petsa ng Pag-apruba: ${pend.date || 'N/A'}
+                        </div>
+                        <button type="button" onclick="confirmOrderReceived(${index})" style="background-color: #388e3c; margin-top: 8px;">📦 Order Received (I-activate sa Stock)</button>
+                    `;
+                    pendingContainer.appendChild(pDiv);
+                });
+            } else {
+                pendingCard.style.display = 'none';
+            }
+
+            // Active Items Summary
             const itemsContainer = document.getElementById('clientItemsContainer');
             itemsContainer.innerHTML = '';
             if (!store.storeItems || store.storeItems.length === 0) {
@@ -513,7 +554,7 @@
                 itemsContainer.appendChild(div);
             });
 
-            // Chat / Messages - Pabaliktad ang pag-loop para ang pinakabagong mensahe ay mapunta sa pinakataas
+            // Chat / Messages
             const chatContainer = document.getElementById('clientChatContainer');
             chatContainer.innerHTML = '';
             if (store.messages && store.messages.length > 0) {
@@ -528,6 +569,38 @@
                 chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
             }
         }
+
+        window.confirmOrderReceived = async function(index) {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store || !store.pendingShipments || !store.pendingShipments[index]) return;
+
+            const itemToActivate = store.pendingShipments.splice(index, 1)[0];
+            
+            if (!store.storeItems) store.storeItems = [];
+            store.storeItems.push({
+                styleType: itemToActivate.styleType,
+                initialQty: itemToActivate.initialQty,
+                currentStock: itemToActivate.initialQty,
+                price: itemToActivate.price,
+                collectionDate: itemToActivate.collectionDate
+            });
+
+            if (!store.messages) store.messages = [];
+            store.messages.push({
+                sender: currentStoreName,
+                text: `Na-confirm ko nang natanggap ang order: ${itemToActivate.initialQty} pcs (${itemToActivate.styleType}). Aktibo na ito sa stock.`,
+                date: new Date().toLocaleString()
+            });
+
+            if (!store.clientNotifications) store.clientNotifications = [];
+            store.clientNotifications.push({
+                text: `Matagumpay na nailagay sa iyong aktibong stock ang ${itemToActivate.initialQty} pcs (${itemToActivate.styleType}).`,
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert('Matagumpay na nakumpirma! Ang mga item ay nailipat na sa iyong mga aktibong stock.');
+        };
 
         window.submitRestockRequest = async function() {
             const styleType = document.getElementById('restockStyleType').value;
@@ -556,6 +629,30 @@
 
             await saveData();
             alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
+        };
+
+        window.requestConsignmentStop = async function() {
+            const confirmation = confirm("Sigurado ka bang nais mong itigil ang iyong kasunduan sa consignment? Padadalhan nito ng abiso ang admin.");
+            if (!confirmation) return;
+
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
+
+            if (!store.messages) store.messages = [];
+            store.messages.push({
+                sender: currentStoreName,
+                text: `⚠️ NAG-REQUEST NG CONSIGNMENT STOP: Nais ko nang itigil o tapusin ang aming kasunduan sa consignment.`,
+                date: new Date().toLocaleString()
+            });
+
+            if (!store.clientNotifications) store.clientNotifications = [];
+            store.clientNotifications.push({
+                text: `Naipadala na sa Admin ang kahilingan mong itigil ang consignment. Maghihintay sila para sa huling pag-areglo o pagkolekta.`,
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert('Naipadala na sa Admin ang kahilingan mong ihinto ang kasunduan. Makikipag-ugnayan sila sa iyo sa lalong madaling panahon.');
         };
 
         window.sendClientMessage = async function() {
