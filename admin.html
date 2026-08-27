@@ -42,7 +42,6 @@
 
         .inquiry-card-box { background: #e3f2fd; border-left: 5px solid #0288d1; padding: 12px; margin-bottom: 10px; border-radius: 6px; font-size: 0.85rem; }
 
-        /* Orihinal na Store Card Design */
         .store-card { background: #fff; border-left: 5px solid var(--primary-color); padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem; }
         .store-card.due { border-left: 6px solid #d32f2f; background-color: #fff9f9; }
         .store-card.has-message { border-left: 6px solid #ff9800; background-color: #fffde7; }
@@ -59,7 +58,6 @@
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
 
-        /* Floating Floating Action Buttons (FABs) */
         .floating-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: flex-end; }
         .fab-btn { width: 52px; height: 52px; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; border: none; position: relative; }
         .fab-add { background-color: var(--primary-color); }
@@ -71,7 +69,6 @@
 
         .fab-badge { position: absolute; top: -4px; right: -4px; background-color: #d32f2f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; display: none; }
 
-        /* Modal Popup para sa mga Bubbles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 8px; padding: 20px; max-height: 85vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
@@ -494,7 +491,6 @@
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
 
-            // Render Inquiries sa Modal
             const inquiriesContainer = document.getElementById('adminInquiriesContainer');
             inquiriesContainer.innerHTML = '';
             if (!appData.pendingInquiries) appData.pendingInquiries = [];
@@ -823,47 +819,19 @@
             const item = appData.consignments[storeIdx];
             const timestamp = new Date().toLocaleString();
             const style = reqStyle || 'Ordinary';
-            const reqObj = item.activeRequests[reqIdx];
-            
+
             item.activeRequests.splice(reqIdx, 1);
             if (!item.clientNotifications) item.clientNotifications = [];
             if (!item.approvedRestocks) item.approvedRestocks = [];
 
             if (isApproved) {
-                const needsDownpayment = qty > 5;
                 appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-                
-                item.approvedRestocks.push({
-                    styleType: style,
-                    qty: qty,
-                    requiresDownpayment: needsDownpayment,
-                    date: timestamp
-                });
-
-                const downpaymentNotice = needsDownpayment ? " 🏷️ (May 50% Downpayment Required)" : "";
-
-                item.clientNotifications.push({ 
-                    id: Date.now(), 
-                    text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}). Nakabinbin ang pagtanggap.${downpaymentNotice}`, 
-                    date: timestamp 
-                });
-                
-                item.history.unshift({ 
-                    id: Date.now(), 
-                    date: timestamp, 
-                    text: `Na-approve ang Restock: ${qty} pcs (${style})${needsDownpayment ? ' [May 50% Downpayment]' : ''}` 
-                });
+                item.approvedRestocks.push({ styleType: style, qty: qty, date: timestamp });
+                item.clientNotifications.push({ id: Date.now(), text: `✅ Na-approve ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock: ${qty} pcs (${style})` });
             } else {
-                item.clientNotifications.push({ 
-                    id: Date.now(), 
-                    text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, 
-                    date: timestamp 
-                });
-                item.history.unshift({ 
-                    id: Date.now(), 
-                    date: timestamp, 
-                    text: `Tinanggihan ang Restock` 
-                });
+                item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock` });
             }
             await saveToCloud();
         };
