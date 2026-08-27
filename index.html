@@ -1936,7 +1936,7 @@ function renderClientDashboard(
 
 
     /* =====================================================
-       PENDING SHIPMENTS (UPDATED WITH LOGIC)
+       PENDING SHIPMENTS
     ===================================================== */
 
     const pendingCard =
@@ -1968,7 +1968,7 @@ function renderClientDashboard(
 
 
     /*
-     * AUTO-DETECT APPROVED RESTOCK REQUESTS PARA HINDI DIRETSONG PUMASOK SA ACTIVE STOCK
+     * AUTO-DETECT APPROVED RESTOCK REQUESTS
      */
     if (Array.isArray(store.activeRequests)) {
         store.activeRequests.forEach(req => {
@@ -1985,7 +1985,7 @@ function renderClientDashboard(
                         price: req.price || 150,
                         collectionDate: req.collectionDate || 'N/A',
                         date: req.date || new Date().toLocaleString(),
-                        status: 'Delivered'
+                        status: req.status || 'Approved'
                     });
                 }
             }
@@ -2159,7 +2159,8 @@ function renderClientDashboard(
                 const statusLower = pend.status ? String(pend.status).toLowerCase() : '';
                 let actionButtonHTML = '';
 
-                if (statusLower === 'delivered' || statusLower === '') {
+                // FIXED: Idinagdag ang 'approved' at 'na-approve' para lumabas ang button
+                if (statusLower === 'approved' || statusLower === 'na-approve' || statusLower === 'delivered' || statusLower === '') {
                     actionButtonHTML = `
                         <button type="button"
                             class="order-received-btn mt-3 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md"
@@ -2627,7 +2628,7 @@ window.clearNotifications =
 
 
 /* =========================================================
-   ORDER RECEIVED (UPDATED FIREBASE PERSISTENCE LOGIC)
+   ORDER RECEIVED (UPDATED PERSISTENCE & STOCK ACCUMULATION)
 ========================================================= */
 
 window.confirmOrderReceived =
@@ -2689,7 +2690,7 @@ window.confirmOrderReceived =
         );
 
 
-        // Ilipat sa active stock
+        // Ilipat / Idagdag sa active stock (FIXED: Nag-a-update sa existing stock kung mayroon na)
         if (!Array.isArray(
             store.storeItems
         )) {
@@ -2699,42 +2700,54 @@ window.confirmOrderReceived =
 
         }
 
+        const existingItem = store.storeItems.find(
+            sub => (sub.styleType || 'Ordinary').toLowerCase() === style.toLowerCase()
+        );
 
-        store.storeItems.push({
+        if (existingItem) {
+            existingItem.initialQty = Number(existingItem.initialQty || 0) + quantity;
+            existingItem.currentStock = Number(existingItem.currentStock || 0) + quantity;
+            if (itemToActivate.collectionDate) {
+                existingItem.collectionDate = itemToActivate.collectionDate;
+            }
+        } else {
+            store.storeItems.push({
 
-            styleType:
-                style,
+                styleType:
+                    style,
 
-            initialQty:
-                quantity,
+                initialQty:
+                    quantity,
 
-            currentStock:
-                quantity,
+                currentStock:
+                    quantity,
 
-            price:
-                Number(
-                    itemToActivate.price ??
-                    itemToActivate.unitPrice ??
-                    0
-                ),
+                price:
+                    Number(
+                        itemToActivate.price ??
+                        itemToActivate.unitPrice ??
+                        0
+                    ),
 
-            collectionDate:
-                itemToActivate.collectionDate ||
-                itemToActivate.targetCollectionDate ||
-                itemToActivate.targetDate ||
-                'N/A',
+                collectionDate:
+                    itemToActivate.collectionDate ||
+                    itemToActivate.targetCollectionDate ||
+                    itemToActivate.targetDate ||
+                    'N/A',
 
-            activatedDate:
-                new Date()
-                    .toLocaleString()
+                activatedDate:
+                    new Date()
+                        .toLocaleString()
 
-        });
+            });
+        }
 
 
         // Linisin din ang nauugnay na active request status kung galing sa activeRequests
         if (Array.isArray(store.activeRequests)) {
             store.activeRequests.forEach(req => {
-                if ((req.styleType === style) && Number(req.qty) === quantity && (req.status === 'Approved' || req.status === 'na-approve')) {
+                const reqStatus = String(req.status || '').toLowerCase();
+                if ((req.styleType === style) && Number(req.qty) === quantity && (reqStatus === 'approved' || reqStatus === 'na-approve' || reqStatus === 'delivered')) {
                     req.status = 'Received';
                 }
             });
