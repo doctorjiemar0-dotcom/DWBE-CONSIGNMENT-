@@ -107,9 +107,19 @@
 
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
                 <h2>CONSIGNMENT INVENTORY AND MONITORING</h2>
-                <div style="font-size: 0.9rem; margin-bottom: 4px; display: flex; justify-content: space-between;">
+                <div style="font-size: 0.9rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                     <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button type="button" onclick="adjustHomeStock('Ordinary', 1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #388e3c;">➕ Dagdag</button>
+                        <button type="button" onclick="adjustHomeStock('Ordinary', -1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #d32f2f;">➖ Bawas</button>
+                    </div>
+                </div>
+                <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
                     <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button type="button" onclick="adjustHomeStock('Premium', 1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #388e3c;">➕ Dagdag</button>
+                        <button type="button" onclick="adjustHomeStock('Premium', -1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #d32f2f;">➖ Bawas</button>
+                    </div>
                 </div>
             </div>
 
@@ -369,6 +379,29 @@
             const formCard = document.getElementById('addStoreCard');
             formCard.style.display = formCard.style.display === 'none' ? 'block' : 'none';
             if (formCard.style.display === 'block') formCard.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.adjustHomeStock = async function(style, amount) {
+            const current = appData.homeStock[style] || 0;
+            let qty = 0;
+            if (amount > 0) {
+                const input = prompt(`Ilang piraso ang idadagdag sa Home stock (${style})?`, '10');
+                if (input === null) return;
+                qty = parseInt(input);
+            } else {
+                const input = prompt(`Ilang piraso ang babawasan sa Home stock (${style})?`, '1');
+                if (input === null) return;
+                qty = parseInt(input);
+            }
+
+            if (!isNaN(qty) && qty > 0) {
+                if (amount < 0 && qty > current) {
+                    alert('Hindi maaaring bumaba sa zero ang stock.');
+                    return;
+                }
+                appData.homeStock[style] = amount > 0 ? current + qty : Math.max(0, current - qty);
+                await saveToCloud();
+            }
         };
 
         window.toggleStoreDetails = function(index) {
