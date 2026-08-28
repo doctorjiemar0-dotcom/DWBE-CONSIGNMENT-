@@ -56,7 +56,8 @@
         .btn-group button { padding: 6px 8px; font-size: 0.75rem; margin-top: 0; width: auto; flex: 1; }
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
 
-        .floating-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: flex-end; }
+        .floating-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: flex-end; touch-action: none; cursor: grab; }
+        .floating-container:active { cursor: grabbing; }
         .fab-btn { width: 52px; height: 52px; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; border: none; position: relative; }
         .fab-add { background-color: var(--primary-color); }
         .fab-add:hover { background-color: #388e3c; }
@@ -176,7 +177,7 @@
     </div>
 
     <!-- Floating Action Bubbles Container -->
-    <div class="floating-container">
+    <div class="floating-container" id="floatingContainer">
         <button class="fab-btn fab-broadcast" id="fabBroadcastBtn" title="Overall Broadcast Chatbox" onclick="openModal('broadcastModal')">📢</button>
         <button class="fab-btn fab-backup" id="fabBackupBtn" title="Data Backup & Recovery" onclick="openModal('backupModal')">💾</button>
         <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock Request" onclick="openModal('requestModal')">
@@ -269,6 +270,54 @@
         const passwordInput = document.getElementById('adminPasswordInput');
         const syncStatus = document.getElementById('syncStatus');
         const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
+
+        // Movable Floating Container Logic
+        const floatingContainer = document.getElementById('floatingContainer');
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+        let hasMoved = false;
+
+        floatingContainer.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            hasMoved = false;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = floatingContainer.getBoundingClientRect();
+            floatingContainer.style.bottom = 'auto';
+            floatingContainer.style.right = 'auto';
+            floatingContainer.style.left = rect.left + 'px';
+            floatingContainer.style.top = rect.top + 'px';
+            initialX = rect.left;
+            initialY = rect.top;
+            floatingContainer.setPointerCapture(e.pointerId);
+        });
+
+        floatingContainer.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                hasMoved = true;
+            }
+            floatingContainer.style.left = (initialX + dx) + 'px';
+            floatingContainer.style.top = (initialY + dy) + 'px';
+        });
+
+        floatingContainer.addEventListener('pointerup', (e) => {
+            isDragging = false;
+            try {
+                floatingContainer.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+        });
+
+        floatingContainer.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (hasMoved) {
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                }
+            }, true);
+        });
 
         function playNotificationSound() {
             try {
@@ -489,6 +538,7 @@
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
+                        searchValidation: "",
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
                 }
@@ -605,6 +655,7 @@
                 if (!item.approvedRestocks) item.approvedRestocks = [];
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
+                if (!item.searchValidation) item.searchValidation = '';
 
                 if (!item.storeItems || item.storeItems.length === 0) {
                     if (item.rejectedQty === undefined) item.rejectedQty = 0;
@@ -853,15 +904,6 @@
 
         window.approveInquiry = async function(inqIdx) {
             const inq = appData.pendingInquiries[inqIdx];
-            
-            // VALIDATION: Kapag pareho ang pangalan ng tao at pangalan ng tindahan
-            if (inq.storeName && inq.ownerName && inq.storeName.trim().toLowerCase() === inq.ownerName.trim().toLowerCase()) {
-                alert(`⚠️ Validation Warning: Ang pangalan ng tao/may-ari ("${inq.ownerName}") at pangalan ng tindahan ("${inq.storeName}") ay magkapareho!`);
-                if (!confirm(`Nais mo bang ituloy pa rin ang pag-apruba kahit magkapareho ang pangalan ng tao at tindahan?`)) {
-                    return;
-                }
-            }
-
             const initialStockStr = prompt(`[Prompt] Simulang stock para sa ${inq.storeName} (${inq.styleType || 'Ordinary'}):`, '10');
             if (initialStockStr === null) return;
             const initialStock = parseInt(initialStockStr) || 0;
@@ -877,18 +919,27 @@
                 return;
             }
 
+            // Validation check if person name (ownerName) and store name are identical
+            const isSameName = inq.ownerName && inq.storeName && inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();
+            const searchValidationMsg = isSameName ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
+
             appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);
             const todayStr = new Date().toISOString().slice(0, 10);
             let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
             const collDateStr = nextMonth.toISOString().slice(0, 10);
 
+            let notifications = [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}).`, date: new Date().toLocaleString() }];
+            if (isSameName) {
+                notifications.push({ id: Date.now() + 1, text: searchValidationMsg, date: new Date().toLocaleString() });
+            }
+
             appData.consignments.push({
-                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName, address: inq.address || '', styleType: style, initialQty: initialStock,
+                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
-                activeRequests: [], approvedRestocks: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}).`, date: new Date().toLocaleString() }],
-                messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
+                activeRequests: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
+                searchValidation: searchValidationMsg,
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style})` }]
             });
 
@@ -1048,11 +1099,11 @@
             const item = appData.consignments[index];
             const newName = prompt('Bagong Pangalan ng Tindahan:', item.storeName);
             if (newName && newName.trim() !== '') {
-                const trimmedName = newName.trim();
-                if (item.ownerName && trimmedName.toLowerCase() === item.ownerName.trim().toLowerCase()) {
-                    alert(`⚠️ Validation Warning: Ang bagong pangalan ng tindahan ay kapareho ng pangalan ng may-ari (${item.ownerName}).`);
+                item.storeName = newName.trim();
+                if (item.ownerName) {
+                    const isSame = item.ownerName.trim().toLowerCase() === item.storeName.trim().toLowerCase();
+                    item.searchValidation = isSame ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
                 }
-                item.storeName = trimmedName;
                 saveToCloud();
             }
         };
