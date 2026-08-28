@@ -38,13 +38,13 @@
 
         /* Style Selection Grid with Pictures */
         .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .style-option-card { border: 2px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; }
+        .style-option-card { border: 2px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; position: relative; }
         .style-option-card.selected { border-color: var(--primary-color); background: #e8f5e9; }
-        .style-option-card img { width: 100%; height: 100px; object-fit: cover; object-position: center center; border-radius: 4px; margin-bottom: 5px; }
-        .style-option-card.premium-highlight img { border: 2px solid #f57f17; box-shadow: 0 0 8px rgba(245, 127, 23, 0.5); object-position: center 45%; }
+        .style-option-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; }
         .style-option-card h4 { font-size: 0.85rem; color: var(--primary-color); margin-bottom: 3px; }
         .style-option-card p { font-size: 0.75rem; color: #666; }
-        .view-img-link { font-size: 0.7rem; color: #0288d1; text-decoration: underline; cursor: pointer; display: inline-block; margin-top: 3px; font-weight: bold; }
+        .view-img-btn { font-size: 0.7rem; color: #0288d1; margin-top: 4px; text-decoration: underline; cursor: pointer; font-weight: bold; display: inline-block; }
+        .fiber-highlight { background: #fff3e0; border: 1px dashed #ffa726; padding: 2px 4px; border-radius: 3px; font-size: 0.65rem; color: #e65100; margin-top: 3px; display: block; font-weight: bold; }
 
         @media print {
             body * { visibility: hidden; }
@@ -126,15 +126,17 @@
                         <input type="hidden" id="inqStyleType" value="Ordinary">
                         <div class="style-grid">
                             <div class="style-option-card selected" onclick="selectInqStyle('Ordinary', this)">
-                                <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300" alt="Ordinary Style Walis Tambo">
+                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo">
                                 <h4>Ordinary Style</h4>
                                 <p>Standard Quality</p>
+                                <span class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</span>
                             </div>
-                            <div class="style-option-card premium-highlight" onclick="selectInqStyle('Premium', this)">
-                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="event.stopPropagation(); viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">
+                            <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
+                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo">
                                 <h4>Premium Style</h4>
                                 <p>Thick & Durable</p>
-                                <span class="view-img-link" onclick="event.stopPropagation(); viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">🔍 View Image (Hibla Highlight)</span>
+                                <span class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</span>
+                                <span class="fiber-highlight">✨ Gitnang Hibla (Tampok)</span>
                             </div>
                         </div>
                     </div>
@@ -187,15 +189,17 @@
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Ito ang dalawang opisyal na klase ng walis tambo na available para sa ating mga kasosyong tindahan:</p>
                 <div class="style-grid">
                     <div class="style-option-card" style="cursor: default;">
-                        <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300" alt="Ordinary Style Walis Tambo">
+                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo">
                         <h4>Ordinary Style</h4>
                         <p>Standard Quality - Maayos at pulido para sa pang-araw-araw na gamit.</p>
+                        <span class="view-img-btn" onclick="openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</span>
                     </div>
-                    <div class="style-option-card premium-highlight" style="cursor: default;">
-                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')" style="cursor: pointer;" title="I-click para palakihin">
+                    <div class="style-option-card" style="cursor: default;">
+                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo">
                         <h4>Premium Style</h4>
                         <p>Thick & Durable - Mas makapal at matibay gawa sa piling tiger grass.</p>
-                        <span class="view-img-link" onclick="viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">🔍 View Image (Hibla Highlight)</span>
+                        <span class="view-img-btn" onclick="openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</span>
+                        <span class="fiber-highlight">✨ Gitnang Hibla (Tampok)</span>
                     </div>
                 </div>
             </div>
@@ -250,15 +254,17 @@
                     <input type="hidden" id="restockStyleType" value="Ordinary">
                     <div class="style-grid">
                         <div class="style-option-card selected" onclick="selectRestockStyle('Ordinary', this)">
-                            <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300" alt="Ordinary Style Walis Tambo">
+                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo">
                             <h4>Ordinary Style</h4>
                             <p>Standard Quality</p>
+                            <span class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</span>
                         </div>
-                        <div class="style-option-card premium-highlight" onclick="selectRestockStyle('Premium', this)">
-                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="event.stopPropagation(); viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">
+                        <div class="style-option-card" onclick="selectRestockStyle('Premium', this)">
+                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo">
                             <h4>Premium Style</h4>
                             <p>Thick & Durable</p>
-                            <span class="view-img-link" onclick="event.stopPropagation(); viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">🔍 View Image (Hibla Highlight)</span>
+                            <span class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</span>
+                            <span class="fiber-highlight">✨ Gitnang Hibla (Tampok)</span>
                         </div>
                     </div>
                 </div>
@@ -296,6 +302,13 @@
 
     </div>
 
+    <!-- Image Modal Viewer -->
+    <div id="imageModal" style="display:none; position:fixed; z-index:9999; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; flex-direction:column; padding: 15px;">
+        <span onclick="closeImageModal()" style="position:absolute; top:15px; right:20px; color:white; font-size:2.5rem; cursor:pointer; font-weight:bold;">&times;</span>
+        <img id="modalImg" src="" style="max-width:95%; max-height:80vh; object-fit:contain; border-radius:6px; border:2px solid white;">
+        <p id="modalCaption" style="color:white; margin-top:12px; font-size:1rem; text-align:center; font-weight: bold;"></p>
+    </div>
+
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -317,8 +330,17 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        window.viewImage = function(url) {
-            window.open(url, '_blank');
+        window.openImageModal = function(imgSrc, caption) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImg');
+            const modalCaption = document.getElementById('modalCaption');
+            modalImg.src = imgSrc;
+            modalCaption.textContent = caption;
+            modal.style.display = 'flex';
+        };
+
+        window.closeImageModal = function() {
+            document.getElementById('imageModal').style.display = 'none';
         };
 
         window.selectInqStyle = function(style, el) {
@@ -791,7 +813,7 @@
         window.sendClientMessage = async function() {
             const input = document.getElementById('clientChatInput');
             const text = input.value.trim();
-            if (!text.trim()) return;
+            if (!text) return;
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
