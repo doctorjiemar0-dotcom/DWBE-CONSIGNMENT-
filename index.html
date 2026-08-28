@@ -80,13 +80,12 @@
 
             <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
 
-            <!-- Bagong Aplikasyon / Inquiry / Create Account Section -->
+            <!-- Bagong Aplikasyon / Inquiry Section -->
             <div id="printableInquirySection" style="width: 100%;">
-                <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Gumawa ng Account / Bagong Aplikasyon</h2>
+                <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Paglikha ng Account at Aplikasyon</h2>
                 
-                <!-- Paalala para sa mga nag-aapply -->
                 <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
-                    <strong>💡 Gabay:</strong> Maaari mong balikan ang iyong account o inquiry pagkalipas ng <strong>2 araw</strong>. I-type lamang ang <strong>Pangalan ng Tindahan</strong> na iyong inilagay sa Pribadong Portal sa itaas. Magpapadala rin kami ng abiso sa email na iyong ibinigay. Kapag aktibo na ang Store Name mo, maaari ka nang magsimulang mag-order ng iyong unang stock!
+                    <strong>💡 Gabay:</strong> Maaari mong balikan ang iyong account at inquiry pagkalipas ng <strong>2 araw</strong>. I-type lamang ang <strong>Pangalan ng Tindahan</strong> na iyong inilagay sa Pribadong Portal sa itaas. Magpapadala rin kami ng abiso sa email na iyong ibinigay. Kapag aktibo na ang Store Name mo, maaari ka nang magsimulang mag-order ng iyong unang stock!
                 </div>
 
                 <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
@@ -95,8 +94,8 @@
                         <input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required>
                     </div>
                     <div class="form-group">
-                        <label>Pangalan ng May-ari:</label>
-                        <input type="text" id="inqOwnerName" placeholder="Hal. Juan Dela Cruz Jr., RN" required>
+                        <label>Pangalan ng May-ari (suportado ang mga espesyal na karakter):</label>
+                        <input type="text" id="inqOwnerName" placeholder="Hal. María ñaña & Co." required>
                     </div>
                     <div class="form-group">
                         <label>Numero ng Telepono / GCash:</label>
@@ -122,10 +121,10 @@
                         <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
                     </div>
                     
-                    <button type="submit" style="background-color: #0288d1;">Ipadala ang Aplikasyon / Gumawa ng Account</button>
+                    <button type="submit" style="background-color: #0288d1;">Ipadala ang Aplikasyon / Account Creation</button>
                 </form>
 
-                <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon / Form</button>
+                <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon / Inquiry Form</button>
             </div>
         </div>
 
@@ -174,7 +173,7 @@
                 <div id="pendingDeliveryContainer"></div>
             </div>
 
-            <!-- QR Code para sa Direktang Link ng Tindahan na ito (Laging sarado kung hindi binubuksan) -->
+            <!-- QR Code para sa Direktang Link ng Tindahan na ito (Laging nakasarado kung hindi binubuksan) -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">📷 QR Code ng Tindahan Mo</h2>
@@ -206,7 +205,7 @@
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Naubusan ka na ba o kailangan mo ng dagdag na walis tambo? Mag-request dito.</p>
                 <div style="font-size: 0.75rem; color: #d84315; margin-bottom: 8px; line-height: 1.3; background: #fff3e0; padding: 6px; border-radius: 4px;">
                     📌 <strong>Tuntunin sa Restock:</strong><br>
-                    • Mag-request lamang kung kinakailangan ng karagdagang paninda sa iyong tindahan (eksaktong 5 pcs, 1 beses bawat buwan).
+                    • Eksaktong 5 piraso lamang bawat hiling. Maaari lamang mag-request ng isang (1) beses bawat buwan.
                 </div>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
@@ -216,8 +215,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Ilang piraso ang kailangan? (Min/Max 5)</label>
-                    <input type="number" id="restockQtyInput" value="5" min="5" max="5">
+                    <label>Ilang piraso ang kailangan? (Eksaktong 5 pcs)</label>
+                    <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background-color: #e9ecef;">
                 </div>
                 <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
             </div>
@@ -234,7 +233,7 @@
                 <button type="button" onclick="sendClientMessage()" style="background-color: #0288d1;">Ipadala ang Mensahe</button>
             </div>
 
-            <!-- STOP AGREEMENT / CONSIGNMENT SECTION (Nakalagay sa baba ng client portal, bago ang admin panel link) -->
+            <!-- STOP AGREEMENT / CONSIGNMENT SECTION (Nasa ibaba ng client portal, sa taas ng admin panel link) -->
             <div class="card" style="background: #ffebee; border: 1px solid #ef9a9a;">
                 <h2 style="color: #c62828; font-size: 0.95rem;">🛑 Pagpapahinto ng Consignment Agreement</h2>
                 <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Kung nais mo nang itigil o tapusin ang kasunduan at consignment sa tindahang ito, i-click ang button sa ibaba.</p>
@@ -532,6 +531,15 @@
                 const styleType = document.getElementById('inqStyleType').value;
                 const message = document.getElementById('inqMessage').value.trim();
 
+                // Validation para sa parehong pangalan ng store (duplicate check)
+                const existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === storeName.toLowerCase());
+                const existingPending = (appData.pendingInquiries || []).find(i => i.storeName.toLowerCase() === storeName.toLowerCase());
+
+                if (existingStore || existingPending) {
+                    alert('Ang pangalan ng tindahang ito ay nakarehistro na o mayroon nang nakabinbing aplikasyon. Mangyaring gumamit ng ibang pangalan.');
+                    return;
+                }
+
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
                 appData.pendingInquiries.unshift({
                     storeName,
@@ -693,13 +701,14 @@
             const qty = parseInt(document.getElementById('restockQtyInput').value);
             
             if (isNaN(qty) || qty !== 5) {
-                alert('Ang restock ay dapat eksaktong 5 piraso lamang (Minimum at Maximum ay 5 pcs).');
+                alert('Ang restock ay dapat eksaktong 5 piraso lamang.');
                 return;
             }
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
+            // Suriin kung nakapag-request na ngayong buwan (1 beses bawat buwan)
             const now = new Date();
             const currentMonthYear = `${now.getFullYear()}-${now.getMonth()}`;
             
@@ -712,7 +721,7 @@
             });
 
             if (alreadyRestockedThisMonth) {
-                alert('Maaari lamang mag-request ng restock ng isang beses bawat buwan.');
+                alert('Maaari lamang mag-request ng restock ng isang (1) beses bawat buwan.');
                 return;
             }
 
