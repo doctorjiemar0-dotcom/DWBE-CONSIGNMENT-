@@ -457,6 +457,10 @@
 
             const itemToReceive = store.approvedRestocks[index];
 
+            // Binabawasan ang homeStock (Admin Inventory) kapag kinumpirma ng kliyente ang pagtanggap
+            if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+            appData.homeStock[itemToReceive.styleType] = Math.max(0, (appData.homeStock[itemToReceive.styleType] || 0) - itemToReceive.qty);
+
             let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType);
             
             if (existingItem) {
@@ -484,7 +488,7 @@
             });
 
             await saveData();
-            alert("Matagumpay na naidagdag sa iyong stock ang mga natanggap na walis!");
+            alert("Matagumpay na naidagdag sa iyong stock at nabawas sa inventory ng admin!");
         };
 
         async function loadData() {
