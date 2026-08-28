@@ -249,28 +249,16 @@
                 </div>
             </div>
 
-            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) with Pictures -->
+            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) without Images -->
             <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
                 <h2>🔄 Humiling ng Karagdagang Restock</h2>
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Mag-request ng eksaktong 5 pirasong restock (1 beses lamang bawat buwan).</p>
                 <div class="form-group">
-                    <label>Piliin ang Uri ng Istilo:</label>
-                    <input type="hidden" id="restockStyleType" value="Ordinary">
-                    <div class="style-grid">
-                        <div class="style-option-card selected" onclick="selectRestockStyle('Ordinary', this)">
-                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
-                            <h4>Ordinary Style</h4>
-                            <p>Standard Quality</p>
-                            <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
-                        </div>
-                        <div class="style-option-card" onclick="selectRestockStyle('Premium', this)">
-                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
-                            <h4>Premium Style</h4>
-                            <p>Thick & Durable</p>
-                            <div style="margin-top: 4px; font-size: 0.7rem; background: #fff9c4; color: #f57f17; padding: 2px 4px; border-radius: 3px; font-weight: bold; border: 1px dashed #fbc02d;">✨ Gitna ng Hibla (Tampok)</div>
-                            <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
-                        </div>
-                    </div>
+                    <label for="restockStyleType">Piliin ang Uri ng Istilo:</label>
+                    <select id="restockStyleType">
+                        <option value="Ordinary">Ordinary Style</option>
+                        <option value="Premium">Premium Style</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Dami ng Restock (Fixed: 5 pcs):</label>
@@ -350,13 +338,6 @@
 
         window.selectInqStyle = function(style, el) {
             document.getElementById('inqStyleType').value = style;
-            const parent = el.parentElement;
-            parent.querySelectorAll('.style-option-card').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
-        };
-
-        window.selectRestockStyle = function(style, el) {
-            document.getElementById('restockStyleType').value = style;
             const parent = el.parentElement;
             parent.querySelectorAll('.style-option-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
