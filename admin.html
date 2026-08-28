@@ -69,6 +69,8 @@
         .fab-backup:hover { background-color: #004d40; }
         .fab-broadcast { background-color: #6a1b9a; }
         .fab-broadcast:hover { background-color: #4a148c; }
+        .fab-dwbe { background-color: #e65100; }
+        .fab-dwbe:hover { background-color: #bf360c; }
 
         .fab-badge { position: absolute; top: -4px; right: -4px; background-color: #d32f2f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; display: none; }
 
@@ -178,6 +180,7 @@
 
     <!-- Floating Action Bubbles Container -->
     <div class="floating-container" id="floatingContainer">
+        <button class="fab-btn fab-dwbe" id="fabDwbeBtn" title="DWBE File & Signed Agreements" onclick="openModal('dwbeModal')">📁</button>
         <button class="fab-btn fab-broadcast" id="fabBroadcastBtn" title="Overall Broadcast Chatbox" onclick="openModal('broadcastModal')">📢</button>
         <button class="fab-btn fab-backup" id="fabBackupBtn" title="Data Backup & Recovery" onclick="openModal('backupModal')">💾</button>
         <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock Request" onclick="openModal('requestModal')">
@@ -187,6 +190,26 @@
             📥<span class="fab-badge" id="inquiryBadge">0</span>
         </button>
         <button class="fab-btn fab-add" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
+    </div>
+
+    <!-- Modal para sa DWBE File -->
+    <div class="modal-overlay" id="dwbeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📁 DWBE File & Signed Agreements</h2>
+                <button class="modal-close" onclick="closeModal('dwbeModal')">✕</button>
+            </div>
+            <div style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">
+                Master DWBE File at listahan ng mga Signed Agreement ng mga Store Partners:
+            </div>
+            <div style="margin-bottom: 12px; background: #e8f5e9; padding: 10px; border-radius: 6px; border: 1px solid #c8e6c9;">
+                <strong>📄 Master DWBE Document:</strong><br>
+                <a href="https://github.com/doctorjiemar0-dotcom/DWBE-AGREEMENTS/blob/main/DWBE.jpeg" target="_blank" style="color: #2e7d32; font-weight: bold; font-size: 0.9rem; text-decoration: none;">🔗 Buksan ang Master DWBE File (GitHub)</a>
+            </div>
+            <div id="adminDwbeContainer">
+                <p style="font-size: 0.85rem; color: #666;">Kinukuha ang mga kasunduan...</p>
+            </div>
+        </div>
     </div>
 
     <!-- Modal para sa Inquiries -->
@@ -621,6 +644,32 @@
                 inquiriesContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>';
             }
 
+            // Render DWBE Files / Signed Agreements in Modal
+            const adminDwbeContainer = document.getElementById('adminDwbeContainer');
+            adminDwbeContainer.innerHTML = '';
+            if (appData.consignments.length === 0) {
+                adminDwbeContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang naka-register na tindahan o kasunduan.</p>';
+            } else {
+                appData.consignments.forEach((item) => {
+                    const partnerName = item.ownerName || item.storeName;
+                    const agreementFileName = `${partnerName}.jpg`;
+                    const agreementFileUrl = `https://github.com/doctorjiemar0-dotcom/DWBE-AGREEMENTS/blob/main/${encodeURIComponent(partnerName)}.jpg`;
+                    
+                    const dwbeDiv = document.createElement('div');
+                    dwbeDiv.className = 'store-item-row';
+                    dwbeDiv.innerHTML = `
+                        <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px;">
+                            🏪 ${item.storeName} ${item.ownerName ? `(${item.ownerName})` : ''}
+                        </div>
+                        <div style="font-size: 0.8rem; color: #555; margin-bottom: 6px;">
+                            📄 Signed Agreement File: <code>${agreementFileName}</code>
+                        </div>
+                        <a href="${agreementFileUrl}" target="_blank" style="display: inline-block; background-color: #00796b; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: bold;">🔍 Tingnan ang DWBE File</a>
+                    `;
+                    adminDwbeContainer.appendChild(dwbeDiv);
+                });
+            }
+
             storesList.innerHTML = '';
             const requestsContainer = document.getElementById('adminRequestsContainer');
             requestsContainer.innerHTML = '';
@@ -919,7 +968,6 @@
                 return;
             }
 
-            // Validation check if person name (ownerName) and store name are identical
             const isSameName = inq.ownerName && inq.storeName && inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();
             const searchValidationMsg = isSameName ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
 
