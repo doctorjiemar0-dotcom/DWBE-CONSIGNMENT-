@@ -397,6 +397,58 @@
             await saveToCloud();
         };
 
+        // Automatic deduction kapag ang client ang nag-click ng pagtanggap ng restock order
+        function processClientAcceptedRestocks() {
+            let updated = false;
+            if (!appData.consignments) return;
+            appData.consignments.forEach(item => {
+                if (item.approvedRestocks && item.approvedRestocks.length > 0) {
+                    for (let i = item.approvedRestocks.length - 1; i >= 0; i--) {
+                        const restock = item.approvedRestocks[i];
+                        if (restock.clientAccepted === true) {
+                            const style = restock.styleType || 'Ordinary';
+                            const qty = restock.qty;
+                            const timestamp = new Date().toLocaleString();
+
+                            appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
+
+                            let basePrice = style === 'Premium' ? 180 : 150;
+                            if (item.storeItems && item.storeItems.length > 0) {
+                                basePrice = item.storeItems[0].price;
+                            }
+                            const todayStr = new Date().toISOString().slice(0, 10);
+                            let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+                            const collDateStr = nextMonth.toISOString().slice(0, 10);
+
+                            if (!item.storeItems) item.storeItems = [];
+                            let existingSub = item.storeItems.find(sub => sub.styleType === style);
+                            if (existingSub) {
+                                existingSub.initialQty += qty;
+                                existingSub.currentStock += qty;
+                                existingSub.collectionDate = collDateStr;
+                            } else {
+                                item.storeItems.push({
+                                    id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
+                                    returnedQty: 0, rejectedQty: 0, price: basePrice, dateDelivered: todayStr, collectionDate: collDateStr
+                                });
+                            }
+
+                            item.approvedRestocks.splice(i, 1);
+                            if (!item.history) item.history = [];
+                            item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggap ni client ang restock: ${qty} pcs (${style})` });
+                            if (!item.clientNotifications) item.clientNotifications = [];
+                            item.clientNotifications.push({ id: Date.now(), text: `🎉 Naitala na ang pagtanggap ng restock (${qty} pcs ${style}).`, date: timestamp });
+
+                            updated = true;
+                        }
+                    }
+                }
+            });
+            if (updated) {
+                saveToCloud();
+            }
+        }
+
         async function loadFromCloud() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
@@ -407,6 +459,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                    processClientAcceptedRestocks();
                 }
                 renderApp();
                 syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
@@ -465,6 +518,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                    processClientAcceptedRestocks();
                     renderApp();
                 }
             } catch (e) {}
