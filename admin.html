@@ -853,6 +853,15 @@
 
         window.approveInquiry = async function(inqIdx) {
             const inq = appData.pendingInquiries[inqIdx];
+            
+            // VALIDATION: Kapag pareho ang pangalan ng tao at pangalan ng tindahan
+            if (inq.storeName && inq.ownerName && inq.storeName.trim().toLowerCase() === inq.ownerName.trim().toLowerCase()) {
+                alert(`⚠️ Validation Warning: Ang pangalan ng tao/may-ari ("${inq.ownerName}") at pangalan ng tindahan ("${inq.storeName}") ay magkapareho!`);
+                if (!confirm(`Nais mo bang ituloy pa rin ang pag-apruba kahit magkapareho ang pangalan ng tao at tindahan?`)) {
+                    return;
+                }
+            }
+
             const initialStockStr = prompt(`[Prompt] Simulang stock para sa ${inq.storeName} (${inq.styleType || 'Ordinary'}):`, '10');
             if (initialStockStr === null) return;
             const initialStock = parseInt(initialStockStr) || 0;
@@ -874,7 +883,7 @@
             const collDateStr = nextMonth.toISOString().slice(0, 10);
 
             appData.consignments.push({
-                id: Date.now(), storeName: inq.storeName, address: inq.address || '', styleType: style, initialQty: initialStock,
+                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName, address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
                 activeRequests: [], approvedRestocks: [], clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}).`, date: new Date().toLocaleString() }],
@@ -1039,7 +1048,11 @@
             const item = appData.consignments[index];
             const newName = prompt('Bagong Pangalan ng Tindahan:', item.storeName);
             if (newName && newName.trim() !== '') {
-                item.storeName = newName.trim();
+                const trimmedName = newName.trim();
+                if (item.ownerName && trimmedName.toLowerCase() === item.ownerName.trim().toLowerCase()) {
+                    alert(`⚠️ Validation Warning: Ang bagong pangalan ng tindahan ay kapareho ng pangalan ng may-ari (${item.ownerName}).`);
+                }
+                item.storeName = trimmedName;
                 saveToCloud();
             }
         };
