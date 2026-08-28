@@ -223,6 +223,13 @@
                 <div id="pendingDeliveryContainer"></div>
             </div>
 
+            <!-- Nakabinbing Resibo ng Benta (Pending Sales Receipt para sa Admin) -->
+            <div class="card" id="pendingSalesCard" style="display:none; background: #fff3e0; border: 1px solid #ffb74d;">
+                <h2 style="color: #f57c00;">⏳ Mga Nakabinbing Resibo ng Benta (Pending Sales)</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Nai-record na ang mga benta at naghihintay ng kumpirmasyon o pag-apruba ng Admin.</p>
+                <div id="pendingSalesContainer"></div>
+            </div>
+
             <!-- QR Code para sa Direktang Link ng Tindahan na ito (Laging sarado kung hindi binubuksan) -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -457,7 +464,6 @@
 
             const itemToReceive = store.approvedRestocks[index];
 
-            // Binabawasan ang homeStock (Admin Inventory) kapag kinumpirma ng kliyente ang pagtanggap
             if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
             appData.homeStock[itemToReceive.styleType] = Math.max(0, (appData.homeStock[itemToReceive.styleType] || 0) - itemToReceive.qty);
 
@@ -489,6 +495,73 @@
 
             await saveData();
             alert("Matagumpay na naidagdag sa iyong stock at nabawas sa inventory ng admin!");
+        };
+
+        // BAGO: Function para sa "MAY BUMILI" button na may validation at pagbawas ng active stock
+        window.promptRecordSale = async function(styleType) {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
+
+            const sub = store.storeItems.find(i => i.styleType === styleType);
+            if (!sub) return;
+
+            if (sub.currentStock <= 0) {
+                alert("Wala nang natitirang active stock para sa uring ito.");
+                return;
+            }
+
+            const inputVal = prompt(`Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`);
+            if (inputVal === null) return; // Kinansela
+
+            const qtySold = parseInt(inputVal);
+
+            // Validation 1: Siguraduhing valid number at greater than 0
+            if (isNaN(qtySold) || qtySold <= 0) {
+                alert("Mangyaring maglagay ng wastong bilang ng nabili (mahigit sa zero).");
+                return;
+            }
+
+            // Validation 2: Siguraduhing hindi hihigit sa natitirang active stock
+            if (qtySold > sub.currentStock) {
+                alert(`Ang dami ng nabili (${qtySold} pcs) ay lumampas sa iyong natitirang active stock (${sub.currentStock} pcs).`);
+                return;
+            }
+
+            const confirmSale = confirm(`Kumpirmahin ang pagbili ng ${qtySold} pcs (${styleType})?\n\nIto ay awtomatikong babawas sa iyong active stock at magpapadala ng pending confirmation receipt sa Admin.`);
+            if (!confirmSale) return;
+
+            // Awtomatikong pagbawas sa active stock
+            sub.currentStock -= qtySold;
+
+            // Pagpapadala ng Pending Confirmation Receipt sa Admin
+            if (!store.pendingSales) store.pendingSales = [];
+            store.pendingSales.unshift({
+                styleType: styleType,
+                qty: qtySold,
+                price: sub.price || 0,
+                totalAmount: qtySold * (sub.price || 0),
+                date: new Date().toLocaleString(),
+                status: "Pending"
+            });
+
+            // Pagdaragdag sa message log
+            if (!store.messages) store.messages = [];
+            store.messages.unshift({
+                sender: currentStoreName,
+                text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType}) - Naghihintay ng kumpirmasyon ng Admin.`,
+                date: new Date().toLocaleString()
+            });
+
+            // Pagdaragdag sa client notification
+            if (!store.clientNotifications) store.clientNotifications = [];
+            store.clientNotifications.unshift({
+                text: `Matagumpay na nai-record ang pagbili ng ${qtySold} pcs (${styleType}). Nakabinbin ang kumpirmasyon ng Admin.`,
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert("Matagumpay na nabawas ang active stock at naipadala ang pending receipt sa Admin!");
+            renderClientDashboard(store);
         };
 
         async function loadData() {
@@ -670,6 +743,25 @@
                 pendingDeliveryCard.style.display = 'none';
             }
 
+            // Render Pending Sales Card
+            const pendingSalesCard = document.getElementById('pendingSalesCard');
+            const pendingSalesContainer = document.getElementById('pendingSalesContainer');
+            pendingSalesContainer.innerHTML = '';
+            if (store.pendingSales && store.pendingSales.length > 0) {
+                pendingSalesCard.style.display = 'block';
+                store.pendingSales.forEach((sale, index) => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "background: white; border: 1px solid #ffb74d; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
+                    div.innerHTML = `
+                        <div>Uri: <strong>${sale.styleType}</strong> | Dami: <strong>${sale.qty} pcs</strong> | Halaga: <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong></div>
+                        <div style="font-size: 0.75rem; color: #555;">Petsa: ${sale.date || 'N/A'} | Status: <span style="color: #f57c00; font-weight: bold;">Nakabinbin (Pending Approval)</span></div>
+                    `;
+                    pendingSalesContainer.appendChild(div);
+                });
+            } else {
+                pendingSalesCard.style.display = 'none';
+            }
+
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
             if (store.clientNotifications && store.clientNotifications.length > 0) {
@@ -737,11 +829,12 @@
                         <span>${sub.styleType || 'Ordinary'}</span>
                         <span>Presyo: ₱${sub.price || 0}</span>
                     </div>
-                    <div style="font-size: 0.85rem; color: #444;">
+                    <div style="font-size: 0.85rem; color: #444; margin-bottom: 8px;">
                         Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Simulang Dami: ${sub.initialQty} pcs<br>
                         Kabuuang Nabenta: <strong>${subSold} pcs</strong> (Benta: ₱${subSales.toLocaleString()})<br>
                         Target na Petsa ng Koleksyon: ${sub.collectionDate || 'N/A'}
                     </div>
+                    <button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px; width: 100%; margin-top: 4px;">🛒 MAY BUMILI (I-record ang Benta)</button>
                 `;
                 itemsContainer.appendChild(div);
             });
