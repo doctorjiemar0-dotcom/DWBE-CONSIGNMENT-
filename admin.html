@@ -1111,30 +1111,29 @@
             const style = styleType || 'Ordinary';
 
             if (isApproved) {
-                if (!item.storeItems) item.storeItems = [];
-                let subItem = item.storeItems.find(sub => sub.styleType === style);
-                if (!subItem && item.storeItems.length > 0) {
-                    subItem = item.storeItems[0];
-                }
-
-                if (subItem) {
-                    if (qty > subItem.currentStock) {
-                        alert(`Babala: Ang na-report na benta (${qty} pcs) ay mas malaki kaysa sa kasalukuyang stock (${subItem.currentStock} pcs).`);
-                    }
-                    subItem.currentStock = Math.max(0, subItem.currentStock - qty);
-                }
-
+                // Na-deduct na sa client side nang i-click ang "MAY BUMILI", 
+                // kaya huwag na itong ibawas ulit dito para maiwasan ang double deduction.
                 item.pendingSales.splice(saleIdx, 1);
                 if (!item.history) item.history = [];
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-aprube ang benta mula sa client: ${qty} pcs (${style})` });
                 if (!item.clientNotifications) item.clientNotifications = [];
                 item.clientNotifications.push({ id: Date.now(), text: `🎉 Na-aprube na ng admin ang iyong na-report na benta (${qty} pcs ${style}).`, date: timestamp });
             } else {
+                // Kapag tinanggihan (decline) ni admin, ibalik ang stock sa currentStock dahil nabawasan na ito sa client.
+                if (!item.storeItems) item.storeItems = [];
+                let subItem = item.storeItems.find(sub => sub.styleType === style);
+                if (!subItem && item.storeItems.length > 0) {
+                    subItem = item.storeItems[0];
+                }
+                if (subItem) {
+                    subItem.currentStock += qty; // Ibalik ang stock
+                }
+
                 item.pendingSales.splice(saleIdx, 1);
                 if (!item.history) item.history = [];
-                item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang na-report na benta (${qty} pcs ${style})` });
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang na-report na benta (${qty} pcs ${style}) - Ibinalik ang stock` });
                 if (!item.clientNotifications) item.clientNotifications = [];
-                item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ng admin ang iyong na-report na benta (${qty} pcs ${style}).`, date: timestamp });
+                item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ng admin ang iyong na-report na benta (${qty} pcs ${style}). Ibinalik ang stock.`, date: timestamp });
             }
             await saveToCloud();
         };
