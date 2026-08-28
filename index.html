@@ -36,6 +36,14 @@
         .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
         #qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
 
+        /* Style Selection Grid with Pictures */
+        .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .style-option-card { border: 2px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; }
+        .style-option-card.selected { border-color: var(--primary-color); background: #e8f5e9; }
+        .style-option-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; }
+        .style-option-card h4 { font-size: 0.85rem; color: var(--primary-color); margin-bottom: 3px; }
+        .style-option-card p { font-size: 0.75rem; color: #666; }
+
         @media print {
             body * { visibility: hidden; }
             #printableInquirySection, #printableInquirySection * { visibility: visible; }
@@ -109,13 +117,25 @@
                         <label>Lokasyon / Address:</label>
                         <input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required>
                     </div>
+                    
+                    <!-- Walis Tambo Style Selection with Pictures for Inquirers -->
                     <div class="form-group">
-                        <label>Gusto mong Uri ng Walis (Style):</label>
-                        <select id="inqStyleType">
-                            <option value="Ordinary">Ordinary Style</option>
-                            <option value="Premium">Premium Style</option>
-                        </select>
+                        <label>Piliin ang Gusto mong Uri ng Walis (Style):</label>
+                        <input type="hidden" id="inqStyleType" value="Ordinary">
+                        <div class="style-grid">
+                            <div class="style-option-card selected" onclick="selectInqStyle('Ordinary', this)">
+                                <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300" alt="Ordinary Style Walis Tambo">
+                                <h4>Ordinary Style</h4>
+                                <p>Standard Quality</p>
+                            </div>
+                            <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
+                                <img src="https://images.unsplash.com/photo-1563453392212-326f5e854473?w=300" alt="Premium Style Walis Tambo">
+                                <h4>Premium Style</h4>
+                                <p>Thick & Durable</p>
+                            </div>
+                        </div>
                     </div>
+
                     <div class="form-group">
                         <label>Mensahe / Katanungan (Optional):</label>
                         <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
@@ -156,6 +176,24 @@
                     scrolling="no"
                     title="Store Partner Agreements">
                 </iframe>
+            </div>
+
+            <!-- Product Catalog / Dalawang Klase ng Walis Tambo para sa Existing Client na may Pictures -->
+            <div class="card">
+                <h2>🧹 Mga Klase ng Walis Tambo (Catalog)</h2>
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Ito ang dalawang opisyal na klase ng walis tambo na available para sa ating mga kasosyong tindahan:</p>
+                <div class="style-grid">
+                    <div class="style-option-card" style="cursor: default;">
+                        <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300" alt="Ordinary Style Walis Tambo">
+                        <h4>Ordinary Style</h4>
+                        <p>Standard Quality - Maayos at pulido para sa pang-araw-araw na gamit.</p>
+                    </div>
+                    <div class="style-option-card" style="cursor: default;">
+                        <img src="https://images.unsplash.com/photo-1563453392212-326f5e854473?w=300" alt="Premium Style Walis Tambo">
+                        <h4>Premium Style</h4>
+                        <p>Thick & Durable - Mas makapal at matibay gawa sa piling tiger grass.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Active Items Summary -->
@@ -199,16 +237,25 @@
                 </div>
             </div>
 
-            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) -->
+            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) with Pictures -->
             <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
                 <h2>🔄 Humiling ng Karagdagang Restock</h2>
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Mag-request ng eksaktong 5 pirasong restock (1 beses lamang bawat buwan).</p>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
-                    <select id="restockStyleType">
-                        <option value="Ordinary">Ordinary Style</option>
-                        <option value="Premium">Premium Style</option>
-                    </select>
+                    <input type="hidden" id="restockStyleType" value="Ordinary">
+                    <div class="style-grid">
+                        <div class="style-option-card selected" onclick="selectRestockStyle('Ordinary', this)">
+                            <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300" alt="Ordinary Style Walis Tambo">
+                            <h4>Ordinary Style</h4>
+                            <p>Standard Quality</p>
+                        </div>
+                        <div class="style-option-card" onclick="selectRestockStyle('Premium', this)">
+                            <img src="https://images.unsplash.com/photo-1563453392212-326f5e854473?w=300" alt="Premium Style Walis Tambo">
+                            <h4>Premium Style</h4>
+                            <p>Thick & Durable</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Dami ng Restock (Fixed: 5 pcs):</label>
@@ -264,6 +311,20 @@
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
+
+        window.selectInqStyle = function(style, el) {
+            document.getElementById('inqStyleType').value = style;
+            const parent = el.parentElement;
+            parent.querySelectorAll('.style-option-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        };
+
+        window.selectRestockStyle = function(style, el) {
+            document.getElementById('restockStyleType').value = style;
+            const parent = el.parentElement;
+            parent.querySelectorAll('.style-option-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        };
 
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'resizeAgreement') {
@@ -681,17 +742,15 @@
         }
 
         window.submitRestockRequest = async function() {
-            // Yes or No prompt pag magrerequest ng restock
             const promptConfirm = confirm("Gusto mo bang mag-request ng restock na eksaktong 5 piraso?");
             if (!promptConfirm) return;
 
             const styleType = document.getElementById('restockStyleType').value;
-            const qty = 5; // Minimum/Maximum 5 pieces restock
+            const qty = 5;
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
-            // Check 1 time restock bawat buwan
             const currentMonthYear = new Date().toISOString().slice(0, 7);
             if (!store.lastRestockMonth) store.lastRestockMonth = "";
             
