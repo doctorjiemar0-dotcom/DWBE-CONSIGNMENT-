@@ -20,9 +20,8 @@
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #388e3c; }
 
-        #authScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 3000; padding: 15px; }
-        #authScreen .card { width: 100%; max-width: 400px; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        #mainAppContent { display: block; }
+        #authScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; }
+        #mainAppContent { display: none; }
 
         .install-banner { background: #e8f5e9; border: 2px dashed #4caf50; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: none; }
         .install-banner button { background-color: #1b5e20; margin-top: 8px; width: auto; padding: 8px 16px; }
@@ -89,14 +88,12 @@
 
     <div class="container">
 
-        <div id="authScreen">
-            <div class="card">
-                <h2>🔒 Security Login</h2>
-                <div class="form-group" style="width: 100%;">
-                    <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
-                </div>
-                <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
+        <div id="authScreen" class="card">
+            <h2>🔒 Security Login</h2>
+            <div class="form-group" style="width: 100%;">
+                <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
             </div>
+            <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
         </div>
 
         <div id="mainAppContent">
@@ -106,16 +103,6 @@
             <div class="card install-banner" id="installCard">
                 <h2>📱 I-install bilang Mobile App</h2>
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
-            </div>
-
-            <!-- DWBE File Section with Security Login Protection -->
-            <div class="card" style="background: #e8f5e9; border: 1px solid #c8e6c9;">
-                <h2>📄 DWBE File</h2>
-                <div style="text-align: center;">
-                    <img src="https://raw.githubusercontent.com/doctorjiemar0-dotcom/DWBE-AGREEMENTS/main/DWBE.jpeg" alt="DWBE File" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 8px;" onerror="this.src='https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/DWBE.jpeg'">
-                    <br>
-                    <a href="https://github.com/doctorjiemar0-dotcom/DWBE-AGREEMENTS/blob/main/DWBE.jpeg" target="_blank" style="font-size: 0.85rem; color: var(--primary-color); font-weight: bold; text-decoration: none;">🔗 Buksan ang DWBE File sa GitHub</a>
-                </div>
             </div>
 
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
@@ -351,17 +338,18 @@
 
         if (sessionStorage.getItem('admin_logged_in') === 'true') {
             authScreen.style.display = 'none';
+            mainAppContent.style.display = 'block';
             toggleAddFormBtn.style.display = 'flex';
-        } else {
-            authScreen.style.display = 'flex';
+            initApp();
         }
-        initApp();
 
         loginBtn.addEventListener('click', () => {
             if (passwordInput.value === ADMIN_PASSWORD) {
                 sessionStorage.setItem('admin_logged_in', 'true');
                 authScreen.style.display = 'none';
+                mainAppContent.style.display = 'block';
                 toggleAddFormBtn.style.display = 'flex';
+                initApp();
             } else {
                 alert('Mali ang password!');
                 passwordInput.value = '';
@@ -447,7 +435,9 @@
             loadFromCloud();
 
             setInterval(() => {
-                loadFromCloudSilent();
+                if (sessionStorage.getItem('admin_logged_in') === 'true') {
+                    loadFromCloudSilent();
+                }
             }, 10000);
         }
 
@@ -587,6 +577,8 @@
         };
 
         function renderApp() {
+            if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
+
             const savedReplies = {};
             appData.consignments.forEach((_, idx) => {
                 const input = document.getElementById(`adminReply_${idx}`);
