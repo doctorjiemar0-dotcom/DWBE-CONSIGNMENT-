@@ -40,11 +40,15 @@
         .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .style-option-card { border: 2px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; position: relative; }
         .style-option-card.selected { border-color: var(--primary-color); background: #e8f5e9; }
-        .style-option-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; }
+        .style-option-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; cursor: pointer; }
         .style-option-card h4 { font-size: 0.85rem; color: var(--primary-color); margin-bottom: 3px; }
         .style-option-card p { font-size: 0.75rem; color: #666; }
-        .view-img-btn { font-size: 0.7rem; color: #0288d1; margin-top: 4px; text-decoration: underline; cursor: pointer; font-weight: bold; display: inline-block; }
-        .fiber-highlight { background: #fff3e0; border: 1px dashed #ffa726; padding: 2px 4px; border-radius: 3px; font-size: 0.65rem; color: #e65100; margin-top: 3px; display: block; font-weight: bold; }
+        .view-img-btn { background: #0288d1; color: white; border: none; padding: 3px 6px; font-size: 0.7rem; border-radius: 3px; cursor: pointer; margin-top: 4px; display: inline-block; width: 100%; }
+
+        /* Modal para sa View Image */
+        #imageModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; flex-direction: column; }
+        #imageModal img { max-width: 90%; max-height: 80%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        #imageModalClose { margin-top: 15px; background: white; color: #333; padding: 8px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; width: auto; }
 
         @media print {
             body * { visibility: hidden; }
@@ -126,17 +130,16 @@
                         <input type="hidden" id="inqStyleType" value="Ordinary">
                         <div class="style-grid">
                             <div class="style-option-card selected" onclick="selectInqStyle('Ordinary', this)">
-                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo">
+                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
                                 <h4>Ordinary Style</h4>
                                 <p>Standard Quality</p>
-                                <span class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</span>
+                                <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
                             </div>
                             <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
-                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo">
+                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
                                 <h4>Premium Style</h4>
-                                <p>Thick & Durable</p>
-                                <span class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</span>
-                                <span class="fiber-highlight">✨ Gitnang Hibla (Tampok)</span>
+                                <p>Thick & Durable — <span style="background: #fff59d; padding: 0 3px; border-radius: 2px; font-weight: bold;">Highlight: Sentro ng Hibla</span></p>
+                                <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
                             </div>
                         </div>
                     </div>
@@ -189,17 +192,16 @@
                 <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Ito ang dalawang opisyal na klase ng walis tambo na available para sa ating mga kasosyong tindahan:</p>
                 <div class="style-grid">
                     <div class="style-option-card" style="cursor: default;">
-                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo">
+                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
                         <h4>Ordinary Style</h4>
                         <p>Standard Quality - Maayos at pulido para sa pang-araw-araw na gamit.</p>
-                        <span class="view-img-btn" onclick="openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</span>
+                        <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
                     </div>
                     <div class="style-option-card" style="cursor: default;">
-                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo">
+                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
                         <h4>Premium Style</h4>
-                        <p>Thick & Durable - Mas makapal at matibay gawa sa piling tiger grass.</p>
-                        <span class="view-img-btn" onclick="openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</span>
-                        <span class="fiber-highlight">✨ Gitnang Hibla (Tampok)</span>
+                        <p>Thick & Durable — <span style="background: #fff59d; padding: 0 3px; border-radius: 2px; font-weight: bold;">Highlight: Sentro ng Hibla</span> - Mas makapal at matibay gawa sa piling tiger grass.</p>
+                        <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
                     </div>
                 </div>
             </div>
@@ -254,17 +256,16 @@
                     <input type="hidden" id="restockStyleType" value="Ordinary">
                     <div class="style-grid">
                         <div class="style-option-card selected" onclick="selectRestockStyle('Ordinary', this)">
-                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo">
+                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
                             <h4>Ordinary Style</h4>
                             <p>Standard Quality</p>
-                            <span class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</span>
+                            <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
                         </div>
                         <div class="style-option-card" onclick="selectRestockStyle('Premium', this)">
-                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo">
+                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
                             <h4>Premium Style</h4>
-                            <p>Thick & Durable</p>
-                            <span class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</span>
-                            <span class="fiber-highlight">✨ Gitnang Hibla (Tampok)</span>
+                            <p>Thick & Durable — <span style="background: #fff59d; padding: 0 3px; border-radius: 2px; font-weight: bold;">Highlight: Sentro ng Hibla</span></p>
+                            <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
                         </div>
                     </div>
                 </div>
@@ -302,11 +303,11 @@
 
     </div>
 
-    <!-- Image Modal Viewer -->
-    <div id="imageModal" style="display:none; position:fixed; z-index:9999; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; flex-direction:column; padding: 15px;">
-        <span onclick="closeImageModal()" style="position:absolute; top:15px; right:20px; color:white; font-size:2.5rem; cursor:pointer; font-weight:bold;">&times;</span>
-        <img id="modalImg" src="" style="max-width:95%; max-height:80vh; object-fit:contain; border-radius:6px; border:2px solid white;">
-        <p id="modalCaption" style="color:white; margin-top:12px; font-size:1rem; text-align:center; font-weight: bold;"></p>
+    <!-- Modal para sa pagpapakita ng mas malaking larawan (View Image) -->
+    <div id="imageModal" onclick="closeImageViewer()">
+        <img id="modalImage" src="" alt="Malaking Larawan">
+        <h3 id="modalTitle" style="color: white; margin-top: 10px; font-size: 1rem;"></h3>
+        <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
     </div>
 
     <!-- Firebase SDKs -->
@@ -330,16 +331,17 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        window.openImageModal = function(imgSrc, caption) {
+        // Functions para sa Image Viewer Modal
+        window.openImageViewer = function(src, title) {
             const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImg');
-            const modalCaption = document.getElementById('modalCaption');
-            modalImg.src = imgSrc;
-            modalCaption.textContent = caption;
+            const modalImg = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('modalTitle');
+            modalImg.src = src;
+            modalTitle.textContent = title;
             modal.style.display = 'flex';
         };
 
-        window.closeImageModal = function() {
+        window.closeImageViewer = function() {
             document.getElementById('imageModal').style.display = 'none';
         };
 
