@@ -107,15 +107,9 @@
 
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
                 <h2>CONSIGNMENT INVENTORY AND MONITORING</h2>
-                <div style="font-size: 0.9rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
+                <div style="font-size: 0.9rem; margin-bottom: 4px; display: flex; justify-content: space-between;">
                     <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
                     <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
-                </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0; flex: 1;">➕ Ordinary</button>
-                    <button type="button" onclick="reduceSpecificHomeStock('Ordinary')" style="background-color: #c62828; font-size: 0.85rem; margin-top:0; flex: 1;">➖ Ordinary</button>
-                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0; flex: 1;">➕ Premium</button>
-                    <button type="button" onclick="reduceSpecificHomeStock('Premium')" style="background-color: #b71c1c; font-size: 0.85rem; margin-top:0; flex: 1;">➖ Premium</button>
                 </div>
             </div>
 
@@ -391,6 +385,18 @@
             }
         };
 
+        window.toggleStoreCollection = async function(storeIdx, isChecked) {
+            appData.consignments[storeIdx].isCollected = isChecked;
+            const timestamp = new Date().toLocaleString();
+            if (!appData.consignments[storeIdx].history) appData.consignments[storeIdx].history = [];
+            appData.consignments[storeIdx].history.unshift({ 
+                id: Date.now(), 
+                date: timestamp, 
+                text: isChecked ? `Minarkahan bilang Nakolekta na ✅` : `Inalis ang marka ng koleksyon` 
+            });
+            await saveToCloud();
+        };
+
         async function loadFromCloud() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
@@ -467,44 +473,6 @@
         const form = document.getElementById('consignmentForm');
         const storesList = document.getElementById('storesList');
 
-        window.addSpecificHomeStock = function(styleType) {
-            const qtyStr = prompt(`Ilang piraso ng ${styleType} Style ang idadagdag sa Bodega/Bahay?`, '10');
-            if (qtyStr !== null && !isNaN(qtyStr)) {
-                const qty = parseInt(qtyStr);
-                if (qty > 0) {
-                    appData.homeStock[styleType] += qty;
-                    saveToCloud();
-                }
-            }
-        };
-
-        window.reduceSpecificHomeStock = function(styleType) {
-            const qtyStr = prompt(`Ilang piraso ng ${styleType} Style ang babawasan sa Bodega/Bahay?`, '1');
-            if (qtyStr !== null && !isNaN(qtyStr)) {
-                const qty = parseInt(qtyStr);
-                if (qty > 0) {
-                    if (qty > appData.homeStock[styleType]) {
-                        alert('Lampas sa kasalukuyang stock sa bodega!');
-                        return;
-                    }
-                    appData.homeStock[styleType] -= qty;
-                    saveToCloud();
-                }
-            }
-        };
-
-        window.toggleStoreCollection = async function(storeIdx, isChecked) {
-            appData.consignments[storeIdx].collectedChecked = isChecked;
-            const timestamp = new Date().toLocaleString();
-            if (!appData.consignments[storeIdx].history) appData.consignments[storeIdx].history = [];
-            if (isChecked) {
-                appData.consignments[storeIdx].history.unshift({ id: Date.now(), date: timestamp, text: `Minarkahan bilang nakolekta (Monitoring Box)` });
-            } else {
-                appData.consignments[storeIdx].history.unshift({ id: Date.now(), date: timestamp, text: `Inalis ang marka ng koleksyon` });
-            }
-            await saveToCloud();
-        };
-
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -538,20 +506,28 @@
                             collectionDate: existingStore.collectionDate
                         }];
                     }
-                    existingStore.storeItems.push({
-                        id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty,
-                        returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD
-                    });
+                    let existingSub = existingStore.storeItems.find(sub => sub.styleType === styleType);
+                    if (existingSub) {
+                        existingSub.initialQty += qty;
+                        existingSub.currentStock += qty;
+                        existingSub.price = price;
+                        existingSub.dateDelivered = startD;
+                        existingSub.collectionDate = collD;
+                    } else {
+                        existingStore.storeItems.push({
+                            id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty,
+                            returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD
+                        });
+                    }
                     if (!existingStore.history) existingStore.history = [];
                     existingStore.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${qty} pcs (${styleType}) noong ${startD}` });
                 } else {
                     appData.consignments.push({
                         id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
-                        collectedChecked: false,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
-                        searchValidation: "",
+                        searchValidation: "", isCollected: false,
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
                 }
@@ -669,7 +645,7 @@
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
                 if (!item.searchValidation) item.searchValidation = '';
-                if (item.collectedChecked === undefined) item.collectedChecked = false;
+                if (item.isCollected === undefined) item.isCollected = false;
 
                 if (!item.storeItems || item.storeItems.length === 0) {
                     if (item.rejectedQty === undefined) item.rejectedQty = 0;
@@ -837,12 +813,10 @@
                             <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
                         </div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-left: 20px;">
-                        <div style="font-size: 0.8rem; color: #555;">
-                            📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong>
-                        </div>
-                        <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px; cursor: pointer; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; border: 1px solid #c8e6c9;">
-                            <input type="checkbox" ${item.collectedChecked ? 'checked' : ''} onchange="toggleStoreCollection(${index}, this.checked)"> Nakolekta na ✅
+                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong></span>
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; cursor: pointer; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; border: 1px solid #c8e6c9;">
+                            <input type="checkbox" ${item.isCollected ? 'checked' : ''} onchange="toggleStoreCollection(${index}, this.checked)"> Nakolekta na ✅
                         </label>
                     </div>
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
@@ -954,11 +928,11 @@
             appData.consignments.push({
                 id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
-                collectedChecked: false,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
                 activeRequests: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
                 searchValidation: searchValidationMsg,
+                isCollected: false,
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style})` }]
             });
 
@@ -1045,10 +1019,17 @@
             const collDateStr = nextMonth.toISOString().slice(0, 10);
 
             if (!item.storeItems) item.storeItems = [];
-            item.storeItems.push({
-                id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
-                returnedQty: 0, rejectedQty: 0, price: basePrice, dateDelivered: todayStr, collectionDate: collDateStr
-            });
+            let existingSub = item.storeItems.find(sub => sub.styleType === style);
+            if (existingSub) {
+                existingSub.initialQty += qty;
+                existingSub.currentStock += qty;
+                existingSub.collectionDate = collDateStr;
+            } else {
+                item.storeItems.push({
+                    id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
+                    returnedQty: 0, rejectedQty: 0, price: basePrice, dateDelivered: todayStr, collectionDate: collDateStr
+                });
+            }
 
             item.approvedRestocks.splice(restockIdx, 1);
             if (!item.history) item.history = [];
