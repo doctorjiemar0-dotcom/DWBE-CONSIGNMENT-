@@ -184,7 +184,7 @@
     <div class="floating-container" id="floatingContainer">
         <button class="fab-btn fab-broadcast" id="fabBroadcastBtn" title="Overall Broadcast Chatbox" onclick="openModal('broadcastModal')">📢</button>
         <button class="fab-btn fab-backup" id="fabBackupBtn" title="Data Backup & Recovery" onclick="openModal('backupModal')">💾</button>
-        <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock Request" onclick="openModal('requestModal')">
+        <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock at Sales Request" onclick="openModal('requestModal')">
             📦<span class="fab-badge" id="requestBadge">0</span>
         </button>
         <button class="fab-btn fab-inquiry" id="fabInquiryBtn" title="Mga Bagong Inquiry / Aplikasyon" onclick="openModal('inquiryModal')">
@@ -206,15 +206,15 @@
         </div>
     </div>
 
-    <!-- Modal para sa Restock Requests -->
+    <!-- Modal para sa Restock & Sales Requests -->
     <div class="modal-overlay" id="requestModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📦 Mga Pending Restock Request</h2>
+                <h2>📦 Mga Pending Request at Sales</h2>
                 <button class="modal-close" onclick="closeModal('requestModal')">✕</button>
             </div>
             <div id="adminRequestsContainer">
-                <p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>
+                <p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request o benta.</p>
             </div>
         </div>
     </div>
@@ -543,6 +543,7 @@
                     if (cloudData.consignments) {
                         cloudData.consignments.forEach(c => {
                             if (c.activeRequests) currentReqsTotal += c.activeRequests.length;
+                            if (c.pendingSales) currentReqsTotal += c.pendingSales.length;
                         });
                     }
                     if (cloudData.pendingInquiries) currentReqsTotal += cloudData.pendingInquiries.length;
@@ -613,7 +614,7 @@
                         id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
-                        activeRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
+                        activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
                         searchValidation: "", isCollected: false,
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
@@ -702,14 +703,14 @@
             requestsContainer.innerHTML = '';
             let hasRequests = false;
             let totalActiveReqsCount = appData.pendingInquiries.length;
-            let restockReqCount = 0;
+            let actionReqCount = 0;
 
             const fabRequestBtn = document.getElementById('fabRequestBtn');
             const requestBadge = document.getElementById('requestBadge');
 
             if (appData.consignments.length === 0) {
                 storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record.</p>';
-                requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>';
+                requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request o benta.</p>';
                 fabRequestBtn.style.display = 'none';
                 requestBadge.style.display = 'none';
                 document.getElementById('totalStores').textContent = '0';
@@ -728,6 +729,7 @@
                 if (!item.styleType) item.styleType = 'Ordinary';
                 if (!item.history) item.history = [];
                 if (!item.activeRequests) item.activeRequests = [];
+                if (!item.pendingSales) item.pendingSales = [];
                 if (!item.approvedRestocks) item.approvedRestocks = [];
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
@@ -790,7 +792,7 @@
 
                 if (item.activeRequests.length > 0) {
                     hasRequests = true;
-                    restockReqCount += item.activeRequests.length;
+                    actionReqCount += item.activeRequests.length;
                     totalActiveReqsCount += item.activeRequests.length;
                     item.activeRequests.forEach((req, reqIdx) => {
                         const reqStyle = req.styleType || item.styleType;
@@ -804,6 +806,27 @@
                             </div>
                         `;
                         requestsContainer.appendChild(reqRow);
+                    });
+                }
+
+                if (item.pendingSales.length > 0) {
+                    hasRequests = true;
+                    actionReqCount += item.pendingSales.length;
+                    totalActiveReqsCount += item.pendingSales.length;
+                    item.pendingSales.forEach((sale, saleIdx) => {
+                        const saleStyle = sale.styleType || 'Ordinary';
+                        const saleRow = document.createElement('div');
+                        saleRow.className = 'request-action-row';
+                        saleRow.style.background = '#e8f5e9';
+                        saleRow.style.borderColor = '#a5d6a7';
+                        saleRow.innerHTML = `
+                            <span><strong>${item.storeName} (${saleStyle})</strong> nag-ulat ng benta: <strong>${sale.qty} pcs</strong> (₱${(sale.totalAmount || 0).toLocaleString()}).</span>
+                            <div>
+                                <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Approve</button>
+                                <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Decline</button>
+                            </div>
+                        `;
+                        requestsContainer.appendChild(saleRow);
                     });
                 }
 
@@ -942,10 +965,10 @@
                 if (input) input.value = savedReplies[idx];
             });
 
-            if (restockReqCount > 0) {
+            if (actionReqCount > 0) {
                 fabRequestBtn.style.display = 'flex';
                 requestBadge.style.display = 'block';
-                requestBadge.textContent = restockReqCount;
+                requestBadge.textContent = actionReqCount;
             } else {
                 fabRequestBtn.style.display = 'none';
                 requestBadge.style.display = 'none';
@@ -955,7 +978,7 @@
             previousRequestCount = totalActiveReqsCount;
 
             if (!hasRequests) {
-                requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request.</p>';
+                requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request o benta.</p>';
             }
 
             document.getElementById('totalStores').textContent = tStores;
@@ -1016,7 +1039,7 @@
                 id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
-                activeRequests: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
+                activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
                 searchValidation: searchValidationMsg,
                 isCollected: false,
@@ -1078,6 +1101,40 @@
                 item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).`, date: timestamp });
                 if (!item.history) item.history = [];
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock` });
+            }
+            await saveToCloud();
+        };
+
+        window.processPendingSales = async function(storeIdx, saleIdx, qty, styleType, isApproved) {
+            const item = appData.consignments[storeIdx];
+            const timestamp = new Date().toLocaleString();
+            const style = styleType || 'Ordinary';
+
+            if (isApproved) {
+                if (!item.storeItems) item.storeItems = [];
+                let subItem = item.storeItems.find(sub => sub.styleType === style);
+                if (!subItem && item.storeItems.length > 0) {
+                    subItem = item.storeItems[0];
+                }
+
+                if (subItem) {
+                    if (qty > subItem.currentStock) {
+                        alert(`Babala: Ang na-report na benta (${qty} pcs) ay mas malaki kaysa sa kasalukuyang stock (${subItem.currentStock} pcs).`);
+                    }
+                    subItem.currentStock = Math.max(0, subItem.currentStock - qty);
+                }
+
+                item.pendingSales.splice(saleIdx, 1);
+                if (!item.history) item.history = [];
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-aprube ang benta mula sa client: ${qty} pcs (${style})` });
+                if (!item.clientNotifications) item.clientNotifications = [];
+                item.clientNotifications.push({ id: Date.now(), text: `🎉 Na-aprube na ng admin ang iyong na-report na benta (${qty} pcs ${style}).`, date: timestamp });
+            } else {
+                item.pendingSales.splice(saleIdx, 1);
+                if (!item.history) item.history = [];
+                item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang na-report na benta (${qty} pcs ${style})` });
+                if (!item.clientNotifications) item.clientNotifications = [];
+                item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ng admin ang iyong na-report na benta (${qty} pcs ${style}).`, date: timestamp });
             }
             await saveToCloud();
         };
