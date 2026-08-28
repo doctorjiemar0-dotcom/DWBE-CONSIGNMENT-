@@ -106,10 +106,16 @@
             </div>
 
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
-                <h2>🏠 CONSIGNMENT INVENTORY AND MONITORING</h2>
-                <div style="font-size: 0.9rem; display: flex; justify-content: space-between;">
+                <h2>CONSIGNMENT INVENTORY AND MONITORING</h2>
+                <div style="font-size: 0.9rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
                     <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
                     <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" onclick="addSpecificHomeStock('Ordinary')" style="background-color: #558b2f; font-size: 0.85rem; margin-top:0; flex: 1;">➕ Ordinary</button>
+                    <button type="button" onclick="reduceSpecificHomeStock('Ordinary')" style="background-color: #c62828; font-size: 0.85rem; margin-top:0; flex: 1;">➖ Ordinary</button>
+                    <button type="button" onclick="addSpecificHomeStock('Premium')" style="background-color: #33691e; font-size: 0.85rem; margin-top:0; flex: 1;">➕ Premium</button>
+                    <button type="button" onclick="reduceSpecificHomeStock('Premium')" style="background-color: #b71c1c; font-size: 0.85rem; margin-top:0; flex: 1;">➖ Premium</button>
                 </div>
             </div>
 
@@ -461,6 +467,44 @@
         const form = document.getElementById('consignmentForm');
         const storesList = document.getElementById('storesList');
 
+        window.addSpecificHomeStock = function(styleType) {
+            const qtyStr = prompt(`Ilang piraso ng ${styleType} Style ang idadagdag sa Bodega/Bahay?`, '10');
+            if (qtyStr !== null && !isNaN(qtyStr)) {
+                const qty = parseInt(qtyStr);
+                if (qty > 0) {
+                    appData.homeStock[styleType] += qty;
+                    saveToCloud();
+                }
+            }
+        };
+
+        window.reduceSpecificHomeStock = function(styleType) {
+            const qtyStr = prompt(`Ilang piraso ng ${styleType} Style ang babawasan sa Bodega/Bahay?`, '1');
+            if (qtyStr !== null && !isNaN(qtyStr)) {
+                const qty = parseInt(qtyStr);
+                if (qty > 0) {
+                    if (qty > appData.homeStock[styleType]) {
+                        alert('Lampas sa kasalukuyang stock sa bodega!');
+                        return;
+                    }
+                    appData.homeStock[styleType] -= qty;
+                    saveToCloud();
+                }
+            }
+        };
+
+        window.toggleStoreCollection = async function(storeIdx, isChecked) {
+            appData.consignments[storeIdx].collectedChecked = isChecked;
+            const timestamp = new Date().toLocaleString();
+            if (!appData.consignments[storeIdx].history) appData.consignments[storeIdx].history = [];
+            if (isChecked) {
+                appData.consignments[storeIdx].history.unshift({ id: Date.now(), date: timestamp, text: `Minarkahan bilang nakolekta (Monitoring Box)` });
+            } else {
+                appData.consignments[storeIdx].history.unshift({ id: Date.now(), date: timestamp, text: `Inalis ang marka ng koleksyon` });
+            }
+            await saveToCloud();
+        };
+
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -504,10 +548,10 @@
                     appData.consignments.push({
                         id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
+                        collectedChecked: false,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
                         searchValidation: "",
-                        isCollectedMarked: false,
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
                 }
@@ -543,18 +587,6 @@
             await saveToCloud();
             closeModal('broadcastModal');
             alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
-        };
-
-        window.toggleStoreCollectionMark = async function(index, isChecked) {
-            appData.consignments[index].isCollectedMarked = isChecked;
-            const timestamp = new Date().toLocaleString();
-            if (!appData.consignments[index].history) appData.consignments[index].history = [];
-            if (isChecked) {
-                appData.consignments[index].history.unshift({ id: Date.now(), date: timestamp, text: `Minarkahan bilang nakolekta na ang bayad` });
-            } else {
-                appData.consignments[index].history.unshift({ id: Date.now(), date: timestamp, text: `Inalis ang marka ng koleksyon` });
-            }
-            await saveToCloud();
         };
 
         function renderApp() {
@@ -637,7 +669,7 @@
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
                 if (!item.searchValidation) item.searchValidation = '';
-                if (item.isCollectedMarked === undefined) item.isCollectedMarked = false;
+                if (item.collectedChecked === undefined) item.collectedChecked = false;
 
                 if (!item.storeItems || item.storeItems.length === 0) {
                     if (item.rejectedQty === undefined) item.rejectedQty = 0;
@@ -795,10 +827,9 @@
                 div.innerHTML = `
                     <div class="store-header-row">
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <input type="checkbox" ${item.isCollectedMarked ? 'checked' : ''} onchange="toggleStoreCollectionMark(${index}, this.checked)" title="Markahan kung nakapagkolekta na" style="width: 18px; height: 18px; cursor: pointer;">
                             <span style="font-size: 1rem;">🏢</span>
                             ${statusDot}
-                            <strong style="font-size: 0.95rem; ${item.isCollectedMarked ? 'text-decoration: line-through; color: #666;' : ''}">${item.storeName}</strong>
+                            <strong style="font-size: 0.95rem;">${item.storeName}</strong>
                             ${hasClientMessage ? '<span class="badge badge-msg">💬 May Mensahe</span>' : ''}
                         </div>
                         <div style="display:flex; align-items:center; gap:6px;">
@@ -806,8 +837,13 @@
                             <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px; padding-left: 20px;">
-                        📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-left: 20px;">
+                        <div style="font-size: 0.8rem; color: #555;">
+                            📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong>
+                        </div>
+                        <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px; cursor: pointer; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; border: 1px solid #c8e6c9;">
+                            <input type="checkbox" ${item.collectedChecked ? 'checked' : ''} onchange="toggleStoreCollection(${index}, this.checked)"> Nakolekta na ✅
+                        </label>
                     </div>
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
@@ -918,11 +954,11 @@
             appData.consignments.push({
                 id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
+                collectedChecked: false,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
                 activeRequests: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
                 searchValidation: searchValidationMsg,
-                isCollectedMarked: false,
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style})` }]
             });
 
