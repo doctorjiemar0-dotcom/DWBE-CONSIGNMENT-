@@ -106,7 +106,7 @@
             </div>
 
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
-                <h2>🏠 Home Stock Inventory (Bodega / Bahay)</h2>
+                <h2>🏠 CONSIGNMENT INVENTORY AND MONITORING</h2>
                 <div style="font-size: 0.9rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
                     <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
                     <span>Premium: <strong id="homePremStock" style="color: #2e7d32;">0</strong> pcs</span>
@@ -539,6 +539,7 @@
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
                         searchValidation: "",
+                        collectedChecked: false,
                         history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
                     });
                 }
@@ -574,6 +575,15 @@
             await saveToCloud();
             closeModal('broadcastModal');
             alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
+        };
+
+        window.toggleStoreCollectionMark = async function(storeIdx, isChecked) {
+            const item = appData.consignments[storeIdx];
+            item.collectedChecked = isChecked;
+            const timestamp = new Date().toLocaleString();
+            if (!item.history) item.history = [];
+            item.history.unshift({ id: Date.now(), date: timestamp, text: isChecked ? `Minarkahan ang Monitoring Box (Nakolekta na)` : `Inalis ang marka sa Monitoring Box` });
+            await saveToCloud();
         };
 
         function renderApp() {
@@ -656,6 +666,7 @@
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
                 if (!item.searchValidation) item.searchValidation = '';
+                if (item.collectedChecked === undefined) item.collectedChecked = false;
 
                 if (!item.storeItems || item.storeItems.length === 0) {
                     if (item.rejectedQty === undefined) item.rejectedQty = 0;
@@ -823,8 +834,11 @@
                             <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px; padding-left: 20px;">
-                        📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong>
+                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px; padding-left: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
+                        <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong></span>
+                        <label style="font-size: 0.75rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #ccc;">
+                            <input type="checkbox" ${item.collectedChecked ? 'checked' : ''} onchange="toggleStoreCollectionMark(${index}, this.checked)" style="width: auto; margin: 0;"> Monitoring Box
+                        </label>
                     </div>
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
@@ -939,6 +953,7 @@
                 activeRequests: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
                 searchValidation: searchValidationMsg,
+                collectedChecked: false,
                 history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style})` }]
             });
 
