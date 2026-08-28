@@ -67,11 +67,11 @@
 
             <div id="manualLoginSection">
                 <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan</h2>
-                <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Para mabuksan ang iyong portal, i-type nang eksakto ang rehistradong Pangalan ng iyong Tindahan.</p>
+                <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Para mabuksan ang iyong portal, i-type nang eksakto ang rehistradong Pangalan ng iyong Tindahan o gamitin ang Pangalan ng May-ari bilang search batayan.</p>
                 
                 <div class="form-group" style="width: 100%;">
-                    <label for="manualStoreNameInput">Pangalan ng Tindahan:</label>
-                    <input type="text" id="manualStoreNameInput" placeholder="Hal. Aling Nena Store">
+                    <label for="manualStoreNameInput">Pangalan ng Tindahan / May-ari:</label>
+                    <input type="text" id="manualStoreNameInput" placeholder="Hal. Aling Nena Store o Juan & Maria">
                 </div>
                 <button type="button" id="manualLoginBtn" style="background-color: var(--secondary-color); margin-bottom: 15px;">Buksan ang Aking Portal</button>
             </div>
@@ -80,12 +80,12 @@
 
             <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
 
-            <!-- Bagong Aplikasyon / Inquiry Section -->
+            <!-- Simple Create Account / Aplikasyon Section -->
             <div id="printableInquirySection" style="width: 100%;">
-                <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Paglikha ng Account at Aplikasyon</h2>
+                <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Create Account / Bagong Aplikasyon</h2>
                 
                 <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
-                    <strong>💡 Gabay:</strong> Maaari mong balikan ang iyong account at inquiry pagkalipas ng <strong>2 araw</strong>. I-type lamang ang <strong>Pangalan ng Tindahan</strong> na iyong inilagay sa Pribadong Portal sa itaas. Magpapadala rin kami ng abiso sa email na iyong ibinigay. Kapag aktibo na ang Store Name mo, maaari ka nang magsimulang mag-order ng iyong unang stock!
+                    <strong>💡 Impormasyon:</strong> Maaari mong balikan ang iyong account pagkalipas ng <strong>2 araw</strong>. I-type lamang ang iyong <strong>Pangalan ng May-ari o Tindahan</strong> sa Pribadong Portal sa itaas.
                 </div>
 
                 <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
@@ -94,8 +94,8 @@
                         <input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required>
                     </div>
                     <div class="form-group">
-                        <label>Pangalan ng May-ari (suportado ang mga espesyal na karakter):</label>
-                        <input type="text" id="inqOwnerName" placeholder="Hal. María ñaña & Co." required>
+                        <label>Pangalan ng May-ari (Tinatanggap ang special characters gaya ng &, -, _, etc.):</label>
+                        <input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required>
                     </div>
                     <div class="form-group">
                         <label>Numero ng Telepono / GCash:</label>
@@ -121,10 +121,10 @@
                         <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
                     </div>
                     
-                    <button type="submit" style="background-color: #0288d1;">Ipadala ang Aplikasyon / Account Creation</button>
+                    <button type="submit" style="background-color: #0288d1;">Gumawa ng Account / Ipadala ang Aplikasyon</button>
                 </form>
 
-                <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon / Inquiry Form</button>
+                <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon Form</button>
             </div>
         </div>
 
@@ -173,7 +173,7 @@
                 <div id="pendingDeliveryContainer"></div>
             </div>
 
-            <!-- QR Code para sa Direktang Link ng Tindahan na ito (Laging nakasarado kung hindi binubuksan) -->
+            <!-- QR Code para sa Direktang Link ng Tindahan na ito (Laging sarado kung hindi binubuksan) -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">📷 QR Code ng Tindahan Mo</h2>
@@ -188,25 +188,21 @@
                 </div>
             </div>
 
-            <!-- Notifications na may Clear (✕) Button at Overall Clear All Button -->
+            <!-- Notifications na may Overall Clear Button at Individual Dismiss -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">📢 Mga Abiso at Update</h2>
-                    <button type="button" onclick="clearAllNotifications()" style="background: none; border: none; color: #d32f2f; font-size: 0.75rem; cursor: pointer; padding: 2px 6px; font-weight: bold;" title="I-clear lahat ng abiso">I-clear Lahat</button>
+                    <button type="button" onclick="clearAllNotifications()" style="background-color: #c62828; width: auto; font-size: 0.75rem; padding: 4px 8px; margin-top: 0;">Clear All</button>
                 </div>
                 <div id="clientNotificationsContainer">
                     <p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>
                 </div>
             </div>
 
-            <!-- Request Restock Section (Min/Max 5 pcs, 1 time per month) -->
+            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) -->
             <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
                 <h2>🔄 Humiling ng Karagdagang Restock</h2>
-                <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Naubusan ka na ba o kailangan mo ng dagdag na walis tambo? Mag-request dito.</p>
-                <div style="font-size: 0.75rem; color: #d84315; margin-bottom: 8px; line-height: 1.3; background: #fff3e0; padding: 6px; border-radius: 4px;">
-                    📌 <strong>Tuntunin sa Restock:</strong><br>
-                    • Eksaktong 5 piraso lamang bawat hiling. Maaari lamang mag-request ng isang (1) beses bawat buwan.
-                </div>
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Mag-request ng eksaktong 5 pirasong restock (1 beses lamang bawat buwan).</p>
                 <div class="form-group">
                     <label>Piliin ang Uri ng Istilo:</label>
                     <select id="restockStyleType">
@@ -215,8 +211,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Ilang piraso ang kailangan? (Eksaktong 5 pcs)</label>
-                    <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background-color: #e9ecef;">
+                    <label>Dami ng Restock (Fixed: 5 pcs):</label>
+                    <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
                 </div>
                 <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
             </div>
@@ -233,7 +229,7 @@
                 <button type="button" onclick="sendClientMessage()" style="background-color: #0288d1;">Ipadala ang Mensahe</button>
             </div>
 
-            <!-- STOP AGREEMENT / CONSIGNMENT SECTION (Nasa ibaba ng client portal, sa taas ng admin panel link) -->
+            <!-- STOP AGREEMENT / CONSIGNMENT SECTION SA BABA NG CLIENT PORTAL -->
             <div class="card" style="background: #ffebee; border: 1px solid #ef9a9a;">
                 <h2 style="color: #c62828; font-size: 0.95rem;">🛑 Pagpapahinto ng Consignment Agreement</h2>
                 <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Kung nais mo nang itigil o tapusin ang kasunduan at consignment sa tindahang ito, i-click ang button sa ibaba.</p>
@@ -331,8 +327,15 @@
             }
         };
 
+        window.clearAllNotifications = async function() {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
+            store.clientNotifications = [];
+            await saveData();
+        };
+
         window.promptStopAgreement = async function() {
-            const confirmation = confirm("⚠️ BABALA: Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' (Yes) para kumpirmahin, o 'Cancel' (No) para ituloy ang kasunduan.");
+            const confirmation = confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' para kumpirmahin.");
             
             if (!confirmation) {
                 return;
@@ -367,14 +370,6 @@
             if (!store || !store.clientNotifications) return;
             
             store.clientNotifications.splice(index, 1);
-            await saveData();
-        };
-
-        window.clearAllNotifications = async function() {
-            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-            if (!store || !store.clientNotifications || store.clientNotifications.length === 0) return;
-            if (!confirm("Sigurado ka bang gusto mong i-clear ang lahat ng abiso?")) return;
-            store.clientNotifications = [];
             await saveData();
         };
 
@@ -474,7 +469,7 @@
             }
 
             if (currentStoreName) {
-                const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+                const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase() || (c.ownerName && c.ownerName.toLowerCase() === currentStoreName.toLowerCase()));
                 if (found) {
                     document.getElementById('loginScreen').style.display = 'none';
                     if (installAppCard) installAppCard.style.display = 'none';
@@ -489,7 +484,7 @@
                     document.getElementById('loginScreen').style.display = 'flex';
                     document.getElementById('portalContent').style.display = 'none';
                     if (paramStore) {
-                        alert(`Ang tindahang "${paramStore}" ay hindi pa rehistrado o aktibo sa sistema.`);
+                        alert(`Ang tindahan o may-ari na "${paramStore}" ay hindi pa rehistrado o aktibo sa sistema.`);
                     }
                 }
             } else {
@@ -501,13 +496,13 @@
         document.getElementById('manualLoginBtn').addEventListener('click', () => {
             const storeInput = document.getElementById('manualStoreNameInput').value.trim();
             if (!storeInput) {
-                alert('Mangyaring ilagay ang pangalan ng iyong tindahan.');
+                alert('Mangyaring ilagay ang pangalan ng iyong tindahan o pangalan ng may-ari.');
                 return;
             }
 
-            const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeInput.toLowerCase());
+            const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeInput.toLowerCase() || (c.ownerName && c.ownerName.toLowerCase() === storeInput.toLowerCase()));
             if (!found) {
-                alert('Hindi natagpuan ang rehistradong tindahan na ito. Siguraduhing tama ang baybay o mag-inquire kung bago ka pa lamang.');
+                alert('Hindi natagpuan ang rehistradong tindahan o may-ari na ito. Siguraduhing tama ang baybay.');
                 return;
             }
 
@@ -531,17 +526,8 @@
                 const styleType = document.getElementById('inqStyleType').value;
                 const message = document.getElementById('inqMessage').value.trim();
 
-                // Validation para sa parehong pangalan ng store (duplicate check)
-                const existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === storeName.toLowerCase());
-                const existingPending = (appData.pendingInquiries || []).find(i => i.storeName.toLowerCase() === storeName.toLowerCase());
-
-                if (existingStore || existingPending) {
-                    alert('Ang pangalan ng tindahang ito ay nakarehistro na o mayroon nang nakabinbing aplikasyon. Mangyaring gumamit ng ibang pangalan.');
-                    return;
-                }
-
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                appData.pendingInquiries.unshift({
+                appData.pendingInquiries.push({
                     storeName,
                     ownerName,
                     contact,
@@ -553,13 +539,13 @@
                 });
 
                 await saveData();
-                alert('Matagumpay na naipadala ang iyong aplikasyon at account creation! Mangyaring hintayin ang pagsusuri ng admin.');
+                alert('Matagumpay na nagawa ang account / naipadala ang aplikasyon! Mangyaring hintayin ang pagsusuri ng admin.');
                 inquiryForm.reset();
             });
         }
 
         function renderClientDashboard(store) {
-            document.getElementById('displayStoreName').textContent = store.storeName;
+            document.getElementById('displayStoreName').textContent = store.storeName + (store.ownerName ? ` (${store.ownerName})` : '');
 
             const agreementFrame = document.getElementById('storeAgreementFrame');
             const targetAgreementUrl = "https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/?store=" + encodeURIComponent(store.storeName);
@@ -621,7 +607,6 @@
                 notifContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
             }
 
-            // Auto-initialize storeItems kung wala pa
             if (!store.storeItems || store.storeItems.length === 0) {
                 store.storeItems = [{
                     styleType: store.styleType || 'Ordinary',
@@ -634,7 +619,6 @@
                 }];
             }
 
-            // Alisin sa storeItems ang mga item na nasa approvedRestocks pa lang (hindi pa nire-receive)
             if (store.approvedRestocks && store.approvedRestocks.length > 0 && store.storeItems) {
                 let dataChanged = false;
                 store.approvedRestocks.forEach(req => {
@@ -684,7 +668,7 @@
             chatContainer.innerHTML = '';
             if (store.messages && store.messages.length > 0) {
                 store.messages.forEach(m => {
-                    const isAdmin = m.sender === 'Admin';
+                    const isAdmin = m.sender === 'Admin' || m.sender === 'Admin (Broadcast)';
                     const div = document.createElement('div');
                     div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
                     div.innerHTML = `<strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
@@ -697,45 +681,33 @@
         }
 
         window.submitRestockRequest = async function() {
+            // Yes or No prompt pag magrerequest ng restock
+            const promptConfirm = confirm("Gusto mo bang mag-request ng restock na eksaktong 5 piraso?");
+            if (!promptConfirm) return;
+
             const styleType = document.getElementById('restockStyleType').value;
-            const qty = parseInt(document.getElementById('restockQtyInput').value);
-            
-            if (isNaN(qty) || qty !== 5) {
-                alert('Ang restock ay dapat eksaktong 5 piraso lamang.');
-                return;
-            }
+            const qty = 5; // Minimum/Maximum 5 pieces restock
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
 
-            // Suriin kung nakapag-request na ngayong buwan (1 beses bawat buwan)
-            const now = new Date();
-            const currentMonthYear = `${now.getFullYear()}-${now.getMonth()}`;
+            // Check 1 time restock bawat buwan
+            const currentMonthYear = new Date().toISOString().slice(0, 7);
+            if (!store.lastRestockMonth) store.lastRestockMonth = "";
             
-            const alreadyRestockedThisMonth = (store.activeRequests || []).some(req => {
-                const reqDate = new Date(req.date);
-                return `${reqDate.getFullYear()}-${reqDate.getMonth()}` === currentMonthYear;
-            }) || (store.approvedRestocks || []).some(req => {
-                const reqDate = new Date(req.date);
-                return `${reqDate.getFullYear()}-${reqDate.getMonth()}` === currentMonthYear;
-            });
-
-            if (alreadyRestockedThisMonth) {
-                alert('Maaari lamang mag-request ng restock ng isang (1) beses bawat buwan.');
-                return;
-            }
-
-            const confirmPrompt = confirm("Gusto mo bang ituloy ang pag-request ng 5 pirasong restock?");
-            if (!confirmPrompt) {
+            if (store.lastRestockMonth === currentMonthYear) {
+                alert("Paalala: Isang beses lamang bawat buwan ang pag-request ng restock. Nag-request ka na ngayong buwan.");
                 return;
             }
 
             if (!store.activeRequests) store.activeRequests = [];
-            store.activeRequests.unshift({
+            store.activeRequests.push({
                 styleType: styleType,
                 qty: qty,
                 date: new Date().toLocaleString()
             });
+
+            store.lastRestockMonth = currentMonthYear;
 
             if (!store.messages) store.messages = [];
             store.messages.unshift({
