@@ -40,9 +40,11 @@
         .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .style-option-card { border: 2px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; }
         .style-option-card.selected { border-color: var(--primary-color); background: #e8f5e9; }
-        .style-option-card img { width: 100%; height: 100px; object-fit: cover; object-position: center; border-radius: 4px; margin-bottom: 5px; }
+        .style-option-card img { width: 100%; height: 100px; object-fit: cover; object-position: center center; border-radius: 4px; margin-bottom: 5px; }
+        .style-option-card.premium-highlight img { border: 2px solid #f57f17; box-shadow: 0 0 8px rgba(245, 127, 23, 0.5); object-position: center 45%; }
         .style-option-card h4 { font-size: 0.85rem; color: var(--primary-color); margin-bottom: 3px; }
         .style-option-card p { font-size: 0.75rem; color: #666; }
+        .view-img-link { font-size: 0.7rem; color: #0288d1; text-decoration: underline; cursor: pointer; display: inline-block; margin-top: 3px; font-weight: bold; }
 
         @media print {
             body * { visibility: hidden; }
@@ -128,13 +130,11 @@
                                 <h4>Ordinary Style</h4>
                                 <p>Standard Quality</p>
                             </div>
-                            <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
-                                <div style="position: relative;">
-                                    <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg')">
-                                    <span style="position: absolute; bottom: 8px; right: 4px; background: rgba(46, 125, 50, 0.85); color: white; font-size: 0.65rem; padding: 2px 5px; border-radius: 3px;">🔍 View</span>
-                                </div>
-                                <h4 style="color: var(--primary-color);">Premium Style <span style="background: #e8f5e9; color: #2e7d32; font-size: 0.65rem; padding: 1px 4px; border: 1px dashed #2e7d32; border-radius: 3px;">✨ Hibla Highlight</span></h4>
-                                <p>Thick & Durable <br><a href="#" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg'); return false;" style="font-size: 0.7rem; color: #0288d1; text-decoration: underline;">Tignan ang Larawan</a></p>
+                            <div class="style-option-card premium-highlight" onclick="selectInqStyle('Premium', this)">
+                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="event.stopPropagation(); viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">
+                                <h4>Premium Style</h4>
+                                <p>Thick & Durable</p>
+                                <span class="view-img-link" onclick="event.stopPropagation(); viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">🔍 View Image (Hibla Highlight)</span>
                             </div>
                         </div>
                     </div>
@@ -191,13 +191,11 @@
                         <h4>Ordinary Style</h4>
                         <p>Standard Quality - Maayos at pulido para sa pang-araw-araw na gamit.</p>
                     </div>
-                    <div class="style-option-card" style="cursor: default;">
-                        <div style="position: relative;">
-                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg')" style="cursor: pointer;">
-                            <span style="position: absolute; bottom: 8px; right: 4px; background: rgba(46, 125, 50, 0.85); color: white; font-size: 0.65rem; padding: 2px 5px; border-radius: 3px; cursor: pointer;" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg')">🔍 View</span>
-                        </div>
-                        <h4 style="color: var(--primary-color);">Premium Style <span style="background: #e8f5e9; color: #2e7d32; font-size: 0.65rem; padding: 1px 4px; border: 1px dashed #2e7d32; border-radius: 3px;">✨ Hibla Highlight</span></h4>
-                        <p>Thick & Durable - Mas makapal at matibay gawa sa piling tiger grass. <br><a href="#" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg'); return false;" style="font-size: 0.7rem; color: #0288d1; text-decoration: underline;">Tignan ang Malaking Larawan</a></p>
+                    <div class="style-option-card premium-highlight" style="cursor: default;">
+                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')" style="cursor: pointer;" title="I-click para palakihin">
+                        <h4>Premium Style</h4>
+                        <p>Thick & Durable - Mas makapal at matibay gawa sa piling tiger grass.</p>
+                        <span class="view-img-link" onclick="viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">🔍 View Image (Hibla Highlight)</span>
                     </div>
                 </div>
             </div>
@@ -256,13 +254,11 @@
                             <h4>Ordinary Style</h4>
                             <p>Standard Quality</p>
                         </div>
-                        <div class="style-option-card" onclick="selectRestockStyle('Premium', this)">
-                            <div style="position: relative;">
-                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg')">
-                                <span style="position: absolute; bottom: 8px; right: 4px; background: rgba(46, 125, 50, 0.85); color: white; font-size: 0.65rem; padding: 2px 5px; border-radius: 3px;">🔍 View</span>
-                            </div>
-                            <h4 style="color: var(--primary-color);">Premium Style <span style="background: #e8f5e9; color: #2e7d32; font-size: 0.65rem; padding: 1px 4px; border: 1px dashed #2e7d32; border-radius: 3px;">✨ Hibla Highlight</span></h4>
-                            <p>Thick & Durable <br><a href="#" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg'); return false;" style="font-size: 0.7rem; color: #0288d1; text-decoration: underline;">Tignan ang Larawan</a></p>
+                        <div class="style-option-card premium-highlight" onclick="selectRestockStyle('Premium', this)">
+                            <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg" alt="Premium Style Walis Tambo" onclick="event.stopPropagation(); viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">
+                            <h4>Premium Style</h4>
+                            <p>Thick & Durable</p>
+                            <span class="view-img-link" onclick="event.stopPropagation(); viewImage('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/premium.jpg')">🔍 View Image (Hibla Highlight)</span>
                         </div>
                     </div>
                 </div>
@@ -300,13 +296,6 @@
 
     </div>
 
-    <!-- Image Viewer Modal para sa Mas Malaking View ng Premium Style at Hibla -->
-    <div id="imageViewerModal" style="display:none; position:fixed; z-index:9999; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; flex-direction:column; padding:20px;">
-        <span onclick="closeImageViewer()" style="position:absolute; top:20px; right:30px; color:white; font-size:2.5rem; cursor:pointer; font-weight:bold;">&times;</span>
-        <img id="modalImage" src="" style="max-width:90%; max-height:75vh; border-radius:8px; object-fit:contain; border:2px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <p style="color:white; margin-top:12px; font-size:0.95rem; text-align:center; font-weight:bold;">✨ Premium Style - Pokus at Highlight sa Makapal na Hibla ng Walis Tambo</p>
-    </div>
-
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -328,15 +317,8 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
-        window.openImageViewer = function(url) {
-            const modal = document.getElementById('imageViewerModal');
-            const img = document.getElementById('modalImage');
-            img.src = url;
-            modal.style.display = 'flex';
-        };
-
-        window.closeImageViewer = function() {
-            document.getElementById('imageViewerModal').style.display = 'none';
+        window.viewImage = function(url) {
+            window.open(url, '_blank');
         };
 
         window.selectInqStyle = function(style, el) {
@@ -809,7 +791,7 @@
         window.sendClientMessage = async function() {
             const input = document.getElementById('clientChatInput');
             const text = input.value.trim();
-            if (!text) return;
+            if (!text.trim()) return;
 
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
