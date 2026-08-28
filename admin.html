@@ -20,8 +20,9 @@
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #388e3c; }
 
-        #authScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; }
-        #mainAppContent { display: none; }
+        #authScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 3000; padding: 15px; }
+        #authScreen .card { width: 100%; max-width: 400px; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        #mainAppContent { display: block; }
 
         .install-banner { background: #e8f5e9; border: 2px dashed #4caf50; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: none; }
         .install-banner button { background-color: #1b5e20; margin-top: 8px; width: auto; padding: 8px 16px; }
@@ -69,8 +70,6 @@
         .fab-backup:hover { background-color: #004d40; }
         .fab-broadcast { background-color: #6a1b9a; }
         .fab-broadcast:hover { background-color: #4a148c; }
-        .fab-dwbe { background-color: #e65100; }
-        .fab-dwbe:hover { background-color: #bf360c; }
 
         .fab-badge { position: absolute; top: -4px; right: -4px; background-color: #d32f2f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; display: none; }
 
@@ -90,12 +89,14 @@
 
     <div class="container">
 
-        <div id="authScreen" class="card">
-            <h2>🔒 Security Login</h2>
-            <div class="form-group" style="width: 100%;">
-                <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
+        <div id="authScreen">
+            <div class="card">
+                <h2>🔒 Security Login</h2>
+                <div class="form-group" style="width: 100%;">
+                    <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
+                </div>
+                <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
             </div>
-            <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
         </div>
 
         <div id="mainAppContent">
@@ -105,6 +106,16 @@
             <div class="card install-banner" id="installCard">
                 <h2>📱 I-install bilang Mobile App</h2>
                 <button id="installBtn" type="button">📲 I-install ang Admin App</button>
+            </div>
+
+            <!-- DWBE File Section with Security Login Protection -->
+            <div class="card" style="background: #e8f5e9; border: 1px solid #c8e6c9;">
+                <h2>📄 DWBE File</h2>
+                <div style="text-align: center;">
+                    <img src="https://raw.githubusercontent.com/doctorjiemar0-dotcom/DWBE-AGREEMENTS/main/DWBE.jpeg" alt="DWBE File" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 8px;" onerror="this.src='https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/DWBE.jpeg'">
+                    <br>
+                    <a href="https://github.com/doctorjiemar0-dotcom/DWBE-AGREEMENTS/blob/main/DWBE.jpeg" target="_blank" style="font-size: 0.85rem; color: var(--primary-color); font-weight: bold; text-decoration: none;">🔗 Buksan ang DWBE File sa GitHub</a>
+                </div>
             </div>
 
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
@@ -180,7 +191,6 @@
 
     <!-- Floating Action Bubbles Container -->
     <div class="floating-container" id="floatingContainer">
-        <button class="fab-btn fab-dwbe" id="fabDwbeBtn" title="DWBE File & Signed Agreements" onclick="openModal('dwbeModal')">📁</button>
         <button class="fab-btn fab-broadcast" id="fabBroadcastBtn" title="Overall Broadcast Chatbox" onclick="openModal('broadcastModal')">📢</button>
         <button class="fab-btn fab-backup" id="fabBackupBtn" title="Data Backup & Recovery" onclick="openModal('backupModal')">💾</button>
         <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock Request" onclick="openModal('requestModal')">
@@ -190,26 +200,6 @@
             📥<span class="fab-badge" id="inquiryBadge">0</span>
         </button>
         <button class="fab-btn fab-add" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
-    </div>
-
-    <!-- Modal para sa DWBE File -->
-    <div class="modal-overlay" id="dwbeModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>📁 DWBE File & Signed Agreements</h2>
-                <button class="modal-close" onclick="closeModal('dwbeModal')">✕</button>
-            </div>
-            <div style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">
-                Master DWBE File at listahan ng mga Signed Agreement ng mga Store Partners:
-            </div>
-            <div style="margin-bottom: 12px; background: #e8f5e9; padding: 10px; border-radius: 6px; border: 1px solid #c8e6c9;">
-                <strong>📄 Master DWBE Document:</strong><br>
-                <a href="https://github.com/doctorjiemar0-dotcom/DWBE-AGREEMENTS/blob/main/DWBE.jpeg" target="_blank" style="color: #2e7d32; font-weight: bold; font-size: 0.9rem; text-decoration: none;">🔗 Buksan ang Master DWBE File (GitHub)</a>
-            </div>
-            <div id="adminDwbeContainer">
-                <p style="font-size: 0.85rem; color: #666;">Kinukuha ang mga kasunduan...</p>
-            </div>
-        </div>
     </div>
 
     <!-- Modal para sa Inquiries -->
@@ -361,18 +351,17 @@
 
         if (sessionStorage.getItem('admin_logged_in') === 'true') {
             authScreen.style.display = 'none';
-            mainAppContent.style.display = 'block';
             toggleAddFormBtn.style.display = 'flex';
-            initApp();
+        } else {
+            authScreen.style.display = 'flex';
         }
+        initApp();
 
         loginBtn.addEventListener('click', () => {
             if (passwordInput.value === ADMIN_PASSWORD) {
                 sessionStorage.setItem('admin_logged_in', 'true');
                 authScreen.style.display = 'none';
-                mainAppContent.style.display = 'block';
                 toggleAddFormBtn.style.display = 'flex';
-                initApp();
             } else {
                 alert('Mali ang password!');
                 passwordInput.value = '';
@@ -458,9 +447,7 @@
             loadFromCloud();
 
             setInterval(() => {
-                if (sessionStorage.getItem('admin_logged_in') === 'true') {
-                    loadFromCloudSilent();
-                }
+                loadFromCloudSilent();
             }, 10000);
         }
 
@@ -600,8 +587,6 @@
         };
 
         function renderApp() {
-            if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
-
             const savedReplies = {};
             appData.consignments.forEach((_, idx) => {
                 const input = document.getElementById(`adminReply_${idx}`);
@@ -642,32 +627,6 @@
                 fabInquiryBtn.style.display = 'none';
                 inquiryBadge.style.display = 'none';
                 inquiriesContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>';
-            }
-
-            // Render DWBE Files / Signed Agreements in Modal
-            const adminDwbeContainer = document.getElementById('adminDwbeContainer');
-            adminDwbeContainer.innerHTML = '';
-            if (appData.consignments.length === 0) {
-                adminDwbeContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang naka-register na tindahan o kasunduan.</p>';
-            } else {
-                appData.consignments.forEach((item) => {
-                    const partnerName = item.ownerName || item.storeName;
-                    const agreementFileName = `${partnerName}.jpg`;
-                    const agreementFileUrl = `https://github.com/doctorjiemar0-dotcom/DWBE-AGREEMENTS/blob/main/${encodeURIComponent(partnerName)}.jpg`;
-                    
-                    const dwbeDiv = document.createElement('div');
-                    dwbeDiv.className = 'store-item-row';
-                    dwbeDiv.innerHTML = `
-                        <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px;">
-                            🏪 ${item.storeName} ${item.ownerName ? `(${item.ownerName})` : ''}
-                        </div>
-                        <div style="font-size: 0.8rem; color: #555; margin-bottom: 6px;">
-                            📄 Signed Agreement File: <code>${agreementFileName}</code>
-                        </div>
-                        <a href="${agreementFileUrl}" target="_blank" style="display: inline-block; background-color: #00796b; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: bold;">🔍 Tingnan ang DWBE File</a>
-                    `;
-                    adminDwbeContainer.appendChild(dwbeDiv);
-                });
             }
 
             storesList.innerHTML = '';
