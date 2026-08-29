@@ -162,12 +162,27 @@
 
         <!-- Main Portal Dashboard -->
         <div id="portalContent">
-            <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: #e8f5e9;">
-                <div>
-                    <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
-                    <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
+            <!-- Header Card na may QR Code sa tabi ng Pangalan ng Tindahan / May-ari -->
+            <div class="card" style="background: #e8f5e9;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px;">
+                            <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
+                            <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #558b2f; width: auto; padding: 2px 8px; font-size: 0.7rem; margin-top: 0;">📷 Ipakita ang QR Code</button>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
+                    </div>
+                    <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0;">Mag-logout</button>
                 </div>
-                <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0;">Mag-logout</button>
+
+                <!-- QR Code Content Wrapper (Nasa ibaba mismo ng pangalan kapag naka-toggle) -->
+                <div id="qrContentWrapper" style="display: none; margin-top: 10px; border-top: 1px dashed #c5e1a5; padding-top: 10px;">
+                    <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px; text-align: center;">I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.</p>
+                    <div class="qr-container" style="margin-top: 0;">
+                        <div id="qrcode"></div>
+                        <span id="qrStoreLinkText" style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;"></span>
+                    </div>
+                </div>
             </div>
 
             <!-- Install App Card para sa Dashboard -->
@@ -233,22 +248,7 @@
                 <div id="pendingSalesContainer"></div>
             </div>
 
-            <!-- QR Code para sa Direktang Link ng Tindahan na ito (Laging sarado kung hindi binubuksan) -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <h2 style="margin-bottom: 0;">📷 QR Code ng Tindahan Mo</h2>
-                    <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #558b2f; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Ipakita</button>
-                </div>
-                <div id="qrContentWrapper" style="display: none;">
-                    <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px; text-align: center;">I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.</p>
-                    <div class="qr-container" style="margin-top: 0;">
-                        <div id="qrcode"></div>
-                        <span id="qrStoreLinkText" style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notifications na may Overall Clear Button at Individual Dismiss -->
+            <!-- Notifications na may Overall Clear Button at Individual Dismiss (Bagong Abiso sa Pinakataas) -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">📢 Mga Abiso at Update</h2>
@@ -413,10 +413,10 @@
             const btn = document.getElementById('toggleQrBtn');
             if (wrapper.style.display === 'none') {
                 wrapper.style.display = 'block';
-                btn.textContent = 'Itago';
+                btn.textContent = 'Itago ang QR Code';
             } else {
                 wrapper.style.display = 'none';
-                btn.textContent = 'Ipakita';
+                btn.textContent = 'Ipakita ang QR Code';
             }
         };
 
@@ -573,7 +573,7 @@
                 date: new Date().toLocaleString()
             });
 
-            // Pagdaragdag sa client notification
+            // Pagdaragdag sa client notification (pinakabago sa pinakataas)
             if (!store.clientNotifications) store.clientNotifications = [];
             store.clientNotifications.unshift({
                 text: `Matagumpay na nai-record ang pagbili ng ${qtySold} pcs (${styleType}). Nakabinbin ang kumpirmasyon ng Admin.`,
@@ -703,7 +703,7 @@
                 const message = document.getElementById('inqMessage').value.trim();
 
                 if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                appData.pendingInquiries.push({
+                appData.pendingInquiries.unshift({
                     storeName,
                     ownerName,
                     contact,
@@ -796,6 +796,7 @@
                 pendingSalesCard.style.display = 'none';
             }
 
+            // Render Notifications (Tinitiyak na ang mga pinakabagong abiso o updates ay nasa pinakataas)
             const notifContainer = document.getElementById('clientNotificationsContainer');
             notifContainer.innerHTML = '';
             if (store.clientNotifications && store.clientNotifications.length > 0) {
@@ -914,7 +915,7 @@
             }
 
             if (!store.activeRequests) store.activeRequests = [];
-            store.activeRequests.push({
+            store.activeRequests.unshift({
                 styleType: styleType,
                 qty: qty,
                 date: new Date().toLocaleString()
