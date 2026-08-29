@@ -125,11 +125,12 @@
 
             <div class="summary-box">
                 <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
-                <div class="summary-row"><span>Online na Tindahan:</span><span id="onlineStoresBadge" class="badge badge-good" style="padding: 2px 6px; font-size: 0.8rem;">0 online</span></div>
+                <div class="summary-row"><span>Tindahang Naka-online:</span><span id="onlineStoresCount"><span class="badge badge-good" id="onlineBadgeNum">0</span></span></div>
                 <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>
                 <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>
                 <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>
-                <div class="summary-row"><span>Ave. Collected/Month:</span><span id="avgCollectedMonth" style="font-weight: bold; color: #1b5e20;">₱0</span></div>
+                <div class="summary-row"><span>Ave. Collected/Month:</span><span id="avgMonthlyCollection">₱0</span></div>
+                <div class="summary-row"><span>Stores Needed for ₱3K/mo:</span><span id="storesNeededFor3k" style="font-weight: bold; color: #2e7d32;">0</span></div>
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
@@ -141,12 +142,12 @@
                         <input type="text" id="storeName" placeholder="Hal. Aling Nena Store" required>
                     </div>
                     <div class="form-group">
-                        <label for="ownerName">Pangalan ng May-ari:</label>
-                        <input type="text" id="ownerName" placeholder="Hal. Juan Dela Cruz">
+                        <label for="ownerNameInput">Pangalan ng May-ari:</label>
+                        <input type="text" id="ownerNameInput" placeholder="Hal. Maria Santos">
                     </div>
                     <div class="form-group">
-                        <label for="ownerEmail">Active Email / Gmail Account:</label>
-                        <input type="email" id="ownerEmail" placeholder="Hal. example@gmail.com">
+                        <label for="ownerEmailInput">Active Email / Gmail:</label>
+                        <input type="email" id="ownerEmailInput" placeholder="Hal. mariasantos@gmail.com">
                     </div>
                     <div class="form-group">
                         <label for="storeAddress">Address / Lokasyon:</label>
@@ -180,13 +181,13 @@
             </div>
 
             <div class="card">
-                <h2>Hanapin ang mga Tindahan</h2>
-                <div style="display: flex; gap: 6px; margin-bottom: 12px;">
-                    <input type="text" id="storeSearchQuery" placeholder="I-type ang pangalan (lagyan ng kuwit kung dalawa, hal: Tindahan A, Tindahan B)" style="flex: 1; font-size: 0.85rem; padding: 8px;">
-                    <button type="button" onclick="executeStoreSearch()" style="width: auto; margin-top: 0; padding: 8px 16px; background-color: var(--primary-color);">GO</button>
+                <h2>Hanapin ang Tindahan</h2>
+                <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                    <input type="text" id="storeSearchInput" placeholder="I-type ang pangalan (lagyan ng kuwit , kung dalawa)" style="font-size: 0.85rem;" onkeypress="if(event.key==='Enter') searchAndFlushStores()">
+                    <button type="button" onclick="searchAndFlushStores()" style="width: auto; margin-top: 0; padding: 8px 16px; background-color: var(--primary-color);">GO</button>
                 </div>
                 <div id="storesList">
-                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan sa itaas at i-click ang GO para hanapin.</p>
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan at i-click ang GO para lumabas sa screen.</p>
                 </div>
             </div>
 
@@ -399,10 +400,6 @@
             if (formCard.style.display === 'block') formCard.scrollIntoView({ behavior: 'smooth' });
         };
 
-        window.executeStoreSearch = function() {
-            renderApp();
-        };
-
         window.adjustHomeStock = async function(style, amount) {
             const current = appData.homeStock[style] || 0;
             let qty = 0;
@@ -568,14 +565,13 @@
         }
 
         const form = document.getElementById('consignmentForm');
-        const storesList = document.getElementById('storesList');
 
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const sName = document.getElementById('storeName').value.trim();
-                const ownerName = document.getElementById('ownerName').value.trim();
-                const ownerEmail = document.getElementById('ownerEmail').value.trim();
+                const ownerName = document.getElementById('ownerNameInput').value.trim();
+                const ownerEmail = document.getElementById('ownerEmailInput').value.trim();
                 const sAddress = document.getElementById('storeAddress').value.trim();
                 const styleType = document.getElementById('styleType').value;
                 const qty = parseInt(document.getElementById('quantity').value);
@@ -593,7 +589,7 @@
                 if (existingStore) {
                     if (sAddress) existingStore.address = sAddress;
                     if (ownerName) existingStore.ownerName = ownerName;
-                    if (ownerEmail) existingStore.ownerEmail = ownerEmail;
+                    if (ownerEmail) existingStore.email = ownerEmail;
                     if (!existingStore.storeItems) {
                         existingStore.storeItems = [{
                             id: existingStore.id || Date.now(),
@@ -624,7 +620,7 @@
                     existingStore.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${qty} pcs (${styleType}) noong ${startD}` });
                 } else {
                     appData.consignments.push({
-                        id: Date.now(), storeName: sName, ownerName: ownerName, ownerEmail: ownerEmail, address: sAddress, styleType: styleType, initialQty: qty,
+                        id: Date.now(), storeName: sName, ownerName: ownerName, email: ownerEmail, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
@@ -666,6 +662,10 @@
             alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
         };
 
+        window.searchAndFlushStores = function() {
+            renderApp();
+        };
+
         function renderApp() {
             if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
 
@@ -694,12 +694,12 @@
                     const div = document.createElement('div');
                     div.className = 'inquiry-card-box';
                     div.innerHTML = `
-                        <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>
-                        📞 Contact: ${inq.contact} | 📧 Email: <strong style="color:#0288d1;">${inq.email || 'Wala'}</strong><br>
+                        <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName || 'Wala'})<br>
+                        📞 Contact: ${inq.contact || 'Wala'} | 📧 Email: <strong style="color:#0288d1;">${inq.email || 'Wala'}</strong><br>
                         📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>
                         💬 <strong>Mensahe/Inquiry:</strong> <span style="color:#333; font-style:italic;">"${inq.message || inq.notes || 'Walang mensahe'}"</span><br>
                         <div class="btn-group" style="margin-top: 6px;">
-                            <button type="button" class="btn-approve" onclick="approveInquiry(${inqIdx})">✅ Aprubahan (Prompt)</button>
+                            <button type="button" class="btn-approve" onclick="approveInquiry(${inqIdx})">✅ Aprubahan (Prompt & Auto-Deduct)</button>
                             <button type="button" class="btn-decline" onclick="declineInquiry(${inqIdx})">❌ Tanggihan</button>
                         </div>
                     `;
@@ -711,6 +711,7 @@
                 inquiriesContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>';
             }
 
+            const storesList = document.getElementById('storesList');
             const requestsContainer = document.getElementById('adminRequestsContainer');
             requestsContainer.innerHTML = '';
             let hasRequests = false;
@@ -724,34 +725,38 @@
             const fabRequestBtn = document.getElementById('fabRequestBtn');
             const requestBadge = document.getElementById('requestBadge');
 
+            if (appData.consignments.length === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record.</p>';
+                requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request o benta.</p>';
+                fabRequestBtn.style.display = 'none';
+                requestBadge.style.display = 'none';
+                document.getElementById('totalStores').textContent = '0';
+                document.getElementById('onlineBadgeNum').textContent = '0';
+                document.getElementById('totalDue').textContent = '0';
+                document.getElementById('totalStock').textContent = '0 pcs';
+                document.getElementById('totalSold').textContent = '0 pcs';
+                document.getElementById('totalSales').textContent = '₱0';
+                document.getElementById('avgMonthlyCollection').textContent = '₱0';
+                document.getElementById('storesNeededFor3k').textContent = '0';
+                const totalSalesBox = document.getElementById('requestModalTotalSales');
+                if (totalSalesBox) totalSalesBox.style.display = 'none';
+                previousRequestCount = totalActiveReqsCount;
+                return;
+            }
+
             let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0, onlineCount = 0;
             const currentYM = new Date().toISOString().slice(0, 7);
 
-            // Pre-calculate online status & totals
-            appData.consignments.forEach((item) => {
-                if (item.lastClientAccess) {
-                    let lastTime = typeof item.lastClientAccess === 'number' ? item.lastClientAccess : Date.parse(item.lastClientAccess);
-                    if (!isNaN(lastTime)) {
-                        const diffMs = Date.now() - lastTime;
-                        if (diffMs >= 0 && diffMs < 30000) onlineCount++;
-                    }
-                }
-            });
-
-            document.getElementById('onlineStoresBadge').textContent = `${onlineCount} online`;
-
-            // Store Search Filter Handling
-            const searchInputEl = document.getElementById('storeSearchQuery');
-            const searchQuery = searchInputEl ? searchInputEl.value.trim() : '';
-            let searchTerms = [];
-            if (searchQuery) {
-                searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
+            // Search bar input check supporting comma separation (e.g. "store1, store2")
+            const storeSearchInputEl = document.getElementById('storeSearchInput');
+            const searchVal = storeSearchInputEl ? storeSearchInputEl.value.trim().toLowerCase() : '';
+            let searchQueries = [];
+            if (searchVal) {
+                searchQueries = searchVal.split(',').map(s => s.trim()).filter(s => s.length > 0);
             }
 
+            let renderedStoresCount = 0;
             storesList.innerHTML = '';
-            if (searchTerms.length === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan sa itaas at i-click ang GO para hanapin.</p>';
-            }
 
             appData.consignments.forEach((item, index) => {
                 if (!item.styleType) item.styleType = 'Ordinary';
@@ -762,7 +767,7 @@
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
                 if (!item.ownerName) item.ownerName = '';
-                if (!item.ownerEmail) item.ownerEmail = '';
+                if (!item.email) item.email = '';
                 if (!item.searchValidation) item.searchValidation = '';
                 if (item.isCollected === undefined) item.isCollected = false;
 
@@ -820,6 +825,45 @@
                 let rating = storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos');
                 let badgeClass = storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good');
 
+                // Online Check
+                let isOnline = false;
+                let clientLastSeenText = 'Hindi pa nabubuksan';
+
+                if (item.lastClientAccess) {
+                    clientLastSeenText = typeof item.lastClientAccess === 'number' 
+                        ? new Date(item.lastClientAccess).toLocaleString() 
+                        : item.lastClientAccess;
+                        
+                    let lastTime = typeof item.lastClientAccess === 'number' 
+                        ? item.lastClientAccess 
+                        : Date.parse(item.lastClientAccess);
+
+                    if (isNaN(lastTime) && typeof item.lastClientAccess === 'string') {
+                        let parts = item.lastClientAccess.split(/[\/\s,:]+/);
+                        if (parts.length >= 6) {
+                            let d = new Date(parts[2], parts[1] - 1, parts[0], parts[3], parts[4], parts[5]);
+                            lastTime = d.getTime();
+                        }
+                    }
+
+                    if (!isNaN(lastTime)) {
+                        const diffMs = Date.now() - lastTime;
+                        if (diffMs >= 0 && diffMs < 30000) {
+                            isOnline = true;
+                        }
+                    }
+                }
+
+                if (isOnline) onlineCount++;
+
+                // Filter by search queries (comma separated)
+                let matchesSearch = true;
+                if (searchQueries.length > 0) {
+                    matchesSearch = searchQueries.some(q => item.storeName.toLowerCase().includes(q));
+                } else {
+                    matchesSearch = false; // Hidden by default if search is empty
+                }
+
                 const storeMatchesFilter = !requestFilter || item.storeName.toLowerCase().includes(requestFilter);
 
                 if (item.activeRequests.length > 0) {
@@ -874,90 +918,60 @@
                     }
                 }
 
-                let approvedRestocksHtml = '';
-                if (item.approvedRestocks && item.approvedRestocks.length > 0) {
-                    item.approvedRestocks.forEach((ar, arIdx) => {
-                        if (!ar.clientAccepted) {
-                            approvedRestocksHtml += `
-                                <div style="background: #fff8e1; border: 1px dashed #ffa000; padding: 6px; border-radius: 4px; margin-bottom: 6px; font-size: 0.8rem;">
-                                    ⏳ Na-approve na ang restock na <strong>${ar.qty} pcs (${ar.styleType})</strong>. Naghihintay ng pagtanggap ng client.<br>
-                                    <button type="button" class="btn-approve" style="margin-top: 4px;" onclick="confirmClientRestock(${index}, ${arIdx})">✅ Tanggap na ni Client (I-deduct sa Home Stock)</button>
-                                </div>
-                            `;
-                        }
+                // If matches search query, flush to screen and auto-open card details
+                if (matchesSearch) {
+                    renderedStoresCount++;
+                    localStorage.setItem(`store_open_${index}`, 'true'); // Auto-open when searched as requested
+
+                    let approvedRestocksHtml = '';
+                    if (item.approvedRestocks && item.approvedRestocks.length > 0) {
+                        item.approvedRestocks.forEach((ar, arIdx) => {
+                            if (!ar.clientAccepted) {
+                                approvedRestocksHtml += `
+                                    <div style="background: #fff8e1; border: 1px dashed #ffa000; padding: 6px; border-radius: 4px; margin-bottom: 6px; font-size: 0.8rem;">
+                                        ⏳ Na-approve na ang restock na <strong>${ar.qty} pcs (${ar.styleType})</strong>. Naghihintay ng pagtanggap ng client.<br>
+                                        <button type="button" class="btn-approve" style="margin-top: 4px;" onclick="confirmClientRestock(${index}, ${arIdx})">✅ Tanggap na ni Client (I-deduct sa Home Stock)</button>
+                                    </div>
+                                `;
+                            }
+                        });
+                    }
+
+                    let historyHtml = '';
+                    item.history.forEach((h, hIdx) => {
+                        historyHtml += `<div class="history-item">
+                            <span>▪️ [${h.date}] ${h.text}</span>
+                            <span class="history-btns">
+                                <button onclick="editHistory(${index}, ${hIdx})" style="color:#0288d1;" type="button">✏️</button>
+                                <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;" type="button">❌</button>
+                            </span>
+                        </div>`;
                     });
-                }
+                    if (!historyHtml) historyHtml = '<div class="history-item">Wala pang tala.</div>';
 
-                let historyHtml = '';
-                item.history.forEach((h, hIdx) => {
-                    historyHtml += `<div class="history-item">
-                        <span>▪️ [${h.date}] ${h.text}</span>
-                        <span class="history-btns">
-                            <button onclick="editHistory(${index}, ${hIdx})" style="color:#0288d1;" type="button">✏️</button>
-                            <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;" type="button">❌</button>
-                        </span>
-                    </div>`;
-                });
-                if (!historyHtml) historyHtml = '<div class="history-item">Wala pang tala.</div>';
+                    let chatHtml = '';
+                    item.messages.forEach(msg => {
+                        chatHtml += `<div class="history-item"><span><strong>${msg.sender}:</strong> ${msg.text}</span> <span style="font-size:0.65rem; color:#888;">${msg.date}</span></div>`;
+                    });
+                    if (!chatHtml) chatHtml = '<div class="history-item">Wala pang mensahe.</div>';
 
-                let chatHtml = '';
-                item.messages.forEach(msg => {
-                    chatHtml += `<div class="history-item"><span><strong>${msg.sender}:</strong> ${msg.text}</span> <span style="font-size:0.65rem; color:#888;">${msg.date}</span></div>`;
-                });
-                if (!chatHtml) chatHtml = '<div class="history-item">Wala pang mensahe.</div>';
+                    const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
+                    const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
 
-                const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
-                const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
-                
-                let isOnline = false;
-                let clientLastSeenText = 'Hindi pa nabubuksan';
+                    let statusDot = isOnline 
+                        ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
+                        : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
 
-                if (item.lastClientAccess) {
-                    clientLastSeenText = typeof item.lastClientAccess === 'number' 
-                        ? new Date(item.lastClientAccess).toLocaleString() 
-                        : item.lastClientAccess;
-                        
-                    let lastTime = typeof item.lastClientAccess === 'number' 
-                        ? item.lastClientAccess 
-                        : Date.parse(item.lastClientAccess);
-
-                    if (isNaN(lastTime) && typeof item.lastClientAccess === 'string') {
-                        let parts = item.lastClientAccess.split(/[\/\s,:]+/);
-                        if (parts.length >= 6) {
-                            let d = new Date(parts[2], parts[1] - 1, parts[0], parts[3], parts[4], parts[5]);
-                            lastTime = d.getTime();
+                    let hasClientMessage = false;
+                    if (item.messages && item.messages.length > 0) {
+                        const lastMsg = item.messages[item.messages.length - 1];
+                        if (lastMsg.sender !== 'Admin') {
+                            hasClientMessage = true;
                         }
                     }
 
-                    if (!isNaN(lastTime)) {
-                        const diffMs = Date.now() - lastTime;
-                        if (diffMs >= 0 && diffMs < 30000) {
-                            isOnline = true;
-                        }
-                    }
-                }
+                    let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
-                let statusDot = isOnline 
-                    ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
-                    : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
-
-                let hasClientMessage = false;
-                if (item.messages && item.messages.length > 0) {
-                    const lastMsg = item.messages[item.messages.length - 1];
-                    if (lastMsg.sender !== 'Admin') {
-                        hasClientMessage = true;
-                    }
-                }
-
-                let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
-
-                // Check if store matches search query terms (supports comma-separated names)
-                let matchesSearch = false;
-                if (searchTerms.length > 0) {
-                    matchesSearch = searchTerms.some(term => item.storeName.toLowerCase().includes(term));
-                }
-
-                if (searchTerms.length > 0 && matchesSearch) {
                     const div = document.createElement('div');
                     div.className = storeCardClass;
                     div.innerHTML = `
@@ -970,11 +984,11 @@
                             </div>
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <span class="badge ${badgeClass}">${rating}</span>
-                                <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">➖</button>
+                                <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">-</button>
                             </div>
                         </div>
                         <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                            <span>👤 May-ari: <strong>${item.ownerName || 'Walang nakalagay'}</strong> | 📧 Email: <strong style="color:#0288d1;">${item.ownerEmail || 'Walang email'}</strong></span><br>
+                            <span>👤 May-ari: <strong>${item.ownerName || 'Walang nakalagay'}</strong> | 📧 Email: <strong style="color:#0288d1;">${item.email || 'Walang email'}</strong></span><br>
                             <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong></span>
                         </div>
                         <div class="store-body-content" id="storeBody_${index}" style="display: block;">
@@ -985,9 +999,10 @@
                             ${approvedRestocksHtml}
                             <div style="margin-top: 10px;">${storeItemsHtml}</div>
                             <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
-                                <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Pangalan</button>
-                                <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Address</button>
-                                <button type="button" onclick="deleteEntireStore(${index})" style="background-color: #d32f2f; font-size: 0.75rem; padding: 6px; flex: 1;">Burahin ang Tindahan</button>
+                                <button type="button" onclick="editStoreOwner(${index})" style="background-color: #3f51b5; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang May-ari/Email</button>
+                                <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">Pangalan</button>
+                                <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">Address</button>
+                                <button type="button" onclick="deleteEntireStore(${index})" style="background-color: #d32f2f; font-size: 0.75rem; padding: 6px; flex: 1;">Burahin</button>
                             </div>
                             <div style="margin-top: 8px;">
                                 <button type="button" onclick="toggleBox('chatBox_${index}', this, 'chat_open_${index}')" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">${chatOpen ? 'Itago ang Chatbox' : `💬 Chatbox (${item.messages.length})`}</button>
@@ -1009,8 +1024,10 @@
                 }
             });
 
-            if (searchTerms.length > 0 && storesList.children.length === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#d32f2f; font-size:0.9rem;">Walang natagpuang tindahan sa pangalang ito.</p>';
+            if (searchQueries.length > 0 && renderedStoresCount === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#c62828; font-size:0.9rem;">Walang nahanap na tindahan sa pangalang iyon.</p>';
+            } else if (searchQueries.length === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan at i-click ang GO para lumabas sa screen.</p>';
             }
 
             Object.keys(savedReplies).forEach(idx => {
@@ -1044,32 +1061,32 @@
                 requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request o benta.</p>';
             }
 
-            // Average Collected money per month calculation
-            let activeMonths = 1;
-            if (appData.consignments.length > 0) {
-                let earliestDate = Date.now();
-                appData.consignments.forEach(c => {
-                    if (c.storeItems) {
-                        c.storeItems.forEach(sub => {
-                            if (sub.dateDelivered) {
-                                let dTime = new Date(sub.dateDelivered).getTime();
-                                if (!isNaN(dTime) && dTime < earliestDate) earliestDate = dTime;
-                            }
-                        });
-                    }
-                });
-                let diffTime = Math.abs(Date.now() - earliestDate);
-                let diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
-                activeMonths = Math.max(1, diffMonths);
-            }
-            let avgCollectedPerMonth = Math.round(tSales / activeMonths);
+            // Calculation for Average Collected Money per Month & Stores needed for ₱3K/mo target
+            let totalMonthsActive = 1;
+            appData.consignments.forEach(c => {
+                if (c.storeItems) {
+                    c.storeItems.forEach(sub => {
+                        if (sub.dateDelivered) {
+                            const start = new Date(sub.dateDelivered);
+                            const now = new Date();
+                            const diffMonths = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+                            if (diffMonths > totalMonthsActive) totalMonthsActive = diffMonths;
+                        }
+                    });
+                }
+            });
+            const avgMonthlyCollection = Math.round(tSales / Math.max(1, totalMonthsActive));
+            const avgPerStoreMonthly = tStores > 0 ? (avgMonthlyCollection / tStores) : 0;
+            const storesNeededFor3k = avgPerStoreMonthly > 0 ? Math.ceil(3000 / avgPerStoreMonthly) : (tStores > 0 ? '-' : tStores);
 
             document.getElementById('totalStores').textContent = tStores;
+            document.getElementById('onlineBadgeNum').textContent = onlineCount;
             document.getElementById('totalDue').textContent = tDue;
             document.getElementById('totalStock').textContent = tStock + ' pcs';
             document.getElementById('totalSold').textContent = tSold + ' pcs';
-            document.getElementById('avgCollectedMonth').textContent = '₱' + avgCollectedPerMonth.toLocaleString();
             document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
+            document.getElementById('avgMonthlyCollection').textContent = '₱' + avgMonthlyCollection.toLocaleString();
+            document.getElementById('storesNeededFor3k').textContent = storesNeededFor3k === Infinity || isNaN(storesNeededFor3k) ? '-' : storesNeededFor3k;
         }
 
         window.markStoreCollected = async function(storeIdx) {
@@ -1109,6 +1126,7 @@
             const isSameName = inq.ownerName && inq.storeName && inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();
             const searchValidationMsg = isSameName ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
 
+            // Automatic deduction from home inventory
             appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);
             const todayStr = new Date().toISOString().slice(0, 10);
             let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -1120,20 +1138,20 @@
             }
 
             appData.consignments.push({
-                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', ownerEmail: inq.email || '', address: inq.address || '', styleType: style, initialQty: initialStock,
+                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', email: inq.email || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
                 activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
                 searchValidation: searchValidationMsg,
                 isCollected: false,
-                history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style})` }]
+                history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon at awtomatikong binawas sa inventory (${initialStock} pcs ${style})` }]
             });
 
             appData.pendingInquiries.splice(inqIdx, 1);
             await saveToCloud();
             closeModal('inquiryModal');
-            alert('Matagumpay na na-aprube ang inquiry!');
+            alert('Matagumpay na na-aprube ang inquiry at awtomatikong nabawasan ang inventory!');
         };
 
         window.declineInquiry = async function(inqIdx) {
@@ -1315,6 +1333,19 @@
                 subItem.initialQty += count;
                 subItem.currentStock += count;
                 store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${count} pcs (${style})` });
+                saveToCloud();
+            }
+        };
+
+        window.editStoreOwner = function(index) {
+            const item = appData.consignments[index];
+            const newOwner = prompt('Bagong Pangalan ng May-ari:', item.ownerName || '');
+            if (newOwner !== null) {
+                item.ownerName = newOwner.trim();
+                const newEmail = prompt('Bagong Active Email / Gmail:', item.email || '');
+                if (newEmail !== null) {
+                    item.email = newEmail.trim();
+                }
                 saveToCloud();
             }
         };
