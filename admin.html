@@ -418,18 +418,6 @@
             }
         };
 
-        window.toggleStoreCollection = async function(storeIdx, isChecked) {
-            appData.consignments[storeIdx].isCollected = isChecked;
-            const timestamp = new Date().toLocaleString();
-            if (!appData.consignments[storeIdx].history) appData.consignments[storeIdx].history = [];
-            appData.consignments[storeIdx].history.unshift({ 
-                id: Date.now(), 
-                date: timestamp, 
-                text: isChecked ? `Minarkahan bilang Nakolekta na ✅` : `Inalis ang marka ng koleksyon` 
-            });
-            await saveToCloud();
-        };
-
         // Automatic deduction kapag ang client ang nag-click ng pagtanggap ng restock order
         function processClientAcceptedRestocks() {
             let updated = false;
@@ -725,6 +713,77 @@
             let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
             const currentYM = new Date().toISOString().slice(0, 7);
 
+            // Kolektahin at ayusin ang lahat ng pending requests at pending sales sa tamang chronological order (oldest to newest)
+            let allRequestsList = [];
+            let allPendingSalesList = [];
+            let totalPendingSalesAmount = 0;
+
+            appData.consignments.forEach((item, index) => {
+                if (item.activeRequests && item.activeRequests.length > 0) {
+                    item.activeRequests.forEach((req, reqIdx) => {
+                        allRequestsList.push({ storeIdx: index, reqIdx, req, time: req.id || 0, storeName: item.storeName });
+                    });
+                }
+                if (item.pendingSales && item.pendingSales.length > 0) {
+                    item.pendingSales.forEach((sale, saleIdx) => {
+                        allPendingSalesList.push({ storeIdx: index, saleIdx, sale, time: sale.id || 0, storeName: item.storeName });
+                        totalPendingSalesAmount += (sale.totalAmount || 0);
+                    });
+                }
+            });
+
+            // Sort chronologically
+            allRequestsList.sort((a, b) => a.time - b.time);
+            allPendingSalesList.sort((a, b) => a.time - b.time);
+
+            if (allRequestsList.length > 0 || allPendingSalesList.length > 0) {
+                hasRequests = true;
+                actionReqCount = allRequestsList.length + allPendingSalesList.length;
+                totalActiveReqsCount += actionReqCount;
+
+                // Idagdag ang Total Sales banner para sa pending sales sa loob ng modal
+                if (allPendingSalesList.length > 0) {
+                    const salesSummaryDiv = document.createElement('div');
+                    salesSummaryDiv.style.cssText = "background: #e8f5e9; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 0.85rem; font-weight: bold; color: #2e7d32; border: 1px solid #c8e6c9;";
+                    salesSummaryDiv.innerHTML = `💰 Kabuuang Benta sa mga Pending Sales: ₱${totalPendingSalesAmount.toLocaleString()}`;
+                    requestsContainer.appendChild(salesSummaryDiv);
+                }
+
+                // I-render ang mga restock requests nang sunud-sunod (Chronological)
+                allRequestsList.forEach(itemData => {
+                    const req = itemData.req;
+                    const reqStyle = req.styleType || 'Ordinary';
+                    const reqRow = document.createElement('div');
+                    reqRow.className = 'request-action-row';
+                    reqRow.innerHTML = `
+                        <span><strong>${itemData.storeName} (${reqStyle})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
+                        <div>
+                            <button type="button" class="btn-approve" onclick="processRestock(${itemData.storeIdx}, ${itemData.reqIdx}, ${req.qty}, '${reqStyle}', true)">Approve</button>
+                            <button type="button" class="btn-decline" onclick="processRestock(${itemData.storeIdx}, ${itemData.reqIdx}, ${req.qty}, '${reqStyle}', false)">Decline</button>
+                        </div>
+                    `;
+                    requestsContainer.appendChild(reqRow);
+                });
+
+                // I-render ang mga pending sales nang sunud-sunod (Chronological)
+                allPendingSalesList.forEach(itemData => {
+                    const sale = itemData.sale;
+                    const saleStyle = sale.styleType || 'Ordinary';
+                    const saleRow = document.createElement('div');
+                    saleRow.className = 'request-action-row';
+                    saleRow.style.background = '#e8f5e9';
+                    saleRow.style.borderColor = '#a5d6a7';
+                    saleRow.innerHTML = `
+                        <span><strong>${itemData.storeName} (${saleStyle})</strong> nag-ulat ng benta: <strong>${sale.qty} pcs</strong> (₱${(sale.totalAmount || 0).toLocaleString()}).</span>
+                        <div>
+                            <button type="button" class="btn-approve" onclick="processPendingSales(${itemData.storeIdx}, ${itemData.saleIdx}, ${sale.qty}, '${saleStyle}', true)">Approve</button>
+                            <button type="button" class="btn-decline" onclick="processPendingSales(${itemData.storeIdx}, ${itemData.saleIdx}, ${sale.qty}, '${saleStyle}', false)">Decline</button>
+                        </div>
+                    `;
+                    requestsContainer.appendChild(saleRow);
+                });
+            }
+
             appData.consignments.forEach((item, index) => {
                 if (!item.styleType) item.styleType = 'Ordinary';
                 if (!item.history) item.history = [];
@@ -734,7 +793,6 @@
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
                 if (!item.searchValidation) item.searchValidation = '';
-                if (item.isCollected === undefined) item.isCollected = false;
 
                 if (!item.storeItems || item.storeItems.length === 0) {
                     if (item.rejectedQty === undefined) item.rejectedQty = 0;
@@ -764,12 +822,16 @@
                     if (subIsDue) storeIsDue = true;
 
                     const totalOrderAmount = subItem.initialQty * subItem.price;
-                    const isPremium = subItem.styleType === 'Premium';
+
+                    // Bagong kulay ng background para sa Premium active stock list (malinaw na pagkakaiba)
+                    const isPremiumItem = (subItem.styleType || 'Ordinary') === 'Premium';
+                    const itemRowBg = isPremiumItem ? '#f3e5f5' : '#fdfdfd';
+                    const itemRowBorder = isPremiumItem ? '#ce93d8' : '#eee';
 
                     storeItemsHtml += `
-                        <div class="store-item-row" style="${isPremium ? 'background-color: #fce4ec; border-color: #f8bbd0;' : ''}">
-                            <div style="font-weight: bold; color: ${isPremium ? '#880e4f' : '#2e7d32'}; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-                                <span>${subItem.styleType || 'Ordinary'}</span>
+                        <div class="store-item-row" style="background: ${itemRowBg}; border: 1px solid ${itemRowBorder};">
+                            <div style="font-weight: bold; color: ${isPremiumItem ? '#7b1fa2' : '#2e7d32'}; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>${subItem.styleType || 'Ordinary'} ${isPremiumItem ? '⭐ (Premium)' : ''}</span>
                                 <span style="color: #333; font-weight: normal;">Presyo: ₱${subItem.price} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
                             </div>
                             <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">
@@ -790,50 +852,6 @@
                 if (storeIsDue) tDue++;
                 let rating = storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos');
                 let badgeClass = storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good');
-
-                if (item.activeRequests.length > 0) {
-                    hasRequests = true;
-                    actionReqCount += item.activeRequests.length;
-                    totalActiveReqsCount += item.activeRequests.length;
-                    item.activeRequests.forEach((req, reqIdx) => {
-                        const reqStyle = req.styleType || item.styleType;
-                        const reqRow = document.createElement('div');
-                        reqRow.className = 'request-action-row';
-                        reqRow.innerHTML = `
-                            <span><strong>${item.storeName} (${reqStyle})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
-                            <div>
-                                <button type="button" class="btn-approve" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', true)">Approve</button>
-                                <button type="button" class="btn-decline" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', false)">Decline</button>
-                            </div>
-                        `;
-                        requestsContainer.appendChild(reqRow);
-                    });
-                }
-
-                if (item.pendingSales.length > 0) {
-                    hasRequests = true;
-                    actionReqCount += item.pendingSales.length;
-                    totalActiveReqsCount += item.pendingSales.length;
-                    item.pendingSales.forEach((sale, saleIdx) => {
-                        const saleStyle = sale.styleType || 'Ordinary';
-                        const subItem = item.storeItems.find(s => s.styleType === saleStyle) || item.storeItems[0];
-                        const unitPrice = subItem ? subItem.price : (item.price || 150);
-                        const saleTotal = sale.totalAmount || (sale.qty * unitPrice);
-
-                        const saleRow = document.createElement('div');
-                        saleRow.className = 'request-action-row';
-                        saleRow.style.background = '#e8f5e9';
-                        saleRow.style.borderColor = '#a5d6a7';
-                        saleRow.innerHTML = `
-                            <span><strong>${item.storeName} (${saleStyle})</strong> nag-ulat ng benta: <strong>${sale.qty} pcs</strong> | Total Sales: <strong style="color: #2e7d32;">₱${saleTotal.toLocaleString()}</strong></span>
-                            <div>
-                                <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Approve</button>
-                                <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Decline</button>
-                            </div>
-                        `;
-                        requestsContainer.appendChild(saleRow);
-                    });
-                }
 
                 let approvedRestocksHtml = '';
                 if (item.approvedRestocks && item.approvedRestocks.length > 0) {
@@ -930,15 +948,11 @@
                     </div>
                     <div style="font-size: 0.8rem; color: #555; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
                         <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong></span>
-                        <label style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; cursor: pointer; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; border: 1px solid #c8e6c9;">
-                            <input type="checkbox" ${item.isCollected ? 'checked' : ''} onchange="toggleStoreCollection(${index}, this.checked)"> Nakolekta na ✅
-                        </label>
                     </div>
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
                             👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
                         </div>
-                        ${storeIsDue ? `<div style="margin-bottom: 8px;"><button type="button" onclick="markStoreCollected(${index})" style="background-color: #d32f2f; font-size: 0.8rem; padding: 6px;">💰 Markahan na Nakolekta na (Alisin ang Due)</button></div>` : ''}
                         ${approvedRestocksHtml}
                         <div style="margin-top: 10px;">${storeItemsHtml}</div>
                         <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
@@ -992,23 +1006,6 @@
             document.getElementById('totalSold').textContent = tSold + ' pcs';
             document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
         }
-
-        window.markStoreCollected = async function(storeIdx) {
-            const item = appData.consignments[storeIdx];
-            const timestamp = new Date().toLocaleString();
-            if (item.storeItems && item.storeItems.length > 0) {
-                item.storeItems.forEach(sub => {
-                    let currColl = sub.collectionDate ? new Date(sub.collectionDate) : new Date();
-                    currColl.setMonth(currColl.getMonth() + 1);
-                    sub.collectionDate = currColl.toISOString().slice(0, 10);
-                });
-            }
-            if (!item.history) item.history = [];
-            item.history.unshift({ id: Date.now(), date: timestamp, text: `Nakolekta na ang bayad/items (Na-clear ang Due)` });
-            if (!item.clientNotifications) item.clientNotifications = [];
-            item.clientNotifications.push({ id: Date.now(), text: `✅ Nakolekta na ng admin ang bayad para sa cycle na ito.`, date: timestamp });
-            await saveToCloud();
-        };
 
         window.approveInquiry = async function(inqIdx) {
             const inq = appData.pendingInquiries[inqIdx];
