@@ -26,6 +26,9 @@
         #portalContent { display: none; }
 
         .store-item-box { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
+        /* Bagong kulay ng background para sa Premium active stock list */
+        .store-item-box.premium-stock { background: #fffde7; border-color: #fbc02d; }
+
         .notification-item { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 8px; margin-bottom: 6px; font-size: 0.85rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: flex-start; }
         .chat-msg { background: #f1f8e9; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85rem; border: 1px solid #c5e1a5; }
         .chat-msg.admin { background: #e3f2fd; border-color: #90caf9; }
@@ -497,7 +500,7 @@
             alert("Matagumpay na naidagdag sa iyong stock at nabawas sa inventory ng admin!");
         };
 
-        // BAGO: Function para sa "MAY BUMILI" button na may validation at pagbawas ng active stock
+        // Function para sa "MAY BUMILI" button na may validation at pagbawas ng active stock
         window.promptRecordSale = async function(styleType) {
             const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
             if (!store) return;
@@ -743,21 +746,34 @@
                 pendingDeliveryCard.style.display = 'none';
             }
 
-            // Render Pending Sales Card
+            // Render Pending Sales Card kasama ang Total Sales ng mga nakabinbing benta
             const pendingSalesCard = document.getElementById('pendingSalesCard');
             const pendingSalesContainer = document.getElementById('pendingSalesContainer');
             pendingSalesContainer.innerHTML = '';
+            
             if (store.pendingSales && store.pendingSales.length > 0) {
                 pendingSalesCard.style.display = 'block';
+                let totalPendingAmount = 0;
+
                 store.pendingSales.forEach((sale, index) => {
+                    const saleTotal = sale.totalAmount || (sale.qty * (sale.price || 0));
+                    totalPendingAmount += saleTotal;
+
                     const div = document.createElement('div');
                     div.style.cssText = "background: white; border: 1px solid #ffb74d; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
                     div.innerHTML = `
-                        <div>Uri: <strong>${sale.styleType}</strong> | Dami: <strong>${sale.qty} pcs</strong> | Halaga: <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong></div>
+                        <div>Uri: <strong>${sale.styleType}</strong> | Dami: <strong>${sale.qty} pcs</strong> | Halaga: <strong>₱${saleTotal.toLocaleString()}</strong></div>
                         <div style="font-size: 0.75rem; color: #555;">Petsa: ${sale.date || 'N/A'} | Status: <span style="color: #f57c00; font-weight: bold;">Nakabinbin (Pending Approval)</span></div>
                     `;
                     pendingSalesContainer.appendChild(div);
                 });
+
+                // Pagdaragdag ng kabuuang Total Sales summary para sa mga pending sales
+                const totalSummaryDiv = document.createElement('div');
+                totalSummaryDiv.style.cssText = "margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ffb74d; font-weight: bold; font-size: 0.9rem; color: #e65100; text-align: right;";
+                totalSummaryDiv.innerHTML = `Kabuuang Halaga ng Nakabinbing Benta (Total Pending Sales): ₱${totalPendingAmount.toLocaleString()}`;
+                pendingSalesContainer.appendChild(totalSummaryDiv);
+
             } else {
                 pendingSalesCard.style.display = 'none';
             }
@@ -822,7 +838,9 @@
                 const subSales = subSold * (sub.price || 0);
 
                 const div = document.createElement('div');
-                div.className = 'store-item-box';
+                // Lagyan ng class na 'premium-stock' kung ang uri ay Premium para magkaiba ang background color
+                const isPremium = (sub.styleType === 'Premium');
+                div.className = 'store-item-box' + (isPremium ? ' premium-stock' : '');
 
                 div.innerHTML = `
                     <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
