@@ -764,10 +764,11 @@
                     if (subIsDue) storeIsDue = true;
 
                     const totalOrderAmount = subItem.initialQty * subItem.price;
+                    const isPremium = subItem.styleType === 'Premium';
 
                     storeItemsHtml += `
-                        <div class="store-item-row">
-                            <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <div class="store-item-row" style="${isPremium ? 'background-color: #fce4ec; border-color: #f8bbd0;' : ''}">
+                            <div style="font-weight: bold; color: ${isPremium ? '#880e4f' : '#2e7d32'}; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
                                 <span>${subItem.styleType || 'Ordinary'}</span>
                                 <span style="color: #333; font-weight: normal;">Presyo: ₱${subItem.price} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
                             </div>
@@ -815,12 +816,16 @@
                     totalActiveReqsCount += item.pendingSales.length;
                     item.pendingSales.forEach((sale, saleIdx) => {
                         const saleStyle = sale.styleType || 'Ordinary';
+                        const subItem = item.storeItems.find(s => s.styleType === saleStyle) || item.storeItems[0];
+                        const unitPrice = subItem ? subItem.price : (item.price || 150);
+                        const saleTotal = sale.totalAmount || (sale.qty * unitPrice);
+
                         const saleRow = document.createElement('div');
                         saleRow.className = 'request-action-row';
                         saleRow.style.background = '#e8f5e9';
                         saleRow.style.borderColor = '#a5d6a7';
                         saleRow.innerHTML = `
-                            <span><strong>${item.storeName} (${saleStyle})</strong> nag-ulat ng benta: <strong>${sale.qty} pcs</strong> (₱${(sale.totalAmount || 0).toLocaleString()}).</span>
+                            <span><strong>${item.storeName} (${saleStyle})</strong> nag-ulat ng benta: <strong>${sale.qty} pcs</strong> | Total Sales: <strong style="color: #2e7d32;">₱${saleTotal.toLocaleString()}</strong></span>
                             <div>
                                 <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Approve</button>
                                 <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Decline</button>
@@ -1111,22 +1116,19 @@
             const style = styleType || 'Ordinary';
 
             if (isApproved) {
-                // Na-deduct na sa client side nang i-click ang "MAY BUMILI", 
-                // kaya huwag na itong ibawas ulit dito para maiwasan ang double deduction.
                 item.pendingSales.splice(saleIdx, 1);
                 if (!item.history) item.history = [];
                 item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-aprube ang benta mula sa client: ${qty} pcs (${style})` });
                 if (!item.clientNotifications) item.clientNotifications = [];
                 item.clientNotifications.push({ id: Date.now(), text: `🎉 Na-aprube na ng admin ang iyong na-report na benta (${qty} pcs ${style}).`, date: timestamp });
             } else {
-                // Kapag tinanggihan (decline) ni admin, ibalik ang stock sa currentStock dahil nabawasan na ito sa client.
                 if (!item.storeItems) item.storeItems = [];
                 let subItem = item.storeItems.find(sub => sub.styleType === style);
                 if (!subItem && item.storeItems.length > 0) {
                     subItem = item.storeItems[0];
                 }
                 if (subItem) {
-                    subItem.currentStock += qty; // Ibalik ang stock
+                    subItem.currentStock += qty;
                 }
 
                 item.pendingSales.splice(saleIdx, 1);
