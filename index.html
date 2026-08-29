@@ -259,7 +259,7 @@
                 </div>
             </div>
 
-            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) with Close and Open Toggle -->
+            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) with Close/Open Toggle -->
             <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">🔄 Humiling ng Karagdagang Restock</h2>
@@ -420,7 +420,7 @@
             }
         };
 
-        // Toggle function para sa Request Restock section (Close and Open)
+        // Toggle function para sa Request Restock section
         window.toggleRestockVisibility = function() {
             const wrapper = document.getElementById('restockContentWrapper');
             const btn = document.getElementById('toggleRestockBtn');
@@ -854,6 +854,7 @@
 
                 const subSold = Math.max(0, sub.initialQty - sub.currentStock - sub.returnedQty - sub.rejectedQty);
                 const subSales = subSold * (sub.price || 0);
+                const isSoldOut = sub.currentStock <= 0;
 
                 const div = document.createElement('div');
                 // Lagyan ng class na 'premium-stock' kung ang uri ay Premium para magkaiba ang background color
@@ -866,11 +867,14 @@
                         <span>Presyo: ₱${sub.price || 0}</span>
                     </div>
                     <div style="font-size: 0.85rem; color: #444; margin-bottom: 8px;">
-                        <span style="background: #fff9c4; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px dashed #fbc02d; display: inline-block; margin-bottom: 3px;">Natitirang Stock: ${sub.currentStock} pcs</span> / Simulang Dami: ${sub.initialQty} pcs<br>
+                        Natitirang Stock: <strong style="font-weight: bold; background: ${isSoldOut ? '#ffebee' : '#e8f5e9'}; color: ${isSoldOut ? '#c62828' : '#2e7d32'}; padding: 2px 6px; border-radius: 4px;">${sub.currentStock} pcs ${isSoldOut ? ' - SOLD OUT ❌' : ''}</strong> / Simulang Dami: ${sub.initialQty} pcs<br>
                         Kabuuang Nabenta: <strong>${subSold} pcs</strong> (Benta: ₱${subSales.toLocaleString()})<br>
                         Target na Petsa ng Koleksyon: ${sub.collectionDate || 'N/A'}
                     </div>
-                    <button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px; width: 100%; margin-top: 4px;">🛒 MAY BUMILI (I-record ang Benta)</button>
+                    ${isSoldOut ? 
+                        '<div style="text-align: center; background: #ffebee; color: #c62828; font-weight: bold; padding: 8px; border-radius: 4px; font-size: 0.9rem; border: 1px solid #ef9a9a; margin-top: 4px;">🚫 SOLD OUT (Wala nang Aktibong Stock)</div>' : 
+                        `<button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px; width: 100%; margin-top: 4px;">🛒 MAY BUMILI (I-record ang Benta)</button>`
+                    }
                 `;
                 itemsContainer.appendChild(div);
             });
