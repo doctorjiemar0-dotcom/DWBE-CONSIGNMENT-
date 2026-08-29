@@ -259,22 +259,27 @@
                 </div>
             </div>
 
-            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) without Images -->
+            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) with Close and Open Toggle -->
             <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
-                <h2>🔄 Humiling ng Karagdagang Restock</h2>
-                <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Mag-request ng eksaktong 5 pirasong restock (1 beses lamang bawat buwan).</p>
-                <div class="form-group">
-                    <label for="restockStyleType">Piliin ang Uri ng Istilo:</label>
-                    <select id="restockStyleType">
-                        <option value="Ordinary">Ordinary Style</option>
-                        <option value="Premium">Premium Style</option>
-                    </select>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h2 style="margin-bottom: 0;">🔄 Humiling ng Karagdagang Restock</h2>
+                    <button type="button" id="toggleRestockBtn" onclick="toggleRestockVisibility()" style="background-color: #f57f17; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Ipakita</button>
                 </div>
-                <div class="form-group">
-                    <label>Dami ng Restock (Fixed: 5 pcs):</label>
-                    <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
+                <div id="restockContentWrapper" style="display: none;">
+                    <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Mag-request ng eksaktong 5 pirasong restock (1 beses lamang bawat buwan).</p>
+                    <div class="form-group">
+                        <label for="restockStyleType">Piliin ang Uri ng Istilo:</label>
+                        <select id="restockStyleType">
+                            <option value="Ordinary">Ordinary Style</option>
+                            <option value="Premium">Premium Style</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Dami ng Restock (Fixed: 5 pcs):</label>
+                        <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
+                    </div>
+                    <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
                 </div>
-                <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
             </div>
 
             <!-- Chat / Message Admin Section -->
@@ -406,6 +411,19 @@
         window.toggleQrVisibility = function() {
             const wrapper = document.getElementById('qrContentWrapper');
             const btn = document.getElementById('toggleQrBtn');
+            if (wrapper.style.display === 'none') {
+                wrapper.style.display = 'block';
+                btn.textContent = 'Itago';
+            } else {
+                wrapper.style.display = 'none';
+                btn.textContent = 'Ipakita';
+            }
+        };
+
+        // Toggle function para sa Request Restock section (Close and Open)
+        window.toggleRestockVisibility = function() {
+            const wrapper = document.getElementById('restockContentWrapper');
+            const btn = document.getElementById('toggleRestockBtn');
             if (wrapper.style.display === 'none') {
                 wrapper.style.display = 'block';
                 btn.textContent = 'Itago';
@@ -848,7 +866,7 @@
                         <span>Presyo: ₱${sub.price || 0}</span>
                     </div>
                     <div style="font-size: 0.85rem; color: #444; margin-bottom: 8px;">
-                        Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Simulang Dami: ${sub.initialQty} pcs<br>
+                        <span style="background: #fff9c4; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px dashed #fbc02d; display: inline-block; margin-bottom: 3px;">Natitirang Stock: ${sub.currentStock} pcs</span> / Simulang Dami: ${sub.initialQty} pcs<br>
                         Kabuuang Nabenta: <strong>${subSold} pcs</strong> (Benta: ₱${subSales.toLocaleString()})<br>
                         Target na Petsa ng Koleksyon: ${sub.collectionDate || 'N/A'}
                     </div>
