@@ -139,6 +139,14 @@
                         <input type="text" id="storeName" placeholder="Hal. Aling Nena Store" required>
                     </div>
                     <div class="form-group">
+                        <label for="ownerNameInput">Pangalan ng May-ari:</label>
+                        <input type="text" id="ownerNameInput" placeholder="Hal. Juan Dela Cruz" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="storeEmailInput">Active Email o Gmail Account:</label>
+                        <input type="email" id="storeEmailInput" placeholder="Hal. juandelacruz@gmail.com">
+                    </div>
+                    <div class="form-group">
                         <label for="storeAddress">Address / Lokasyon:</label>
                         <input type="text" id="storeAddress" placeholder="Hal. Brgy. Sirangan, Sorsogon">
                     </div>
@@ -171,8 +179,11 @@
 
             <div class="card">
                 <h2>Listahan ng mga Aktibong Tindahan</h2>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <input type="text" id="storeSearchInput" placeholder="🔍 I-type ang pangalan ng tindahan para hanapin..." oninput="renderApp()" style="font-size: 0.9rem; padding: 8px;">
+                </div>
                 <div id="storesList">
-                    <p style="text-align:center; color:#778; font-size:0.9rem;">Kinukuha ang data sa Cloud...</p>
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan sa itaas para hanapin...</p>
                 </div>
             </div>
 
@@ -557,6 +568,8 @@
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const sName = document.getElementById('storeName').value.trim();
+                const oName = document.getElementById('ownerNameInput').value.trim();
+                const sEmail = document.getElementById('storeEmailInput').value.trim();
                 const sAddress = document.getElementById('storeAddress').value.trim();
                 const styleType = document.getElementById('styleType').value;
                 const qty = parseInt(document.getElementById('quantity').value);
@@ -572,6 +585,8 @@
                 let existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === sName.toLowerCase());
 
                 if (existingStore) {
+                    if (oName) existingStore.ownerName = oName;
+                    if (sEmail) existingStore.email = sEmail;
                     if (sAddress) existingStore.address = sAddress;
                     if (!existingStore.storeItems) {
                         existingStore.storeItems = [{
@@ -603,7 +618,7 @@
                     existingStore.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${qty} pcs (${styleType}) noong ${startD}` });
                 } else {
                     appData.consignments.push({
-                        id: Date.now(), storeName: sName, address: sAddress, styleType: styleType, initialQty: qty,
+                        id: Date.now(), storeName: sName, ownerName: oName, email: sEmail, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
@@ -724,7 +739,11 @@
             let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
             const currentYM = new Date().toISOString().slice(0, 7);
 
-            // Sort consignments alphabetically or keep order, and collect requests cleanly grouped per store to avoid random jumbling
+            const storeSearchInput = document.getElementById('storeSearchInput');
+            const storeQuery = storeSearchInput ? storeSearchInput.value.toLowerCase().trim() : '';
+
+            let matchedStoreCount = 0;
+
             appData.consignments.forEach((item, index) => {
                 if (!item.styleType) item.styleType = 'Ordinary';
                 if (!item.history) item.history = [];
@@ -733,6 +752,8 @@
                 if (!item.approvedRestocks) item.approvedRestocks = [];
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
+                if (!item.ownerName) item.ownerName = '';
+                if (!item.email) item.email = '';
                 if (!item.searchValidation) item.searchValidation = '';
                 if (item.isCollected === undefined) item.isCollected = false;
 
@@ -845,132 +866,147 @@
                     }
                 }
 
-                let approvedRestocksHtml = '';
-                if (item.approvedRestocks && item.approvedRestocks.length > 0) {
-                    item.approvedRestocks.forEach((ar, arIdx) => {
-                        if (!ar.clientAccepted) {
-                            approvedRestocksHtml += `
-                                <div style="background: #fff8e1; border: 1px dashed #ffa000; padding: 6px; border-radius: 4px; margin-bottom: 6px; font-size: 0.8rem;">
-                                    ⏳ Na-approve na ang restock na <strong>${ar.qty} pcs (${ar.styleType})</strong>. Naghihintay ng pagtanggap ng client.<br>
-                                    <button type="button" class="btn-approve" style="margin-top: 4px;" onclick="confirmClientRestock(${index}, ${arIdx})">✅ Tanggap na ni Client (I-deduct sa Home Stock)</button>
-                                </div>
-                            `;
-                        }
+                // Render store card only if storeQuery matches
+                if (storeQuery && item.storeName.toLowerCase().includes(storeQuery)) {
+                    matchedStoreCount++;
+
+                    let approvedRestocksHtml = '';
+                    if (item.approvedRestocks && item.approvedRestocks.length > 0) {
+                        item.approvedRestocks.forEach((ar, arIdx) => {
+                            if (!ar.clientAccepted) {
+                                approvedRestocksHtml += `
+                                    <div style="background: #fff8e1; border: 1px dashed #ffa000; padding: 6px; border-radius: 4px; margin-bottom: 6px; font-size: 0.8rem;">
+                                        ⏳ Na-approve na ang restock na <strong>${ar.qty} pcs (${ar.styleType})</strong>. Naghihintay ng pagtanggap ng client.<br>
+                                        <button type="button" class="btn-approve" style="margin-top: 4px;" onclick="confirmClientRestock(${index}, ${arIdx})">✅ Tanggap na ni Client (I-deduct sa Home Stock)</button>
+                                    </div>
+                                `;
+                            }
+                        });
+                    }
+
+                    let historyHtml = '';
+                    item.history.forEach((h, hIdx) => {
+                        historyHtml += `<div class="history-item">
+                            <span>▪️ [${h.date}] ${h.text}</span>
+                            <span class="history-btns">
+                                <button onclick="editHistory(${index}, ${hIdx})" style="color:#0288d1;" type="button">✏️</button>
+                                <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;" type="button">❌</button>
+                            </span>
+                        </div>`;
                     });
-                }
+                    if (!historyHtml) historyHtml = '<div class="history-item">Wala pang tala.</div>';
 
-                let historyHtml = '';
-                item.history.forEach((h, hIdx) => {
-                    historyHtml += `<div class="history-item">
-                        <span>▪️ [${h.date}] ${h.text}</span>
-                        <span class="history-btns">
-                            <button onclick="editHistory(${index}, ${hIdx})" style="color:#0288d1;" type="button">✏️</button>
-                            <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;" type="button">❌</button>
-                        </span>
-                    </div>`;
-                });
-                if (!historyHtml) historyHtml = '<div class="history-item">Wala pang tala.</div>';
+                    let chatHtml = '';
+                    item.messages.forEach(msg => {
+                        chatHtml += `<div class="history-item"><span><strong>${msg.sender}:</strong> ${msg.text}</span> <span style="font-size:0.65rem; color:#888;">${msg.date}</span></div>`;
+                    });
+                    if (!chatHtml) chatHtml = '<div class="history-item">Wala pang mensahe.</div>';
 
-                let chatHtml = '';
-                item.messages.forEach(msg => {
-                    chatHtml += `<div class="history-item"><span><strong>${msg.sender}:</strong> ${msg.text}</span> <span style="font-size:0.65rem; color:#888;">${msg.date}</span></div>`;
-                });
-                if (!chatHtml) chatHtml = '<div class="history-item">Wala pang mensahe.</div>';
+                    const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
+                    const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
+                    const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
+                    
+                    let isOnline = false;
+                    let clientLastSeenText = 'Hindi pa nabubuksan';
 
-                const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
-                const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
-                const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
-                
-                let isOnline = false;
-                let clientLastSeenText = 'Hindi pa nabubuksan';
+                    if (item.lastClientAccess) {
+                        clientLastSeenText = typeof item.lastClientAccess === 'number' 
+                            ? new Date(item.lastClientAccess).toLocaleString() 
+                            : item.lastClientAccess;
+                            
+                        let lastTime = typeof item.lastClientAccess === 'number' 
+                            ? item.lastClientAccess 
+                            : Date.parse(item.lastClientAccess);
 
-                if (item.lastClientAccess) {
-                    clientLastSeenText = typeof item.lastClientAccess === 'number' 
-                        ? new Date(item.lastClientAccess).toLocaleString() 
-                        : item.lastClientAccess;
-                        
-                    let lastTime = typeof item.lastClientAccess === 'number' 
-                        ? item.lastClientAccess 
-                        : Date.parse(item.lastClientAccess);
+                        if (isNaN(lastTime) && typeof item.lastClientAccess === 'string') {
+                            let parts = item.lastClientAccess.split(/[\/\s,:]+/);
+                            if (parts.length >= 6) {
+                                let d = new Date(parts[2], parts[1] - 1, parts[0], parts[3], parts[4], parts[5]);
+                                lastTime = d.getTime();
+                            }
+                        }
 
-                    if (isNaN(lastTime) && typeof item.lastClientAccess === 'string') {
-                        let parts = item.lastClientAccess.split(/[\/\s,:]+/);
-                        if (parts.length >= 6) {
-                            let d = new Date(parts[2], parts[1] - 1, parts[0], parts[3], parts[4], parts[5]);
-                            lastTime = d.getTime();
+                        if (!isNaN(lastTime)) {
+                            const diffMs = Date.now() - lastTime;
+                            if (diffMs >= 0 && diffMs < 30000) {
+                                isOnline = true;
+                            }
                         }
                     }
 
-                    if (!isNaN(lastTime)) {
-                        const diffMs = Date.now() - lastTime;
-                        if (diffMs >= 0 && diffMs < 30000) {
-                            isOnline = true;
+                    let statusDot = isOnline 
+                        ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
+                        : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
+
+                    let hasClientMessage = false;
+                    if (item.messages && item.messages.length > 0) {
+                        const lastMsg = item.messages[item.messages.length - 1];
+                        if (lastMsg.sender !== 'Admin') {
+                            hasClientMessage = true;
                         }
                     }
-                }
 
-                let statusDot = isOnline 
-                    ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
-                    : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
+                    let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
-                let hasClientMessage = false;
-                if (item.messages && item.messages.length > 0) {
-                    const lastMsg = item.messages[item.messages.length - 1];
-                    if (lastMsg.sender !== 'Admin') {
-                        hasClientMessage = true;
-                    }
-                }
-
-                let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
-
-                const div = document.createElement('div');
-                div.className = storeCardClass;
-                div.innerHTML = `
-                    <div class="store-header-row">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size: 1rem;">🏢</span>
-                            ${statusDot}
-                            <strong style="font-size: 0.95rem;">${item.storeName}</strong>
-                            ${hasClientMessage ? '<span class="badge badge-msg">💬 May Mensahe</span>' : ''}
+                    const div = document.createElement('div');
+                    div.className = storeCardClass;
+                    div.innerHTML = `
+                        <div class="store-header-row">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 1rem;">🏢</span>
+                                ${statusDot}
+                                <strong style="font-size: 0.95rem;">${item.storeName}</strong>
+                                ${hasClientMessage ? '<span class="badge badge-msg">💬 May Mensahe</span>' : ''}
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span class="badge ${badgeClass}">${rating}</span>
+                                <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
+                            </div>
                         </div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span class="badge ${badgeClass}">${rating}</span>
-                            <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
+                        <div style="font-size: 0.8rem; color: #555; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
+                            <span>👤 May-ari: <strong>${item.ownerName || 'Walang nakalagay'}</strong></span>
+                            <span>📧 Email: <strong style="color: #0288d1;">${item.email || 'Walang nakalagay'}</strong></span>
+                            <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong></span>
                         </div>
-                    </div>
-                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                        <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong></span>
-                    </div>
-                    <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
-                        <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
-                            👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
-                        </div>
-                        ${storeIsDue ? `<div style="margin-bottom: 8px;"><button type="button" onclick="markStoreCollected(${index})" style="background-color: #d32f2f; font-size: 0.8rem; padding: 6px;">💰 Markahan na Nakolekta na (Alisin ang Due)</button></div>` : ''}
-                        ${approvedRestocksHtml}
-                        <div style="margin-top: 10px;">${storeItemsHtml}</div>
-                        <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
-                            <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Pangalan</button>
-                            <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Address</button>
-                            <button type="button" onclick="deleteEntireStore(${index})" style="background-color: #d32f2f; font-size: 0.75rem; padding: 6px; flex: 1;">Burahin ang Tindahan</button>
-                        </div>
-                        <div style="margin-top: 8px;">
-                            <button type="button" onclick="toggleBox('chatBox_${index}', this, 'chat_open_${index}')" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">${chatOpen ? 'Itago ang Chatbox' : `💬 Chatbox (${item.messages.length})`}</button>
-                            <div class="collapsible-box" id="chatBox_${index}" style="display: ${chatOpen ? 'block' : 'none'};">
-                                ${chatHtml}
-                                <div style="display:flex; gap:4px; margin-top:5px;">
-                                    <input type="text" id="adminReply_${index}" placeholder="Mag-reply..." style="font-size:0.75rem; padding:4px;">
-                                    <button type="button" onclick="sendAdminReply(${index})" style="width:auto; margin-top:0; font-size:0.75rem; padding:4px 8px;">Ipadala</button>
+                        <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
+                            <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
+                                👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
+                            </div>
+                            ${storeIsDue ? `<div style="margin-bottom: 8px;"><button type="button" onclick="markStoreCollected(${index})" style="background-color: #d32f2f; font-size: 0.8rem; padding: 6px;">💰 Markahan na Nakolekta na (Alisin ang Due)</button></div>` : ''}
+                            ${approvedRestocksHtml}
+                            <div style="margin-top: 10px;">${storeItemsHtml}</div>
+                            <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
+                                <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Pangalan</button>
+                                <button type="button" onclick="editStoreOwner(${index})" style="background-color: #3f51b5; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang May-ari</button>
+                                <button type="button" onclick="editStoreEmail(${index})" style="background-color: #00838f; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Email</button>
+                                <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Address</button>
+                                <button type="button" onclick="deleteEntireStore(${index})" style="background-color: #d32f2f; font-size: 0.75rem; padding: 6px; flex: 1;">Burahin</button>
+                            </div>
+                            <div style="margin-top: 8px;">
+                                <button type="button" onclick="toggleBox('chatBox_${index}', this, 'chat_open_${index}')" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">${chatOpen ? 'Itago ang Chatbox' : `💬 Chatbox (${item.messages.length})`}</button>
+                                <div class="collapsible-box" id="chatBox_${index}" style="display: ${chatOpen ? 'block' : 'none'};">
+                                    ${chatHtml}
+                                    <div style="display:flex; gap:4px; margin-top:5px;">
+                                        <input type="text" id="adminReply_${index}" placeholder="Mag-reply..." style="font-size:0.75rem; padding:4px;">
+                                        <button type="button" onclick="sendAdminReply(${index})" style="width:auto; margin-top:0; font-size:0.75rem; padding:4px 8px;">Ipadala</button>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="toggleBox('historyBox_${index}', this, 'history_open_${index}')" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">${historyOpen ? 'Itago ang History' : '📜 History'}</button>
+                                <div class="collapsible-box" id="historyBox_${index}" style="display: ${historyOpen ? 'block' : 'none'};">
+                                    ${historyHtml}
                                 </div>
                             </div>
-                            <button type="button" onclick="toggleBox('historyBox_${index}', this, 'history_open_${index}')" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">${historyOpen ? 'Itago ang History' : '📜 History'}</button>
-                            <div class="collapsible-box" id="historyBox_${index}" style="display: ${historyOpen ? 'block' : 'none'};">
-                                ${historyHtml}
-                            </div>
                         </div>
-                    </div>
-                `;
-                storesList.appendChild(div);
+                    `;
+                    storesList.appendChild(div);
+                }
             });
+
+            if (!storeQuery) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan sa itaas para hanapin...</p>';
+            } else if (matchedStoreCount === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang nahanap na tindahan na tugma sa iyong hinahanap.</p>';
+            }
 
             Object.keys(savedReplies).forEach(idx => {
                 const input = document.getElementById(`adminReply_${idx}`);
@@ -1058,7 +1094,7 @@
             }
 
             appData.consignments.push({
-                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', address: inq.address || '', styleType: style, initialQty: initialStock,
+                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', email: inq.email || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
                 activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
@@ -1071,7 +1107,7 @@
             appData.pendingInquiries.splice(inqIdx, 1);
             await saveToCloud();
             closeModal('inquiryModal');
-            alert('Matagumpay na na-aprube ang inquiry!');
+            alert('Matagumpay na na-aprube ang inquiry at ibinawas sa inventory!');
         };
 
         window.declineInquiry = async function(inqIdx) {
@@ -1266,6 +1302,24 @@
                     const isSame = item.ownerName.trim().toLowerCase() === item.storeName.trim().toLowerCase();
                     item.searchValidation = isSame ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
                 }
+                saveToCloud();
+            }
+        };
+
+        window.editStoreOwner = function(index) {
+            const item = appData.consignments[index];
+            const newOwner = prompt('Bagong Pangalan ng May-ari:', item.ownerName || '');
+            if (newOwner !== null) {
+                item.ownerName = newOwner.trim();
+                saveToCloud();
+            }
+        };
+
+        window.editStoreEmail = function(index) {
+            const item = appData.consignments[index];
+            const newEmail = prompt('Bagong Active Email o Gmail:', item.email || '');
+            if (newEmail !== null) {
+                item.email = newEmail.trim();
                 saveToCloud();
             }
         };
