@@ -137,7 +137,13 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
-            <!-- Requirement 6: Potential Income Calculator Card -->
+            <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
+                <h2>💰 Dashboard ng Pera bawat Tindahan</h2>
+                <div id="storeEarningsDashboard" style="font-size: 0.85rem; max-height: 180px; overflow-y: auto;">
+                    <p style="color: #666;">Wala pang datos ng benta.</p>
+                </div>
+            </div>
+
             <div class="card" style="background: #e0f7fa; border: 1px solid #b2ebf2;">
                 <h2>📊 Calculator ng Potensyal na Kita</h2>
                 <div class="form-group">
@@ -159,7 +165,6 @@
                         <label for="storeName">Pangalan ng Tindahan:</label>
                         <input type="text" id="storeName" placeholder="Hal. Aling Nena Store" required>
                     </div>
-                    <!-- Requirement 1: Pangalan ng May-ari at Active Email -->
                     <div class="form-group">
                         <label for="storeOwner">Pangalan ng May-ari:</label>
                         <input type="text" id="storeOwner" placeholder="Hal. Maria Santos" required>
@@ -199,18 +204,17 @@
                 </form>
             </div>
 
-            <!-- Requirement 3, 4 & 5: Search Bar with Comma Support, GO Button, Online Badge, Hidden Store List -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <h2 style="margin-bottom: 0;">Maghanap ng Tindahan</h2>
+                    <h2 style="margin-bottom: 0;">Lista ng mga Tindahan</h2>
                     <span id="onlineStoreBadge" class="badge badge-good" title="Mga Tindahang Naka-online Ngayon">🟢 Online: 0</span>
                 </div>
-                <div style="display: flex; gap: 6px; margin-bottom: 10px;">
-                    <input type="text" id="storeSearchInput" placeholder="I-type ang pangalan (gamitin ang kuwit , para sa dalawa)" style="flex: 1; font-size: 0.85rem; padding: 8px;">
-                    <button type="button" id="storeSearchGoBtn" onclick="triggerStoreSearch()" style="width: auto; margin-top: 0; padding: 8px 16px; background-color: var(--primary-color);">GO</button>
+                <!-- Pinapalitan ang search bar ng Show All Button -->
+                <div style="margin-bottom: 12px;">
+                    <button type="button" onclick="showAllStores()" style="background-color: var(--primary-color); font-size: 0.9rem; padding: 8px 12px;">📋 Show All (Ipakita Lahat ng Tindahan)</button>
                 </div>
                 <div id="storesList">
-                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan at i-click ang GO para hanapin.</p>
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para makita ang listahan ng mga tindahan.</p>
                 </div>
             </div>
 
@@ -218,7 +222,6 @@
 
     </div>
 
-    <!-- Floating Action Bubbles Container -->
     <div class="floating-container" id="floatingContainer">
         <button class="fab-btn fab-broadcast" id="fabBroadcastBtn" title="Overall Broadcast Chatbox" onclick="openModal('broadcastModal')">📢</button>
         <button class="fab-btn fab-backup" id="fabBackupBtn" title="Data Backup & Recovery" onclick="openModal('backupModal')">💾</button>
@@ -231,7 +234,6 @@
         <button class="fab-btn fab-add" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
     </div>
 
-    <!-- Modal para sa Inquiries -->
     <div class="modal-overlay" id="inquiryModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -244,7 +246,6 @@
         </div>
     </div>
 
-    <!-- Modal para sa Restock & Sales Requests -->
     <div class="modal-overlay" id="requestModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -261,7 +262,6 @@
         </div>
     </div>
 
-    <!-- Modal para sa Backup & Recovery -->
     <div class="modal-overlay" id="backupModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -278,7 +278,6 @@
         </div>
     </div>
 
-    <!-- Modal para sa Overall Broadcast Chatbox -->
     <div class="modal-overlay" id="broadcastModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -320,23 +319,21 @@
         const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
         const logoutBtn = document.getElementById('logoutBtn');
 
-        // Tawagin ito kapag pinindot ang login button gamit ang email at password
         async function handleAdminLogin(email, password) {
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                // Matagumpay na nag-login! Kusang magbubukas ang dashboard.
             } catch (error) {
                 let msg = "Nagkaroon ng problema sa pag-login.";
-if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-    msg = "Mali ang iyong email o password.";
-} else if (error.code === 'auth/user-not-found') {
-    msg = "Walang account na nakarehistro sa email na ito.";
-} else if (error.code === 'auth/invalid-email') {
-    msg = "Hindi wastong format ng email ang nailagay mo.";
-} else {
-    msg = error.message;
-}
-alert(msg);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    msg = "Mali ang iyong email o password.";
+                } else if (error.code === 'auth/user-not-found') {
+                    msg = "Walang account na nakarehistro sa email na ito.";
+                } else if (error.code === 'auth/invalid-email') {
+                    msg = "Hindi wastong format ng email ang nailagay mo.";
+                } else {
+                    msg = error.message;
+                }
+                alert(msg);
             }
         }
 
@@ -358,17 +355,14 @@ alert(msg);
             if (e.key === 'Enter') { loginBtn.click(); }
         });
 
-        // Awtomatikong sumusubaybay kung naka-login ang admin
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Naka-login na: Itago ang login screen at i-load ang data
                 authScreen.style.display = 'none';
                 mainAppContent.style.display = 'block';
                 toggleAddFormBtn.style.display = 'flex';
                 if (logoutBtn) logoutBtn.style.display = 'inline-block';
                 initApp();
             } else {
-                // Walang naka-login: Ipakita ang login screen
                 authScreen.style.display = 'flex';
                 mainAppContent.style.display = 'none';
                 toggleAddFormBtn.style.display = 'none';
@@ -376,13 +370,11 @@ alert(msg);
             }
         });
 
-        // Para sa Logout button mo
         function handleAdminLogout() {
             signOut(auth);
         }
         window.handleAdminLogout = handleAdminLogout;
 
-        // Movable Floating Container Logic
         const floatingContainer = document.getElementById('floatingContainer');
         let isDragging = false;
         let startX, startY, initialX, initialY;
@@ -449,6 +441,7 @@ alert(msg);
 
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let previousRequestCount = 0;
+        let showAllActive = false; // Sinisigurong kontrolado ang pagpapakita ng lahat ng tindahan para maiwasan ang double rendering
 
         window.openModal = function(modalId) {
             document.getElementById(modalId).style.display = 'flex';
@@ -594,6 +587,7 @@ alert(msg);
             let nextMonth = new Date();
             nextMonth.setMonth(nextMonth.getMonth() + 1);
             if (collectionDateEl) collectionDateEl.valueAsDate = nextMonth;
+            
             loadFromCloud();
 
             setInterval(() => {
@@ -726,7 +720,8 @@ alert(msg);
             alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
         };
 
-        window.triggerStoreSearch = function() {
+        window.showAllStores = function() {
+            showAllActive = true;
             renderApp();
         };
 
@@ -803,6 +798,8 @@ alert(msg);
             }
 
             const storesList = document.getElementById('storesList');
+            storesList.innerHTML = ''; // Nililinis ang buong listahan bago i-render para maiwasan ang pagdodoble
+
             const requestsContainer = document.getElementById('adminRequestsContainer');
             requestsContainer.innerHTML = '';
             let hasRequests = false;
@@ -817,17 +814,11 @@ alert(msg);
             const fabRequestBtn = document.getElementById('fabRequestBtn');
             const requestBadge = document.getElementById('requestBadge');
 
-            const storeSearchInput = document.getElementById('storeSearchInput');
-            const searchInputVal = storeSearchInput ? storeSearchInput.value.trim().toLowerCase() : '';
-            let searchKeywords = [];
-            if (searchInputVal) {
-                searchKeywords = searchInputVal.split(',').map(s => s.trim()).filter(s => s.length > 0);
-            }
-
             let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
             const currentYM = new Date().toISOString().slice(0, 7);
 
             let matchedStoresCount = 0;
+            let dashboardEarningsHtml = '';
 
             appData.consignments.forEach((item, index) => {
                 if (!item.styleType) item.styleType = 'Ordinary';
@@ -850,7 +841,7 @@ alert(msg);
                     }];
                 }
 
-                let storeTotalStock = 0, storeTotalSold = 0, storeIsDue = false, storeItemsHtml = '';
+                let storeTotalStock = 0, storeTotalSold = 0, storeTotalStoreSales = 0, storeIsDue = false, storeItemsHtml = '';
                 item.storeItems.forEach((subItem, subIdx) => {
                     if (subItem.rejectedQty === undefined) subItem.rejectedQty = 0;
                     if (subItem.returnedQty === undefined) subItem.returnedQty = 0;
@@ -860,6 +851,7 @@ alert(msg);
 
                     storeTotalStock += subItem.currentStock;
                     storeTotalSold += subSold;
+                    storeTotalStoreSales += subSales;
                     tStock += subItem.currentStock;
                     tSold += subSold;
                     tSales += subSales;
@@ -889,6 +881,13 @@ alert(msg);
                         </div>
                     `;
                 });
+
+                dashboardEarningsHtml += `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #c8e6c9;">
+                        <span>🏢 <strong>${item.storeName}</strong></span>
+                        <span style="color: #1b5e20; font-weight: bold;">₱${storeTotalStoreSales.toLocaleString()} (${storeTotalSold} pcs nabenta)</span>
+                    </div>
+                `;
 
                 if (storeIsDue) tDue++;
                 let rating = storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos');
@@ -1010,16 +1009,6 @@ alert(msg);
 
                 if (isOnline) onlineStoreCount++;
 
-                let matchesSearch = false;
-                if (searchKeywords.length > 0) {
-                    const storeLower = item.storeName.toLowerCase();
-                    matchesSearch = searchKeywords.some(kw => storeLower.includes(kw));
-                }
-
-                if (matchesSearch) {
-                    localStorage.setItem(`store_open_${index}`, 'true');
-                }
-
                 const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
                 const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
                 const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
@@ -1038,7 +1027,8 @@ alert(msg);
 
                 let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
-                if (matchesSearch) {
+                // Kung naka-klik ang "Show All", ilalabas ang lahat ng tindahan nang walang duplicate
+                if (showAllActive) {
                     matchedStoresCount++;
                     const div = document.createElement('div');
                     div.className = storeCardClass;
@@ -1090,15 +1080,20 @@ alert(msg);
                 }
             });
 
+            const dashboardContainer = document.getElementById('storeEarningsDashboard');
+            if (dashboardContainer) {
+                dashboardContainer.innerHTML = dashboardEarningsHtml || '<p style="color: #666;">Wala pang datos ng benta.</p>';
+            }
+
             const onlineBadgeEl = document.getElementById('onlineStoreBadge');
             if (onlineBadgeEl) {
                 onlineBadgeEl.textContent = `🟢 Online: ${onlineStoreCount}`;
             }
 
-            if (searchKeywords.length > 0 && matchedStoresCount === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#d32f2f; font-size:0.9rem;">Walang nahanap na tindahan na tugma sa iyong sinulat.</p>';
-            } else if (searchKeywords.length === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan at i-click ang GO para hanapin.</p>';
+            if (!showAllActive) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para makita ang listahan ng mga tindahan.</p>';
+            } else if (matchedStoresCount === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang nakarehistrong tindahan.</p>';
             }
 
             Object.keys(savedReplies).forEach(idx => {
