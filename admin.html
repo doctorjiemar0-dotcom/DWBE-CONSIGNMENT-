@@ -466,7 +466,6 @@
             renderApp();
         };
 
-        // Bug Fix: Deduplicate consignments based on storeName case-insensitively to prevent record duplication
         function deduplicateConsignments() {
             if (!appData.consignments || !Array.isArray(appData.consignments)) return;
             const uniqueMap = new Map();
@@ -491,6 +490,33 @@
                 }
             });
             appData.consignments = Array.from(uniqueMap.values());
+        }
+
+        function cleanSourceData() {
+            if (!appData.consignments || !Array.isArray(appData.consignments)) return;
+            appData.consignments.forEach(item => {
+                if (item.storeName) item.storeName = item.storeName.trim();
+                if (item.ownerName) item.ownerName = item.ownerName.trim();
+                if (item.email) item.email = item.email.trim();
+                if (item.address) item.address = item.address.trim();
+
+                if (item.storeItems && Array.isArray(item.storeItems)) {
+                    item.storeItems.forEach(sub => {
+                        if (sub.initialQty < 0) sub.initialQty = 0;
+                        if (sub.currentStock < 0) sub.currentStock = 0;
+                        if (sub.returnedQty < 0) sub.returnedQty = 0;
+                        if (sub.rejectedQty < 0) sub.rejectedQty = 0;
+                    });
+                }
+            });
+
+            if (appData.pendingInquiries && Array.isArray(appData.pendingInquiries)) {
+                appData.pendingInquiries.forEach(inq => {
+                    if (inq.storeName) inq.storeName = inq.storeName.trim();
+                    if (inq.ownerName) inq.ownerName = inq.ownerName.trim();
+                    if (inq.email) inq.email = inq.email.trim();
+                });
+            }
         }
 
         window.adjustHomeStock = async function(style, amount) {
@@ -578,6 +604,7 @@
             });
             if (updated) {
                 deduplicateConsignments();
+                cleanSourceData();
                 saveToCloud();
             }
         }
@@ -593,6 +620,7 @@
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
                     deduplicateConsignments();
+                    cleanSourceData();
                     processClientAcceptedRestocks();
                 }
                 renderApp();
@@ -603,6 +631,7 @@
                 if (local) { 
                     appData = JSON.parse(local); 
                     deduplicateConsignments();
+                    cleanSourceData();
                     renderApp(); 
                 }
             }
@@ -612,6 +641,7 @@
             syncStatus.textContent = "Nagse-save sa Cloud...";
             try {
                 deduplicateConsignments();
+                cleanSourceData();
                 await setDoc(doc(db, "app_data", "main_inventory"), appData);
                 localStorage.setItem('consignments_v3', JSON.stringify(appData));
                 syncStatus.textContent = "✅ Na-save sa Cloud";
@@ -660,6 +690,7 @@
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
                     deduplicateConsignments();
+                    cleanSourceData();
                     processClientAcceptedRestocks();
                     renderApp();
                 }
@@ -687,6 +718,7 @@
 
                 appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
                 deduplicateConsignments();
+                cleanSourceData();
                 let existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === sName.toLowerCase());
 
                 if (existingStore) {
@@ -765,7 +797,6 @@
             alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
         };
 
-        // Requirement 3: Potential income calculator based on the previous month's average income
         function calculatePotentialIncome() {
             const inputEl = document.getElementById('calcStoreInput');
             const targetStores = parseInt(inputEl.value) || 0;
@@ -807,7 +838,6 @@
                 });
             }
 
-            // Fallback to overall average if no specific previous month sales log found
             let totalSalesSoFar = 0;
             if (appData.consignments) {
                 appData.consignments.forEach(item => {
@@ -1102,7 +1132,6 @@
 
                 let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
-                // Render based on Show All toggle
                 if (showAllStores) {
                     matchedStoresCount++;
                     const div = document.createElement('div');
@@ -1258,6 +1287,7 @@
             }
 
             deduplicateConsignments();
+            cleanSourceData();
             appData.consignments.push({
                 id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', email: inq.email || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
@@ -1468,6 +1498,7 @@
                     item.searchValidation = isSame ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
                 }
                 deduplicateConsignments();
+                cleanSourceData();
                 saveToCloud();
             }
         };
@@ -1477,6 +1508,7 @@
             const newAddress = prompt('Bagong Address / Lokasyon:', item.address || '');
             if (newAddress !== null) {
                 item.address = newAddress.trim();
+                cleanSourceData();
                 saveToCloud();
             }
         };
@@ -1516,6 +1548,7 @@
             try {
                 appData = JSON.parse(document.getElementById('backupTextarea').value.trim());
                 deduplicateConsignments();
+                cleanSourceData();
                 saveToCloud();
                 alert('Na-load na!');
             } catch (err) { alert('Mali ang format.'); }
