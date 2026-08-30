@@ -10,7 +10,7 @@
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
-        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
+        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
         h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
@@ -84,13 +84,19 @@
 </head>
 <body>
 
-    <header>🧹 Doctor's Whisk Broom - ADMIN (Cloud)</header>
+    <header>
+        <span>🧹 Doctor's Whisk Broom - ADMIN (Cloud)</span>
+        <button type="button" id="logoutBtn" onclick="handleAdminLogout()" style="background-color: #c62828; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: none; width: auto; margin-top: 0;">Logout</button>
+    </header>
 
     <div class="container">
 
         <div id="authScreen" class="card">
-            <h2>🔒 Security Login</h2>
+            <h2>🔒 Security Login (Firebase Auth)</h2>
             <div class="form-group" style="width: 100%;">
+                <label for="adminEmailInput">Admin Email:</label>
+                <input type="email" id="adminEmailInput" placeholder="I-type ang email..." style="margin-bottom: 10px;">
+                <label for="adminPasswordInput">Password:</label>
                 <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
             </div>
             <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
@@ -290,6 +296,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -302,14 +309,68 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth();
 
-        const ADMIN_PASSWORD = "0802";
         const authScreen = document.getElementById('authScreen');
         const mainAppContent = document.getElementById('mainAppContent');
         const loginBtn = document.getElementById('loginBtn');
+        const emailInput = document.getElementById('adminEmailInput');
         const passwordInput = document.getElementById('adminPasswordInput');
         const syncStatus = document.getElementById('syncStatus');
         const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Tawagin ito kapag pinindot ang login button gamit ang email at password
+        async function handleAdminLogin(email, password) {
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // Matagumpay na nag-login! Kusang magbubukas ang dashboard.
+            } catch (error) {
+                alert("Maling email o password. Subukan muli.");
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            if (!email || !password) {
+                alert("Mangyaring ilagay ang email at password.");
+                return;
+            }
+            handleAdminLogin(email, password);
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { loginBtn.click(); }
+        });
+
+        emailInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { loginBtn.click(); }
+        });
+
+        // Awtomatikong sumusubaybay kung naka-login ang admin
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Naka-login na: Itago ang login screen at i-load ang data
+                authScreen.style.display = 'none';
+                mainAppContent.style.display = 'block';
+                toggleAddFormBtn.style.display = 'flex';
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                initApp();
+            } else {
+                // Walang naka-login: Ipakita ang login screen
+                authScreen.style.display = 'flex';
+                mainAppContent.style.display = 'none';
+                toggleAddFormBtn.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+            }
+        });
+
+        // Para sa Logout button mo
+        function handleAdminLogout() {
+            signOut(auth);
+        }
+        window.handleAdminLogout = handleAdminLogout;
 
         // Movable Floating Container Logic
         const floatingContainer = document.getElementById('floatingContainer');
@@ -376,30 +437,6 @@
             } catch (e) {}
         }
 
-        if (sessionStorage.getItem('admin_logged_in') === 'true') {
-            authScreen.style.display = 'none';
-            mainAppContent.style.display = 'block';
-            toggleAddFormBtn.style.display = 'flex';
-            initApp();
-        }
-
-        loginBtn.addEventListener('click', () => {
-            if (passwordInput.value === ADMIN_PASSWORD) {
-                sessionStorage.setItem('admin_logged_in', 'true');
-                authScreen.style.display = 'none';
-                mainAppContent.style.display = 'block';
-                toggleAddFormBtn.style.display = 'flex';
-                initApp();
-            } else {
-                alert('Mali ang password!');
-                passwordInput.value = '';
-            }
-        });
-
-        passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') { loginBtn.click(); }
-        });
-
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let previousRequestCount = 0;
 
@@ -454,7 +491,6 @@
             }
         };
 
-        // Automatic deduction kapag ang client ang nag-click ng pagtanggap ng restock order
         function processClientAcceptedRestocks() {
             let updated = false;
             if (!appData.consignments) return;
@@ -551,7 +587,7 @@
             loadFromCloud();
 
             setInterval(() => {
-                if (sessionStorage.getItem('admin_logged_in') === 'true') {
+                if (auth.currentUser) {
                     loadFromCloudSilent();
                 }
             }, 10000);
@@ -702,7 +738,6 @@
                 });
             }
 
-            // Average sales per store (default to estimated ₱1,500 per store if no data yet)
             let avgSalesPerStore = activeCount > 0 ? (totalSalesSoFar / activeCount) : 1500;
             const potentialTotal = avgSalesPerStore * targetStores;
 
@@ -711,7 +746,7 @@
         }
 
         function renderApp() {
-            if (sessionStorage.getItem('admin_logged_in') !== 'true') return;
+            if (!auth.currentUser) return;
 
             const savedReplies = {};
             appData.consignments.forEach((_, idx) => {
@@ -772,7 +807,6 @@
             const fabRequestBtn = document.getElementById('fabRequestBtn');
             const requestBadge = document.getElementById('requestBadge');
 
-            // Requirement 3 & 4: Search bar input for stores supporting comma separation
             const storeSearchInput = document.getElementById('storeSearchInput');
             const searchInputVal = storeSearchInput ? storeSearchInput.value.trim().toLowerCase() : '';
             let searchKeywords = [];
@@ -783,7 +817,6 @@
             let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
             const currentYM = new Date().toISOString().slice(0, 7);
 
-            let matchingStoresHtml = '';
             let matchedStoresCount = 0;
 
             appData.consignments.forEach((item, index) => {
@@ -967,14 +1000,12 @@
 
                 if (isOnline) onlineStoreCount++;
 
-                // Check if this store matches the search keywords (supporting multiple names separated by comma)
                 let matchesSearch = false;
                 if (searchKeywords.length > 0) {
                     const storeLower = item.storeName.toLowerCase();
                     matchesSearch = searchKeywords.some(kw => storeLower.includes(kw));
                 }
 
-                // Requirement 3: Pag na search na, nakabukas na agad ang tindahan dahil nakahide naman na dati pa
                 if (matchesSearch) {
                     localStorage.setItem(`store_open_${index}`, 'true');
                 }
@@ -1049,7 +1080,6 @@
                 }
             });
 
-            // Requirement 5: Online store count badge update
             const onlineBadgeEl = document.getElementById('onlineStoreBadge');
             if (onlineBadgeEl) {
                 onlineBadgeEl.textContent = `🟢 Online: ${onlineStoreCount}`;
@@ -1118,7 +1148,6 @@
 
         window.approveInquiry = async function(inqIdx) {
             const inq = appData.pendingInquiries[inqIdx];
-            // Requirement 2: Automatic deduction based on requested/approved quantity from client inquiry
             const defaultQty = inq.qty || 10;
             const initialStockStr = prompt(`[Prompt] Simulang stock para sa ${inq.storeName} (${inq.styleType || 'Ordinary'}):`, defaultQty);
             if (initialStockStr === null) return;
@@ -1138,7 +1167,6 @@
             const isSameName = inq.ownerName && inq.storeName && inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();
             const searchValidationMsg = isSameName ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
 
-            // Automatic deduction from inventory upon approval
             appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);
             const todayStr = new Date().toISOString().slice(0, 10);
             let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
