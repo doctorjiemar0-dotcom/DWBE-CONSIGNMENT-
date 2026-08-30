@@ -131,15 +131,18 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
-            <!-- Income & Store Growth Calculator -->
-            <div class="card" style="background: #e3f2fd; border: 1px solid #90caf9;">
-                <h2>📊 Income & Store Growth Calculator</h2>
+            <!-- Requirement 6: Potential Income Calculator Card -->
+            <div class="card" style="background: #e0f7fa; border: 1px solid #b2ebf2;">
+                <h2>📊 Calculator ng Potensyal na Kita</h2>
                 <div class="form-group">
-                    <label for="calcTargetIncome">Target na Buwanang Kita (₱):</label>
-                    <input type="number" id="calcTargetIncome" placeholder="Hal. 50000" value="30000" oninput="calculateStoreGrowth()">
+                    <label for="calcStoreInput">Bilang ng Tindahan na gusto mong i-target:</label>
+                    <input type="number" id="calcStoreInput" placeholder="Hal. 20" value="10" oninput="calculatePotentialIncome()">
                 </div>
-                <div style="font-size: 0.85rem; color: #333; background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #bbdefb;" id="calcResultBox">
-                    Kinakalkula ang data mula sa mga aktibong tindahan...
+                <div style="font-size: 0.85rem; color: #006064; background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #b2ebf2;">
+                    <div>Average Benta bawat Tindahan: <strong id="calcAvgSales">₱0</strong></div>
+                    <div style="margin-top: 4px; font-size: 0.95rem; font-weight: bold; color: #00838f;">
+                        💡 Potensyal na Kabuuang Kita: <span id="calcPotentialTotal">₱0</span>
+                    </div>
                 </div>
             </div>
 
@@ -150,13 +153,14 @@
                         <label for="storeName">Pangalan ng Tindahan:</label>
                         <input type="text" id="storeName" placeholder="Hal. Aling Nena Store" required>
                     </div>
+                    <!-- Requirement 1: Pangalan ng May-ari at Active Email -->
                     <div class="form-group">
-                        <label for="storeOwnerName">Pangalan ng May-ari:</label>
-                        <input type="text" id="storeOwnerName" placeholder="Hal. Juan Dela Cruz" required>
+                        <label for="storeOwner">Pangalan ng May-ari:</label>
+                        <input type="text" id="storeOwner" placeholder="Hal. Maria Santos" required>
                     </div>
                     <div class="form-group">
-                        <label for="storeOwnerEmail">Active Email / Gmail Account:</label>
-                        <input type="email" id="storeOwnerEmail" placeholder="Hal. example@gmail.com" required>
+                        <label for="storeEmail">Active Email o Gmail Account:</label>
+                        <input type="email" id="storeEmail" placeholder="Hal. mariasantos@gmail.com" required>
                     </div>
                     <div class="form-group">
                         <label for="storeAddress">Address / Lokasyon:</label>
@@ -189,20 +193,18 @@
                 </form>
             </div>
 
+            <!-- Requirement 3, 4 & 5: Search Bar with Comma Support, GO Button, Online Badge, Hidden Store List -->
             <div class="card">
-                <h2>
-                    Listahan ng mga Aktibong Tindahan 
-                    <span id="onlineStoresBadge" class="badge" style="background-color: #2e7d32; float: right; font-size: 0.75rem;" title="Mga tindahang online">🟢 0 Online</span>
-                </h2>
-                <div class="form-group" style="display: flex; gap: 6px; margin-bottom: 10px; margin-top: 8px;">
-                    <input type="text" id="storeSearchInput" placeholder="🔍 I-type ang pangalan (lagyan ng kuwit ',' kung sabay)..." style="flex: 1; font-size: 0.85rem;" onkeypress="if(event.key==='Enter') executeStoreSearch()">
-                    <select id="storeSelectDropdown" style="width: 130px; font-size: 0.85rem;" onchange="selectStoreFromDropdown(this)">
-                        <option value="">-- Pilian --</option>
-                    </select>
-                    <button type="button" id="storeSearchGoBtn" onclick="executeStoreSearch()" style="width: auto; margin-top: 0; padding: 8px 12px; background-color: var(--primary-color);">GO</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h2 style="margin-bottom: 0;">Maghanap ng Tindahan</h2>
+                    <span id="onlineStoreBadge" class="badge badge-good" title="Mga Tindahang Naka-online Ngayon">🟢 Online: 0</span>
+                </div>
+                <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                    <input type="text" id="storeSearchInput" placeholder="I-type ang pangalan (gamitin ang kuwit , para sa dalawa)" style="flex: 1; font-size: 0.85rem; padding: 8px;">
+                    <button type="button" id="storeSearchGoBtn" onclick="triggerStoreSearch()" style="width: auto; margin-top: 0; padding: 8px 16px; background-color: var(--primary-color);">GO</button>
                 </div>
                 <div id="storesList">
-                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan o pumili sa pilian at i-click ang GO.</p>
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan at i-click ang GO para hanapin.</p>
                 </div>
             </div>
 
@@ -581,14 +583,13 @@
         }
 
         const form = document.getElementById('consignmentForm');
-        const storesList = document.getElementById('storesList');
 
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const sName = document.getElementById('storeName').value.trim();
-                const ownerName = document.getElementById('storeOwnerName').value.trim();
-                const ownerEmail = document.getElementById('storeOwnerEmail').value.trim();
+                const sOwner = document.getElementById('storeOwner').value.trim();
+                const sEmail = document.getElementById('storeEmail').value.trim();
                 const sAddress = document.getElementById('storeAddress').value.trim();
                 const styleType = document.getElementById('styleType').value;
                 const qty = parseInt(document.getElementById('quantity').value);
@@ -605,8 +606,8 @@
 
                 if (existingStore) {
                     if (sAddress) existingStore.address = sAddress;
-                    if (ownerName) existingStore.ownerName = ownerName;
-                    if (ownerEmail) existingStore.ownerEmail = ownerEmail;
+                    if (sOwner) existingStore.ownerName = sOwner;
+                    if (sEmail) existingStore.email = sEmail;
                     if (!existingStore.storeItems) {
                         existingStore.storeItems = [{
                             id: existingStore.id || Date.now(),
@@ -637,7 +638,7 @@
                     existingStore.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${qty} pcs (${styleType}) noong ${startD}` });
                 } else {
                     appData.consignments.push({
-                        id: Date.now(), storeName: sName, ownerName: ownerName, ownerEmail: ownerEmail, address: sAddress, styleType: styleType, initialQty: qty,
+                        id: Date.now(), storeName: sName, ownerName: sOwner, email: sEmail, address: sAddress, styleType: styleType, initialQty: qty,
                         currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                         storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                         activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
@@ -679,50 +680,34 @@
             alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
         };
 
-        // Search & Dropdown Helper Functions
-        window.executeStoreSearch = function() {
+        window.triggerStoreSearch = function() {
             renderApp();
         };
 
-        window.selectStoreFromDropdown = function(selectEl) {
-            const val = selectEl.value;
-            if (val) {
-                document.getElementById('storeSearchInput').value = val;
-                renderApp();
-            }
-        };
-
-        function calculateStoreGrowth() {
-            const targetIncomeInput = document.getElementById('calcTargetIncome');
-            const resultBox = document.getElementById('calcResultBox');
-            if (!targetIncomeInput || !resultBox) return;
-
-            const targetIncome = parseFloat(targetIncomeInput.value) || 0;
-            const totalStoresCount = appData.consignments ? appData.consignments.length : 0;
-
-            let totalSoldAll = 0;
-            let totalSalesAll = 0;
-
-            if (appData.consignments) {
+        function calculatePotentialIncome() {
+            const inputEl = document.getElementById('calcStoreInput');
+            const targetStores = parseInt(inputEl.value) || 0;
+            
+            let totalSalesSoFar = 0;
+            let activeCount = appData.consignments ? appData.consignments.length : 0;
+            
+            if (appData.consignments && activeCount > 0) {
                 appData.consignments.forEach(item => {
                     if (item.storeItems) {
                         item.storeItems.forEach(sub => {
                             const subSold = Math.max(0, sub.initialQty - sub.currentStock - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
-                            totalSoldAll += subSold;
-                            totalSalesAll += subSold * sub.price;
+                            totalSalesSoFar += subSold * sub.price;
                         });
                     }
                 });
             }
 
-            const avgSalesPerStore = totalStoresCount > 0 ? (totalSalesAll / totalStoresCount) : 1500; // default estimate kung wala pang benta
-            const storesNeeded = avgSalesPerStore > 0 ? Math.ceil(targetIncome / avgSalesPerStore) : 0;
+            // Average sales per store (default to estimated ₱1,500 per store if no data yet)
+            let avgSalesPerStore = activeCount > 0 ? (totalSalesSoFar / activeCount) : 1500;
+            const potentialTotal = avgSalesPerStore * targetStores;
 
-            resultBox.innerHTML = `
-                • Kasalukuyang Benta bawat Tindahan (Ave): <strong>₱${avgSalesPerStore.toFixed(2)}</strong><br>
-                • Bilang ng Aktibong Tindahan: <strong>${totalStoresCount}</strong><br>
-                • Para kitain ang <strong>₱${targetIncome.toLocaleString()}</strong>, kailangan mo ng humigit-kumulang <strong>${storesNeeded} na tindahan</strong> (batay sa kasalukuyang average performance).
-            `;
+            document.getElementById('calcAvgSales').textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
+            document.getElementById('calcPotentialTotal').textContent = '₱' + Math.round(potentialTotal).toLocaleString();
         }
 
         function renderApp() {
@@ -736,20 +721,7 @@
 
             document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
             document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
-
-            // Populate store dropdown for quick selection
-            const storeSelectDropdown = document.getElementById('storeSelectDropdown');
-            if (storeSelectDropdown) {
-                const currentSelectedVal = storeSelectDropdown.value;
-                storeSelectDropdown.innerHTML = '<option value="">-- Pilian --</option>';
-                appData.consignments.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.storeName;
-                    opt.textContent = c.storeName;
-                    if (c.storeName === currentSelectedVal) opt.selected = true;
-                    storeSelectDropdown.appendChild(opt);
-                });
-            }
+            calculatePotentialIncome();
 
             const inquiriesContainer = document.getElementById('adminInquiriesContainer');
             inquiriesContainer.innerHTML = '';
@@ -770,9 +742,10 @@
                         <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>
                         📞 Contact: ${inq.contact} | 📧 Email: <strong style="color:#0288d1;">${inq.email || 'Wala'}</strong><br>
                         📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>
+                        📦 Hiniling na Qty: <strong>${inq.qty || 10} pcs</strong><br>
                         💬 <strong>Mensahe/Inquiry:</strong> <span style="color:#333; font-style:italic;">"${inq.message || inq.notes || 'Walang mensahe'}"</span><br>
                         <div class="btn-group" style="margin-top: 6px;">
-                            <button type="button" class="btn-approve" onclick="approveInquiry(${inqIdx})">✅ Aprubahan (Prompt)</button>
+                            <button type="button" class="btn-approve" onclick="approveInquiry(${inqIdx})">✅ Aprubahan (Auto-Bawas Inventory)</button>
                             <button type="button" class="btn-decline" onclick="declineInquiry(${inqIdx})">❌ Tanggihan</button>
                         </div>
                     `;
@@ -784,48 +757,34 @@
                 inquiriesContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>';
             }
 
-            storesList.innerHTML = '';
+            const storesList = document.getElementById('storesList');
             const requestsContainer = document.getElementById('adminRequestsContainer');
             requestsContainer.innerHTML = '';
             let hasRequests = false;
             let totalActiveReqsCount = appData.pendingInquiries.length;
             let actionReqCount = 0;
-            let onlineStoresCount = 0;
+            let onlineStoreCount = 0;
 
             const requestSearchInput = document.getElementById('requestSearchInput');
             const requestFilter = requestSearchInput ? requestSearchInput.value.toLowerCase().trim() : '';
             let filteredRequestsSalesTotal = 0;
-            let filteredRequestsSalesCount = 0;
-
-            const storeSearchInput = document.getElementById('storeSearchInput');
-            const searchQueryRaw = storeSearchInput ? storeSearchInput.value.trim().toLowerCase() : '';
-            // Suportahan ang paghahanap ng dalawang pangalan na pinaghihiwalay ng kuwit (,)
-            let searchQueries = searchQueryRaw ? searchQueryRaw.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
 
             const fabRequestBtn = document.getElementById('fabRequestBtn');
             const requestBadge = document.getElementById('requestBadge');
 
-            if (appData.consignments.length === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang naka-record.</p>';
-                requestsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request o benta.</p>';
-                fabRequestBtn.style.display = 'none';
-                requestBadge.style.display = 'none';
-                document.getElementById('totalStores').textContent = '0';
-                document.getElementById('totalDue').textContent = '0';
-                document.getElementById('totalStock').textContent = '0 pcs';
-                document.getElementById('totalSold').textContent = '0 pcs';
-                document.getElementById('totalSales').textContent = '₱0';
-                const totalSalesBox = document.getElementById('requestModalTotalSales');
-                if (totalSalesBox) totalSalesBox.style.display = 'none';
-                document.getElementById('onlineStoresBadge').textContent = '🟢 0 Online';
-                previousRequestCount = totalActiveReqsCount;
-                calculateStoreGrowth();
-                return;
+            // Requirement 3 & 4: Search bar input for stores supporting comma separation
+            const storeSearchInput = document.getElementById('storeSearchInput');
+            const searchInputVal = storeSearchInput ? storeSearchInput.value.trim().toLowerCase() : '';
+            let searchKeywords = [];
+            if (searchInputVal) {
+                searchKeywords = searchInputVal.split(',').map(s => s.trim()).filter(s => s.length > 0);
             }
 
             let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
             const currentYM = new Date().toISOString().slice(0, 7);
-            let displayedStoresCount = 0;
+
+            let matchingStoresHtml = '';
+            let matchedStoresCount = 0;
 
             appData.consignments.forEach((item, index) => {
                 if (!item.styleType) item.styleType = 'Ordinary';
@@ -835,8 +794,6 @@
                 if (!item.approvedRestocks) item.approvedRestocks = [];
                 if (!item.messages) item.messages = [];
                 if (!item.address) item.address = '';
-                if (!item.ownerName) item.ownerName = '';
-                if (!item.ownerEmail) item.ownerEmail = '';
                 if (!item.searchValidation) item.searchValidation = '';
                 if (item.isCollected === undefined) item.isCollected = false;
 
@@ -926,7 +883,6 @@
                     item.pendingSales.forEach((sale) => {
                         if (storeMatchesFilter) {
                             filteredRequestsSalesTotal += (sale.totalAmount || 0);
-                            filteredRequestsSalesCount++;
                         }
                     });
 
@@ -980,7 +936,7 @@
                     chatHtml += `<div class="history-item"><span><strong>${msg.sender}:</strong> ${msg.text}</span> <span style="font-size:0.65rem; color:#888;">${msg.date}</span></div>`;
                 });
                 if (!chatHtml) chatHtml = '<div class="history-item">Wala pang mensahe.</div>';
-                
+
                 let isOnline = false;
                 let clientLastSeenText = 'Hindi pa nabubuksan';
 
@@ -1009,25 +965,21 @@
                     }
                 }
 
-                if (isOnline) {
-                    onlineStoresCount++;
-                }
+                if (isOnline) onlineStoreCount++;
 
-                // Check kung tugma sa search queries (sinusuportahan ang comma separation)
+                // Check if this store matches the search keywords (supporting multiple names separated by comma)
                 let matchesSearch = false;
-                if (searchQueries.length === 0) {
-                    matchesSearch = false; // naka-hide ang mga tindahan by default hangga't walang sine-search
-                } else {
-                    matchesSearch = searchQueries.some(q => item.storeName.toLowerCase().includes(q));
+                if (searchKeywords.length > 0) {
+                    const storeLower = item.storeName.toLowerCase();
+                    matchesSearch = searchKeywords.some(kw => storeLower.includes(kw));
                 }
 
+                // Requirement 3: Pag na search na, nakabukas na agad ang tindahan dahil nakahide naman na dati pa
                 if (matchesSearch) {
-                    displayedStoresCount++;
-                    // Kapag na-search, dapat nakabukas na agad ang tindahan dahil nakahide naman na dati pa
                     localStorage.setItem(`store_open_${index}`, 'true');
                 }
 
-                const isOpen = matchesSearch || (localStorage.getItem(`store_open_${index}`) === 'true');
+                const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
                 const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
                 const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
 
@@ -1046,6 +998,7 @@
                 let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
                 if (matchesSearch) {
+                    matchedStoresCount++;
                     const div = document.createElement('div');
                     div.className = storeCardClass;
                     div.innerHTML = `
@@ -1062,8 +1015,7 @@
                             </div>
                         </div>
                         <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                            <span>👤 May-ari: <strong>${item.ownerName || 'Walang pangalan'}</strong> | 📧 Email: <strong style="color: #0288d1;">${item.ownerEmail || 'Wala'}</strong></span><br>
-                            <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong></span>
+                            <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#0288d1;">${item.email || 'N/A'}</strong></span>
                         </div>
                         <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                             <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
@@ -1074,7 +1026,6 @@
                             <div style="margin-top: 10px;">${storeItemsHtml}</div>
                             <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
                                 <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Pangalan</button>
-                                <button type="button" onclick="editStoreOwner(${index})" style="background-color: #006064; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang May-ari/Email</button>
                                 <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">I-edit ang Address</button>
                                 <button type="button" onclick="deleteEntireStore(${index})" style="background-color: #d32f2f; font-size: 0.75rem; padding: 6px; flex: 1;">Burahin ang Tindahan</button>
                             </div>
@@ -1098,16 +1049,16 @@
                 }
             });
 
-            if (searchQueries.length > 0 && displayedStoresCount === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#c62828; font-size:0.9rem;">Walang nahanap na tindahan sa pangalang iyon.</p>';
-            } else if (searchQueries.length === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Nakahide ang mga tindahan. Mag-search o pumili sa pilian at i-click ang GO.</p>';
+            // Requirement 5: Online store count badge update
+            const onlineBadgeEl = document.getElementById('onlineStoreBadge');
+            if (onlineBadgeEl) {
+                onlineBadgeEl.textContent = `🟢 Online: ${onlineStoreCount}`;
             }
 
-            // Update Online Stores Number Badge
-            const onlineBadge = document.getElementById('onlineStoresBadge');
-            if (onlineBadge) {
-                onlineBadge.textContent = `🟢 ${onlineStoresCount} Online`;
+            if (searchKeywords.length > 0 && matchedStoresCount === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#d32f2f; font-size:0.9rem;">Walang nahanap na tindahan na tugma sa iyong sinulat.</p>';
+            } else if (searchKeywords.length === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan at i-click ang GO para hanapin.</p>';
             }
 
             Object.keys(savedReplies).forEach(idx => {
@@ -1146,8 +1097,6 @@
             document.getElementById('totalStock').textContent = tStock + ' pcs';
             document.getElementById('totalSold').textContent = tSold + ' pcs';
             document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
-
-            calculateStoreGrowth();
         }
 
         window.markStoreCollected = async function(storeIdx) {
@@ -1169,7 +1118,9 @@
 
         window.approveInquiry = async function(inqIdx) {
             const inq = appData.pendingInquiries[inqIdx];
-            const initialStockStr = prompt(`[Prompt] Simulang stock para sa ${inq.storeName} (${inq.styleType || 'Ordinary'}):`, '10');
+            // Requirement 2: Automatic deduction based on requested/approved quantity from client inquiry
+            const defaultQty = inq.qty || 10;
+            const initialStockStr = prompt(`[Prompt] Simulang stock para sa ${inq.storeName} (${inq.styleType || 'Ordinary'}):`, defaultQty);
             if (initialStockStr === null) return;
             const initialStock = parseInt(initialStockStr) || 0;
 
@@ -1187,7 +1138,7 @@
             const isSameName = inq.ownerName && inq.storeName && inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();
             const searchValidationMsg = isSameName ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
 
-            // Automatic deduction sa inventory kapag na-approve ang inquiry
+            // Automatic deduction from inventory upon approval
             appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);
             const todayStr = new Date().toISOString().slice(0, 10);
             let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -1199,20 +1150,20 @@
             }
 
             appData.consignments.push({
-                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', ownerEmail: inq.email || '', address: inq.address || '', styleType: style, initialQty: initialStock,
+                id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', email: inq.email || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
                 storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
                 activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
                 lastClientAccess: null,
                 searchValidation: searchValidationMsg,
                 isCollected: false,
-                history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style})` }]
+                history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory` }]
             });
 
             appData.pendingInquiries.splice(inqIdx, 1);
             await saveToCloud();
             closeModal('inquiryModal');
-            alert('Matagumpay na na-aprube ang inquiry at nabawasan ang inventory!');
+            alert('Matagumpay na na-aprube ang inquiry at naibawas na sa inventory!');
         };
 
         window.declineInquiry = async function(inqIdx) {
@@ -1406,19 +1357,6 @@
                 if (item.ownerName) {
                     const isSame = item.ownerName.trim().toLowerCase() === item.storeName.trim().toLowerCase();
                     item.searchValidation = isSame ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
-                }
-                saveToCloud();
-            }
-        };
-
-        window.editStoreOwner = function(index) {
-            const item = appData.consignments[index];
-            const newOwner = prompt('Bagong Pangalan ng May-ari:', item.ownerName || '');
-            if (newOwner !== null) {
-                item.ownerName = newOwner.trim();
-                const newEmail = prompt('Bagong Active Email / Gmail:', item.ownerEmail || '');
-                if (newEmail !== null) {
-                    item.ownerEmail = newEmail.trim();
                 }
                 saveToCloud();
             }
