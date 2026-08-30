@@ -151,7 +151,7 @@
                     <input type="number" id="calcStoreInput" placeholder="Hal. 20" value="10" oninput="calculatePotentialIncome()">
                 </div>
                 <div style="font-size: 0.85rem; color: #006064; background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #b2ebf2;">
-                    <div>Average Benta bawat Tindahan: <strong id="calcAvgSales">₱0</strong></div>
+                    <div>Average Benta bawat Tindahan (Nakaraang Buwan): <strong id="calcAvgSales">₱0</strong></div>
                     <div style="margin-top: 4px; font-size: 0.95rem; font-weight: bold; color: #00838f;">
                         💡 Potensyal na Kabuuang Kita: <span id="calcPotentialTotal">₱0</span>
                     </div>
@@ -206,15 +206,14 @@
 
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <h2 style="margin-bottom: 0;">Lista ng mga Tindahan</h2>
+                    <h2 style="margin-bottom: 0;">Talaan ng mga Tindahan</h2>
                     <span id="onlineStoreBadge" class="badge badge-good" title="Mga Tindahang Naka-online Ngayon">🟢 Online: 0</span>
                 </div>
-                <!-- Pinapalitan ang search bar ng Show All Button -->
-                <div style="margin-bottom: 12px;">
-                    <button type="button" onclick="showAllStores()" style="background-color: var(--primary-color); font-size: 0.9rem; padding: 8px 12px;">📋 Show All (Ipakita Lahat ng Tindahan)</button>
+                <div style="margin-bottom: 10px;">
+                    <button type="button" onclick="showAllStores()" style="background-color: var(--primary-color); font-size: 0.9rem; padding: 10px;">📂 Show All (Ipakita Lahat ng Tindahan)</button>
                 </div>
                 <div id="storesList">
-                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para makita ang listahan ng mga tindahan.</p>
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para Makita ang lahat ng mga tindahan.</p>
                 </div>
             </div>
 
@@ -441,7 +440,7 @@
 
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let previousRequestCount = 0;
-        let showAllActive = false; // Sinisigurong kontrolado ang pagpapakita ng lahat ng tindahan para maiwasan ang double rendering
+        let showAllActive = false;
 
         window.openModal = function(modalId) {
             document.getElementById(modalId).style.display = 'flex';
@@ -743,7 +742,7 @@
                 });
             }
 
-            let avgSalesPerStore = activeCount > 0 ? (totalSalesSoFar / activeCount) : 1500;
+            let avgSalesPerStore = activeCount > 0 ? (totalSalesSoFar / activeCount) : 0;
             const potentialTotal = avgSalesPerStore * targetStores;
 
             document.getElementById('calcAvgSales').textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
@@ -798,8 +797,6 @@
             }
 
             const storesList = document.getElementById('storesList');
-            storesList.innerHTML = ''; // Nililinis ang buong listahan bago i-render para maiwasan ang pagdodoble
-
             const requestsContainer = document.getElementById('adminRequestsContainer');
             requestsContainer.innerHTML = '';
             let hasRequests = false;
@@ -1009,27 +1006,26 @@
 
                 if (isOnline) onlineStoreCount++;
 
-                const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
-                const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
-                const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
-
-                let statusDot = isOnline 
-                    ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
-                    : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
-
-                let hasClientMessage = false;
-                if (item.messages && item.messages.length > 0) {
-                    const lastMsg = item.messages[item.messages.length - 1];
-                    if (lastMsg.sender !== 'Admin') {
-                        hasClientMessage = true;
-                    }
-                }
-
-                let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
-
-                // Kung naka-klik ang "Show All", ilalabas ang lahat ng tindahan nang walang duplicate
                 if (showAllActive) {
                     matchedStoresCount++;
+                    const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
+                    const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
+                    const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
+
+                    let statusDot = isOnline 
+                        ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
+                        : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
+
+                    let hasClientMessage = false;
+                    if (item.messages && item.messages.length > 0) {
+                        const lastMsg = item.messages[item.messages.length - 1];
+                        if (lastMsg.sender !== 'Admin') {
+                            hasClientMessage = true;
+                        }
+                    }
+
+                    let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
+
                     const div = document.createElement('div');
                     div.className = storeCardClass;
                     div.innerHTML = `
@@ -1091,8 +1087,8 @@
             }
 
             if (!showAllActive) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para makita ang listahan ng mga tindahan.</p>';
-            } else if (matchedStoresCount === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para makita ang lahat ng mga tindahan.</p>';
+            } else if (showAllActive && matchedStoresCount === 0) {
                 storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang nakarehistrong tindahan.</p>';
             }
 
