@@ -137,7 +137,6 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
-            <!-- Requirement 3: Dashboard ng Pera bawat Tindahan -->
             <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
                 <h2>💰 Dashboard ng Pera bawat Tindahan</h2>
                 <div id="storeEarningsDashboard" style="font-size: 0.85rem; max-height: 180px; overflow-y: auto;">
@@ -145,7 +144,6 @@
                 </div>
             </div>
 
-            <!-- Requirement 6: Potential Income Calculator Card -->
             <div class="card" style="background: #e0f7fa; border: 1px solid #b2ebf2;">
                 <h2>📊 Calculator ng Potensyal na Kita</h2>
                 <div class="form-group">
@@ -153,7 +151,7 @@
                     <input type="number" id="calcStoreInput" placeholder="Hal. 20" value="10" oninput="calculatePotentialIncome()">
                 </div>
                 <div style="font-size: 0.85rem; color: #006064; background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #b2ebf2;">
-                    <div>Average Benta bawat Tindahan: <strong id="calcAvgSales">₱0</strong></div>
+                    <div>Average Benta bawat Tindahan (Nakaraang Buwan): <strong id="calcAvgSales">₱0</strong></div>
                     <div style="margin-top: 4px; font-size: 0.95rem; font-weight: bold; color: #00838f;">
                         💡 Potensyal na Kabuuang Kita: <span id="calcPotentialTotal">₱0</span>
                     </div>
@@ -208,15 +206,14 @@
 
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <h2 style="margin-bottom: 0;">Maghanap ng Tindahan</h2>
+                    <h2 style="margin-bottom: 0;">Talaan ng mga Tindahan</h2>
                     <span id="onlineStoreBadge" class="badge badge-good" title="Mga Tindahang Naka-online Ngayon">🟢 Online: 0</span>
                 </div>
-                <div style="display: flex; gap: 6px; margin-bottom: 10px;">
-                    <input type="text" id="storeSearchInput" placeholder="I-type ang pangalan (gamitin ang kuwit , para sa dalawa)" style="flex: 1; font-size: 0.85rem; padding: 8px;">
-                    <button type="button" id="storeSearchGoBtn" onclick="triggerStoreSearch()" style="width: auto; margin-top: 0; padding: 8px 16px; background-color: var(--primary-color);">GO</button>
+                <div style="margin-bottom: 10px;">
+                    <button type="button" onclick="showAllStores()" style="background-color: var(--primary-color); font-size: 0.9rem; padding: 10px;">📂 Show All (Ipakita Lahat ng Tindahan)</button>
                 </div>
                 <div id="storesList">
-                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan at i-click ang GO para hanapin.</p>
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para Makita ang lahat ng mga tindahan.</p>
                 </div>
             </div>
 
@@ -443,6 +440,7 @@
 
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let previousRequestCount = 0;
+        let showAllActive = false;
 
         window.openModal = function(modalId) {
             document.getElementById(modalId).style.display = 'flex';
@@ -589,13 +587,6 @@
             nextMonth.setMonth(nextMonth.getMonth() + 1);
             if (collectionDateEl) collectionDateEl.valueAsDate = nextMonth;
             
-            // Ibalik ang sinulat sa search kung meron man sa localStorage
-            const savedSearch = localStorage.getItem('saved_store_search');
-            if (savedSearch) {
-                const searchInput = document.getElementById('storeSearchInput');
-                if (searchInput) searchInput.value = savedSearch;
-            }
-
             loadFromCloud();
 
             setInterval(() => {
@@ -728,11 +719,8 @@
             alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
         };
 
-        window.triggerStoreSearch = function() {
-            const searchInput = document.getElementById('storeSearchInput');
-            if (searchInput) {
-                localStorage.setItem('saved_store_search', searchInput.value.trim());
-            }
+        window.showAllStores = function() {
+            showAllActive = true;
             renderApp();
         };
 
@@ -754,7 +742,7 @@
                 });
             }
 
-            let avgSalesPerStore = activeCount > 0 ? (totalSalesSoFar / activeCount) : 1500;
+            let avgSalesPerStore = activeCount > 0 ? (totalSalesSoFar / activeCount) : 0;
             const potentialTotal = avgSalesPerStore * targetStores;
 
             document.getElementById('calcAvgSales').textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
@@ -822,19 +810,6 @@
 
             const fabRequestBtn = document.getElementById('fabRequestBtn');
             const requestBadge = document.getElementById('requestBadge');
-
-            const storeSearchInput = document.getElementById('storeSearchInput');
-            if (storeSearchInput) {
-                const currentSaved = localStorage.getItem('saved_store_search') || '';
-                if (storeSearchInput.value !== currentSaved && document.activeElement !== storeSearchInput) {
-                    storeSearchInput.value = currentSaved;
-                }
-            }
-            const searchInputVal = storeSearchInput ? storeSearchInput.value.trim().toLowerCase() : '';
-            let searchKeywords = [];
-            if (searchInputVal) {
-                searchKeywords = searchInputVal.split(',').map(s => s.trim()).filter(s => s.length > 0);
-            }
 
             let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
             const currentYM = new Date().toISOString().slice(0, 7);
@@ -904,7 +879,6 @@
                     `;
                 });
 
-                // Dashboard row bawat tindahan
                 dashboardEarningsHtml += `
                     <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #c8e6c9;">
                         <span>🏢 <strong>${item.storeName}</strong></span>
@@ -1032,37 +1006,26 @@
 
                 if (isOnline) onlineStoreCount++;
 
-                let matchesSearch = false;
-                if (searchKeywords.length > 0) {
-                    const storeLower = item.storeName.toLowerCase();
-                    matchesSearch = searchKeywords.some(kw => storeLower.includes(kw));
-                }
-
-                if (matchesSearch) {
-                    localStorage.setItem(`store_open_${index}`, 'true');
-                }
-
-                const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
-                const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
-                const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
-
-                let statusDot = isOnline 
-                    ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
-                    : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
-
-                let hasClientMessage = false;
-                if (item.messages && item.messages.length > 0) {
-                    const lastMsg = item.messages[item.messages.length - 1];
-                    if (lastMsg.sender !== 'Admin') {
-                        hasClientMessage = true;
-                    }
-                }
-
-                let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
-
-                // Bug Fix #1: Sinigurong hindi nadodoble ang pag-render gamit ang tamang condition at break/filter per unique item
-                if (matchesSearch) {
+                if (showAllActive) {
                     matchedStoresCount++;
+                    const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
+                    const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
+                    const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
+
+                    let statusDot = isOnline 
+                        ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
+                        : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
+
+                    let hasClientMessage = false;
+                    if (item.messages && item.messages.length > 0) {
+                        const lastMsg = item.messages[item.messages.length - 1];
+                        if (lastMsg.sender !== 'Admin') {
+                            hasClientMessage = true;
+                        }
+                    }
+
+                    let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
+
                     const div = document.createElement('div');
                     div.className = storeCardClass;
                     div.innerHTML = `
@@ -1123,10 +1086,10 @@
                 onlineBadgeEl.textContent = `🟢 Online: ${onlineStoreCount}`;
             }
 
-            if (searchKeywords.length > 0 && matchedStoresCount === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#d32f2f; font-size:0.9rem;">Walang nahanap na tindahan na tugma sa iyong sinulat.</p>';
-            } else if (searchKeywords.length === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-type ang pangalan ng tindahan at i-click ang GO para hanapin.</p>';
+            if (!showAllActive) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para makita ang lahat ng mga tindahan.</p>';
+            } else if (showAllActive && matchedStoresCount === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang nakarehistrong tindahan.</p>';
             }
 
             Object.keys(savedReplies).forEach(idx => {
