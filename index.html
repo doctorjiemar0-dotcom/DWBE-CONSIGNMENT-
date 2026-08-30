@@ -18,11 +18,17 @@
     <meta name="theme-color" content="#2e7d32">
     <!-- QR Code Library mula sa CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
     <style>
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
-        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
+        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .header-title { flex-grow: 1; text-align: center; }
+        .store-qr-header { width: 40px; height: 40px; background: white; padding: 2px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
         h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
@@ -44,10 +50,6 @@
         
         #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
 
-        #installAppCard, #dashboardInstallCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
-        .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
-        #qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
-
         .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .style-option-card { border: 2px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; position: relative; }
         .style-option-card.selected { border-color: var(--primary-color); background: #e8f5e9; }
@@ -59,12 +61,287 @@
         #imageModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; flex-direction: column; }
         #imageModal img { max-width: 90%; max-height: 80%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         #imageModalClose { margin-top: 15px; background: white; color: #333; padding: 8px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; width: auto; }
-
-        @media print {
-            body * { visibility: hidden; }
-            #printableInquirySection, #printableInquirySection * { visibility: visible; }
-            #printableInquirySection { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; }
-            .no-print { display: none !important; }
-        }
     </style>
 </head>
+<body>
+
+    <header>
+        <div style="width: 40px;"></div>
+        <div class="header-title">Doctor's Whisk Broom Portal</div>
+        <div id="headerQrContainer" class="store-qr-header" title="I-click para lumaki ang QR" onclick="openFullQrModal()">
+            <div id="miniQr"></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="syncStatus">Kumokonekta sa Database...</div>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="card">
+            <h2>Mag-login sa iyong Tindahan</h2>
+            <div class="form-group" style="width: 100%;">
+                <label>Pangalan ng Tindahan / Client ID</label>
+                <input type="text" id="storeIdInput" placeholder="Hal. TindahanNiAlingNena">
+            </div>
+            <button onclick="loginStore()">Pumasok sa Portal</button>
+        </div>
+
+        <!-- Portal Content -->
+        <div id="portalContent">
+            
+            <!-- Store Info & QR Code -->
+            <div class="card">
+                <h2>Impormasyon ng Tindahan</h2>
+                <p><strong>Pangalan:</strong> <span id="displayStoreName"></span></p>
+                <p><strong>Code:</strong> <span id="displayStoreCode"></span></p>
+                <div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px;">
+                    <label style="margin-bottom: 5px;">Store QR Code (Consignment ID)</label>
+                    <div id="qrcode" style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #ddd;"></div>
+                    <button class="view-img-btn" style="margin-top: 8px; width: auto; padding: 5px 12px;" onclick="openFullQrModal()">I-download / Palakihin ang QR</button>
+                </div>
+            </div>
+
+            <!-- Inventory & Stock Confirmation -->
+            <div class="card">
+                <h2>Kasalukuyang Inventory & Mga Paninda</h2>
+                <div id="inventoryList">
+                    <!-- Dynamic inventory items -->
+                </div>
+                <button onclick="confirmReceivedStock()" style="background-color: #0288d1; margin-top: 10px;">Kumpirmahin ang Natanggap na Stock</button>
+            </div>
+
+            <!-- Record Sales -->
+            <div class="card">
+                <h2>Mag-record ng Benta</h2>
+                <div class="form-group">
+                    <label>Uri ng Walis Tambo (Tiger Grass)</label>
+                    <div class="style-grid">
+                        <div class="style-option-card selected" onclick="selectBroomStyle('Standard', this)">
+                            <img src="https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=300" alt="Standard Walis">
+                            <h4>Standard Tiger</h4>
+                            <p>Matibay at Subok</p>
+                            <button class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600')">Tingnan</button>
+                        </div>
+                        <div class="style-option-card" onclick="selectBroomStyle('Premium', this)">
+                            <img src="https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=300" alt="Premium Walis">
+                            <h4>Premium Grade</h4>
+                            <p>Makapal at Pulido</p>
+                            <button class="view-img-btn" onclick="event.stopPropagation(); openImageModal('https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600')">Tingnan</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Bilang ng Naibenta</label>
+                    <input type="number" id="soldQuantity" min="1" value="1">
+                </div>
+                <button onclick="submitSalesRecord()">Isumite ang Benta</button>
+            </div>
+
+            <!-- Restock Request -->
+            <div class="card">
+                <h2>Humiling ng Karagdagang Stock (Restock)</h2>
+                <div class="form-group">
+                    <label>Dami ng Hinihinging Walis</label>
+                    <input type="number" id="restockQty" min="5" value="10">
+                </div>
+                <div class="form-group">
+                    <label>Mensahe o Paalala sa Tagagawa</label>
+                    <textarea id="restockNote" rows="2" placeholder="Hal. Kailangan ko bago mag-Linggo po."></textarea>
+                </div>
+                <button onclick="submitRestockRequest()">Ipadala ang Kahilingan</button>
+            </div>
+
+            <!-- Notifications (Newest First) -->
+            <div class="card">
+                <h2>Mga Abiso at Paalala</h2>
+                <div id="notificationsList">
+                    <!-- Dynamic notifications -->
+                </div>
+            </div>
+
+            <!-- Direct Messaging / Chat -->
+            <div class="card">
+                <h2>Komunikasyon sa Tagagawa</h2>
+                <div id="chatBox" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
+                <div class="form-group">
+                    <input type="text" id="chatInput" placeholder="Mag-type ng mensahe...">
+                </div>
+                <button onclick="sendChatMessage()">Ipadala ang Mensahe</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Image Modal Viewer -->
+    <div id="imageModal" onclick="closeImageModal()">
+        <img id="modalImageSrc" src="" alt="Malaking Larawan">
+        <button id="imageModalClose" onclick="closeImageModal()">Isara</button>
+    </div>
+
+    <script>
+        // Firebase Configuration Placeholder
+        const firebaseConfig = {
+            databaseURL: "https://doctors-whisk-broom-default-rtdb.firebaseio.com/"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        let currentStore = localStorage.getItem('doctor_whisk_store') || '';
+        let selectedStyle = 'Standard';
+
+        window.onload = function() {
+            if (currentStore) {
+                document.getElementById('storeIdInput').value = currentStore;
+                loginStore();
+            }
+            checkSyncStatus();
+        };
+
+        function checkSyncStatus() {
+            const connectedRef = db.ref(".info/connected");
+            connectedRef.on("value", function(snap) {
+                if (snap.val() === true) {
+                    document.getElementById('syncStatus').innerText = "Konektado sa Firebase Database (Real-time sync active)";
+                    document.getElementById('syncStatus').style.color = "#2e7d32";
+                } else {
+                    document.getElementById('syncStatus').innerText = "Offline mode - Naka-save ang datos sa lokal na memorya";
+                    document.getElementById('syncStatus').style.color = "#c62828";
+                }
+            });
+        }
+
+        function loginStore() {
+            const storeName = document.getElementById('storeIdInput').value.trim();
+            if (!storeName) {
+                alert('Mangyaring ilagay ang pangalan ng tindahan.');
+                return;
+            }
+            currentStore = storeName;
+            localStorage.setItem('doctor_whisk_store', currentStore);
+
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('portalContent').style.display = 'block';
+            document.getElementById('displayStoreName').innerText = currentStore;
+            document.getElementById('displayStoreCode').innerText = "WB-" + currentStore.toUpperCase().replace(/\s+/g, '-');
+
+            generateQRCodes(currentStore);
+            loadStoreData();
+        }
+
+        function generateQRCodes(storeText) {
+            document.getElementById('qrcode').innerHTML = "";
+            document.getElementById('miniQr').innerHTML = "";
+            
+            const qrData = "DOCTOR_WHISK_BROOM_STORE:" + storeText;
+            
+            new QRCode(document.getElementById('qrcode'), {
+                text: qrData,
+                width: 128,
+                height: 128
+            });
+
+            new QRCode(document.getElementById('miniQr'), {
+                text: qrData,
+                width: 36,
+                height: 36
+            });
+        }
+
+        function selectBroomStyle(styleName, element) {
+            selectedStyle = styleName;
+            document.querySelectorAll('.style-option-card').forEach(card => card.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        function openImageModal(imgUrl) {
+            document.getElementById('modalImageSrc').src = imgUrl;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function openFullQrModal() {
+            alert("I-screenshot o ipakita ang QR code na ito para sa pag-scan ng tagagawa sa panahon ng koleksyon o stock audit.");
+        }
+
+        function loadStoreData() {
+            const inventoryDiv = document.getElementById('inventoryList');
+            inventoryDiv.innerHTML = `
+                <div class="store-item-box">
+                    <p><strong>Walis Tambo (Standard Tiger):</strong> 15 piraso natitira</p>
+                    <p style="font-size: 0.8rem; color: #666;">Huling na-update: Ngayong araw</p>
+                </div>
+            `;
+
+            // Notifications sorted newest first (Newest on top)
+            const notifDiv = document.getElementById('notificationsList');
+            const notifications = [
+                { text: "Naitala ang iyong huling hulog noong Mayo 2026.", date: "Mayo 28, 2026" },
+                { text: "Paalala: Nakatakda ang susunod na koleksyon sa darating na Biyernes.", date: "Mayo 25, 2026" }
+            ];
+
+            notifDiv.innerHTML = notifications.map(n => `
+                <div class="notification-item">
+                    <div><span>${n.text}</span><br><small style="color:#555;">${n.date}</small></div>
+                </div>
+            `).join('');
+
+            const chatDiv = document.getElementById('chatBox');
+            chatDiv.innerHTML = `
+                <div class="chat-msg admin"><strong>Tagagawa:</strong> Kumusta po ang benta ng mga walis sa inyong tindahan?</div>
+                <div class="chat-msg"><strong>Tindahan:</strong> Maayos naman po, mabilis maubos ang standard tiger grass.</div>
+            `;
+        }
+
+        function confirmReceivedStock() {
+            alert('Matagumpay na kumpirmahang natanggap ang mga bagong stock ng walis tambo.');
+            db.ref('stores/' + currentStore + '/stock_confirmations').push({
+                timestamp: Date.now(),
+                status: 'Confirmed Received'
+            });
+        }
+
+        function submitSalesRecord() {
+            const qty = document.getElementById('soldQuantity').value;
+            alert(`Nai-record ang pagbenta ng ${qty} piraso ng ${selectedStyle} walis tambo.`);
+            db.ref('stores/' + currentStore + '/sales').push({
+                style: selectedStyle,
+                quantity: qty,
+                timestamp: Date.now()
+            });
+        }
+
+        function submitRestockRequest() {
+            const qty = document.getElementById('restockQty').value;
+            const note = document.getElementById('restockNote').value;
+            alert(`Naipadala na ang kahilingan para sa ${qty} na bagong stock.`);
+            db.ref('stores/' + currentStore + '/restock').push({
+                quantity: qty,
+                note: note,
+                timestamp: Date.now()
+            });
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            if (!input.value.trim()) return;
+            
+            db.ref('stores/' + currentStore + '/chat').push({
+                sender: 'store',
+                message: input.value,
+                timestamp: Date.now()
+            });
+
+            const chatDiv = document.getElementById('chatBox');
+            chatDiv.innerHTML += `<div class="chat-msg"><strong>Ikaw:</strong> ${input.value}</div>`;
+            input.value = '';
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
