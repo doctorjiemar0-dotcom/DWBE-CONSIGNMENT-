@@ -206,14 +206,14 @@
 
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <h2 style="margin-bottom: 0;">Talaan ng mga Tindahan</h2>
+                    <h2 style="margin-bottom: 0;">Listahan ng mga Tindahan</h2>
                     <span id="onlineStoreBadge" class="badge badge-good" title="Mga Tindahang Naka-online Ngayon">🟢 Online: 0</span>
                 </div>
                 <div style="margin-bottom: 10px;">
-                    <button type="button" onclick="showAllStores()" style="background-color: var(--primary-color); font-size: 0.9rem; padding: 10px;">📂 Show All (Ipakita Lahat ng Tindahan)</button>
+                    <button type="button" id="showAllStoresBtn" onclick="toggleShowAllStores()" style="background-color: var(--primary-color); font-size: 0.85rem; padding: 8px;">📋 Ipakita Lahat ng Tindahan (Show All)</button>
                 </div>
                 <div id="storesList">
-                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para Makita ang lahat ng mga tindahan.</p>
+                    <p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Ipakita Lahat ng Tindahan" para makita ang mga ito.</p>
                 </div>
             </div>
 
@@ -440,7 +440,7 @@
 
         let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
         let previousRequestCount = 0;
-        let showAllActive = false;
+        let showAllStores = false;
 
         window.openModal = function(modalId) {
             document.getElementById(modalId).style.display = 'flex';
@@ -455,6 +455,43 @@
             formCard.style.display = formCard.style.display === 'none' ? 'block' : 'none';
             if (formCard.style.display === 'block') formCard.scrollIntoView({ behavior: 'smooth' });
         };
+
+        window.toggleShowAllStores = function() {
+            showAllStores = !showAllStores;
+            const btn = document.getElementById('showAllStoresBtn');
+            if (btn) {
+                btn.textContent = showAllStores ? '📂 Itago ang Listahan' : '📋 Ipakita Lahat ng Tindahan (Show All)';
+                btn.style.backgroundColor = showAllStores ? '#d32f2f' : 'var(--primary-color)';
+            }
+            renderApp();
+        };
+
+        // Bug Fix: Deduplicate consignments based on storeName case-insensitively to prevent record duplication
+        function deduplicateConsignments() {
+            if (!appData.consignments || !Array.isArray(appData.consignments)) return;
+            const uniqueMap = new Map();
+            appData.consignments.forEach(item => {
+                if (!item.storeName) return;
+                const key = item.storeName.trim().toLowerCase();
+                if (uniqueMap.has(key)) {
+                    let existing = uniqueMap.get(key);
+                    if (item.storeItems && item.storeItems.length > 0) {
+                        item.storeItems.forEach(sub => {
+                            let exSub = existing.storeItems.find(s => s.styleType === sub.styleType);
+                            if (exSub) {
+                                exSub.initialQty += sub.initialQty;
+                                exSub.currentStock += sub.currentStock;
+                            } else {
+                                existing.storeItems.push(sub);
+                            }
+                        });
+                    }
+                } else {
+                    uniqueMap.set(key, item);
+                }
+            });
+            appData.consignments = Array.from(uniqueMap.values());
+        }
 
         window.adjustHomeStock = async function(style, amount) {
             const current = appData.homeStock[style] || 0;
@@ -540,6 +577,7 @@
                 }
             });
             if (updated) {
+                deduplicateConsignments();
                 saveToCloud();
             }
         }
@@ -554,6 +592,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                    deduplicateConsignments();
                     processClientAcceptedRestocks();
                 }
                 renderApp();
@@ -561,13 +600,18 @@
             } catch (err) {
                 syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
                 const local = localStorage.getItem('consignments_v3');
-                if (local) { appData = JSON.parse(local); renderApp(); }
+                if (local) { 
+                    appData = JSON.parse(local); 
+                    deduplicateConsignments();
+                    renderApp(); 
+                }
             }
         }
 
         async function saveToCloud() {
             syncStatus.textContent = "Nagse-save sa Cloud...";
             try {
+                deduplicateConsignments();
                 await setDoc(doc(db, "app_data", "main_inventory"), appData);
                 localStorage.setItem('consignments_v3', JSON.stringify(appData));
                 syncStatus.textContent = "✅ Na-save sa Cloud";
@@ -586,7 +630,7 @@
             let nextMonth = new Date();
             nextMonth.setMonth(nextMonth.getMonth() + 1);
             if (collectionDateEl) collectionDateEl.valueAsDate = nextMonth;
-            
+
             loadFromCloud();
 
             setInterval(() => {
@@ -615,6 +659,7 @@
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
                     if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                    deduplicateConsignments();
                     processClientAcceptedRestocks();
                     renderApp();
                 }
@@ -641,6 +686,7 @@
                 }
 
                 appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
+                deduplicateConsignments();
                 let existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === sName.toLowerCase());
 
                 if (existingStore) {
@@ -719,19 +765,51 @@
             alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
         };
 
-        window.showAllStores = function() {
-            showAllActive = true;
-            renderApp();
-        };
-
+        // Requirement 3: Potential income calculator based on the previous month's average income
         function calculatePotentialIncome() {
             const inputEl = document.getElementById('calcStoreInput');
             const targetStores = parseInt(inputEl.value) || 0;
             
-            let totalSalesSoFar = 0;
-            let activeCount = appData.consignments ? appData.consignments.length : 0;
+            const prevDate = new Date();
+            prevDate.setMonth(prevDate.getMonth() - 1);
+            const prevYear = prevDate.getFullYear();
+            const prevMonth = prevDate.getMonth();
             
-            if (appData.consignments && activeCount > 0) {
+            let prevMonthTotalSales = 0;
+            let activeCount = appData.consignments ? appData.consignments.length : 0;
+            let storesWithPrevSales = 0;
+            
+            if (appData.consignments) {
+                appData.consignments.forEach(item => {
+                    let storePrevSales = 0;
+                    if (item.history) {
+                        item.history.forEach(h => {
+                            let hDate = new Date(h.date);
+                            if (!isNaN(hDate.getTime()) && hDate.getFullYear() === prevYear && hDate.getMonth() === prevMonth) {
+                                if (h.text.includes("Nabenta:")) {
+                                    let match = h.text.match(/Nabenta:\s*(\d+)\s*pcs/);
+                                    if (match) {
+                                        let qtySold = parseInt(match[1]);
+                                        let price = 150;
+                                        if (item.storeItems && item.storeItems.length > 0) {
+                                            price = item.storeItems[0].price;
+                                        }
+                                        storePrevSales += qtySold * price;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    if (storePrevSales > 0) {
+                        prevMonthTotalSales += storePrevSales;
+                        storesWithPrevSales++;
+                    }
+                });
+            }
+
+            // Fallback to overall average if no specific previous month sales log found
+            let totalSalesSoFar = 0;
+            if (appData.consignments) {
                 appData.consignments.forEach(item => {
                     if (item.storeItems) {
                         item.storeItems.forEach(sub => {
@@ -742,7 +820,7 @@
                 });
             }
 
-            let avgSalesPerStore = activeCount > 0 ? (totalSalesSoFar / activeCount) : 0;
+            let avgSalesPerStore = storesWithPrevSales > 0 ? (prevMonthTotalSales / storesWithPrevSales) : (activeCount > 0 ? (totalSalesSoFar / activeCount) : 1500);
             const potentialTotal = avgSalesPerStore * targetStores;
 
             document.getElementById('calcAvgSales').textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
@@ -1006,26 +1084,27 @@
 
                 if (isOnline) onlineStoreCount++;
 
-                if (showAllActive) {
-                    matchedStoresCount++;
-                    const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
-                    const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
-                    const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
+                const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
+                const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
+                const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
 
-                    let statusDot = isOnline 
-                        ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
-                        : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
+                let statusDot = isOnline 
+                    ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online">🟢</span>` 
+                    : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline">🔴</span>`;
 
-                    let hasClientMessage = false;
-                    if (item.messages && item.messages.length > 0) {
-                        const lastMsg = item.messages[item.messages.length - 1];
-                        if (lastMsg.sender !== 'Admin') {
-                            hasClientMessage = true;
-                        }
+                let hasClientMessage = false;
+                if (item.messages && item.messages.length > 0) {
+                    const lastMsg = item.messages[item.messages.length - 1];
+                    if (lastMsg.sender !== 'Admin') {
+                        hasClientMessage = true;
                     }
+                }
 
-                    let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
+                let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
+                // Render based on Show All toggle
+                if (showAllStores) {
+                    matchedStoresCount++;
                     const div = document.createElement('div');
                     div.className = storeCardClass;
                     div.innerHTML = `
@@ -1086,10 +1165,10 @@
                 onlineBadgeEl.textContent = `🟢 Online: ${onlineStoreCount}`;
             }
 
-            if (!showAllActive) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Show All" para makita ang lahat ng mga tindahan.</p>';
-            } else if (showAllActive && matchedStoresCount === 0) {
-                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Wala pang nakarehistrong tindahan.</p>';
+            if (!showAllStores) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">I-click ang "Ipakita Lahat ng Tindahan" para makita ang mga ito.</p>';
+            } else if (matchedStoresCount === 0) {
+                storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang nakarehistrong tindahan.</p>';
             }
 
             Object.keys(savedReplies).forEach(idx => {
@@ -1178,6 +1257,7 @@
                 notifications.push({ id: Date.now() + 1, text: searchValidationMsg, date: new Date().toLocaleString() });
             }
 
+            deduplicateConsignments();
             appData.consignments.push({
                 id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', email: inq.email || '', address: inq.address || '', styleType: style, initialQty: initialStock,
                 currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,
@@ -1387,6 +1467,7 @@
                     const isSame = item.ownerName.trim().toLowerCase() === item.storeName.trim().toLowerCase();
                     item.searchValidation = isSame ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
                 }
+                deduplicateConsignments();
                 saveToCloud();
             }
         };
@@ -1434,6 +1515,7 @@
         document.getElementById('importTextBtn').addEventListener('click', () => {
             try {
                 appData = JSON.parse(document.getElementById('backupTextarea').value.trim());
+                deduplicateConsignments();
                 saveToCloud();
                 alert('Na-load na!');
             } catch (err) { alert('Mali ang format.'); }
