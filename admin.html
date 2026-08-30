@@ -137,6 +137,14 @@
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
             </div>
 
+            <!-- Requirement 3: Dashboard ng Pera bawat Tindahan -->
+            <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
+                <h2>💰 Dashboard ng Pera bawat Tindahan</h2>
+                <div id="storeEarningsDashboard" style="font-size: 0.85rem; max-height: 180px; overflow-y: auto;">
+                    <p style="color: #666;">Wala pang datos ng benta.</p>
+                </div>
+            </div>
+
             <!-- Requirement 6: Potential Income Calculator Card -->
             <div class="card" style="background: #e0f7fa; border: 1px solid #b2ebf2;">
                 <h2>📊 Calculator ng Potensyal na Kita</h2>
@@ -159,7 +167,6 @@
                         <label for="storeName">Pangalan ng Tindahan:</label>
                         <input type="text" id="storeName" placeholder="Hal. Aling Nena Store" required>
                     </div>
-                    <!-- Requirement 1: Pangalan ng May-ari at Active Email -->
                     <div class="form-group">
                         <label for="storeOwner">Pangalan ng May-ari:</label>
                         <input type="text" id="storeOwner" placeholder="Hal. Maria Santos" required>
@@ -199,7 +206,6 @@
                 </form>
             </div>
 
-            <!-- Requirement 3, 4 & 5: Search Bar with Comma Support, GO Button, Online Badge, Hidden Store List -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 0;">Maghanap ng Tindahan</h2>
@@ -218,7 +224,6 @@
 
     </div>
 
-    <!-- Floating Action Bubbles Container -->
     <div class="floating-container" id="floatingContainer">
         <button class="fab-btn fab-broadcast" id="fabBroadcastBtn" title="Overall Broadcast Chatbox" onclick="openModal('broadcastModal')">📢</button>
         <button class="fab-btn fab-backup" id="fabBackupBtn" title="Data Backup & Recovery" onclick="openModal('backupModal')">💾</button>
@@ -231,7 +236,6 @@
         <button class="fab-btn fab-add" id="toggleAddFormBtn" title="Magdagdag ng Tindahan" style="display:none;" onclick="toggleAddStoreForm()">➕</button>
     </div>
 
-    <!-- Modal para sa Inquiries -->
     <div class="modal-overlay" id="inquiryModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -244,7 +248,6 @@
         </div>
     </div>
 
-    <!-- Modal para sa Restock & Sales Requests -->
     <div class="modal-overlay" id="requestModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -261,7 +264,6 @@
         </div>
     </div>
 
-    <!-- Modal para sa Backup & Recovery -->
     <div class="modal-overlay" id="backupModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -278,7 +280,6 @@
         </div>
     </div>
 
-    <!-- Modal para sa Overall Broadcast Chatbox -->
     <div class="modal-overlay" id="broadcastModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -320,23 +321,21 @@
         const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
         const logoutBtn = document.getElementById('logoutBtn');
 
-        // Tawagin ito kapag pinindot ang login button gamit ang email at password
         async function handleAdminLogin(email, password) {
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                // Matagumpay na nag-login! Kusang magbubukas ang dashboard.
             } catch (error) {
                 let msg = "Nagkaroon ng problema sa pag-login.";
-if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-    msg = "Mali ang iyong email o password.";
-} else if (error.code === 'auth/user-not-found') {
-    msg = "Walang account na nakarehistro sa email na ito.";
-} else if (error.code === 'auth/invalid-email') {
-    msg = "Hindi wastong format ng email ang nailagay mo.";
-} else {
-    msg = error.message;
-}
-alert(msg);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    msg = "Mali ang iyong email o password.";
+                } else if (error.code === 'auth/user-not-found') {
+                    msg = "Walang account na nakarehistro sa email na ito.";
+                } else if (error.code === 'auth/invalid-email') {
+                    msg = "Hindi wastong format ng email ang nailagay mo.";
+                } else {
+                    msg = error.message;
+                }
+                alert(msg);
             }
         }
 
@@ -358,17 +357,14 @@ alert(msg);
             if (e.key === 'Enter') { loginBtn.click(); }
         });
 
-        // Awtomatikong sumusubaybay kung naka-login ang admin
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Naka-login na: Itago ang login screen at i-load ang data
                 authScreen.style.display = 'none';
                 mainAppContent.style.display = 'block';
                 toggleAddFormBtn.style.display = 'flex';
                 if (logoutBtn) logoutBtn.style.display = 'inline-block';
                 initApp();
             } else {
-                // Walang naka-login: Ipakita ang login screen
                 authScreen.style.display = 'flex';
                 mainAppContent.style.display = 'none';
                 toggleAddFormBtn.style.display = 'none';
@@ -376,13 +372,11 @@ alert(msg);
             }
         });
 
-        // Para sa Logout button mo
         function handleAdminLogout() {
             signOut(auth);
         }
         window.handleAdminLogout = handleAdminLogout;
 
-        // Movable Floating Container Logic
         const floatingContainer = document.getElementById('floatingContainer');
         let isDragging = false;
         let startX, startY, initialX, initialY;
@@ -594,6 +588,14 @@ alert(msg);
             let nextMonth = new Date();
             nextMonth.setMonth(nextMonth.getMonth() + 1);
             if (collectionDateEl) collectionDateEl.valueAsDate = nextMonth;
+            
+            // Ibalik ang sinulat sa search kung meron man sa localStorage
+            const savedSearch = localStorage.getItem('saved_store_search');
+            if (savedSearch) {
+                const searchInput = document.getElementById('storeSearchInput');
+                if (searchInput) searchInput.value = savedSearch;
+            }
+
             loadFromCloud();
 
             setInterval(() => {
@@ -727,6 +729,10 @@ alert(msg);
         };
 
         window.triggerStoreSearch = function() {
+            const searchInput = document.getElementById('storeSearchInput');
+            if (searchInput) {
+                localStorage.setItem('saved_store_search', searchInput.value.trim());
+            }
             renderApp();
         };
 
@@ -818,6 +824,12 @@ alert(msg);
             const requestBadge = document.getElementById('requestBadge');
 
             const storeSearchInput = document.getElementById('storeSearchInput');
+            if (storeSearchInput) {
+                const currentSaved = localStorage.getItem('saved_store_search') || '';
+                if (storeSearchInput.value !== currentSaved && document.activeElement !== storeSearchInput) {
+                    storeSearchInput.value = currentSaved;
+                }
+            }
             const searchInputVal = storeSearchInput ? storeSearchInput.value.trim().toLowerCase() : '';
             let searchKeywords = [];
             if (searchInputVal) {
@@ -828,6 +840,7 @@ alert(msg);
             const currentYM = new Date().toISOString().slice(0, 7);
 
             let matchedStoresCount = 0;
+            let dashboardEarningsHtml = '';
 
             appData.consignments.forEach((item, index) => {
                 if (!item.styleType) item.styleType = 'Ordinary';
@@ -850,7 +863,7 @@ alert(msg);
                     }];
                 }
 
-                let storeTotalStock = 0, storeTotalSold = 0, storeIsDue = false, storeItemsHtml = '';
+                let storeTotalStock = 0, storeTotalSold = 0, storeTotalStoreSales = 0, storeIsDue = false, storeItemsHtml = '';
                 item.storeItems.forEach((subItem, subIdx) => {
                     if (subItem.rejectedQty === undefined) subItem.rejectedQty = 0;
                     if (subItem.returnedQty === undefined) subItem.returnedQty = 0;
@@ -860,6 +873,7 @@ alert(msg);
 
                     storeTotalStock += subItem.currentStock;
                     storeTotalSold += subSold;
+                    storeTotalStoreSales += subSales;
                     tStock += subItem.currentStock;
                     tSold += subSold;
                     tSales += subSales;
@@ -889,6 +903,14 @@ alert(msg);
                         </div>
                     `;
                 });
+
+                // Dashboard row bawat tindahan
+                dashboardEarningsHtml += `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #c8e6c9;">
+                        <span>🏢 <strong>${item.storeName}</strong></span>
+                        <span style="color: #1b5e20; font-weight: bold;">₱${storeTotalStoreSales.toLocaleString()} (${storeTotalSold} pcs nabenta)</span>
+                    </div>
+                `;
 
                 if (storeIsDue) tDue++;
                 let rating = storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos');
@@ -1038,6 +1060,7 @@ alert(msg);
 
                 let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
+                // Bug Fix #1: Sinigurong hindi nadodoble ang pag-render gamit ang tamang condition at break/filter per unique item
                 if (matchesSearch) {
                     matchedStoresCount++;
                     const div = document.createElement('div');
@@ -1089,6 +1112,11 @@ alert(msg);
                     storesList.appendChild(div);
                 }
             });
+
+            const dashboardContainer = document.getElementById('storeEarningsDashboard');
+            if (dashboardContainer) {
+                dashboardContainer.innerHTML = dashboardEarningsHtml || '<p style="color: #666;">Wala pang datos ng benta.</p>';
+            }
 
             const onlineBadgeEl = document.getElementById('onlineStoreBadge');
             if (onlineBadgeEl) {
