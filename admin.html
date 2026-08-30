@@ -326,7 +326,17 @@
                 await signInWithEmailAndPassword(auth, email, password);
                 // Matagumpay na nag-login! Kusang magbubukas ang dashboard.
             } catch (error) {
-                alert("Maling email o password. Subukan muli.");
+                let msg = "Nagkaroon ng problema sa pag-login.";
+if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+    msg = "Mali ang iyong email o password.";
+} else if (error.code === 'auth/user-not-found') {
+    msg = "Walang account na nakarehistro sa email na ito.";
+} else if (error.code === 'auth/invalid-email') {
+    msg = "Hindi wastong format ng email ang nailagay mo.";
+} else {
+    msg = error.message;
+}
+alert(msg);
             }
         }
 
