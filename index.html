@@ -581,11 +581,25 @@
             store.storeItems.forEach(sub => {
                 const sold = Math.max(0, sub.initialQty - sub.currentStock - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
                 const soldOut = sub.currentStock <= 0;
+                
+                // Pagtukoy sa tamang larawan batay sa uri ng walis tambo
+                const imgUrl = sub.styleType === 'Premium' 
+                    ? 'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg' 
+                    : 'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg';
+
                 const div = document.createElement('div');
                 div.className = 'store-item-box' + (sub.styleType === 'Premium' ? ' premium-stock' : '');
                 div.innerHTML = `
-                    <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between;">
-                        <span>${sub.styleType}</span><span>Presyo: ₱${sub.price}</span>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+                        <img src="${imgUrl}" alt="${sub.styleType} Walis Tambo" onclick="openImageViewer('${imgUrl}', '${sub.styleType} Style')" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; cursor: pointer;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between;">
+                                <span>${sub.styleType} Style</span><span>Presyo: ₱${sub.price}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #555; margin-top: 2px;">
+                                I-click ang larawan para palakihin.
+                            </div>
+                        </div>
                     </div>
                     <div style="font-size: 0.85rem; color: #444; margin: 5px 0;">
                         Natitirang Stock: <strong style="background: ${soldOut ? '#ffebee' : '#e8f5e9'}; color: ${soldOut ? '#c62828' : '#2e7d32'}; padding: 2px 6px; border-radius: 4px;">${sub.currentStock} pcs ${soldOut ? ' - SOLD OUT ❌' : ''}</strong><br>
