@@ -4,95 +4,94 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor's Whisk Broom - Client Portal</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2e7d32">
+    <!-- QR Code Library mula sa CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
-
-        header { 
-            background-color: var(--primary-color); 
-            color: white; 
-            padding: 15px; 
-            text-align: center; 
-            font-size: 1.2rem; 
-            font-weight: bold; 
-        }
-
-        .search-panel {
-            background: #1b5e20;
-            padding: 12px;
-            text-align: center;
-            border-bottom: 2px solid #388e3c;
-        }
-        .search-box-group {
-            display: flex;
-            gap: 8px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        .search-box-group input {
-            flex: 1;
-            padding: 8px 12px;
-            font-size: 0.9rem;
-            border-radius: 4px;
-            border: none;
-            outline: none;
-        }
-        .search-box-group button {
-            background-color: #ff9800;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .search-box-group button:hover { background-color: #f57c00; }
-
+        header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 3px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+        button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button:hover { opacity: 0.9; }
 
-        /* Istilo para sa Request & Approval Banners ng Client */
-        .client-banner {
-            background: #fff8e1;
-            border: 1px solid #ffe082;
-            border-left: 5px solid #ffb300;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            display: none;
-        }
-        .client-banner.approved {
-            background: #e8f5e9;
-            border: 1px solid #c8e6c9;
-            border-left: 5px solid #4caf50;
-        }
-        .client-banner-title { font-weight: bold; color: #f57c00; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
-        .client-banner.approved .client-banner-title { color: #2e7d32; }
-        .client-banner-text { font-size: 0.85rem; color: #5d4037; margin-bottom: 8px; }
-        .client-banner.approved .client-banner-text { color: #1b5e20; }
+        #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40vh; text-align: left; }
+        #portalContent { display: none; }
 
-        .request-list-item {
-            font-size: 0.85rem;
-            background: #fff;
-            padding: 6px 8px;
-            border-radius: 4px;
-            margin-bottom: 4px;
-            border: 1px solid #ffe082;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .store-item-box { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
+        /* Bagong kulay ng background para sa Premium active stock list */
+        .store-item-box.premium-stock { background: #fffde7; border-color: #fbc02d; }
+
+        .notification-item { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 8px; margin-bottom: 6px; font-size: 0.85rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .chat-msg { background: #f1f8e9; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85rem; border: 1px solid #c5e1a5; }
+        .chat-msg.admin { background: #e3f2fd; border-color: #90caf9; }
+        
+        #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
+
+        #installAppCard, #dashboardInstallCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
+        .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
+        #qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
+
+        /* Style Selection Grid with Pictures */
+        .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .style-option-card { border: 2px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; position: relative; }
+        .style-option-card.selected { border-color: var(--primary-color); background: #e8f5e9; }
+        .style-option-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; cursor: pointer; }
+        .style-option-card h4 { font-size: 0.85rem; color: var(--primary-color); margin-bottom: 3px; }
+        .style-option-card p { font-size: 0.75rem; color: #666; }
+        .view-img-btn { background: #0288d1; color: white; border: none; padding: 3px 6px; font-size: 0.7rem; border-radius: 3px; cursor: pointer; margin-top: 4px; display: inline-block; width: 100%; }
+
+        /* I-update ang Image Modal CSS para mas maging malaki ang display */
+        #imageModal { 
+            display: none; 
+            position: fixed; 
+            z-index: 9999; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.85); 
+            align-items: center; 
+            justify-content: center; 
+            flex-direction: column; 
+            padding: 20px;
         }
 
-        .clear-banner-btn {
-            background-color: #78909c;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
+        #imageModal img { 
+            width: 100%;
+            max-width: 450px; /* Mas pinalaki para lumitaw ang detalye ng logo */
+            height: auto; 
+            max-height: 75vh;
+            object-fit: contain;
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+            background: #000; /* Para sakaling may transparent background ang logo */
+        }
+
+        #imageModalClose { 
+            margin-top: 20px; 
+            background: white; 
+            color: #333; 
+            padding: 10px 25px; 
+            border: none; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            width: auto; 
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printableInquirySection, #printableInquirySection * { visibility: visible; }
+            #printableInquirySection { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; }
+            .no-print { display: none !important; }
         }
         .clear-banner-btn:hover { background-color: #607d8b; }
 
@@ -166,98 +165,255 @@
 </head>
 <body>
 
-    <header>🧹 Doctor's Whisk Broom - Client</header>
-
-    <div class="search-panel">
-        <div style="font-size: 0.85rem; color: white; margin-bottom: 6px; font-weight: bold;">🔍 I-type ang Pangalan ng Tindahan:</div>
-        <div class="search-box-group">
-            <input type="text" id="storeSearchInput" placeholder="Pangalan ng Tindahan...">
-            <button type="button" id="searchStoreBtn">Hanapin</button>
-        </div>
-    </div>
+    <header>🧹 Doctor's Whisk Broom - Client Portal</header>
 
     <div class="container">
+
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- Banner para sa mga Pending Restock Requests -->
-        <div class="client-banner" id="clientRequestBanner">
-            <div class="client-banner-title">📦 Mga Nakabinbing Restock Request</div>
-            <div class="client-banner-text">Ang mga sumusunod na kahilingan ay naghihintay pa ng aksyon o pag-apruba mula sa Admin:</div>
-            <div id="pendingRequestsList" style="margin-bottom: 8px;"></div>
+        <!-- Install App Card para sa Login/Inquiry Page -->
+        <div id="installAppCard" class="card">
+            <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
+            <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
+            <button id="installAppBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
         </div>
 
-        <!-- Banner para sa Admin Approvals / Notifications -->
-        <div class="client-banner approved" id="clientApprovalBanner">
-            <div class="client-banner-title">🎉 Update mula sa Admin!</div>
-            <div class="client-banner-text" id="approvalBannerText">Na-approve na ang iyong restock request.</div>
-            <button type="button" class="clear-banner-btn" id="clearApprovalBtn">✓ Nakita ko na / I-clear</button>
-        </div>
+        <!-- Secure Login Screen -->
+        <div id="loginScreen" class="card">
+            <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
+                🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. I-click ang button sa ibaba upang buksan ang iyong portal.
+            </div>
 
-        <div class="card" id="clientCard">
-            <h2 id="storeTitle">🏪 Tindahan</h2>
-            <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #c8e6c9; margin-top: 10px;">
-                <div class="summary-row"><span>Uri ng Estilo:</span><span id="styleType">-</span></div>
-                <div class="summary-row"><span>Presyo bawat Isa:</span><span id="price">-</span></div>
-                <div class="summary-row"><span>Simulang Stock:</span><span id="initialQty">-</span></div>
-                <div class="summary-row"><span>Natitirang Stock:</span><span id="currentStock" style="color: #2e7d32; font-weight: bold;">-</span></div>
-                <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="soldQty" style="color: #c2185b; font-weight: bold;">-</span></div>
-                <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>
+            <div id="manualLoginSection">
+                <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan</h2>
+                <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Para mabuksan ang iyong portal, i-type nang eksakto ang rehistradong Pangalan ng iyong Tindahan o gamitin ang Pangalan ng May-ari bilang search batayan.</p>
+                
+                <div class="form-group" style="width: 100%;">
+                    <label for="manualStoreNameInput">Pangalan ng Tindahan / May-ari:</label>
+                    <input type="text" id="manualStoreNameInput" placeholder="Hal. Aling Nena Store o Juan & Maria">
+                </div>
+                <button type="button" id="manualLoginBtn" style="background-color: var(--secondary-color); margin-bottom: 15px;">Buksan ang Aking Portal</button>
+            </div>
+
+            <button type="button" id="proceedLoginBtn" style="display:none; background-color: var(--secondary-color); margin-bottom: 15px;">Ituloy sa Aking Portal</button>
+
+            <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+
+            <!-- Simple Create Account / Aplikasyon Section -->
+            <div id="printableInquirySection" style="width: 100%;">
+                <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Create Account / Bagong Aplikasyon</h2>
+                
+                <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
+                    <strong>💡 Impormasyon:</strong> Maaari mong balikan ang iyong account pagkalipas ng <strong>2 araw</strong>. I-type lamang ang iyong <strong>Pangalan ng May-ari o Tindahan</strong> sa Pribadong Portal sa itaas.
+                </div>
+
+                <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
+                    <div class="form-group">
+                        <label>Pangalan ng Tindahan:</label>
+                        <input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Pangalan ng May-ari (Tinatanggap ang special characters gaya ng &, -, _, etc.):</label>
+                        <input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Numero ng Telepono / GCash:</label>
+                        <input type="text" id="inqContact" placeholder="Hal. 09123456789" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gmail / Active Email Address:</label>
+                        <input type="email" id="inqEmail" placeholder="Hal. alingenastore@gmail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Lokasyon / Address:</label>
+                        <input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required>
+                    </div>
+                    
+                    <!-- Walis Tambo Style Selection with Pictures for Inquirers -->
+                    <div class="form-group">
+                        <label>Piliin ang Gusto mong Uri ng Walis (Style):</label>
+                        <input type="hidden" id="inqStyleType" value="Ordinary">
+                        <div class="style-grid">
+                            <div class="style-option-card selected" onclick="selectInqStyle('Ordinary', this)">
+                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
+                                <h4>Ordinary Style</h4>
+                                <p>Standard Quality</p>
+                                <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
+                            </div>
+                            <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
+                                <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
+                                <h4>Premium Style</h4>
+                                <p>Thick & Durable</p>
+                                <div style="margin-top: 4px; font-size: 0.7rem; background: #fff9c4; color: #f57f17; padding: 2px 4px; border-radius: 3px; font-weight: bold; border: 1px dashed #fbc02d;">✨ Gitna ng Hibla (Tampok)</div>
+                                <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mensahe / Katanungan (Optional):</label>
+                        <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
+                    </div>
+                    
+                    <button type="submit" style="background-color: #0288d1;">Gumawa ng Account / Ipadala ang Aplikasyon</button>
+                </form>
+
+                <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon Form</button>
             </div>
         </div>
 
-        <div class="portal-box" id="paymentPortalCard">
-            <div class="portal-title">💳 Payment & Terms Portal</div>
-            <div class="portal-detail"><span>Paraan ng Bayad:</span> <strong id="portalPaymentType">-</strong></div>
-            <div class="portal-detail"><span>Nabayaran / Down Payment:</span> <strong id="portalPaid">₱0</strong></div>
-            <div class="portal-detail"><span>Naiwang Balanse:</span> <strong id="portalBalance" style="color: #c62828;">₱0</strong></div>
+        <!-- Main Portal Dashboard -->
+        <div id="portalContent">
+            <!-- Header Card na may QR Code sa tabi ng Pangalan ng Tindahan / May-ari -->
+            <div class="card" style="background: #e8f5e9;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px;">
+                            <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
+                            <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #558b2f; width: auto; padding: 2px 8px; font-size: 0.7rem; margin-top: 0;">📷 Ipakita ang QR Code</button>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
+                    </div>
+                    <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0;">Mag-logout</button>
+                </div>
 
-            <div id="gcashDetails" style="display: none; margin-top: 10px;">
-                <div style="font-size: 0.85rem; color: #0d47a1; margin-bottom: 5px;">Maaaring magbayad sa pamamagitan ng GCash:</div>
-                <div style="font-size: 0.9rem; font-weight: bold; background: #fff; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #90caf9;">
-                    📱 GCash Name: Jiemar Doctor<br>
-                    📞 Number: 0912-345-6789
+                <!-- QR Code Content Wrapper (Nasa ibaba mismo ng pangalan kapag naka-toggle) -->
+                <div id="qrContentWrapper" style="display: none; margin-top: 10px; border-top: 1px dashed #c5e1a5; padding-top: 10px;">
+                    <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px; text-align: center;">I-scan ito para direktang mabuksan ang portal na ito sa ibang telepono.</p>
+                    <div class="qr-container" style="margin-top: 0;">
+                        <div id="qrcode"></div>
+                        <span id="qrStoreLinkText" style="font-size: 0.7rem; color: #0288d1; word-break: break-all; text-align: center; margin-top: 5px;"></span>
+                    </div>
                 </div>
             </div>
 
-            <div id="codDetails" style="display: none; margin-top: 10px;">
-                <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
-                    💵 <strong>Cash on Delivery (COD):</strong> Ang koleksyon ng bayad ay gagawin sa takdang araw ng pagkolekta kasama ang ating authorized partner.
+            <!-- Install App Card para sa Dashboard -->
+            <div id="dashboardInstallCard" class="card">
+                <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
+                <button id="dashboardInstallBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
+            </div>
+
+            <!-- STORE PARTNER AGREEMENTS IFRAME SECTION -->
+            <div style="margin-bottom: 10px;">
+                <iframe 
+                    id="storeAgreementFrame"
+                    src="" 
+                    width="100%" 
+                    height="50px" 
+                    style="border: none; background: transparent; overflow: hidden;" 
+                    scrolling="no"
+                    title="Store Partner Agreements">
+                </iframe>
+            </div>
+
+            <!-- Product Catalog / Dalawang Klase ng Walis Tambo para sa Existing Client na may Pictures -->
+            <div class="card">
+                <h2>🧹 Mga Klase ng Walis Tambo (Catalog)</h2>
+                <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Ito ang dalawang opisyal na klase ng walis tambo na available para sa ating mga kasosyong tindahan:</p>
+                <div class="style-grid">
+                    <div class="style-option-card" style="cursor: default;">
+                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
+                        <h4>Ordinary Style</h4>
+                        <p>Standard Quality - Maayos at pulido para sa pang-araw-araw na gamit.</p>
+                        <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
+                    </div>
+                    <div class="style-option-card" style="cursor: default;">
+                        <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
+                        <h4>Premium Style</h4>
+                        <p>Thick & Durable - Mas makapal at matibay gawa sa piling tiger grass.</p>
+                        <div style="margin-top: 4px; font-size: 0.7rem; background: #fff9c4; color: #f57f17; padding: 2px 4px; border-radius: 3px; font-weight: bold; border: 1px dashed #fbc02d;">✨ Gitna ng Hibla (Tampok)</div>
+                        <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
+                    </div>
                 </div>
             </div>
 
-            <div id="dpDetails" style="display: none; margin-top: 10px;">
-                <div style="font-size: 0.85rem; color: #0d47a1; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
-                    📊 <strong>Down Payment Terms:</strong> Ang natitirang balanse ay kailangang bayaran sa susunod na hulog o takdang petsa ng koleksyon.
+            <!-- Active Items Summary -->
+            <div class="card">
+                <h2>📦 Aktibong Stock at mga Paninda</h2>
+                <div id="clientItemsContainer">
+                    <p style="font-size: 0.85rem; color: #666;">Kinukuha ang data...</p>
                 </div>
             </div>
-        </div>
 
         <div class="restock-action-box">
             <div style="font-size: 0.85rem; color: #2e7d32; margin-bottom: 8px; font-weight: bold;">Nauubusan na ba ng walis? Humiling ng karagdagang stock dito:</div>
             <button type="button" class="restock-btn" id="openRestockModalBtn">📦 Humiling ng Restock (Request Restock)</button>
         </div>
 
-        <div class="card">
-            <h2>💬 Mensahe / Paalala sa Admin</h2>
-            <div class="chat-box" id="clientChatBox">
-                <div style="color: #778; font-size: 0.8rem;">Wala pang mensahe. Mag-iwan ng mensahe o tanong para sa admin dito.</div>
+            <!-- Nakabinbing Resibo ng Benta (Pending Sales Receipt para sa Admin) -->
+            <div class="card" id="pendingSalesCard" style="display:none; background: #fff3e0; border: 1px solid #ffb74d;">
+                <h2 style="color: #f57c00;">⏳ Mga Nakabinbing Resibo ng Benta (Pending Sales)</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Nai-record na ang mga benta at naghihintay ng kumpirmasyon o pag-apruba ng Admin.</p>
+                <div id="pendingSalesContainer"></div>
             </div>
-            <div class="chat-input-group">
-                <input type="text" id="chatMessageInput" placeholder="I-type ang iyong mensahe...">
-                <button type="button" id="sendChatBtn">Ipadala</button>
+
+            <!-- Notifications na may Overall Clear Button at Individual Dismiss (Bagong Abiso sa Pinakataas) -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h2 style="margin-bottom: 0;">📢 Mga Abiso at Update</h2>
+                    <button type="button" onclick="clearAllNotifications()" style="background-color: #c62828; width: auto; font-size: 0.75rem; padding: 4px 8px; margin-top: 0;">Clear All</button>
+                </div>
+                <div id="clientNotificationsContainer">
+                    <p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>
+                </div>
+            </div>
+
+            <!-- Request Restock Section (Min/Max 5 pcs, 1 time a month) with Close/Open Toggle -->
+            <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h2 style="margin-bottom: 0;">🔄 Humiling ng Karagdagang Restock</h2>
+                    <button type="button" id="toggleRestockBtn" onclick="toggleRestockVisibility()" style="background-color: #f57f17; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Ipakita</button>
+                </div>
+                <div id="restockContentWrapper" style="display: none;">
+                    <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Mag-request ng eksaktong 5 pirasong restock (1 beses lamang bawat buwan).</p>
+                    <div class="form-group">
+                        <label for="restockStyleType">Piliin ang Uri ng Istilo:</label>
+                        <select id="restockStyleType">
+                            <option value="Ordinary">Ordinary Style</option>
+                            <option value="Premium">Premium Style</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Dami ng Restock (Fixed: 5 pcs):</label>
+                        <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
+                    </div>
+                    <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
+                </div>
+            </div>
+
+            <!-- Chat / Message Admin Section -->
+            <div class="card">
+                <h2>💬 Makipag-ugnayan sa Admin</h2>
+                <div id="clientChatContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 8px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background: #fafafa;">
+                    <p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>
+                </div>
+                <div class="form-group" style="margin-bottom: 5px;">
+                    <input type="text" id="clientChatInput" placeholder="I-type ang mensahe o tanong sa admin...">
+                </div>
+                <button type="button" onclick="sendClientMessage()" style="background-color: #0288d1;">Ipadala ang Mensahe</button>
+            </div>
+
+            <!-- STOP AGREEMENT / CONSIGNMENT SECTION SA BABA NG CLIENT PORTAL -->
+            <div class="card" style="background: #ffebee; border: 1px solid #ef9a9a;">
+                <h2 style="color: #c62828; font-size: 0.95rem;">🛑 Pagpapahinto ng Consignment Agreement</h2>
+                <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Kung nais mo nang itigil o tapusin ang kasunduan at consignment sa tindahang ito, i-click ang button sa ibaba.</p>
+                <button type="button" onclick="promptStopAgreement()" style="background-color: #d32f2f; font-size: 0.9rem; padding: 8px;">Itigil / I-cancel ang Kasunduan (Stop)</button>
             </div>
         </div>
 
-        <div class="card">
-            <h2>📜 Kasaysayan ng Transaksyon</h2>
-            <div id="historyList">
-                <p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>
-            </div>
+        <!-- Admin Panel Link sa Pinaka-ibaba -->
+        <div style="text-align: center; margin-top: 20px; margin-bottom: 10px;">
+            <a href="admin.html" style="font-size: 0.8rem; color: #666; text-decoration: none;">🔐 Pumunta sa Admin Panel</a>
         </div>
 
-        <div class="admin-link">
-            <a href="admin.html">⚙️ Bumalik sa Admin Panel</a>
-        </div>
+    </div>
+
+    <!-- Modal para sa pagpapakita ng mas malaking larawan (View Image) -->
+    <div id="imageModal" onclick="closeImageViewer()">
+        <img id="modalImage" src="" alt="Malaking Larawan">
+        <h3 id="modalTitle" style="color: white; margin-top: 10px; font-size: 1rem;"></h3>
+        <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
     </div>
 
     <!-- Restock Request Modal (May Dropdown Selection na para madali) -->
@@ -284,228 +440,592 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
-            authDomain: "dwbe-consignment.firebaseapp.com",
-            projectId: "dwbe-consignment",
-            storageBucket: "dwbe-consignment.firebasestorage.app",
-            messagingSenderId: "205759197252",
-            appId: "1:205759197252:web:b04400821f81791d10cc11"
+          apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+          authDomain: "dwbe-consignment.firebaseapp.com",
+          projectId: "dwbe-consignment",
+          storageBucket: "dwbe-consignment.firebasestorage.app",
+          messagingSenderId: "205759197252",
+          appId: "1:205759197252:web:b04400821f81791d10cc11"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
+        let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
-        const urlParams = new URLSearchParams(window.location.search);
-        let storeNameParam = urlParams.get('store');
 
-        let globalStoreIndex = -1;
-        let globalAllData = null;
-        let unsubscribeListener = null;
-        let activeTargetStoreName = "";
+        // Functions para sa Image Viewer Modal
+        window.openImageViewer = function(src, title) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('modalTitle');
+            modalImg.src = src;
+            modalTitle.textContent = title;
+            modal.style.display = 'flex';
+        };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            if (storeNameParam) {
-                const decodedStore = decodeURIComponent(storeNameParam);
-                document.getElementById('storeSearchInput').value = decodedStore;
-                activeTargetStoreName = decodedStore;
-                setupRealtimeListener(decodedStore);
-            } else {
-                syncStatus.textContent = "✅ Ilagay o i-type ang pangalan ng tindahan upang magsimula.";
+        window.closeImageViewer = function() {
+            document.getElementById('imageModal').style.display = 'none';
+        };
+
+        window.selectInqStyle = function(style, el) {
+            document.getElementById('inqStyleType').value = style;
+            const parent = el.parentElement;
+            parent.querySelectorAll('.style-option-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        };
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'resizeAgreement') {
+                const iframe = document.getElementById('storeAgreementFrame');
+                if (iframe) {
+                    iframe.style.height = event.data.height + 'px';
+                }
             }
         });
 
-        document.getElementById('searchStoreBtn').addEventListener('click', () => {
-            const query = document.getElementById('storeSearchInput').value.trim();
-            if (!query) {
-                alert("Ilagay ang pangalan ng tindahan.");
+        let deferredPrompt;
+        const installAppCard = document.getElementById('installAppCard');
+        const installAppBtn = document.getElementById('installAppBtn');
+        const dashboardInstallCard = document.getElementById('dashboardInstallCard');
+        const dashboardInstallBtn = document.getElementById('dashboardInstallBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installAppCard) installAppCard.style.display = 'block';
+            if (dashboardInstallCard) dashboardInstallCard.style.display = 'block';
+        });
+
+        const handleInstallClick = async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('Na-install ang app');
+                }
+                deferredPrompt = null;
+                if (installAppCard) installAppCard.style.display = 'none';
+                if (dashboardInstallCard) dashboardInstallCard.style.display = 'none';
+            }
+        };
+
+        if (installAppBtn) installAppBtn.addEventListener('click', handleInstallClick);
+        if (dashboardInstallBtn) dashboardInstallBtn.addEventListener('click', handleInstallClick);
+
+        window.requestLogout = function() {
+            const pass = prompt("Ilagay ang password para mag-logout:");
+            if (pass === null) return;
+            if (pass === "admin123") {
+                localStorage.removeItem('client_logged_store');
+                currentStoreName = '';
+                window.location.href = window.location.pathname.split('?')[0];
+            } else {
+                alert("Maling password!");
+            }
+        };
+
+        window.toggleQrVisibility = function() {
+            const wrapper = document.getElementById('qrContentWrapper');
+            const btn = document.getElementById('toggleQrBtn');
+            if (wrapper.style.display === 'none') {
+                wrapper.style.display = 'block';
+                btn.textContent = 'Itago ang QR Code';
+            } else {
+                wrapper.style.display = 'none';
+                btn.textContent = 'Ipakita ang QR Code';
+            }
+        };
+
+        // Toggle function para sa Request Restock section
+        window.toggleRestockVisibility = function() {
+            const wrapper = document.getElementById('restockContentWrapper');
+            const btn = document.getElementById('toggleRestockBtn');
+            if (wrapper.style.display === 'none') {
+                wrapper.style.display = 'block';
+                btn.textContent = 'Itago';
+            } else {
+                wrapper.style.display = 'none';
+                btn.textContent = 'Ipakita';
+            }
+        };
+
+        window.clearAllNotifications = async function() {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
+            store.clientNotifications = [];
+            await saveData();
+        };
+
+        window.promptStopAgreement = async function() {
+            const confirmation = confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' para kumpirmahin.");
+            
+            if (!confirmation) {
                 return;
             }
-            activeTargetStoreName = query;
-            setupRealtimeListener(query);
-        });
 
-        function setupRealtimeListener(targetStore) {
-            syncStatus.textContent = "Kumokonekta sa live updates ng tindahan...";
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
 
-            if (unsubscribeListener) {
-                unsubscribeListener();
+            store.agreementAccepted = false;
+            store.consignmentStatus = "Stopped";
+
+            if (!store.messages) store.messages = [];
+            store.messages.unshift({
+                sender: currentStoreName,
+                text: "⚠️ Pinal na itinigil / kinansela ng kliyente ang Consignment Agreement.",
+                date: new Date().toLocaleString()
+            });
+
+            if (!store.clientNotifications) store.clientNotifications = [];
+            store.clientNotifications.unshift({
+                text: "Matagumpay na nai-submit ang hiling na itigil ang Consignment Agreement.",
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert("Matagumpay na naitala ang iyong pagpapahinto sa kasunduan. Naabisuhan na ang Admin.");
+            renderClientDashboard(store);
+        };
+
+        window.dismissNotification = async function(index) {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store || !store.clientNotifications) return;
+            
+            store.clientNotifications.splice(index, 1);
+            await saveData();
+        };
+
+        window.confirmReceiveRestock = async function(index) {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
+
+            const itemToReceive = store.approvedRestocks[index];
+
+            if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+            appData.homeStock[itemToReceive.styleType] = Math.max(0, (appData.homeStock[itemToReceive.styleType] || 0) - itemToReceive.qty);
+
+            let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType);
+            
+            if (existingItem) {
+                existingItem.currentStock += itemToReceive.qty;
+                existingItem.initialQty += itemToReceive.qty;
+            } else {
+                store.storeItems.push({
+                    styleType: itemToReceive.styleType,
+                    initialQty: itemToReceive.qty,
+                    currentStock: itemToReceive.qty,
+                    returnedQty: 0,
+                    rejectedQty: 0,
+                    price: store.price || 0,
+                    collectionDate: store.collectionDate || 'N/A'
+                });
             }
 
-            const docRef = doc(db, "app_data", "main_inventory");
+            store.approvedRestocks.splice(index, 1);
 
-            unsubscribeListener = onSnapshot(docRef, (docSnap) => {
+            if (!store.messages) store.messages = [];
+            store.messages.unshift({
+                sender: currentStoreName,
+                text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`,
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert("Matagumpay na naidagdag sa iyong stock at nabawas sa inventory ng admin!");
+        };
+
+        // Function para sa "MAY BUMILI" button na may validation at pagbawas ng active stock
+        window.promptRecordSale = async function(styleType) {
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
+
+            const sub = store.storeItems.find(i => i.styleType === styleType);
+            if (!sub) return;
+
+            if (sub.currentStock <= 0) {
+                alert("Wala nang natitirang active stock para sa uring ito.");
+                return;
+            }
+
+            const inputVal = prompt(`Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`);
+            if (inputVal === null) return; // Kinansela
+
+            const qtySold = parseInt(inputVal);
+
+            // Validation 1: Siguraduhing valid number at greater than 0
+            if (isNaN(qtySold) || qtySold <= 0) {
+                alert("Mangyaring maglagay ng wastong bilang ng nabili (mahigit sa zero).");
+                return;
+            }
+
+            // Validation 2: Siguraduhing hindi hihigit sa natitirang active stock
+            if (qtySold > sub.currentStock) {
+                alert(`Ang dami ng nabili (${qtySold} pcs) ay lumampas sa iyong natitirang active stock (${sub.currentStock} pcs).`);
+                return;
+            }
+
+            const confirmSale = confirm(`Kumpirmahin ang pagbili ng ${qtySold} pcs (${styleType})?\n\nIto ay awtomatikong babawas sa iyong active stock at magpapadala ng pending confirmation receipt sa Admin.`);
+            if (!confirmSale) return;
+
+            // Awtomatikong pagbawas sa active stock
+            sub.currentStock -= qtySold;
+
+            // Pagpapadala ng Pending Confirmation Receipt sa Admin
+            if (!store.pendingSales) store.pendingSales = [];
+            store.pendingSales.unshift({
+                styleType: styleType,
+                qty: qtySold,
+                price: sub.price || 0,
+                totalAmount: qtySold * (sub.price || 0),
+                date: new Date().toLocaleString(),
+                status: "Pending"
+            });
+
+            // Pagdaragdag sa message log
+            if (!store.messages) store.messages = [];
+            store.messages.unshift({
+                sender: currentStoreName,
+                text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType}) - Naghihintay ng kumpirmasyon ng Admin.`,
+                date: new Date().toLocaleString()
+            });
+
+            // Pagdaragdag sa client notification (pinakabago sa pinakataas)
+            if (!store.clientNotifications) store.clientNotifications = [];
+            store.clientNotifications.unshift({
+                text: `Matagumpay na nai-record ang pagbili ng ${qtySold} pcs (${styleType}). Nakabinbin ang kumpirmasyon ng Admin.`,
+                date: new Date().toLocaleString()
+            });
+
+            await saveData();
+            alert("Matagumpay na nabawas ang active stock at naipadala ang pending receipt sa Admin!");
+            renderClientDashboard(store);
+        };
+
+        async function loadData() {
+            syncStatus.textContent = "Kumukuha ng data sa Cloud...";
+            try {
+                const docRef = doc(db, "app_data", "main_inventory");
+                const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    globalAllData = docSnap.data();
-                    const consignments = globalAllData.consignments;
-                    const cleanTarget = targetStore.toLowerCase().trim();
-
-                    globalStoreIndex = consignments.findIndex(item => {
-                        const sName = (item.storeName || "").toLowerCase().trim();
-                        return sName === cleanTarget || sName.includes(cleanTarget);
-                    });
-
-                    if (globalStoreIndex !== -1) {
-                        const storeData = consignments[globalStoreIndex];
-                        renderClient(storeData);
-                        syncStatus.textContent = `🟢 Live Connected: ${storeData.storeName}`;
-                    } else {
-                        globalStoreIndex = -1;
-                        syncStatus.textContent = "⚠️ Hindi natagpuan ang tindahan sa database.";
-                    }
-                } else {
-                    syncStatus.textContent = "⚠️ Walang makitang record sa database.";
+                    appData = docSnap.data();
+                    if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+                    if (!appData.consignments) appData.consignments = [];
+                    if (!appData.pendingInquiries) appData.pendingInquiries = [];
                 }
-            }, (err) => {
-                console.error("Snapshot error:", err);
-                syncStatus.textContent = "⚠️ Nagkaaberya sa live connection.";
-            });
-        }
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const paramStore = urlParams.get('store');
+                let storeToCheck = paramStore || localStorage.getItem('client_logged_store');
+                
+                if (storeToCheck) {
+                    const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeToCheck.toLowerCase());
+                    if (found) {
+                        found.lastClientAccess = new Date().toLocaleString();
+                        found.clientStatus = "Online";
+                        await setDoc(docRef, appData);
+                    }
+                }
 
-        function renderClient(item) {
-            if (item.rejectedQty === undefined) item.rejectedQty = 0;
-            const sold = Math.max(0, item.initialQty - item.currentStock - item.rejectedQty);
-            const sales = sold * item.price;
-            const amountPaid = item.amountPaid || 0;
-            const balance = Math.max(0, sales - amountPaid);
-            const paymentType = item.paymentType || 'COD';
-
-            document.getElementById('storeTitle').textContent = `🏪 ${item.storeName}`;
-            document.getElementById('styleType').textContent = item.styleType || 'Ordinary';
-            document.getElementById('price').textContent = '₱' + item.price;
-            document.getElementById('initialQty').textContent = item.initialQty + ' pcs';
-            document.getElementById('currentStock').textContent = item.currentStock + ' pcs';
-            document.getElementById('soldQty').textContent = sold + ' pcs';
-            document.getElementById('totalSales').textContent = '₱' + sales.toLocaleString();
-
-            document.getElementById('portalPaymentType').textContent = paymentType;
-            document.getElementById('portalPaid').textContent = '₱' + amountPaid.toLocaleString();
-            document.getElementById('portalBalance').textContent = '₱' + balance.toLocaleString();
-
-            const gcashDiv = document.getElementById('gcashDetails');
-            const codDiv = document.getElementById('codDetails');
-            const dpDiv = document.getElementById('dpDetails');
-
-            gcashDiv.style.display = 'none';
-            codDiv.style.display = 'none';
-            dpDiv.style.display = 'none';
-
-            if (paymentType === 'GCash') {
-                gcashDiv.style.display = 'block';
-            } else if (paymentType === 'COD') {
-                codDiv.style.display = 'block';
-            } else if (paymentType === 'Downpayment') {
-                dpDiv.style.display = 'block';
-            }
-
-            const reqBanner = document.getElementById('clientRequestBanner');
-            const pendingListContainer = document.getElementById('pendingRequestsList');
-            pendingListContainer.innerHTML = '';
-
-            if (item.activeRequests && item.activeRequests.length > 0) {
-                item.activeRequests.forEach(req => {
-                    const reqDiv = document.createElement('div');
-                    reqDiv.className = 'request-list-item';
-                    const styleLabel = req.styleType ? ` (${req.styleType})` : '';
-                    reqDiv.innerHTML = `<span>📦 <strong>${req.qty} pcs${styleLabel}</strong> (Petsa: ${req.date || 'N/A'})</span> <span style="color: #f57c00; font-weight: bold;">Pending</span>`;
-                    pendingListContainer.appendChild(reqDiv);
-                });
-                reqBanner.style.display = 'block';
-            } else {
-                reqBanner.style.display = 'none';
-            }
-
-            const approvalBanner = document.getElementById('clientApprovalBanner');
-            const approvalText = document.getElementById('approvalBannerText');
-
-            if (item.clientNotifications && item.clientNotifications.length > 0) {
-                const notif = item.clientNotifications[item.clientNotifications.length - 1];
-                const displayMsg = typeof notif === 'object' ? notif.text : notif;
-                approvalText.innerHTML = displayMsg;
-                approvalBanner.style.display = 'block';
-            } else {
-                approvalBanner.style.display = 'none';
-            }
-
-            const historyList = document.getElementById('historyList');
-            historyList.innerHTML = '';
-            if (item.history && item.history.length > 0) {
-                item.history.forEach(h => {
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    div.innerHTML = `▪️ [${h.date}] ${h.text}`;
-                    historyList.appendChild(div);
-                });
-            } else {
-                historyList.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang tala.</p>';
-            }
-
-            const chatBox = document.getElementById('clientChatBox');
-            chatBox.innerHTML = '';
-            if (item.messages && item.messages.length > 0) {
-                item.messages.forEach(m => {
-                    const div = document.createElement('div');
-                    div.style.marginBottom = '5px';
-                    div.innerHTML = `💬 <strong>[${m.date}]</strong> ${m.text}`;
-                    chatBox.appendChild(div);
-                });
-            } else {
-                chatBox.innerHTML = '<div style="color: #778; font-size: 0.8rem;">Wala pang mensahe. Mag-iwan ng mensahe o tanong para sa admin dito.</div>';
+                syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+                initPortalView();
+            } catch (err) {
+                console.error("Error loading cloud data:", err);
+                syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
             }
         }
 
-        document.getElementById('clearApprovalBtn').addEventListener('click', async () => {
-            if (globalStoreIndex === -1 || !globalAllData) return;
-
-            const storeData = globalAllData.consignments[globalStoreIndex];
-            storeData.clientNotifications = [];
-
-            syncStatus.textContent = "Ina-update ang status...";
+        async function saveData() {
+            syncStatus.textContent = "Nagse-save sa Cloud...";
             try {
-                const docRef = doc(db, "app_data", "main_inventory");
-                await setDoc(docRef, globalAllData);
-                syncStatus.textContent = "✅ Na-clear na ang approval notification.";
+                const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+                if (store) {
+                    store.lastClientAccess = new Date().toLocaleString();
+                    store.clientStatus = "Online";
+                }
+                await setDoc(doc(db, "app_data", "main_inventory"), appData);
+                syncStatus.textContent = "✅ Na-save at Nakakonekta sa Cloud";
+                initPortalView();
             } catch (err) {
-                console.error("Error clearing notification:", err);
-                syncStatus.textContent = "⚠️ Nabigo sa pag-clear ng notification.";
+                console.error("Error saving cloud data:", err);
+                syncStatus.textContent = "⚠️ Error sa pag-save sa cloud";
             }
+        }
+
+        function initPortalView() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramStore = urlParams.get('store');
+            
+            if (paramStore) {
+                currentStoreName = paramStore;
+                localStorage.setItem('client_logged_store', currentStoreName);
+            }
+
+            if (currentStoreName) {
+                const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase() || (c.ownerName && c.ownerName.toLowerCase() === currentStoreName.toLowerCase()));
+                if (found) {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    if (installAppCard) installAppCard.style.display = 'none';
+                    document.getElementById('portalContent').style.display = 'block';
+                    if (paramStore) {
+                        document.getElementById('directAccessNotice').style.display = 'block';
+                    }
+                    renderClientDashboard(found);
+                } else {
+                    localStorage.removeItem('client_logged_store');
+                    currentStoreName = '';
+                    document.getElementById('loginScreen').style.display = 'flex';
+                    document.getElementById('portalContent').style.display = 'none';
+                    if (paramStore) {
+                        alert(`Ang tindahan o may-ari na "${paramStore}" ay hindi pa rehistrado o aktibo sa sistema.`);
+                    }
+                }
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('portalContent').style.display = 'none';
+            }
+        }
+
+        document.getElementById('manualLoginBtn').addEventListener('click', () => {
+            const storeInput = document.getElementById('manualStoreNameInput').value.trim();
+            if (!storeInput) {
+                alert('Mangyaring ilagay ang pangalan ng iyong tindahan o pangalan ng may-ari.');
+                return;
+            }
+
+            const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeInput.toLowerCase() || (c.ownerName && c.ownerName.toLowerCase() === storeInput.toLowerCase()));
+            if (!found) {
+                alert('Hindi natagpuan ang rehistradong tindahan o may-ari na ito. Siguraduhing tama ang baybay.');
+                return;
+            }
+
+            currentStoreName = found.storeName;
+            localStorage.setItem('client_logged_store', currentStoreName);
+            
+            found.lastClientAccess = new Date().toLocaleString();
+            found.clientStatus = "Online";
+            saveData();
         });
 
-        document.getElementById('sendChatBtn').addEventListener('click', async () => {
-            const inputField = document.getElementById('chatMessageInput');
-            const msgText = inputField.value.trim();
-            if (!msgText || globalStoreIndex === -1 || !globalAllData) return;
+        const inquiryForm = document.getElementById('inquiryForm');
+        if (inquiryForm) {
+            inquiryForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const storeName = document.getElementById('inqStoreName').value.trim();
+                const ownerName = document.getElementById('inqOwnerName').value.trim();
+                const contact = document.getElementById('inqContact').value.trim();
+                const email = document.getElementById('inqEmail').value.trim();
+                const address = document.getElementById('inqAddress').value.trim();
+                const styleType = document.getElementById('inqStyleType').value;
+                const message = document.getElementById('inqMessage').value.trim();
 
-            const storeData = globalAllData.consignments[globalStoreIndex];
-            const timestamp = new Date().toLocaleString();
+                if (!appData.pendingInquiries) appData.pendingInquiries = [];
+                appData.pendingInquiries.unshift({
+                    storeName,
+                    ownerName,
+                    contact,
+                    email,
+                    address,
+                    styleType,
+                    message,
+                    date: new Date().toLocaleString()
+                });
 
-            if (!storeData.messages) storeData.messages = [];
-            storeData.messages.push({
-                date: timestamp,
-                text: msgText
+                await saveData();
+                alert('Matagumpay na nagawa ang account / naipadala ang aplikasyon! Mangyaring hintayin ang pagsusuri ng admin.');
+                inquiryForm.reset();
             });
+        }
 
-            if (!storeData.history) storeData.history = [];
-            storeData.history.unshift({
-                id: Date.now(),
-                date: timestamp,
-                text: `Mensahe mula sa Tindahan: "${msgText}"`
-            });
+        function renderClientDashboard(store) {
+            document.getElementById('displayStoreName').textContent = store.storeName + (store.ownerName ? ` (${store.ownerName})` : '');
 
-            syncStatus.textContent = "Nagpapadala ng mensahe...";
-            try {
-                const docRef = doc(db, "app_data", "main_inventory");
-                await setDoc(docRef, globalAllData);
-                inputField.value = '';
-                syncStatus.textContent = "✅ Naipadala ang mensahe sa Cloud";
-            } catch (err) {
-                console.error("Error sending message:", err);
-                syncStatus.textContent = "⚠️ Nabigo sa pagpapadala ng mensahe.";
+            const agreementFrame = document.getElementById('storeAgreementFrame');
+            const targetAgreementUrl = "https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/?store=" + encodeURIComponent(store.storeName);
+            if (agreementFrame.src !== targetAgreementUrl) {
+                agreementFrame.src = targetAgreementUrl;
             }
-        });
+
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = ""; 
+            const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
+            
+            document.getElementById('qrStoreLinkText').textContent = currentUrl;
+            
+            new QRCode(qrContainer, {
+                text: currentUrl,
+                width: 128,
+                height: 128,
+                colorDark: "#2e7d32",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            const pendingDeliveryCard = document.getElementById('pendingDeliveryCard');
+            const pendingDeliveryContainer = document.getElementById('pendingDeliveryContainer');
+            pendingDeliveryContainer.innerHTML = '';
+            
+            if (store.approvedRestocks && store.approvedRestocks.length > 0) {
+                pendingDeliveryCard.style.display = 'block';
+                store.approvedRestocks.forEach((req, index) => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
+                    div.innerHTML = `
+                        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong></div>
+                        <div style="font-size: 0.75rem; color: #555; margin-bottom: 5px;">Na-approve noong: ${req.date || 'N/A'}</div>
+                        <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 0;">✅ Natanggap Ko Na (Idagdag sa Stock)</button>
+                    `;
+                    pendingDeliveryContainer.appendChild(div);
+                });
+            } else {
+                pendingDeliveryCard.style.display = 'none';
+            }
+
+            // Render Pending Sales Card kasama ang Total Sales ng mga nakabinbing benta
+            const pendingSalesCard = document.getElementById('pendingSalesCard');
+            const pendingSalesContainer = document.getElementById('pendingSalesContainer');
+            pendingSalesContainer.innerHTML = '';
+            
+            if (store.pendingSales && store.pendingSales.length > 0) {
+                pendingSalesCard.style.display = 'block';
+                let totalPendingAmount = 0;
+
+                store.pendingSales.forEach((sale, index) => {
+                    const saleTotal = sale.totalAmount || (sale.qty * (sale.price || 0));
+                    totalPendingAmount += saleTotal;
+
+                    const div = document.createElement('div');
+                    div.style.cssText = "background: white; border: 1px solid #ffb74d; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
+                    div.innerHTML = `
+                        <div>Uri: <strong>${sale.styleType}</strong> | Dami: <strong>${sale.qty} pcs</strong> | Halaga: <strong>₱${saleTotal.toLocaleString()}</strong></div>
+                        <div style="font-size: 0.75rem; color: #555;">Petsa: ${sale.date || 'N/A'} | Status: <span style="color: #f57c00; font-weight: bold;">Nakabinbin (Pending Approval)</span></div>
+                    `;
+                    pendingSalesContainer.appendChild(div);
+                });
+
+                // Pagdaragdag ng kabuuang Total Sales summary para sa mga pending sales
+                const totalSummaryDiv = document.createElement('div');
+                totalSummaryDiv.style.cssText = "margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ffb74d; font-weight: bold; font-size: 0.9rem; color: #e65100; text-align: right;";
+                totalSummaryDiv.innerHTML = `Kabuuang Halaga ng Nakabinbing Benta (Total Pending Sales): ₱${totalPendingAmount.toLocaleString()}`;
+                pendingSalesContainer.appendChild(totalSummaryDiv);
+
+            } else {
+                pendingSalesCard.style.display = 'none';
+            }
+
+            // Render Notifications (Tinitiyak na ang mga pinakabagong abiso o updates ay nasa pinakataas)
+            const notifContainer = document.getElementById('clientNotificationsContainer');
+            notifContainer.innerHTML = '';
+            if (store.clientNotifications && store.clientNotifications.length > 0) {
+                store.clientNotifications.forEach((n, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'notification-item';
+                    div.innerHTML = `
+                        <div>
+                            <div>${n.text}</div>
+                            <div style="font-size:0.7rem; color:#778; margin-top:2px;">${n.date}</div>
+                        </div>
+                        <button type="button" onclick="dismissNotification(${index})" style="background: none; border: none; color: #d32f2f; font-size: 0.9rem; cursor: pointer; padding: 0 4px; margin-top: 0; width: auto; font-weight: bold;" title="I-clear ang abiso">✕</button>
+                    `;
+                    notifContainer.appendChild(div);
+                });
+            } else {
+                notifContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
+            }
+
+            if (!store.storeItems || store.storeItems.length === 0) {
+                store.storeItems = [{
+                    styleType: store.styleType || 'Ordinary',
+                    initialQty: store.initialQty,
+                    currentStock: store.currentStock,
+                    returnedQty: store.returnedQty || 0,
+                    rejectedQty: store.rejectedQty || 0,
+                    price: store.price,
+                    collectionDate: store.collectionDate
+                }];
+            }
+
+            if (store.approvedRestocks && store.approvedRestocks.length > 0 && store.storeItems) {
+                let dataChanged = false;
+                store.approvedRestocks.forEach(req => {
+                    const matchIndex = store.storeItems.findIndex(i => 
+                        i.styleType === req.styleType && 
+                        i.initialQty === req.qty &&
+                        i.currentStock === req.qty
+                    );
+                    if (matchIndex !== -1) {
+                        store.storeItems.splice(matchIndex, 1);
+                        dataChanged = true;
+                    }
+                });
+                if (dataChanged) {
+                    saveData();
+                }
+            }
+
+            const itemsContainer = document.getElementById('clientItemsContainer');
+            itemsContainer.innerHTML = '';
+
+            store.storeItems.forEach(sub => {
+                if (sub.returnedQty === undefined) sub.returnedQty = 0;
+                if (sub.rejectedQty === undefined) sub.rejectedQty = 0;
+
+                const subSold = Math.max(0, sub.initialQty - sub.currentStock - sub.returnedQty - sub.rejectedQty);
+                const subSales = subSold * (sub.price || 0);
+                const isSoldOut = sub.currentStock <= 0;
+
+                const div = document.createElement('div');
+                // Lagyan ng class na 'premium-stock' kung ang uri ay Premium para magkaiba ang background color
+                const isPremium = (sub.styleType === 'Premium');
+                div.className = 'store-item-box' + (isPremium ? ' premium-stock' : '');
+
+                div.innerHTML = `
+                    <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span>${sub.styleType || 'Ordinary'}</span>
+                        <span>Presyo: ₱${sub.price || 0}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #444; margin-bottom: 8px;">
+                        Natitirang Stock: <strong style="font-weight: bold; background: ${isSoldOut ? '#ffebee' : '#e8f5e9'}; color: ${isSoldOut ? '#c62828' : '#2e7d32'}; padding: 2px 6px; border-radius: 4px;">${sub.currentStock} pcs ${isSoldOut ? ' - SOLD OUT ❌' : ''}</strong> / Simulang Dami: ${sub.initialQty} pcs<br>
+                        Kabuuang Nabenta: <strong>${subSold} pcs</strong> (Benta: ₱${subSales.toLocaleString()})<br>
+                        Target na Petsa ng Koleksyon: ${sub.collectionDate || 'N/A'}
+                    </div>
+                    ${isSoldOut ? 
+                        '<div style="text-align: center; background: #ffebee; color: #c62828; font-weight: bold; padding: 8px; border-radius: 4px; font-size: 0.9rem; border: 1px solid #ef9a9a; margin-top: 4px;">🚫 SOLD OUT (Wala nang Aktibong Stock)</div>' : 
+                        `<button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px; width: 100%; margin-top: 4px;">🛒 MAY BUMILI (I-record ang Benta)</button>`
+                    }
+                `;
+                itemsContainer.appendChild(div);
+            });
+
+            const chatContainer = document.getElementById('clientChatContainer');
+            chatContainer.innerHTML = '';
+            if (store.messages && store.messages.length > 0) {
+                store.messages.forEach(m => {
+                    const isAdmin = m.sender === 'Admin' || m.sender === 'Admin (Broadcast)';
+                    const div = document.createElement('div');
+                    div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
+                    div.innerHTML = `<strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
+                    chatContainer.appendChild(div);
+                });
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            } else {
+                chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
+            }
+        }
+
+        window.submitRestockRequest = async function() {
+            const promptConfirm = confirm("Gusto mo bang mag-request ng restock na eksaktong 5 piraso?");
+            if (!promptConfirm) return;
+
+            const styleType = document.getElementById('restockStyleType').value;
+            const qty = 5;
+
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
 
         // Modal Controls para sa Restock Request
         const restockModal = document.getElementById('restockModal');
@@ -549,45 +1069,74 @@
             const timestamp = new Date().toLocaleString();
             const storeData = globalAllData.consignments[globalStoreIndex];
 
-            if (!storeData.activeRequests) {
-                storeData.activeRequests = [];
+        window.sendClientMessage = async function() {
+            const input = document.getElementById('clientChatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+            if (!store) return;
+
+            if (!store.messages) store.messages = [];
+            store.messages.unshift({
+                sender: currentStoreName,
+                text: text,
+                date: new Date().toLocaleString()
+            });
+
+            input.value = '';
+            await saveData();
+        };
+
+        loadData();
+
+        setInterval(() => {
+            if (currentStoreName) {
+                sendHeartbeatSilent();
             }
-
-            storeData.activeRequests.push({
-                reqId: Date.now(),
-                qty: requestedQty,
-                styleType: formattedStyle,
-                date: timestamp
-            });
-
-            const reqText = `📦 RESTOCK REQUEST: Humiling ng karagdagang ${requestedQty} pcs (${formattedStyle}).`;
-
-            if (!storeData.history) storeData.history = [];
-            storeData.history.unshift({
-                id: Date.now(),
-                date: timestamp,
-                text: reqText
-            });
-
-            if (!storeData.messages) storeData.messages = [];
-            storeData.messages.push({
-                date: timestamp,
-                text: reqText
-            });
+        }, 20000);
 
             syncStatus.textContent = "Nire-request ang restock...";
             restockModal.style.display = 'none';
 
             try {
                 const docRef = doc(db, "app_data", "main_inventory");
-                await setDoc(docRef, globalAllData);
-                syncStatus.textContent = "✅ Matagumpay na naipadala ang Request Restock!";
-                alert(`Matagumpay na naipadala ang iyong kahilingan na ${requestedQty} pcs ng ${formattedStyle} sa Admin!`);
-            } catch (err) {
-                console.error("Error requesting restock:", err);
-                syncStatus.textContent = "⚠️ Nabigo sa pagpapadala ng restock request.";
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    let freshData = docSnap.data();
+                    let store = freshData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+                    if (store) {
+                        store.lastClientAccess = new Date().toLocaleString();
+                        store.clientStatus = "Online";
+                        await setDoc(docRef, freshData);
+                    }
+                }
+            } catch (e) {
+                console.log("Heartbeat error", e);
             }
-        });
+        }
+
+        setInterval(() => {
+            if (currentStoreName) {
+                loadDataSilent();
+            }
+        }, 10000);
+
+        async function loadDataSilent() {
+            try {
+                const docRef = doc(db, "app_data", "main_inventory");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    appData = docSnap.data();
+                    const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+                    if (found) {
+                        renderClientDashboard(found);
+                    }
+                }
+            } catch (e) {
+                console.log("Silent sync error", e);
+            }
+        }
     </script>
 </body>
 </html>
