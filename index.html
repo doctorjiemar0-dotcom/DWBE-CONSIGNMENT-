@@ -54,8 +54,6 @@
         .fab-restock { background-color: #ff9800; }
         .fab-restock:hover { background-color: #e65100; }
 
-        .fab-badge { position: absolute; top: -4px; right: -4px; background-color: #d32f2f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; display: none; }
-
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 8px; padding: 20px; max-height: 85vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
@@ -216,7 +214,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, arrayUnion, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -230,7 +228,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ✅ FIX #1: CONSISTENT DOCUMENT ID FUNCTION
         function getDocId(storeName) {
             if (!storeName) return "unknown_store";
             return storeName
@@ -274,7 +271,6 @@
                 const storeSnap = await getDoc(storeDocRef);
 
                 if (!storeSnap.exists()) {
-                    // ✅ FIX #2: NEW INQUIRY - USE ARRAAUNION NOT SETDOC WITH MERGE
                     try {
                         const mainRef = doc(db, "app_data", "main_inventory");
                         const timestamp = new Date().toLocaleString();
@@ -320,21 +316,14 @@
             const storeDocId = getDocId(currentStoreName);
             const storeDocRef = doc(db, "stores", storeDocId);
 
-            unsubscribeListener = new Promise(() => {
-                // Real-time listener para sa store changes
-                const unsubscribe = onSnapshot(storeDocRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        currentStoreData = docSnap.data();
-                        updateLastClientAccess();
-                        renderClientDashboard();
-                    }
-                }, (err) => console.error("Listener error:", err));
-                return unsubscribe;
-            }).then(() => {});
+            unsubscribeListener = onSnapshot(storeDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    currentStoreData = docSnap.data();
+                    updateLastClientAccess();
+                    renderClientDashboard();
+                }
+            }, (err) => console.error("Listener error:", err));
         }
-
-        // Add onSnapshot import
-        import { onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         function updateLastClientAccess() {
             if (!currentStoreData) return;
@@ -369,7 +358,6 @@
             document.getElementById('ownerName').textContent = currentStoreData.ownerName || 'N/A';
             document.getElementById('storeAddress').textContent = currentStoreData.address || 'Walang nakalagay na address';
 
-            // Calculate stock & sales
             let totalStock = 0, totalSold = 0, totalSales = 0;
             if (currentStoreData.storeItems && Array.isArray(currentStoreData.storeItems)) {
                 currentStoreData.storeItems.forEach(item => {
@@ -384,7 +372,6 @@
             document.getElementById('totalStock').textContent = totalStock + ' pcs';
             document.getElementById('totalSales').textContent = '₱' + totalSales.toLocaleString();
 
-            // Notifications
             renderNotifications();
             renderStock();
             renderApprovedRestocks();
@@ -711,7 +698,6 @@
             alert('✅ Mensahe sent sa admin!');
         };
 
-        // Check if logged in on page load
         const savedLogin = localStorage.getItem('client_logged_store');
         if (savedLogin) {
             try {
