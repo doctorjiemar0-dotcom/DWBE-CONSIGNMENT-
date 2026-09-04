@@ -154,21 +154,17 @@
                 </div>
             </div>
 
-            <!-- INVENTORY COMPUTATION NILAGAY SA DASHBOARD BUTTON -->
-            <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
-                <h2>📋 Inventory Computation (Home Stocks)</h2>
-                <div style="font-size: 0.9rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 6px; border-radius: 4px; border: 1px solid #e0e0e0;">
-                    <span>Ordinary: <strong id="dashHomeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
-                    <div style="display: flex; gap: 4px;">
-                        <button type="button" onclick="adjustHomeStock('Ordinary', 1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #388e3c;">➕ Dagdag</button>
-                        <button type="button" onclick="adjustHomeStock('Ordinary', -1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #d32f2f;">➖ Bawas</button>
-                    </div>
+            <!-- (3) Inilipat ang Calculator ng Potensyal na Kita rito sa Dashboard Button area -->
+            <div class="card" style="background: #e0f7fa; border: 1px solid #b2ebf2;">
+                <h2>📊 Calculator ng Potensyal na Kita</h2>
+                <div class="form-group">
+                    <label for="calcStoreInput">Bilang ng Tindahan na gusto mong i-target:</label>
+                    <input type="number" id="calcStoreInput" placeholder="Hal. 20" value="10" oninput="calculatePotentialIncome()">
                 </div>
-                <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: 6px; border-radius: 4px; border: 1px solid #ffe0b2;">
-                    <span>Premium: <strong id="dashHomePremStock" style="color: #e65100;">0</strong> pcs</span>
-                    <div style="display: flex; gap: 4px;">
-                        <button type="button" onclick="adjustHomeStock('Premium', 1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #e65100;">➕ Dagdag</button>
-                        <button type="button" onclick="adjustHomeStock('Premium', -1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #d32f2f;">➖ Bawas</button>
+                <div style="font-size: 0.85rem; color: #006064; background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #b2ebf2;">
+                    <div>Average Benta bawat Tindahan (Nakaraang Buwan): <strong id="calcAvgSales">₱0</strong></div>
+                    <div style="margin-top: 4px; font-size: 0.95rem; font-weight: bold; color: #00838f;">
+                        💡 Potensyal na Kabuuang Kita: <span id="calcPotentialTotal">₱0</span>
                     </div>
                 </div>
             </div>
@@ -281,7 +277,7 @@
             </div>
         </div>
 
-        <!-- TAB 5: MGA BENTA -->
+        <!-- TAB 5: MGA BENTA (Bubble Head / Dedicated Tab) -->
         <div id="salesTab" class="tab-content">
             <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
                 <h2>💰 Bubble Head / Tab ng mga Benta</h2>
@@ -311,20 +307,6 @@
                     <div style="display: flex; gap: 4px;">
                         <button type="button" onclick="adjustHomeStock('Premium', 1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #e65100;">➕ Dagdag</button>
                         <button type="button" onclick="adjustHomeStock('Premium', -1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #d32f2f;">➖ Bawas</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card" style="background: #e0f7fa; border: 1px solid #b2ebf2;">
-                <h2>📊 Calculator ng Potensyal na Kita</h2>
-                <div class="form-group">
-                    <label for="calcStoreInput">Bilang ng Tindahan na gusto mong i-target:</label>
-                    <input type="number" id="calcStoreInput" placeholder="Hal. 20" value="10" oninput="calculatePotentialIncome()">
-                </div>
-                <div style="font-size: 0.85rem; color: #006064; background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #b2ebf2;">
-                    <div>Average Benta bawat Tindahan (Nakaraang Buwan): <strong id="calcAvgSales">₱0</strong></div>
-                    <div style="margin-top: 4px; font-size: 0.95rem; font-weight: bold; color: #00838f;">
-                        💡 Potensyal na Kabuuang Kita: <span id="calcPotentialTotal">₱0</span>
                     </div>
                 </div>
             </div>
@@ -427,6 +409,7 @@
     const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
     const logoutBtn = document.getElementById('logoutBtn');
 
+    // Tab switching function
     window.switchTab = function(tabId, btnElement) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -915,7 +898,6 @@
 
     function calculatePotentialIncome() {
         const inputEl = document.getElementById('calcStoreInput');
-        if (!inputEl) return;
         const targetStores = parseInt(inputEl.value) || 0;
         
         const prevDate = new Date();
@@ -970,10 +952,8 @@
         let avgSalesPerStore = storesWithPrevSales > 0 ? (prevMonthTotalSales / storesWithPrevSales) : (activeCount > 0 ? (totalSalesSoFar / activeCount) : 1500);
         const potentialTotal = avgSalesPerStore * targetStores;
 
-        const avgSalesEl = document.getElementById('calcAvgSales');
-        const potTotalEl = document.getElementById('calcPotentialTotal');
-        if (avgSalesEl) avgSalesEl.textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
-        if (potTotalEl) potTotalEl.textContent = '₱' + Math.round(potentialTotal).toLocaleString();
+        document.getElementById('calcAvgSales').textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
+        document.getElementById('calcPotentialTotal').textContent = '₱' + Math.round(potentialTotal).toLocaleString();
     }
 
     function renderApp() {
@@ -985,17 +965,8 @@
             if (input) savedReplies[idx] = input.value;
         });
 
-        // I-update ang home stock view sa parehong inventory tab at dashboard inventory
-        const homeOrdEl = document.getElementById('homeOrdStock');
-        const homePremEl = document.getElementById('homePremStock');
-        const dashHomeOrdEl = document.getElementById('dashHomeOrdStock');
-        const dashHomePremEl = document.getElementById('dashHomePremStock');
-
-        if (homeOrdEl) homeOrdEl.textContent = appData.homeStock.Ordinary;
-        if (homePremEl) homePremEl.textContent = appData.homeStock.Premium;
-        if (dashHomeOrdEl) dashHomeOrdEl.textContent = appData.homeStock.Ordinary;
-        if (dashHomePremEl) dashHomePremEl.textContent = appData.homeStock.Premium;
-
+        document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
+        document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
         calculatePotentialIncome();
 
         const inquiriesContainer = document.getElementById('adminInquiriesContainer');
@@ -1275,9 +1246,9 @@
                 }
 
                 if (!isNaN(lastTime)) {
-                    // Pinalawak ang active online window threshold sa 45 segundo para matiyak na lumalabas ang status
+                    // (2) Pinahaba ang window detection ng active client status sa 60 segundo para masigurong lumalabas ang pag-a-online nito
                     const diffMs = Date.now() - lastTime;
-                    if (diffMs >= 0 && diffMs < 45000) {
+                    if (diffMs >= 0 && diffMs < 60000) {
                         isOnline = true;
                     }
                 }
@@ -1303,16 +1274,9 @@
 
             let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
-            // Paggawa ng QR code display sa tabi ng pangalan ng may-ari (pakitabi ng QR code sa pangalan ng may ari)
-            let qrCodeContainerHtml = `
-                <div style="margin-top: 6px; background: #fafafa; padding: 6px; border-radius: 4px; border: 1px dashed #ccc; display: flex; align-items: center; gap: 8px;">
-                    <div style="font-size: 1.2rem;">📱</div>
-                    <div style="font-size: 0.75rem;">
-                        <div><strong>QR Code ID:</strong> STORE-${item.id}</div>
-                        <div style="color: #666;">I-scan ito ng may-ari para sa mabilis na client portal access.</div>
-                    </div>
-                </div>
-            `;
+            // (4) Aktibong Vercel link para sa QR Code ng admin panel na pang-general sa lahat ng store, nakatabi sa pangalan ng may-ari (1)
+            let storeEncodedURL = encodeURIComponent(`https://dwbe-consignment.vercel.app/?store=${encodeURIComponent(item.storeName)}`);
+            let qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${storeEncodedURL}`;
 
             if (showAllStores) {
                 matchedStoresCount++;
@@ -1331,10 +1295,17 @@
                             <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                        <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong></span>
+                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px; display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong><br></span>
+                            <span>👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong><br></span>
+                            <span>📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong></span>
+                        </div>
+                        <div style="text-align: center; background: #f9f9f9; padding: 4px; border-radius: 4px; border: 1px solid #ddd;">
+                            <img src="${qrCodeImageUrl}" alt="QR Code" style="width: 70px; height: 70px; display: block; margin: auto;">
+                            <span style="font-size: 0.65rem; color: #555;">QR Code</span>
+                        </div>
                     </div>
-                    ${qrCodeContainerHtml}
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
                             👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
