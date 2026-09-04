@@ -381,15 +381,18 @@ if (installAppBtn) installAppBtn.addEventListener('click', handleInstallClick);
 if (dashboardInstallBtn) dashboardInstallBtn.addEventListener('click', handleInstallClick);
 
 window.requestLogout = function() {
-  const storeInput = prompt("Para sa security, ilagay ang pangalan ng iyong tindahan upang mag-logout:");
+  const storeInput = prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
   if (storeInput === null) return;
   
-  if (storeInput.toLowerCase().trim() === currentStoreName.toLowerCase().trim()) {
+  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+  if (!store) return;
+  
+  if (storeInput.toLowerCase().trim() === store.ownerName.toLowerCase().trim()) {
     localStorage.removeItem('client_logged_store');
     currentStoreName = '';
     window.location.href = window.location.pathname.split('?')[0];
   } else {
-    alert("Mali ang pangalan ng tindahan. Puwede mo i-try ulit.");
+    alert("Mali ang pangalan ng may-ari. Puwede mo i-try ulit.");
   }
 };
 
