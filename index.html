@@ -105,7 +105,7 @@
                         <input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required>
                     </div>
                     <div class="form-group">
-                        <label>Pangalan ng May-ari:</label>
+                        <label>Pangalan ng May-ari (Tinatanggap ang special characters gaya ng &, -, _, etc.):</label>
                         <input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required>
                     </div>
                     <div class="form-group">
@@ -290,10 +290,9 @@
         <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -307,9 +306,19 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
-        let currentStoreName = (localStorage.getItem('client_logged_store') || '').trim();
+        let currentStoreData = null;
+        let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
+
+        // ✅ FIXED: Consistent getDocId function (SAME AS ADMIN)
+        function getDocId(storeName) {
+            if (!storeName) return "unknown_store";
+            return storeName
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-z0-9_-]/g, '');
+        }
 
         window.openImageViewer = function(src, title) {
             const modal = document.getElementById('imageModal');
@@ -370,14 +379,10 @@
         if (dashboardInstallBtn) dashboardInstallBtn.addEventListener('click', handleInstallClick);
 
         window.requestLogout = function() {
-            const pass = prompt("Ilagay ang password para mag-logout:");
-            if (pass === null) return;
-            if (pass === "admin123") {
+            if (confirm("Sigurado ka bang gusto mong mag-logout?")) {
                 localStorage.removeItem('client_logged_store');
                 currentStoreName = '';
                 window.location.href = window.location.pathname.split('?')[0];
-            } else {
-                alert("Maling password!");
             }
         };
 
@@ -394,78 +399,87 @@
         };
 
         window.clearAllNotifications = async function() {
-            const store = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-            if (!store) return;
-            store.clientNotifications = [];
+            if (!currentStoreData) return;
+            currentStoreData.clientNotifications = [];
             await saveData();
         };
 
         window.promptStopAgreement = async function() {
             const confirmation = confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' para kumpirmahin.");
-            if (!confirmation) return;
+            
+            if (!confirmation) {
+                return;
+            }
 
-            const store = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-            if (!store) return;
+            if (!currentStoreData) return;
 
-            store.agreementAccepted = false;
-            store.consignmentStatus = "Stopped";
+            currentStoreData.agreementAccepted = false;
+            currentStoreData.consignmentStatus = "Stopped";
 
-            if (!store.messages) store.messages = [];
-            store.messages.unshift({
+            if (!currentStoreData.messages) currentStoreData.messages = [];
+            currentStoreData.messages.unshift({
                 sender: currentStoreName,
                 text: "⚠️ Pinal na itinigil / kinansela ng kliyente ang Consignment Agreement.",
                 date: new Date().toLocaleString()
             });
 
-            if (!store.clientNotifications) store.clientNotifications = [];
-            store.clientNotifications.unshift({
+            if (!currentStoreData.clientNotifications) currentStoreData.clientNotifications = [];
+            currentStoreData.clientNotifications.unshift({
                 text: "Matagumpay na nai-submit ang hiling na itigil ang Consignment Agreement.",
                 date: new Date().toLocaleString()
             });
 
             await saveData();
             alert("Matagumpay na naitala ang iyong pagpapahinto sa kasunduan. Naabisuhan na ang Admin.");
-            renderClientDashboard(store);
+            renderClientDashboard(currentStoreData);
         };
 
         window.dismissNotification = async function(index) {
-            const store = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-            if (!store || !store.clientNotifications) return;
+            if (!currentStoreData || !currentStoreData.clientNotifications) return;
             
-            store.clientNotifications.splice(index, 1);
+            currentStoreData.clientNotifications.splice(index, 1);
             await saveData();
         };
 
         window.confirmReceiveRestock = async function(index) {
-            const store = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-            if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
+            if (!currentStoreData || !currentStoreData.approvedRestocks || !currentStoreData.approvedRestocks[index]) return;
 
-            const itemToReceive = store.approvedRestocks[index];
+            const itemToReceive = currentStoreData.approvedRestocks[index];
 
-            if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-            appData.homeStock[itemToReceive.styleType] = Math.max(0, (appData.homeStock[itemToReceive.styleType] || 0) - itemToReceive.qty);
+            try {
+                const mainInvRef = doc(db, "app_data", "main_inventory");
+                const mainInvSnap = await getDoc(mainInvRef);
+                if (mainInvSnap.exists()) {
+                    let mainData = mainInvSnap.data();
+                    if (!mainData.homeStock) mainData.homeStock = { Ordinary: 0, Premium: 0 };
+                    mainData.homeStock[itemToReceive.styleType] = Math.max(0, (mainData.homeStock[itemToReceive.styleType] || 0) - itemToReceive.qty);
+                    await setDoc(mainInvRef, mainData);
+                }
+            } catch (e) {
+                console.log("Error updating homeStock in admin inventory:", e);
+            }
 
-            let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType);
+            let existingItem = currentStoreData.storeItems.find(i => i.styleType === itemToReceive.styleType);
             
             if (existingItem) {
                 existingItem.currentStock += itemToReceive.qty;
                 existingItem.initialQty += itemToReceive.qty;
             } else {
-                store.storeItems.push({
+                currentStoreData.storeItems.push({
                     styleType: itemToReceive.styleType,
                     initialQty: itemToReceive.qty,
                     currentStock: itemToReceive.qty,
                     returnedQty: 0,
                     rejectedQty: 0,
-                    price: store.price || 0,
-                    collectionDate: store.collectionDate || 'N/A'
+                    price: currentStoreData.price || 0,
+                    collectionDate: currentStoreData.collectionDate || 'N/A'
                 });
             }
 
-            store.approvedRestocks.splice(index, 1);
+            currentStoreData.approvedRestocks.splice(index, 1);
 
-            if (!store.messages) store.messages = [];
-            store.messages.unshift({
+            if (!currentStoreData.messages) currentStoreData.messages = [];
+            currentStoreData.messages.unshift({
                 sender: currentStoreName,
                 text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`,
                 date: new Date().toLocaleString()
@@ -476,10 +490,9 @@
         };
 
         window.promptRecordSale = async function(styleType) {
-            const store = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-            if (!store) return;
+            if (!currentStoreData) return;
 
-            const sub = store.storeItems.find(i => i.styleType === styleType);
+            const sub = currentStoreData.storeItems.find(i => i.styleType === styleType);
             if (!sub) return;
 
             if (sub.currentStock <= 0) {
@@ -507,8 +520,8 @@
 
             sub.currentStock -= qtySold;
 
-            if (!store.pendingSales) store.pendingSales = [];
-            store.pendingSales.unshift({
+            if (!currentStoreData.pendingSales) currentStoreData.pendingSales = [];
+            currentStoreData.pendingSales.unshift({
                 styleType: styleType,
                 qty: qtySold,
                 price: sub.price || 0,
@@ -517,46 +530,48 @@
                 status: "Pending"
             });
 
-            if (!store.messages) store.messages = [];
-            store.messages.unshift({
+            if (!currentStoreData.messages) currentStoreData.messages = [];
+            currentStoreData.messages.unshift({
                 sender: currentStoreName,
                 text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType}) - Naghihintay ng kumpirmasyon ng Admin.`,
                 date: new Date().toLocaleString()
             });
 
-            if (!store.clientNotifications) store.clientNotifications = [];
-            store.clientNotifications.unshift({
+            if (!currentStoreData.clientNotifications) currentStoreData.clientNotifications = [];
+            currentStoreData.clientNotifications.unshift({
                 text: `Matagumpay na nai-record ang pagbili ng ${qtySold} pcs (${styleType}). Nakabinbin ang kumpirmasyon ng Admin.`,
                 date: new Date().toLocaleString()
             });
 
             await saveData();
             alert("Matagumpay na nabawas ang active stock at naipadala ang pending receipt sa Admin!");
-            renderClientDashboard(store);
+            renderClientDashboard(currentStoreData);
         };
 
         async function loadData() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
-                const docRef = doc(db, "app_data", "main_inventory");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    appData = docSnap.data();
-                    if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-                    if (!appData.consignments) appData.consignments = [];
-                    if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                }
-                
                 const urlParams = new URLSearchParams(window.location.search);
                 const paramStore = urlParams.get('store');
-                let storeToCheck = (paramStore || localStorage.getItem('client_logged_store') || '').trim();
+                let storeToCheck = paramStore || localStorage.getItem('client_logged_store');
                 
                 if (storeToCheck) {
-                    const found = appData.consignments.find(c => c.storeName.trim().toLowerCase() === storeToCheck.toLowerCase());
-                    if (found) {
-                        found.lastClientAccess = new Date().toLocaleString();
-                        found.clientStatus = "Online";
-                        await setDoc(docRef, appData);
+                    currentStoreName = storeToCheck;
+                    localStorage.setItem('client_logged_store', currentStoreName);
+
+                    const docId = getDocId(currentStoreName);
+                    const storeDocRef = doc(db, "stores", docId);
+                    const storeSnap = await getDoc(storeDocRef);
+
+                    if (storeSnap.exists()) {
+                        currentStoreData = storeSnap.data();
+                        currentStoreData.lastClientAccess = new Date().toLocaleString();
+                        currentStoreData.clientStatus = "Online";
+                        await setDoc(storeDocRef, currentStoreData);
+                        
+                        syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+                        initPortalView();
+                        return;
                     }
                 }
 
@@ -571,12 +586,13 @@
         async function saveData() {
             syncStatus.textContent = "Nagse-save sa Cloud...";
             try {
-                const store = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-                if (store) {
-                    store.lastClientAccess = new Date().toLocaleString();
-                    store.clientStatus = "Online";
+                if (currentStoreData && currentStoreName) {
+                    currentStoreData.lastClientAccess = new Date().toLocaleString();
+                    currentStoreData.clientStatus = "Online";
+                    const docId = getDocId(currentStoreName);
+                    const storeDocRef = doc(db, "stores", docId);
+                    await setDoc(storeDocRef, currentStoreData);
                 }
-                await setDoc(doc(db, "app_data", "main_inventory"), appData);
                 syncStatus.textContent = "✅ Na-save at Nakakonekta sa Cloud";
                 initPortalView();
             } catch (err) {
@@ -585,27 +601,37 @@
             }
         }
 
-        function initPortalView() {
+        async function initPortalView() {
             const urlParams = new URLSearchParams(window.location.search);
             const paramStore = urlParams.get('store');
             
             if (paramStore) {
-                currentStoreName = paramStore.trim();
+                currentStoreName = paramStore;
                 localStorage.setItem('client_logged_store', currentStoreName);
             }
 
             if (currentStoreName) {
-                const found = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase() || (c.ownerName && c.ownerName.trim().toLowerCase() === currentStoreName.toLowerCase()));
-                if (found) {
-                    currentStoreName = found.storeName; // i-sync ang eksaktong casing
-                    localStorage.setItem('client_logged_store', currentStoreName);
+                if (!currentStoreData) {
+                    try {
+                        const docId = getDocId(currentStoreName);
+                        const storeDocRef = doc(db, "stores", docId);
+                        const storeSnap = await getDoc(storeDocRef);
+                        if (storeSnap.exists()) {
+                            currentStoreData = storeSnap.data();
+                        }
+                    } catch(e) {
+                        console.log("Error fetching store data", e);
+                    }
+                }
+
+                if (currentStoreData) {
                     document.getElementById('loginScreen').style.display = 'none';
                     if (installAppCard) installAppCard.style.display = 'none';
                     document.getElementById('portalContent').style.display = 'block';
                     if (paramStore) {
                         document.getElementById('directAccessNotice').style.display = 'block';
                     }
-                    renderClientDashboard(found);
+                    renderClientDashboard(currentStoreData);
                 } else {
                     localStorage.removeItem('client_logged_store');
                     currentStoreName = '';
@@ -621,25 +647,33 @@
             }
         }
 
-        document.getElementById('manualLoginBtn').addEventListener('click', () => {
+        document.getElementById('manualLoginBtn').addEventListener('click', async () => {
             const storeInput = document.getElementById('manualStoreNameInput').value.trim();
             if (!storeInput) {
                 alert('Mangyaring ilagay ang pangalan ng iyong tindahan o pangalan ng may-ari.');
                 return;
             }
 
-            const found = appData.consignments.find(c => c.storeName.trim().toLowerCase() === storeInput.toLowerCase() || (c.ownerName && c.ownerName.trim().toLowerCase() === storeInput.toLowerCase()));
-            if (!found) {
-                alert('Hindi natagpuan ang rehistradong tindahan o may-ari na ito. Siguraduhing tama ang baybay.');
-                return;
-            }
+            try {
+                const docId = getDocId(storeInput);
+                const storeDocRef = doc(db, "stores", docId);
+                const storeSnap = await getDoc(storeDocRef);
 
-            currentStoreName = found.storeName;
-            localStorage.setItem('client_logged_store', currentStoreName);
-            
-            found.lastClientAccess = new Date().toLocaleString();
-            found.clientStatus = "Online";
-            saveData();
+                if (storeSnap.exists()) {
+                    currentStoreData = storeSnap.data();
+                    currentStoreName = currentStoreData.storeName;
+                    localStorage.setItem('client_logged_store', currentStoreName);
+                    
+                    currentStoreData.lastClientAccess = new Date().toLocaleString();
+                    currentStoreData.clientStatus = "Online";
+                    await saveData();
+                } else {
+                    alert('Hindi natagpuan ang rehistradong tindahan o may-ari na ito. Siguraduhing tama ang baybay.');
+                }
+            } catch (e) {
+                console.error("Login error:", e);
+                alert("Nagkaroon ng problema sa pag-login.");
+            }
         });
 
         const inquiryForm = document.getElementById('inquiryForm');
@@ -654,21 +688,29 @@
                 const styleType = document.getElementById('inqStyleType').value;
                 const message = document.getElementById('inqMessage').value.trim();
 
-                if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                appData.pendingInquiries.push({
-                    storeName,
-                    ownerName,
-                    contact,
-                    email,
-                    address,
-                    styleType,
-                    message,
-                    date: new Date().toLocaleString()
-                });
-
-                await saveData();
-                alert('Matagumpay na nagawa ang account / naipadala ang aplikasyon! Mangyaring hintayin ang pagsusuri ng admin.');
-                inquiryForm.reset();
+                try {
+                    const mainInvRef = doc(db, "app_data", "main_inventory");
+                    
+                    // ✅ FIXED: Use arrayUnion instead of merge:true for arrays
+                    await setDoc(mainInvRef, {
+                        pendingInquiries: arrayUnion({
+                            storeName,
+                            ownerName,
+                            contact,
+                            email,
+                            address,
+                            styleType,
+                            message,
+                            date: new Date().toLocaleString()
+                        })
+                    }, { merge: true });
+                    
+                    alert('Matagumpay na nagawa ang account / naipadala ang aplikasyon! Mangyaring hintayin ang pagsusuri ng admin.');
+                    inquiryForm.reset();
+                } catch (err) {
+                    console.error("Inquiry error:", err);
+                    alert("Nabigo sa pagpapadala ng aplikasyon.");
+                }
             });
         }
 
@@ -724,7 +766,7 @@
                 pendingSalesCard.style.display = 'block';
                 let totalPendingAmount = 0;
 
-                store.pendingSales.forEach((sale) => {
+                store.pendingSales.forEach((sale, index) => {
                     const saleTotal = sale.totalAmount || (sale.qty * (sale.price || 0));
                     totalPendingAmount += saleTotal;
 
@@ -777,6 +819,24 @@
                 }];
             }
 
+            if (store.approvedRestocks && store.approvedRestocks.length > 0 && store.storeItems) {
+                let dataChanged = false;
+                store.approvedRestocks.forEach(req => {
+                    const matchIndex = store.storeItems.findIndex(i => 
+                        i.styleType === req.styleType && 
+                        i.initialQty === req.qty &&
+                        i.currentStock === req.qty
+                    );
+                    if (matchIndex !== -1) {
+                        store.storeItems.splice(matchIndex, 1);
+                        dataChanged = true;
+                    }
+                });
+                if (dataChanged) {
+                    saveData();
+                }
+            }
+
             const itemsContainer = document.getElementById('clientItemsContainer');
             itemsContainer.innerHTML = '';
 
@@ -807,25 +867,18 @@
             });
 
             const chatContainer = document.getElementById('clientChatContainer');
-            const messagesList = store.messages || [];
-            
-            // Smart update sa chat para hindi maistorbo ang gumagamit habang nagti-type
-            let currentChatHtml = '';
-            if (messagesList.length > 0) {
-                messagesList.forEach(m => {
+            chatContainer.innerHTML = '';
+            if (store.messages && store.messages.length > 0) {
+                store.messages.forEach(m => {
                     const isAdmin = m.sender === 'Admin' || m.sender === 'Admin (Broadcast)';
-                    currentChatHtml += `<div class="chat-msg ${isAdmin ? 'admin' : ''}"><strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div></div>`;
+                    const div = document.createElement('div');
+                    div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
+                    div.innerHTML = `<strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
+                    chatContainer.appendChild(div);
                 });
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             } else {
-                currentChatHtml = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
-            }
-
-            if (chatContainer.innerHTML !== currentChatHtml) {
-                chatContainer.innerHTML = currentChatHtml;
-                // I-scroll lang sa baba kung hindi nagti-type ang user o kung may bagong mensahe
-                if (document.activeElement !== document.getElementById('clientChatInput')) {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }
+                chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
             }
         }
 
@@ -836,28 +889,27 @@
             const styleType = document.getElementById('restockStyleType').value;
             const qty = 5;
 
-            const store = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-            if (!store) return;
+            if (!currentStoreData) return;
 
             const currentMonthYear = new Date().toISOString().slice(0, 7);
-            if (!store.lastRestockMonth) store.lastRestockMonth = "";
+            if (!currentStoreData.lastRestockMonth) currentStoreData.lastRestockMonth = "";
             
-            if (store.lastRestockMonth === currentMonthYear) {
+            if (currentStoreData.lastRestockMonth === currentMonthYear) {
                 alert("Paalala: Isang beses lamang bawat buwan ang pag-request ng restock. Nag-request ka na ngayong buwan.");
                 return;
             }
 
-            if (!store.activeRequests) store.activeRequests = [];
-            store.activeRequests.push({
+            if (!currentStoreData.activeRequests) currentStoreData.activeRequests = [];
+            currentStoreData.activeRequests.push({
                 styleType: styleType,
                 qty: qty,
                 date: new Date().toLocaleString()
             });
 
-            store.lastRestockMonth = currentMonthYear;
+            currentStoreData.lastRestockMonth = currentMonthYear;
 
-            if (!store.messages) store.messages = [];
-            store.messages.unshift({
+            if (!currentStoreData.messages) currentStoreData.messages = [];
+            currentStoreData.messages.unshift({
                 sender: currentStoreName,
                 text: `Humiling ng restock: ${qty} pcs (${styleType})`,
                 date: new Date().toLocaleString()
@@ -872,11 +924,10 @@
             const text = input.value.trim();
             if (!text) return;
 
-            const store = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-            if (!store) return;
+            if (!currentStoreData) return;
 
-            if (!store.messages) store.messages = [];
-            store.messages.unshift({
+            if (!currentStoreData.messages) currentStoreData.messages = [];
+            currentStoreData.messages.unshift({
                 sender: currentStoreName,
                 text: text,
                 date: new Date().toLocaleString()
@@ -896,15 +947,15 @@
 
         async function sendHeartbeatSilent() {
             try {
-                const docRef = doc(db, "app_data", "main_inventory");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    let freshData = docSnap.data();
-                    let store = freshData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-                    if (store) {
-                        store.lastClientAccess = new Date().toLocaleString();
-                        store.clientStatus = "Online";
-                        await setDoc(docRef, freshData);
+                if (currentStoreData && currentStoreName) {
+                    const docId = getDocId(currentStoreName);
+                    const storeDocRef = doc(db, "stores", docId);
+                    const storeSnap = await getDoc(storeDocRef);
+                    if (storeSnap.exists()) {
+                        let freshStore = storeSnap.data();
+                        freshStore.lastClientAccess = new Date().toLocaleString();
+                        freshStore.clientStatus = "Online";
+                        await setDoc(storeDocRef, freshStore);
                     }
                 }
             } catch (e) {
@@ -920,13 +971,13 @@
 
         async function loadDataSilent() {
             try {
-                const docRef = doc(db, "app_data", "main_inventory");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    appData = docSnap.data();
-                    const found = appData.consignments.find(c => c.storeName.trim().toLowerCase() === currentStoreName.toLowerCase());
-                    if (found) {
-                        renderClientDashboard(found);
+                if (currentStoreName) {
+                    const docId = getDocId(currentStoreName);
+                    const storeDocRef = doc(db, "stores", docId);
+                    const storeSnap = await getDoc(storeDocRef);
+                    if (storeSnap.exists()) {
+                        currentStoreData = storeSnap.data();
+                        renderClientDashboard(currentStoreData);
                     }
                 }
             } catch (e) {
