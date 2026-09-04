@@ -293,7 +293,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateData, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -612,17 +612,26 @@
         async function loadFromCloud() {
             syncStatus.textContent = "Kumukuha ng data sa Cloud...";
             try {
+                // Pagbasa ng Listahan ng mga Tindahan mula sa stores collection
+                const storesQuerySnapshot = await getDocs(collection(db, "stores"));
+                let cloudConsignments = [];
+                storesQuerySnapshot.forEach((storeDoc) => {
+                    cloudConsignments.push({ ...storeDoc.data(), firestoreId: storeDoc.id });
+                });
+
                 const docRef = doc(db, "app_data", "main_inventory");
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     appData = docSnap.data();
                     if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-                    if (!appData.consignments) appData.consignments = [];
                     if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                    deduplicateConsignments();
-                    cleanSourceData();
-                    processClientAcceptedRestocks();
                 }
+                if (cloudConsignments.length > 0) {
+                    appData.consignments = cloudConsignments;
+                }
+                deduplicateConsignments();
+                cleanSourceData();
+                processClientAcceptedRestocks();
                 renderApp();
                 syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
             } catch (err) {
@@ -642,7 +651,19 @@
             try {
                 deduplicateConsignments();
                 cleanSourceData();
-                await setDoc(doc(db, "app_data", "main_inventory"), appData);
+                await setDoc(doc(db, "app_data", "main_inventory"), {
+                    homeStock: appData.homeStock,
+                    pendingInquiries: appData.pendingInquiries
+                });
+                
+                // I-save ang bawat tindahan sa stores collection gamit ang custom firestoreId o storeName
+                if (appData.consignments) {
+                    for (let item of appData.consignments) {
+                        let storeDocId = item.firestoreId || (item.storeName ? item.storeName.replace(/\s+/g, '_').toLowerCase() : String(item.id));
+                        await setDoc(doc(db, "stores", storeDocId), item);
+                    }
+                }
+
                 localStorage.setItem('consignments_v3', JSON.stringify(appData));
                 syncStatus.textContent = "✅ Na-save sa Cloud";
                 renderApp();
@@ -672,28 +693,37 @@
 
         async function loadFromCloudSilent() {
             try {
+                const storesQuerySnapshot = await getDocs(collection(db, "stores"));
+                let cloudConsignments = [];
+                storesQuerySnapshot.forEach((storeDoc) => {
+                    cloudConsignments.push({ ...storeDoc.data(), firestoreId: storeDoc.id });
+                });
+
                 const docRef = doc(db, "app_data", "main_inventory");
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const cloudData = docSnap.data();
-                    let currentReqsTotal = 0;
-                    if (cloudData.consignments) {
-                        cloudData.consignments.forEach(c => {
-                            if (c.activeRequests) currentReqsTotal += c.activeRequests.length;
-                            if (c.pendingSales) currentReqsTotal += c.pendingSales.length;
-                        });
-                    }
-                    if (cloudData.pendingInquiries) currentReqsTotal += cloudData.pendingInquiries.length;
-                    if (currentReqsTotal > previousRequestCount) playNotificationSound();
-                    appData = cloudData;
-                    if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-                    if (!appData.consignments) appData.consignments = [];
-                    if (!appData.pendingInquiries) appData.pendingInquiries = [];
-                    deduplicateConsignments();
-                    cleanSourceData();
-                    processClientAcceptedRestocks();
-                    renderApp();
+                    appData.homeStock = cloudData.homeStock || { Ordinary: 0, Premium: 0 };
+                    appData.pendingInquiries = cloudData.pendingInquiries || [];
                 }
+                if (cloudConsignments.length > 0) {
+                    appData.consignments = cloudConsignments;
+                }
+
+                let currentReqsTotal = 0;
+                if (appData.consignments) {
+                    appData.consignments.forEach(c => {
+                        if (c.activeRequests) currentReqsTotal += c.activeRequests.length;
+                        if (c.pendingSales) currentReqsTotal += c.pendingSales.length;
+                    });
+                }
+                if (appData.pendingInquiries) currentReqsTotal += appData.pendingInquiries.length;
+                if (currentReqsTotal > previousRequestCount) playNotificationSound();
+
+                deduplicateConsignments();
+                cleanSourceData();
+                processClientAcceptedRestocks();
+                renderApp();
             } catch (e) {}
         }
 
@@ -871,7 +901,7 @@
             calculatePotentialIncome();
 
             const inquiriesContainer = document.getElementById('adminInquiriesContainer');
-            inquiriesContainer.innerHTML = ''; // Nililinis ang inquiries container
+            inquiriesContainer.innerHTML = '';
             if (!appData.pendingInquiries) appData.pendingInquiries = [];
 
             const fabInquiryBtn = document.getElementById('fabInquiryBtn');
@@ -905,10 +935,10 @@
             }
 
             const storesList = document.getElementById('storesList');
-            storesList.innerHTML = ''; // <--- IDAGDAG ITO PARA MAIWASAN ANG PAG-DOBLE NG LISTAHAN NG TINDAHAN
+            storesList.innerHTML = '';
             
             const requestsContainer = document.getElementById('adminRequestsContainer');
-            requestsContainer.innerHTML = ''; // <--- IDAGDAG DIN ITO PARA SA MGA REQUESTS CONTAINER
+            requestsContainer.innerHTML = '';
 
             let hasRequests = false;
             let totalActiveReqsCount = appData.pendingInquiries.length;
