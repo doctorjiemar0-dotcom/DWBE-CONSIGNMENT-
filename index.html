@@ -381,11 +381,15 @@ if (installAppBtn) installAppBtn.addEventListener('click', handleInstallClick);
 if (dashboardInstallBtn) dashboardInstallBtn.addEventListener('click', handleInstallClick);
 
 window.requestLogout = function() {
-  const confirmed = confirm("Sigurado ka bang gusto mong mag-logout?");
-  if (confirmed) {
+  const storeInput = prompt("Para sa security, ilagay ang pangalan ng iyong tindahan upang mag-logout:");
+  if (storeInput === null) return;
+  
+  if (storeInput.toLowerCase().trim() === currentStoreName.toLowerCase().trim()) {
     localStorage.removeItem('client_logged_store');
     currentStoreName = '';
     window.location.href = window.location.pathname.split('?')[0];
+  } else {
+    alert("Mali ang pangalan ng tindahan. Puwede mo i-try ulit.");
   }
 };
 
