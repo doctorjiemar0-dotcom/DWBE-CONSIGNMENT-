@@ -293,7 +293,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -309,6 +309,16 @@
         const db = getFirestore(app);
         const auth = getAuth();
 
+        // ✅ FIX #1: CONSISTENT DOCUMENT ID FUNCTION (SAME AS CLIENT)
+        function getDocId(storeName) {
+            if (!storeName) return "unknown_store";
+            return storeName
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-z0-9_-]/g, '');
+        }
+
         const authScreen = document.getElementById('authScreen');
         const mainAppContent = document.getElementById('mainAppContent');
         const loginBtn = document.getElementById('loginBtn');
@@ -317,16 +327,6 @@
         const syncStatus = document.getElementById('syncStatus');
         const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
         const logoutBtn = document.getElementById('logoutBtn');
-
-        // Helper para sa consistent Document ID (Gaya ng nasa screenshot)
-        function getDocId(storeName) {
-            if (!storeName) return "unknown_store";
-            return storeName
-                .toLowerCase()
-                .trim()
-                .replace(/\s+/g, '_')
-                .replace(/[^\w-]/g, '');
-        }
 
         async function handleAdminLogin(email, password) {
             try {
