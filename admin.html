@@ -154,6 +154,25 @@
                 </div>
             </div>
 
+            <!-- INVENTORY COMPUTATION NILAGAY SA DASHBOARD BUTTON -->
+            <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
+                <h2>📋 Inventory Computation (Home Stocks)</h2>
+                <div style="font-size: 0.9rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 6px; border-radius: 4px; border: 1px solid #e0e0e0;">
+                    <span>Ordinary: <strong id="dashHomeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button type="button" onclick="adjustHomeStock('Ordinary', 1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #388e3c;">➕ Dagdag</button>
+                        <button type="button" onclick="adjustHomeStock('Ordinary', -1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #d32f2f;">➖ Bawas</button>
+                    </div>
+                </div>
+                <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: 6px; border-radius: 4px; border: 1px solid #ffe0b2;">
+                    <span>Premium: <strong id="dashHomePremStock" style="color: #e65100;">0</strong> pcs</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button type="button" onclick="adjustHomeStock('Premium', 1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #e65100;">➕ Dagdag</button>
+                        <button type="button" onclick="adjustHomeStock('Premium', -1)" style="padding: 2px 6px; font-size: 0.75rem; width: auto; margin-top: 0; background-color: #d32f2f;">➖ Bawas</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="summary-box">
                 <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
                 <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>
@@ -262,7 +281,7 @@
             </div>
         </div>
 
-        <!-- TAB 5: MGA BENTA (Bubble Head / Dedicated Tab) -->
+        <!-- TAB 5: MGA BENTA -->
         <div id="salesTab" class="tab-content">
             <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
                 <h2>💰 Bubble Head / Tab ng mga Benta</h2>
@@ -408,7 +427,6 @@
     const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
     const logoutBtn = document.getElementById('logoutBtn');
 
-    // Tab switching function
     window.switchTab = function(tabId, btnElement) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -897,6 +915,7 @@
 
     function calculatePotentialIncome() {
         const inputEl = document.getElementById('calcStoreInput');
+        if (!inputEl) return;
         const targetStores = parseInt(inputEl.value) || 0;
         
         const prevDate = new Date();
@@ -951,8 +970,10 @@
         let avgSalesPerStore = storesWithPrevSales > 0 ? (prevMonthTotalSales / storesWithPrevSales) : (activeCount > 0 ? (totalSalesSoFar / activeCount) : 1500);
         const potentialTotal = avgSalesPerStore * targetStores;
 
-        document.getElementById('calcAvgSales').textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
-        document.getElementById('calcPotentialTotal').textContent = '₱' + Math.round(potentialTotal).toLocaleString();
+        const avgSalesEl = document.getElementById('calcAvgSales');
+        const potTotalEl = document.getElementById('calcPotentialTotal');
+        if (avgSalesEl) avgSalesEl.textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
+        if (potTotalEl) potTotalEl.textContent = '₱' + Math.round(potentialTotal).toLocaleString();
     }
 
     function renderApp() {
@@ -964,8 +985,17 @@
             if (input) savedReplies[idx] = input.value;
         });
 
-        document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
-        document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
+        // I-update ang home stock view sa parehong inventory tab at dashboard inventory
+        const homeOrdEl = document.getElementById('homeOrdStock');
+        const homePremEl = document.getElementById('homePremStock');
+        const dashHomeOrdEl = document.getElementById('dashHomeOrdStock');
+        const dashHomePremEl = document.getElementById('dashHomePremStock');
+
+        if (homeOrdEl) homeOrdEl.textContent = appData.homeStock.Ordinary;
+        if (homePremEl) homePremEl.textContent = appData.homeStock.Premium;
+        if (dashHomeOrdEl) dashHomeOrdEl.textContent = appData.homeStock.Ordinary;
+        if (dashHomePremEl) dashHomePremEl.textContent = appData.homeStock.Premium;
+
         calculatePotentialIncome();
 
         const inquiriesContainer = document.getElementById('adminInquiriesContainer');
@@ -1245,8 +1275,9 @@
                 }
 
                 if (!isNaN(lastTime)) {
+                    // Pinalawak ang active online window threshold sa 45 segundo para matiyak na lumalabas ang status
                     const diffMs = Date.now() - lastTime;
-                    if (diffMs >= 0 && diffMs < 30000) {
+                    if (diffMs >= 0 && diffMs < 45000) {
                         isOnline = true;
                     }
                 }
@@ -1272,6 +1303,17 @@
 
             let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
+            // Paggawa ng QR code display sa tabi ng pangalan ng may-ari (pakitabi ng QR code sa pangalan ng may ari)
+            let qrCodeContainerHtml = `
+                <div style="margin-top: 6px; background: #fafafa; padding: 6px; border-radius: 4px; border: 1px dashed #ccc; display: flex; align-items: center; gap: 8px;">
+                    <div style="font-size: 1.2rem;">📱</div>
+                    <div style="font-size: 0.75rem;">
+                        <div><strong>QR Code ID:</strong> STORE-${item.id}</div>
+                        <div style="color: #666;">I-scan ito ng may-ari para sa mabilis na client portal access.</div>
+                    </div>
+                </div>
+            `;
+
             if (showAllStores) {
                 matchedStoresCount++;
                 const div = document.createElement('div');
@@ -1292,6 +1334,7 @@
                     <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
                         <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong></span>
                     </div>
+                    ${qrCodeContainerHtml}
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
                             👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
