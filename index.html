@@ -332,6 +332,16 @@
         let currentStoreName = localStorage.getItem('client_logged_store') || '';
         const syncStatus = document.getElementById('syncStatus');
 
+        // Parehong helper function para sa Document ID formatting (gaya sa admin)
+        function getDocId(storeName) {
+            if (!storeName) return '';
+            return storeName
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-z0-9_]/g, '');
+        }
+
         // Functions para sa Image Viewer Modal
         window.openImageViewer = function(src, title) {
             const modal = document.getElementById('imageModal');
@@ -463,7 +473,6 @@
 
             const itemToReceive = currentStoreData.approvedRestocks[index];
 
-            // Bawasan ang homeStock sa admin inventory document kung kinakailangan
             try {
                 const mainInvRef = doc(db, "app_data", "main_inventory");
                 const mainInvSnap = await getDoc(mainInvRef);
@@ -507,7 +516,6 @@
             alert("Matagumpay na naidagdag sa iyong stock at nabawas sa inventory ng admin!");
         };
 
-        // Function para sa "MAY BUMILI" button na may validation at pagbawas ng active stock
         window.promptRecordSale = async function(styleType) {
             if (!currentStoreData) return;
 
@@ -520,17 +528,15 @@
             }
 
             const inputVal = prompt(`Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`);
-            if (inputVal === null) return; // Kinansela
+            if (inputVal === null) return;
 
             const qtySold = parseInt(inputVal);
 
-            // Validation 1: Siguraduhing valid number at greater than 0
             if (isNaN(qtySold) || qtySold <= 0) {
                 alert("Mangyaring maglagay ng wastong bilang ng nabili (mahigit sa zero).");
                 return;
             }
 
-            // Validation 2: Siguraduhing hindi hihigit sa natitirang active stock
             if (qtySold > sub.currentStock) {
                 alert(`Ang dami ng nabili (${qtySold} pcs) ay lumampas sa iyong natitirang active stock (${sub.currentStock} pcs).`);
                 return;
@@ -539,10 +545,8 @@
             const confirmSale = confirm(`Kumpirmahin ang pagbili ng ${qtySold} pcs (${styleType})?\n\nIto ay awtomatikong babawas sa iyong active stock at magpapadala ng pending confirmation receipt sa Admin.`);
             if (!confirmSale) return;
 
-            // Awtomatikong pagbawas sa active stock
             sub.currentStock -= qtySold;
 
-            // Pagpapadala ng Pending Confirmation Receipt sa Admin
             if (!currentStoreData.pendingSales) currentStoreData.pendingSales = [];
             currentStoreData.pendingSales.unshift({
                 styleType: styleType,
@@ -553,7 +557,6 @@
                 status: "Pending"
             });
 
-            // Pagdaragdag sa message log
             if (!currentStoreData.messages) currentStoreData.messages = [];
             currentStoreData.messages.unshift({
                 sender: currentStoreName,
@@ -561,7 +564,6 @@
                 date: new Date().toLocaleString()
             });
 
-            // Pagdaragdag sa client notification
             if (!currentStoreData.clientNotifications) currentStoreData.clientNotifications = [];
             currentStoreData.clientNotifications.unshift({
                 text: `Matagumpay na nai-record ang pagbili ng ${qtySold} pcs (${styleType}). Nakabinbin ang kumpirmasyon ng Admin.`,
@@ -584,8 +586,8 @@
                     currentStoreName = storeToCheck;
                     localStorage.setItem('client_logged_store', currentStoreName);
 
-                    // Kunin ang eksklusibong document ng tindahang ito mula sa stores collection
-                    const storeDocRef = doc(db, "stores", currentStoreName.toLowerCase().replace(/\s+/g, '_'));
+                    const docId = getDocId(currentStoreName);
+                    const storeDocRef = doc(db, "stores", docId);
                     const storeSnap = await getDoc(storeDocRef);
 
                     if (storeSnap.exists()) {
@@ -614,7 +616,8 @@
                 if (currentStoreData && currentStoreName) {
                     currentStoreData.lastClientAccess = new Date().toLocaleString();
                     currentStoreData.clientStatus = "Online";
-                    const storeDocRef = doc(db, "stores", currentStoreName.toLowerCase().replace(/\s+/g, '_'));
+                    const docId = getDocId(currentStoreName);
+                    const storeDocRef = doc(db, "stores", docId);
                     await setDoc(storeDocRef, currentStoreData);
                 }
                 syncStatus.textContent = "✅ Na-save at Nakakonekta sa Cloud";
@@ -637,7 +640,8 @@
             if (currentStoreName) {
                 if (!currentStoreData) {
                     try {
-                        const storeDocRef = doc(db, "stores", currentStoreName.toLowerCase().replace(/\s+/g, '_'));
+                        const docId = getDocId(currentStoreName);
+                        const storeDocRef = doc(db, "stores", docId);
                         const storeSnap = await getDoc(storeDocRef);
                         if (storeSnap.exists()) {
                             currentStoreData = storeSnap.data();
@@ -678,7 +682,8 @@
             }
 
             try {
-                const storeDocRef = doc(db, "stores", storeInput.toLowerCase().replace(/\s+/g, '_'));
+                const docId = getDocId(storeInput);
+                const storeDocRef = doc(db, "stores", docId);
                 const storeSnap = await getDoc(storeDocRef);
 
                 if (storeSnap.exists()) {
@@ -781,7 +786,6 @@
                 pendingDeliveryCard.style.display = 'none';
             }
 
-            // Render Pending Sales Card kasama ang Total Sales ng mga nakabinbing benta
             const pendingSalesCard = document.getElementById('pendingSalesCard');
             const pendingSalesContainer = document.getElementById('pendingSalesContainer');
             pendingSalesContainer.innerHTML = '';
@@ -803,7 +807,6 @@
                     pendingSalesContainer.appendChild(div);
                 });
 
-                // Pagdaragdag ng kabuuang Total Sales summary para sa mga pending sales
                 const totalSummaryDiv = document.createElement('div');
                 totalSummaryDiv.style.cssText = "margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ffb74d; font-weight: bold; font-size: 0.9rem; color: #e65100; text-align: right;";
                 totalSummaryDiv.innerHTML = `Kabuuang Halaga ng Nakabinbing Benta (Total Pending Sales): ₱${totalPendingAmount.toLocaleString()}`;
@@ -873,7 +876,6 @@
                 const subSales = subSold * (sub.price || 0);
 
                 const div = document.createElement('div');
-                // Lagyan ng class na 'premium-stock' kung ang uri ay Premium para magkaiba ang background color
                 const isPremium = (sub.styleType === 'Premium');
                 div.className = 'store-item-box' + (isPremium ? ' premium-stock' : '');
 
@@ -974,7 +976,8 @@
         async function sendHeartbeatSilent() {
             try {
                 if (currentStoreData && currentStoreName) {
-                    const storeDocRef = doc(db, "stores", currentStoreName.toLowerCase().replace(/\s+/g, '_'));
+                    const docId = getDocId(currentStoreName);
+                    const storeDocRef = doc(db, "stores", docId);
                     const storeSnap = await getDoc(storeDocRef);
                     if (storeSnap.exists()) {
                         let freshStore = storeSnap.data();
@@ -997,7 +1000,8 @@
         async function loadDataSilent() {
             try {
                 if (currentStoreName) {
-                    const storeDocRef = doc(db, "stores", currentStoreName.toLowerCase().replace(/\s+/g, '_'));
+                    const docId = getDocId(currentStoreName);
+                    const storeDocRef = doc(db, "stores", docId);
                     const storeSnap = await getDoc(storeDocRef);
                     if (storeSnap.exists()) {
                         currentStoreData = storeSnap.data();
