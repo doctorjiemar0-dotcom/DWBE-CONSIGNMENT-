@@ -20,7 +20,6 @@
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #388e3c; }
         
-        /* Bagong Tab Navigation Style mula sa Screenshot pero Kulay Berde */
         .nav-tabs { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.05); }
         .tab-btn { background-color: #e8f5e9; color: var(--primary-color); border: 1px solid #c8e6c9; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; width: auto; margin-top: 0; flex: 1; justify-content: center; min-width: 110px; }
         .tab-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
@@ -30,7 +29,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Dashboard Metric Cards Style */
         .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
         .metric-card { background-color: var(--primary-color); color: white; padding: 12px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .metric-card h3 { font-size: 0.75rem; margin-bottom: 5px; font-weight: normal; opacity: 0.9; }
@@ -121,7 +119,7 @@
 
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-        <!-- Tab Navigation Menu katulad ng Screenshot pero Kulay Berde -->
+        <!-- Tab Navigation Menu -->
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>
             <button type="button" class="tab-btn" onclick="switchTab('inquiriesTab', this)">📥 Inquiries</button>
@@ -154,9 +152,9 @@
                 </div>
             </div>
 
-            <!-- (3) Inilipat ang Calculator ng Potensyal na Kita rito sa Dashboard Button area -->
+            <!-- UPDATE #3: Calculator ng Potensyal na Kita inilipat sa Dashboard Button / Section -->
             <div class="card" style="background: #e0f7fa; border: 1px solid #b2ebf2;">
-                <h2>📊 Calculator ng Potensyal na Kita</h2>
+                <h2>📊 Calculator ng Potensyal na Kita (Dashboard)</h2>
                 <div class="form-group">
                     <label for="calcStoreInput">Bilang ng Tindahan na gusto mong i-target:</label>
                     <input type="number" id="calcStoreInput" placeholder="Hal. 20" value="10" oninput="calculatePotentialIncome()">
@@ -277,7 +275,7 @@
             </div>
         </div>
 
-        <!-- TAB 5: MGA BENTA (Bubble Head / Dedicated Tab) -->
+        <!-- TAB 5: MGA BENTA -->
         <div id="salesTab" class="tab-content">
             <div class="card" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
                 <h2>💰 Bubble Head / Tab ng mga Benta</h2>
@@ -291,7 +289,7 @@
             </div>
         </div>
 
-        <!-- TAB 6: INVENTORY -->
+        <!-- TAB 6: INVENTORY (UPDATE #4: Ibinalik sa dating posisyon) -->
         <div id="inventoryTab" class="tab-content">
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
                 <h2>CONSIGNMENT INVENTORY AND MONITORING</h2>
@@ -409,7 +407,6 @@
     const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
     const logoutBtn = document.getElementById('logoutBtn');
 
-    // Tab switching function
     window.switchTab = function(tabId, btnElement) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -1246,9 +1243,8 @@
                 }
 
                 if (!isNaN(lastTime)) {
-                    // (2) Pinahaba ang window detection ng active client status sa 60 segundo para masigurong lumalabas ang pag-a-online nito
                     const diffMs = Date.now() - lastTime;
-                    if (diffMs >= 0 && diffMs < 60000) {
+                    if (diffMs >= 0 && diffMs < 60000) { // UPDATE #2: Pinalawak nang bahagya ang window para masigurong nakikita ang active online status
                         isOnline = true;
                     }
                 }
@@ -1274,10 +1270,6 @@
 
             let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
-            // (4) Aktibong Vercel link para sa QR Code ng admin panel na pang-general sa lahat ng store, nakatabi sa pangalan ng may-ari (1)
-            let storeEncodedURL = encodeURIComponent(`https://dwbe-consignment.vercel.app/?store=${encodeURIComponent(item.storeName)}`);
-            let qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${storeEncodedURL}`;
-
             if (showAllStores) {
                 matchedStoresCount++;
                 const div = document.createElement('div');
@@ -1288,6 +1280,8 @@
                             <span style="font-size: 1rem;">🏢</span>
                             ${statusDot}
                             <strong style="font-size: 0.95rem;">${item.storeName}</strong>
+                            <!-- UPDATE #1: Pinagtabi ang General QR Code icon malapit sa pangalan ng may-ari/tindahan -->
+                            <span title="General Admin QR Link" style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:4px; padding:2px 6px; font-size:0.7rem; color:#2e7d32; font-weight:bold; cursor:pointer;" onclick="alert('Ito ang General Admin QR Code link para sa lahat ng kliyente: https://dwbe-consignment.web.app')">📷 QR Link</span>
                             ${hasClientMessage ? '<span class="badge badge-msg">💬 May Mensahe</span>' : ''}
                         </div>
                         <div style="display:flex; align-items:center; gap:6px;">
@@ -1295,16 +1289,8 @@
                             <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px; display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong><br></span>
-                            <span>👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong><br></span>
-                            <span>📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong></span>
-                        </div>
-                        <div style="text-align: center; background: #f9f9f9; padding: 4px; border-radius: 4px; border: 1px solid #ddd;">
-                            <img src="${qrCodeImageUrl}" alt="QR Code" style="width: 70px; height: 70px; display: block; margin: auto;">
-                            <span style="font-size: 0.65rem; color: #555;">QR Code</span>
-                        </div>
+                    <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
+                        <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong></span>
                     </div>
                     <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                         <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
