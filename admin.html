@@ -318,6 +318,16 @@
         const toggleAddFormBtn = document.getElementById('toggleAddFormBtn');
         const logoutBtn = document.getElementById('logoutBtn');
 
+        // Helper para sa consistent Document ID (Gaya ng nasa screenshot)
+        function getDocId(storeName) {
+            if (!storeName) return "unknown_store";
+            return storeName
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '_')
+                .replace(/[^\w-]/g, '');
+        }
+
         async function handleAdminLogin(email, password) {
             try {
                 await signInWithEmailAndPassword(auth, email, password);
@@ -472,7 +482,7 @@
             const uniqueMap = new Map();
             appData.consignments.forEach(item => {
                 if (!item.storeName) return;
-                const key = item.storeName.trim().toLowerCase();
+                const key = getDocId(item.storeName);
                 if (uniqueMap.has(key)) {
                     let existing = uniqueMap.get(key);
                     if (item.storeItems && item.storeItems.length > 0) {
@@ -688,7 +698,7 @@
 
         async function updateStoreInCloud(storeObj) {
             try {
-                let docId = storeObj.docId || storeObj.storeName.toLowerCase().replace(/\s+/g, '_');
+                let docId = storeObj.docId || getDocId(storeObj.storeName);
                 let dataToSave = { ...storeObj };
                 delete dataToSave.docId;
                 await setDoc(doc(db, "stores", docId), dataToSave, { merge: true });
@@ -738,7 +748,7 @@
                 appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
                 deduplicateConsignments();
                 cleanSourceData();
-                let existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === sName.toLowerCase());
+                let existingStore = appData.consignments.find(c => getDocId(c.storeName) === getDocId(sName));
 
                 if (existingStore) {
                     if (sAddress) existingStore.address = sAddress;
@@ -1529,8 +1539,13 @@
             const item = appData.consignments[index];
             const newName = prompt('Bagong Pangalan ng Tindahan:', item.storeName);
             if (newName && newName.trim() !== '') {
-                // Kung binago ang pangalan, maaaring burahin ang lumang doc ID o gumawa ng bago, ngunit i-update ang pangalan
+                try {
+                    let oldDocId = item.docId || getDocId(item.storeName);
+                    await deleteDoc(doc(db, "stores", oldDocId));
+                } catch(e) {}
+
                 item.storeName = newName.trim();
+                item.docId = getDocId(item.storeName);
                 if (item.ownerName) {
                     const isSame = item.ownerName.trim().toLowerCase() === item.storeName.trim().toLowerCase();
                     item.searchValidation = isSame ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
@@ -1562,7 +1577,7 @@
                     });
                 }
                 try {
-                    let docId = item.docId || item.storeName.toLowerCase().replace(/\s+/g, '_');
+                    let docId = item.docId || getDocId(item.storeName);
                     await deleteDoc(doc(db, "stores", docId));
                 } catch (e) {
                     console.error("Error deleting store document:", e);
