@@ -20,7 +20,7 @@
         button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #388e3c; }
 
-        #authScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; }
+        #authScreen { display: block; }
         #mainAppContent { display: none; }
 
         .summary-box { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
@@ -53,33 +53,77 @@
 <body>
 
     <header>
-        <span>🧹 Doctor's Whisk Broom - CLIENT</span>
-        <button type="button" id="logoutBtn" onclick="handleClientLogout()" style="background-color: #c62828; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: none; width: auto; margin-top: 0;">Logout</button>
+        <span>🧹 Doctor's Whisk Broom - Client Portal</span>
+        <button type="button" id="logoutBtn" onclick="handleClientLogout()" style="background-color: #c62828; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: none; width: auto; margin-top: 0;">Mag-logout</button>
     </header>
 
     <div class="container">
 
-        <!-- AUTH SCREEN -->
-        <div id="authScreen" class="card">
-            <h2>🔒 Login ng Tindahan</h2>
-            <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px; text-align: center;">Ilagay ang email na naka-register sa iyong consignment.</p>
-            <div class="form-group" style="width: 100%;">
-                <label for="clientEmailInput">Store Email:</label>
-                <input type="email" id="clientEmailInput" placeholder="I-type ang email ng tindahan..." style="margin-bottom: 10px;">
-                <label for="clientPasswordInput">Password:</label>
-                <input type="password" id="clientPasswordInput" placeholder="I-type ang password...">
+        <!-- AUTH / LOGIN SCREEN -->
+        <div id="authScreen">
+            <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
+
+            <div class="card">
+                <h2>Pribadong Portal ng Tindahan</h2>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">Para mabuksan ang iyong portal, i-type nang eksakto ang rehistradong Pangalan ng iyong Tindahan o gamitin ang Pangalan ng May-ari bilang search batayan.</p>
+                
+                <div class="form-group">
+                    <label for="clientSearchInput">Pangalan ng Tindahan / May-ari:</label>
+                    <input type="text" id="clientSearchInput" placeholder="Hal. Myla Dones o Angela Cambal">
+                </div>
+                <button type="button" id="loginBtn" style="background-color: var(--secondary-color);">Buksan ang Aking Portal</button>
             </div>
-            <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
-            <div style="margin-top: 15px; text-align: center; font-size: 0.85rem;">
-                <a href="#" onclick="openModal('applyModal')" style="color: var(--primary-color); font-weight: bold;">📝 Gusto mo bang maging Consignment Store? Mag-apply dito</a>
+
+            <!-- CREATE ACCOUNT / APPLY -->
+            <div class="card">
+                <h2>Create Account / Bagong Aplikasyon</h2>
+                <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 12px; border-radius: 4px; font-size: 0.85rem; color: #0d47a1;">
+                    💡 <strong>Impormasyon:</strong> Maaari mong balikan ang iyong account pagkalipas ng 2 araw. I-type lamang ang iyong <strong>Pangalan ng May-ari o Tindahan</strong> sa Pribadong Portal sa itaas.
+                </div>
+                
+                <form id="applyForm">
+                    <div class="form-group">
+                        <label for="applyStoreName">Pangalan ng Tindahan:</label>
+                        <input type="text" id="applyStoreName" required placeholder="Hal. Aling Nena Store">
+                    </div>
+                    <div class="form-group">
+                        <label for="applyOwnerName">Pangalan ng May-ari (Tinatanggap ang special characters gaya ng &, -, _, etc.):</label>
+                        <input type="text" id="applyOwnerName" required placeholder="Hal. Juan & Maria Dela Cruz-Santos">
+                    </div>
+                    <div class="form-group">
+                        <label for="applyPhone">Numero ng Telepono / GCash:</label>
+                        <input type="text" id="applyPhone" placeholder="Hal. 09123456789">
+                    </div>
+                    <div class="form-group">
+                        <label for="applyEmail">Gmail / Active Email Address:</label>
+                        <input type="email" id="applyEmail" placeholder="Hal. alingenastore@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="applyAddress">Lokasyon / Address:</label>
+                        <input type="text" id="applyAddress" placeholder="Hal. Brgy. Osiao, Sorsogon">
+                    </div>
+                    <div class="form-group">
+                        <label for="applyStyle">Piliin ang Gusto mong Uri ng Walis (Style):</label>
+                        <select id="applyStyle">
+                            <option value="Ordinary">Ordinary Style</option>
+                            <option value="Premium">Premium Style</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="applyQty">Simulang Bilang ng Stock (pcs):</label>
+                        <input type="number" id="applyQty" value="10" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="applyMessage">Mensahe / Note sa Admin (Opsyonal):</label>
+                        <textarea id="applyMessage" rows="3" placeholder="I-type ang mensahe..."></textarea>
+                    </div>
+                    <button type="submit" style="background-color: var(--primary-color);">Isumite ang Aplikasyon</button>
+                </form>
             </div>
         </div>
 
         <!-- MAIN APP CONTENT -->
         <div id="mainAppContent">
-
-            <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
-
             <div class="card" style="background: #e8f5e9; border: 1px solid #c8e6c9;">
                 <h2 id="storeTitleDisplay">🏢 Pangalan ng Tindahan</h2>
                 <div style="font-size: 0.85rem; color: #555; margin-bottom: 8px;">
@@ -115,7 +159,6 @@
                     <p style="color: #666;">Wala pang tala.</p>
                 </div>
             </div>
-
         </div>
 
     </div>
@@ -208,54 +251,9 @@
         </div>
     </div>
 
-    <!-- APPLY MODAL -->
-    <div class="modal-overlay" id="applyModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>📝 Aplikasyon para sa Consignment</h2>
-                <button class="modal-close" onclick="closeModal('applyModal')">✕</button>
-            </div>
-            <form id="applyForm">
-                <div class="form-group">
-                    <label for="applyStoreName">Pangalan ng Tindahan:</label>
-                    <input type="text" id="applyStoreName" required placeholder="Hal. Aling Nena Store">
-                </div>
-                <div class="form-group">
-                    <label for="applyOwnerName">Pangalan ng May-ari:</label>
-                    <input type="text" id="applyOwnerName" required placeholder="Hal. Maria Santos">
-                </div>
-                <div class="form-group">
-                    <label for="applyEmail">Active Email / Gmail:</label>
-                    <input type="email" id="applyEmail" required placeholder="Hal. mariasantos@gmail.com">
-                </div>
-                <div class="form-group">
-                    <label for="applyAddress">Address / Lokasyon:</label>
-                    <input type="text" id="applyAddress" placeholder="Hal. Brgy. Sirangan, Sorsogon">
-                </div>
-                <div class="form-group">
-                    <label for="applyStyle">Nais na Estilo:</label>
-                    <select id="applyStyle">
-                        <option value="Ordinary">Ordinary Style</option>
-                        <option value="Premium">Premium Style</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="applyQty">Simulang Bilang ng Stock (pcs):</label>
-                    <input type="number" id="applyQty" value="10" required min="1">
-                </div>
-                <div class="form-group">
-                    <label for="applyMessage">Mensahe / Note sa Admin:</label>
-                    <textarea id="applyMessage" rows="3" placeholder="I-type ang mensahe..."></textarea>
-                </div>
-                <button type="submit" style="background-color: var(--primary-color);">Isumite ang Aplikasyon</button>
-            </form>
-        </div>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, getDocs, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -268,7 +266,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth();
 
         function getDocId(storeName) {
             if (!storeName) return "unknown_store";
@@ -282,8 +279,7 @@
         const authScreen = document.getElementById('authScreen');
         const mainAppContent = document.getElementById('mainAppContent');
         const loginBtn = document.getElementById('loginBtn');
-        const emailInput = document.getElementById('clientEmailInput');
-        const passwordInput = document.getElementById('clientPasswordInput');
+        const searchInput = document.getElementById('clientSearchInput');
         const syncStatus = document.getElementById('syncStatus');
         const logoutBtn = document.getElementById('logoutBtn');
 
@@ -300,71 +296,71 @@
             document.getElementById(modalId).style.display = 'none';
         };
 
-        async function handleClientLogin(email, password) {
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                // Kung walang auth account pero nasa stores collection ang email, subukan nating i-match o i-prompt
-                try {
-                    const querySnapshot = await getDocs(collection(db, "stores"));
-                    let foundDocId = null;
-                    querySnapshot.forEach((docSnap) => {
-                        let data = docSnap.data();
-                        if (data.email && data.email.trim().toLowerCase() === email.trim().toLowerCase()) {
-                            foundDocId = docSnap.id;
-                        }
-                    });
-                    if (foundDocId) {
-                        currentStoreDocId = foundDocId;
-                        authScreen.style.display = 'none';
-                        mainAppContent.style.display = 'block';
-                        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-                        initClientApp(foundDocId);
-                        return;
-                    }
-                } catch (e) {}
-                alert("Mali ang email o password, o walang nakarehistrong tindahan sa email na ito.");
+        // Auto-login kung nakatala na sa localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedStoreId = localStorage.getItem('dwbe_current_store_id');
+            if (savedStoreId) {
+                currentStoreDocId = savedStoreId;
+                authScreen.style.display = 'none';
+                mainAppContent.style.display = 'block';
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                initClientApp(savedStoreId);
+            } else {
+                syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
             }
-        }
-
-        loginBtn.addEventListener('click', () => {
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            if (!email || !password) {
-                alert("Ilagay ang email at password.");
-                return;
-            }
-            handleClientLogin(email, password);
         });
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const email = user.email;
+        loginBtn.addEventListener('click', async () => {
+            const queryVal = searchInput.value.trim().toLowerCase();
+            if (!queryVal) {
+                alert("Ilagay ang pangalan ng tindahan o may-ari.");
+                return;
+            }
+
+            syncStatus.textContent = "Hinahanap ang tindahan...";
+            try {
                 const querySnapshot = await getDocs(collection(db, "stores"));
-                let foundDocId = null;
+                let foundId = null;
+
                 querySnapshot.forEach((docSnap) => {
-                    let data = docSnap.data();
-                    if (data.email && data.email.trim().toLowerCase() === email.trim().toLowerCase()) {
-                        foundDocId = docSnap.id;
+                    const data = docSnap.data();
+                    const sName = (data.storeName || "").toLowerCase();
+                    const oName = (data.ownerName || "").toLowerCase();
+                    const docId = docSnap.id.toLowerCase();
+
+                    if (docId === getDocId(queryVal) || sName.includes(queryVal) || oName.includes(queryVal)) {
+                        foundId = docSnap.id;
                     }
                 });
-                if (foundDocId) {
-                    currentStoreDocId = foundDocId;
+
+                if (foundId) {
+                    currentStoreDocId = foundId;
+                    localStorage.setItem('dwbe_current_store_id', foundId);
                     authScreen.style.display = 'none';
                     mainAppContent.style.display = 'block';
                     if (logoutBtn) logoutBtn.style.display = 'inline-block';
-                    initClientApp(foundDocId);
+                    initClientApp(foundId);
+                } else {
+                    alert("Hindi natagpuan ang tindahan na may ganyang pangalan. Pakitiyak na tama ang spelling o mag-apply sa ibaba.");
+                    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
                 }
+            } catch (e) {
+                alert("Nagkaroon ng problema sa paghahanap.");
+                syncStatus.textContent = "⚠️ Error sa pagkonekta";
             }
         });
 
         function handleClientLogout() {
             if (heartbeatInterval) clearInterval(heartbeatInterval);
             if (unsubscribeStore) unsubscribeStore();
-            signOut(auth);
-            authScreen.style.display = 'flex';
+            localStorage.removeItem('dwbe_current_store_id');
+            currentStoreDocId = null;
+            currentStoreData = null;
+            authScreen.style.display = 'block';
             mainAppContent.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'none';
+            searchInput.value = '';
+            syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
         }
         window.handleClientLogout = handleClientLogout;
 
@@ -383,7 +379,6 @@
                 }
             });
 
-            // Heartbeat para maging Online status sa Admin
             updateLastAccess();
             if (heartbeatInterval) clearInterval(heartbeatInterval);
             heartbeatInterval = setInterval(updateLastAccess, 20000);
@@ -410,7 +405,7 @@
             let totalStock = 0, totalSold = 0, totalSales = 0;
             let itemsHtml = '';
 
-            item.storeItems.forEach((sub, idx) => {
+            item.storeItems.forEach((sub) => {
                 const subSold = Math.max(0, sub.initialQty - sub.currentStock - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
                 const subSales = subSold * sub.price;
                 totalStock += sub.currentStock;
@@ -438,7 +433,6 @@
             document.getElementById('clientTotalSales').textContent = '₱' + totalSales.toLocaleString();
             document.getElementById('clientStoreItemsList').innerHTML = itemsHtml || '<p style="text-align:center; color:#778;">Wala pang items.</p>';
 
-            // History
             let historyHtml = '';
             if (item.history) {
                 item.history.forEach(h => {
@@ -447,7 +441,6 @@
             }
             document.getElementById('clientHistoryContainer').innerHTML = historyHtml || '<p style="color:#666;">Wala pang tala.</p>';
 
-            // Chat
             let chatHtml = '';
             if (item.messages) {
                 item.messages.forEach(msg => {
@@ -456,7 +449,6 @@
             }
             document.getElementById('clientChatContainer').innerHTML = chatHtml || '<p style="color:#666;">Wala pang mensahe.</p>';
 
-            // Notifications
             let notifHtml = '';
             let unreadNotifCount = 0;
             if (item.clientNotifications) {
@@ -476,7 +468,6 @@
             }
         }
 
-        // Report Sales Form Submission
         document.getElementById('reportSalesForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentStoreDocId || !currentStoreData) return;
@@ -520,7 +511,6 @@
             alert('Matagumpay na naipadala ang ulat ng benta sa admin!');
         });
 
-        // Restock Form Submission
         document.getElementById('restockForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentStoreDocId || !currentStoreData) return;
@@ -549,7 +539,6 @@
             alert('Matagumpay na naipadala ang hiling na restock sa admin!');
         });
 
-        // Send Chat Message
         window.sendClientMessage = async function() {
             const input = document.getElementById('clientChatInput');
             const text = input.value.trim();
@@ -569,22 +558,22 @@
             });
         };
 
-        // Application Form for New Stores
         document.getElementById('applyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const sName = document.getElementById('applyStoreName').value.trim();
             const oName = document.getElementById('applyOwnerName').value.trim();
+            const phone = document.getElementById('applyPhone').value.trim();
             const email = document.getElementById('applyEmail').value.trim();
             const address = document.getElementById('applyAddress').value.trim();
             const style = document.getElementById('applyStyle').value;
             const qty = parseInt(document.getElementById('applyQty').value) || 10;
             const message = document.getElementById('applyMessage').value.trim();
 
-            const docId = getDocId(sName);
             const newInquiry = {
                 id: Date.now(),
                 storeName: sName,
                 ownerName: oName,
+                phone: phone,
                 email: email,
                 address: address,
                 styleType: style,
