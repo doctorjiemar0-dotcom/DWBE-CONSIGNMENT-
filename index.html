@@ -142,10 +142,16 @@ button:hover { opacity: 0.9; }
           <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
           <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
         </div>
-        <!-- Maliit na QR Code sa tabi ng Pangalan ng Owner na laging nakabukas -->
-        <div style="background: white; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center;">
-          <div id="smallQrcode" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"></div>
-          <span style="font-size: 0.55rem; color: #2e7d32; font-weight: bold; display: block;">QR Code</span>
+        <!-- Malaking QR Code section na may Open/Close Button -->
+        <div style="background: white; padding: 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span style="font-size: 0.7rem; color: #2e7d32; font-weight: bold;">Store QR Code</span>
+            <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #2e7d32; color: white; border: none; padding: 2px 6px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; width: auto; margin-top: 0;">Itago</button>
+          </div>
+          <div id="qrCodeWrapper" style="display: block;">
+            <div id="smallQrcode" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></div>
+            <span style="font-size: 0.6rem; color: #555; display: block; margin-top: 4px;">I-scan para sa Portal</span>
+          </div>
         </div>
       </div>
       <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0; margin-left: 10px;">Mag-logout</button>
@@ -319,7 +325,7 @@ window.selectInqStyle = function(style, el) {
   el.classList.add('selected');
 };
 
-// Toggle functions para sa Restock at Chat buttons
+// Toggle functions para sa Restock, Chat, at QR Code buttons
 window.toggleRestockVisibility = function() {
   const wrapper = document.getElementById('restockContentWrapper');
   const btn = document.getElementById('toggleRestockBtn');
@@ -335,6 +341,18 @@ window.toggleRestockVisibility = function() {
 window.toggleChatVisibility = function() {
   const wrapper = document.getElementById('chatContentWrapper');
   const btn = document.getElementById('toggleChatBtn');
+  if (wrapper.style.display === 'none') {
+    wrapper.style.display = 'block';
+    btn.textContent = 'Itago';
+  } else {
+    wrapper.style.display = 'none';
+    btn.textContent = 'Buksan';
+  }
+};
+
+window.toggleQrVisibility = function() {
+  const wrapper = document.getElementById('qrCodeWrapper');
+  const btn = document.getElementById('toggleQrBtn');
   if (wrapper.style.display === 'none') {
     wrapper.style.display = 'block';
     btn.textContent = 'Itago';
@@ -604,14 +622,14 @@ function renderClientDashboard(store) {
     agreementFrame.src = targetAgreementUrl;
   }
 
-  // Render Maliit na QR Code sa tabi ng pangalan na laging nakabukas
+  // Render Malaking QR Code sa tabi ng pangalan na may Open/Close feature
   const smallQrContainer = document.getElementById('smallQrcode');
   smallQrContainer.innerHTML = "";
   const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
   new QRCode(smallQrContainer, {
     text: currentUrl,
-    width: 45,
-    height: 45,
+    width: 110,
+    height: 110,
     colorDark: "#2e7d32",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
