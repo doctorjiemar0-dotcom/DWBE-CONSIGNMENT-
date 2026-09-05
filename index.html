@@ -142,15 +142,14 @@ button:hover { opacity: 0.9; }
           <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
           <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
         </div>
-        <!-- Malaking QR Code section na may Open/Close Button -->
+        <!-- Saktong lakihan ang QR code na may Open and Close button -->
         <div style="background: white; padding: 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <span style="font-size: 0.7rem; color: #2e7d32; font-weight: bold;">Store QR Code</span>
-            <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #2e7d32; color: white; border: none; padding: 2px 6px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; width: auto; margin-top: 0;">Itago</button>
+            <span style="font-size: 0.65rem; color: #2e7d32; font-weight: bold;">QR Code</span>
+            <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background: #2e7d32; color: white; border: none; font-size: 0.6rem; padding: 2px 6px; border-radius: 3px; cursor: pointer; width: auto; margin-top: 0;">Itago</button>
           </div>
-          <div id="qrCodeWrapper" style="display: block;">
+          <div id="smallQrcodeWrapper" style="display: block;">
             <div id="smallQrcode" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></div>
-            <span style="font-size: 0.6rem; color: #555; display: block; margin-top: 4px;">I-scan para sa Portal</span>
           </div>
         </div>
       </div>
@@ -351,7 +350,7 @@ window.toggleChatVisibility = function() {
 };
 
 window.toggleQrVisibility = function() {
-  const wrapper = document.getElementById('qrCodeWrapper');
+  const wrapper = document.getElementById('smallQrcodeWrapper');
   const btn = document.getElementById('toggleQrBtn');
   if (wrapper.style.display === 'none') {
     wrapper.style.display = 'block';
@@ -622,14 +621,14 @@ function renderClientDashboard(store) {
     agreementFrame.src = targetAgreementUrl;
   }
 
-  // Render Malaking QR Code sa tabi ng pangalan na may Open/Close feature
+  // Render Saktong Lakihan ang QR Code (120px) na may Open/Close Button sa header card
   const smallQrContainer = document.getElementById('smallQrcode');
   smallQrContainer.innerHTML = "";
   const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
   new QRCode(smallQrContainer, {
     text: currentUrl,
-    width: 110,
-    height: 110,
+    width: 120,
+    height: 120,
     colorDark: "#2e7d32",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
