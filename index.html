@@ -53,7 +53,6 @@ button:hover { opacity: 0.9; }
 .chat-msg { background: #f1f8e9; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85rem; border: 1px solid #c5e1a5; }
 .chat-msg.admin { background: #e3f2fd; border-color: #90caf9; }
 #syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
-#installAppCard, #dashboardInstallCard { background: #e3f2fd; border: 1px solid #90caf9; display: none; text-align: center; }
 .qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
 #qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
 .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
@@ -82,13 +81,6 @@ button:hover { opacity: 0.9; }
 
 <div class="container">
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
-
-  <!-- Install App Card para sa Login/Inquiry Page -->
-  <div id="installAppCard" class="card">
-    <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
-    <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
-    <button id="installAppBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
-  </div>
 
   <!-- Secure Login Screen -->
   <div id="loginScreen" class="card">
@@ -179,13 +171,6 @@ button:hover { opacity: 0.9; }
         </div>
       </div>
       <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0; margin-left: 10px;">Mag-logout</button>
-    </div>
-
-    <!-- Install App Card para sa Dashboard -->
-    <div id="dashboardInstallCard" class="card">
-      <h2 style="color: #0288d1; font-size: 1rem;">📱 I-install ang App sa Device Mo</h2>
-      <p style="font-size: 0.80rem; color: #333; margin-bottom: 10px;">Gawing parang tunay na mobile app ang portal na ito para mabilis ma-access kahit walang browser.</p>
-      <button id="dashboardInstallBtn" style="background-color: #0288d1; width: auto; padding: 8px 20px; margin: 0 auto;">I-install ang App Na Ito</button>
     </div>
 
     <!-- STORE PARTNER AGREEMENTS IFRAME SECTION -->
@@ -389,17 +374,11 @@ window.addEventListener('message', function(event) {
 });
 
 let deferredPrompt;
-const installAppCard = document.getElementById('installAppCard');
-const installAppBtn = document.getElementById('installAppBtn');
-const dashboardInstallCard = document.getElementById('dashboardInstallCard');
-const dashboardInstallBtn = document.getElementById('dashboardInstallBtn');
 const headerInstallBtn = document.getElementById('headerInstallBtn');
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  if (installAppCard) installAppCard.style.display = 'block';
-  if (dashboardInstallCard) dashboardInstallCard.style.display = 'block';
   if (headerInstallBtn) headerInstallBtn.style.display = 'block';
 });
 
@@ -412,14 +391,10 @@ const handleInstallClick = async () => {
       alert('✅ Matagumpay na na-install ang app!');
     }
     deferredPrompt = null;
-    if (installAppCard) installAppCard.style.display = 'none';
-    if (dashboardInstallCard) dashboardInstallCard.style.display = 'none';
     if (headerInstallBtn) headerInstallBtn.style.display = 'none';
   }
 };
 
-if (installAppBtn) installAppBtn.addEventListener('click', handleInstallClick);
-if (dashboardInstallBtn) dashboardInstallBtn.addEventListener('click', handleInstallClick);
 if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleInstallClick);
 
 window.requestLogout = function() {
@@ -580,7 +555,6 @@ function initPortalView() {
     const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase() || (c.ownerName && c.ownerName.toLowerCase() === currentStoreName.toLowerCase()));
     if (found) {
       document.getElementById('loginScreen').style.display = 'none';
-      if (installAppCard) installAppCard.style.display = 'none';
       document.getElementById('portalContent').style.display = 'block';
       if (paramStore) {
         document.getElementById('directAccessNotice').style.display = 'block';
