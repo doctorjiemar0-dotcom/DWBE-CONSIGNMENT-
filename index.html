@@ -2,15 +2,41 @@
 <html lang="tl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Doctor's Whisk Broom - Client Portal</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Theme Color -->
+<meta name="theme-color" content="#2e7d32">
+<meta name="msapplication-navbutton-color" content="#2e7d32">
+
+<!-- PWA Configuration -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Whisk Broom">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232e7d32' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
+
+<!-- Shortcut Icons -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%232e7d32' width='32' height='32'/><text x='50%' y='50%' font-size='24' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
+
 <!-- QRCode JS Library para sa QR Code generator -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <style>
 :root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
 body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
-header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
+header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+.header-title { flex-grow: 1; text-align: center; }
+.install-header-btn { background-color: #0288d1; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
+.install-header-btn:hover { opacity: 0.9; }
+.install-header-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .container { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
 h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
@@ -49,7 +75,11 @@ button:hover { opacity: 0.9; }
 </style>
 </head>
 <body>
-<header>🧹 Doctor's Whisk Broom - Client Portal</header>
+<header>
+  <div class="header-title">🧹 Doctor's Whisk Broom - Client Portal</div>
+  <button id="headerInstallBtn" class="install-header-btn" style="display:none;">📱 I-Install</button>
+</header>
+
 <div class="container">
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
@@ -81,7 +111,7 @@ button:hover { opacity: 0.9; }
     <div id="printableInquirySection" style="width: 100%;">
       <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Create Account / Bagong Aplikasyon</h2>
       <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
-        <strong>💡 Impormasyon:</strong> Maaari mong balikan ang iyong account pagkalipas ng <strong>2 araw</strong>. I-type lamang ang iyong <strong>Pangalan ng May-ari o Tindahan</strong> sa Pribadong Portal sa itaas.
+        <strong>💡 Impormasyon:</strong> Maaari mong balihan ang iyong account pagkalipas ng <strong>2 araw</strong>. I-type lamang ang iyong <strong>Pangalan ng May-ari o Tindahan</strong> sa Pribadong Portal sa itaas.
       </div>
       <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
         <div class="form-group">
@@ -142,15 +172,10 @@ button:hover { opacity: 0.9; }
           <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
           <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
         </div>
-        <!-- Saktong lakihan ang QR code na may Open and Close button -->
-        <div style="background: white; padding: 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <span style="font-size: 0.65rem; color: #2e7d32; font-weight: bold;">QR Code</span>
-            <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background: #2e7d32; color: white; border: none; font-size: 0.6rem; padding: 2px 6px; border-radius: 3px; cursor: pointer; width: auto; margin-top: 0;">Itago</button>
-          </div>
-          <div id="smallQrcodeWrapper" style="display: block;">
-            <div id="smallQrcode" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></div>
-          </div>
+        <!-- Maliit na QR Code sa tabi ng Pangalan ng Owner na laging nakabukas -->
+        <div style="background: white; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center;">
+          <div id="smallQrcode" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"></div>
+          <span style="font-size: 0.55rem; color: #2e7d32; font-weight: bold; display: block;">QR Code</span>
         </div>
       </div>
       <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: auto; font-size: 0.8rem; padding: 6px 10px; margin-top: 0; margin-left: 10px;">Mag-logout</button>
@@ -304,6 +329,11 @@ let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendin
 let currentStoreName = localStorage.getItem('client_logged_store') || '';
 const syncStatus = document.getElementById('syncStatus');
 
+// Register Service Worker para sa Offline Support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+}
+
 window.openImageViewer = function(src, title) {
   const modal = document.getElementById('imageModal');
   const modalImg = document.getElementById('modalImage');
@@ -324,7 +354,7 @@ window.selectInqStyle = function(style, el) {
   el.classList.add('selected');
 };
 
-// Toggle functions para sa Restock, Chat, at QR Code buttons
+// Toggle functions para sa Restock at Chat buttons
 window.toggleRestockVisibility = function() {
   const wrapper = document.getElementById('restockContentWrapper');
   const btn = document.getElementById('toggleRestockBtn');
@@ -349,18 +379,6 @@ window.toggleChatVisibility = function() {
   }
 };
 
-window.toggleQrVisibility = function() {
-  const wrapper = document.getElementById('smallQrcodeWrapper');
-  const btn = document.getElementById('toggleQrBtn');
-  if (wrapper.style.display === 'none') {
-    wrapper.style.display = 'block';
-    btn.textContent = 'Itago';
-  } else {
-    wrapper.style.display = 'none';
-    btn.textContent = 'Buksan';
-  }
-};
-
 window.addEventListener('message', function(event) {
   if (event.data && event.data.type === 'resizeAgreement') {
     const iframe = document.getElementById('storeAgreementFrame');
@@ -375,27 +393,34 @@ const installAppCard = document.getElementById('installAppCard');
 const installAppBtn = document.getElementById('installAppBtn');
 const dashboardInstallCard = document.getElementById('dashboardInstallCard');
 const dashboardInstallBtn = document.getElementById('dashboardInstallBtn');
+const headerInstallBtn = document.getElementById('headerInstallBtn');
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
   if (installAppCard) installAppCard.style.display = 'block';
   if (dashboardInstallCard) dashboardInstallCard.style.display = 'block';
+  if (headerInstallBtn) headerInstallBtn.style.display = 'block';
 });
 
 const handleInstallClick = async () => {
   if (deferredPrompt) {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') { console.log('Na-install ang app'); }
+    if (outcome === 'accepted') { 
+      console.log('Na-install ang app');
+      alert('✅ Matagumpay na na-install ang app!');
+    }
     deferredPrompt = null;
     if (installAppCard) installAppCard.style.display = 'none';
     if (dashboardInstallCard) dashboardInstallCard.style.display = 'none';
+    if (headerInstallBtn) headerInstallBtn.style.display = 'none';
   }
 };
 
 if (installAppBtn) installAppBtn.addEventListener('click', handleInstallClick);
 if (dashboardInstallBtn) dashboardInstallBtn.addEventListener('click', handleInstallClick);
+if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleInstallClick);
 
 window.requestLogout = function() {
   const storeInput = prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
@@ -621,14 +646,14 @@ function renderClientDashboard(store) {
     agreementFrame.src = targetAgreementUrl;
   }
 
-  // Render Saktong Lakihan ang QR Code (120px) na may Open/Close Button sa header card
+  // Render Maliit na QR Code sa tabi ng pangalan na laging nakabukas
   const smallQrContainer = document.getElementById('smallQrcode');
   smallQrContainer.innerHTML = "";
   const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
   new QRCode(smallQrContainer, {
     text: currentUrl,
-    width: 120,
-    height: 120,
+    width: 45,
+    height: 45,
     colorDark: "#2e7d32",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
