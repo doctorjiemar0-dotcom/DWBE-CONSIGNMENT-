@@ -2593,87 +2593,148 @@ window.addEventListener(
   
   
   
-/* =========================================================  
-   PWA INSTALL  
-========================================================= */  
-  
-let deferredPrompt;  
-  
-const headerInstallBtn =  
-  document.getElementById(  
-    'headerInstallBtn'  
-  );  
-  
-  
-window.addEventListener(  
-  'beforeinstallprompt',  
-  (e) => {  
-  
-    e.preventDefault();  
-  
-    deferredPrompt = e;  
-  
-    if (headerInstallBtn) {  
-  
-      headerInstallBtn.style.display =  
-        'block';  
-  
-    }  
-  
-  }  
-);  
-  
-  
-const handleInstallClick =  
-async () => {  
-  
-  if (deferredPrompt) {  
-  
-    deferredPrompt.prompt();  
-  
-    const {  
-      outcome  
-    } =  
-      await deferredPrompt.userChoice;  
-  
-    if (  
-      outcome ===  
-      'accepted'  
-    ) {  
-  
-      console.log(  
-        'Na-install ang app'  
-      );  
-  
-      alert(  
-        '✅ Matagumpay na na-install ang app!'  
-      );  
-  
-    }  
-  
-    deferredPrompt = null;  
-  
-    if (headerInstallBtn) {  
-  
-      headerInstallBtn.style.display =  
-        'none';  
-  
-    }  
-  
-  }  
-  
-};  
-  
-  
-if (headerInstallBtn) {  
-  
-  headerInstallBtn.addEventListener(  
-    'click',  
-    handleInstallClick  
-  );  
-  
-}  
-  
+
+  /* =========================================================
+   PWA INSTALL SUPPORT
+========================================================= */
+
+let deferredPrompt = null;
+
+const headerInstallBtn =
+  document.getElementById('headerInstallBtn');
+
+
+/* ---------------------------------------------------------
+   DETECT INSTALLABLE PWA
+--------------------------------------------------------- */
+
+window.addEventListener(
+  'beforeinstallprompt',
+  (event) => {
+
+    console.log(
+      '✅ PWA install prompt detected.'
+    );
+
+    /* Huwag hayaang automatic na lumabas
+       ang browser install prompt */
+    event.preventDefault();
+
+    /* Itago muna ang event para magamit
+       kapag pinindot ang sariling button */
+    deferredPrompt = event;
+
+    /* Ipakita ang sariling INSTALL button */
+    if (headerInstallBtn) {
+
+      headerInstallBtn.style.display =
+        'block';
+
+    }
+
+  }
+);
+
+
+/* ---------------------------------------------------------
+   INSTALL BUTTON
+--------------------------------------------------------- */
+
+if (headerInstallBtn) {
+
+  headerInstallBtn.addEventListener(
+    'click',
+    async () => {
+
+      /* Walang install prompt */
+      if (!deferredPrompt) {
+
+        alert(
+          '📱 Hindi pa available ang automatic install prompt sa browser na ito.\n\n' +
+          'Kung Android Chrome ang gamit mo, buksan ang browser menu ⋮ at piliin ang "Install app" o "Add to Home screen".'
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        /* Ipakita ang native install prompt */
+        const result =
+          await deferredPrompt.prompt();
+
+        console.log(
+          'Install result:',
+          result.outcome
+        );
+
+
+        if (
+          result.outcome ===
+          'accepted'
+        ) {
+
+          console.log(
+            '✅ Matagumpay na na-install ang PWA.'
+          );
+
+        } else {
+
+          console.log(
+            'ℹ️ Kinansela ng user ang installation.'
+          );
+
+        }
+
+
+      } catch (error) {
+
+        console.error(
+          'Install prompt error:',
+          error
+        );
+
+      }
+
+
+      /* Isang beses lang maaaring gamitin
+         ang parehong install prompt */
+      deferredPrompt = null;
+
+      headerInstallBtn.style.display =
+        'none';
+
+    }
+  );
+
+}
+
+
+/* ---------------------------------------------------------
+   APP INSTALLED
+--------------------------------------------------------- */
+
+window.addEventListener(
+  'appinstalled',
+  () => {
+
+    console.log(
+      '✅ Doctor\'s Whisk Broom PWA installed.'
+    );
+
+    deferredPrompt = null;
+
+    if (headerInstallBtn) {
+
+      headerInstallBtn.style.display =
+        'none';
+
+    }
+
+  }
+);
   
   
 /* =========================================================  
