@@ -119,7 +119,7 @@
             <button type="button" class="tab-btn active" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>  
             <button type="button" class="tab-btn" onclick="switchTab('inquiriesTab', this)">📥 Inquiries</button>  
             <button type="button" class="tab-btn" onclick="switchTab('storesTab', this)">🏢 Tindahan</button>  
-            <button type="button" class="tab-btn" onclick="switchTab('restockTab', this)">📦 Restock</button>  
+            <button type="button" class="tab-btn" style="display:none;" onclick="switchTab('restockTab', this)">📦 Restock</button>  
             <button type="button" class="tab-btn" onclick="switchTab('salesTab', this)">💰 Mga Benta</button>  
             <button type="button" class="tab-btn" onclick="switchTab('inventoryTab', this)">📋 Inventory</button>  
         </div>  
@@ -164,7 +164,7 @@
 
             <div class="summary-box">  
                 <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>  
-                <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>  
+                <div class="summary-row" style="color: #c62828; font-weight: bold; display:none;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>  
                 <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>  
                 <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>  
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>  
@@ -242,7 +242,7 @@
                             <label for="dateDelivered">Petsa ng Simula (Start):</label>  
                             <input type="date" id="dateDelivered">  
                         </div>  
-                        <div class="form-group">  
+                        <div class="form-group" style="display:none;">  
                             <label for="collectionDate">Target na Petsa ng Koleksyon:</label>  
                             <input type="date" id="collectionDate">  
                         </div>  
@@ -257,7 +257,7 @@
         </div>  
 
         <!-- TAB 4: RESTOCK -->  
-        <div id="restockTab" class="tab-content">  
+        <div id="restockTab" class="tab-content" style="display:none;">  
             <div class="card">  
                 <h2>📦 Mga Pending Request at Restock</h2>  
                 <div class="form-group" style="margin-bottom: 10px;">  
@@ -309,7 +309,7 @@
 <div class="floating-container" id="floatingContainer">  
     <button class="fab-btn fab-broadcast" id="fabBroadcastBtn" title="Overall Broadcast Chatbox" onclick="openModal('broadcastModal')">📢</button>  
     <button class="fab-btn fab-backup" id="fabBackupBtn" title="Data Backup & Recovery" onclick="openModal('backupModal')">💾</button>  
-    <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock at Sales Request" onclick="openModal('requestModal')">  
+    <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock at Sales Request" onclick="openModal('requestModal')" style="display:none;">  
         📦<span class="fab-badge" id="requestBadge">0</span>  
     </button>  
     <button class="fab-btn fab-inquiry" id="fabInquiryBtn" title="Mga Bagong Inquiry / Aplikasyon" onclick="openModal('inquiryModal')">  
@@ -788,7 +788,7 @@
             const qty = parseInt(document.getElementById('quantity').value);  
             const price = parseFloat(document.getElementById('price').value);  
             const startD = document.getElementById('dateDelivered').value;  
-            const collD = document.getElementById('collectionDate').value;  
+            const collD = document.getElementById('collectionDate') ? document.getElementById('collectionDate').value : new Date().toISOString().slice(0, 10);  
   
             if (appData.homeStock[styleType] < qty) {  
                 if (!confirm(`Babala: Ang Home stock para sa ${styleType} ay kulang (${appData.homeStock[styleType]} pcs). Ituloy pa rin?`)) return;  
@@ -844,8 +844,10 @@
   
             form.reset();  
             document.getElementById('dateDelivered').valueAsDate = new Date();  
-            let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);  
-            document.getElementById('collectionDate').valueAsDate = nextMonth;  
+            if(document.getElementById('collectionDate')) {  
+                let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);  
+                document.getElementById('collectionDate').valueAsDate = nextMonth;  
+            }  
             document.getElementById('addStoreCard').style.display = 'none';  
             saveToCloud();  
         });  
@@ -1076,7 +1078,7 @@
                             Initial Qty: ${subItem.initialQty} pcs | Nabenta: <strong>${subSold} pcs</strong> | Total: ₱${totalOrderAmount.toLocaleString()}  
                         </div>  
                         <div style="font-size: 0.75rem; color: #555; margin-bottom: 6px;">  
-                            Start: ${subItem.dateDelivered || 'N/A'} | Target: ${subItem.collectionDate || 'N/A'}  
+                            Start: ${subItem.dateDelivered || 'N/A'}  
                         </div>  
                         <div class="btn-group">  
                             <button type="button" onclick="checkupStoreSub(${index}, ${subIdx})" style="background-color: #2e7d32;">Koleksyon</button>  
@@ -1275,7 +1277,6 @@
                     <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">  
                         👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>  
                     </div>  
-                    ${storeIsDue ? `<div style="margin-bottom: 8px;"><button type="button" onclick="markStoreCollected(${index})" style="background-color: #d32f2f; font-size: 0.8rem; padding: 6px;">💰 Markahan na Nakolekta na</button></div>` : ''}  
                     ${approvedRestocksHtml}  
                     <div style="margin-top: 10px;">${storeItemsHtml}</div>  
                     <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">  
@@ -1359,23 +1360,6 @@
         document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();  
     }  
   
-    window.markStoreCollected = async function(storeIdx) {  
-        const item = appData.consignments[storeIdx];  
-        const timestamp = new Date().toLocaleString();  
-        if (item.storeItems && item.storeItems.length > 0) {  
-            item.storeItems.forEach(sub => {  
-                let currColl = sub.collectionDate ? new Date(sub.collectionDate) : new Date();  
-                currColl.setMonth(currColl.getMonth() + 1);  
-                sub.collectionDate = currColl.toISOString().slice(0, 10);  
-            });  
-        }  
-        if (!item.history) item.history = [];  
-        item.history.unshift({ id: Date.now(), date: timestamp, text: `Nakolekta na ang bayad/items (Na-clear ang Due)` });  
-        if (!item.clientNotifications) item.clientNotifications = [];  
-        item.clientNotifications.push({ id: Date.now(), text: `✅ Nakolekta na ng admin ang bayad para sa cycle na ito.`, date: timestamp });  
-        await saveToCloud();  
-    };  
-  
     window.approveInquiry = async function(inqIdx) {  
         const inq = appData.pendingInquiries[inqIdx];  
         const defaultQty = inq.qty || 10;  
@@ -1399,8 +1383,7 @@
   
         appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);  
         const todayStr = new Date().toISOString().slice(0, 10);  
-        let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);  
-        const collDateStr = nextMonth.toISOString().slice(0, 10);  
+        const collDateStr = new Date().toISOString().slice(0, 10);  
   
         let notifications = [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}).`, date: new Date().toLocaleString() }];  
         if (isSameName) {  
@@ -1529,8 +1512,7 @@
             basePrice = item.storeItems[0].price;  
         }  
         const todayStr = new Date().toISOString().slice(0, 10);  
-        let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);  
-        const collDateStr = nextMonth.toISOString().slice(0, 10);  
+        const collDateStr = new Date().toISOString().slice(0, 10);  
   
         if (!item.storeItems) item.storeItems = [];  
         let existingSub = item.storeItems.find(sub => sub.styleType === style);  
