@@ -1,46 +1,77 @@
-<!DOCTYPE html><html lang="tl">
+<!DOCTYPE html>
+<html lang="tl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Doctor's Whisk Broom - Client Portal</title><!-- PWA Manifest --><link rel="manifest" href="manifest.json"><!-- Theme Color --><meta name="theme-color" content="#2e7d32">
-<meta name="msapplication-navbutton-color" content="#2e7d32"><!-- PWA Configuration --><meta name="mobile-web-app-capable" content="yes">
+
+<title>Doctor's Whisk Broom - Client Portal</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Theme Color -->
+<meta name="theme-color" content="#176b2c">
+<meta name="msapplication-navbutton-color" content="#176b2c">
+
+<!-- PWA Configuration -->
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Whisk Broom"><!-- Apple Touch Icon --><link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232e7d32' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>"><!-- Shortcut Icons --><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%232e7d32' width='32' height='32'/><text x='50%' y='50%' font-size='24' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>"><!-- QRCode JS Library --><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><style>
+<meta name="apple-mobile-web-app-title" content="Whisk Broom">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23176b2c' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%23176b2c' width='32' height='32'/><text x='50%' y='50%' font-size='24' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
+
+<!-- QRCode JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
 
 /* =========================================================
-   PROFESSIONAL CLIENT DASHBOARD DESIGN
-   ========================================================= */
+   ROOT / GLOBAL
+========================================================= */
 
 :root {
-  --primary-color: #1b5e20;
-  --primary-dark: #124a17;
-  --secondary-color: #2e7d32;
-  --accent-color: #4caf50;
+  --primary-color: #176b2c;
+  --primary-dark: #0d5420;
+  --primary-light: #2e8b3f;
+
+  --secondary-color: #4caf50;
+
+  --background-color: #f2f7f3;
+  --card-color: #ffffff;
+
+  --text-color: #263238;
+  --muted-color: #68747c;
 
   --blue: #1976d2;
-  --orange: #ef6c00;
-  --red: #c62828;
-  --gold: #d9a441;
+  --red: #e53935;
+  --orange: #f57c00;
+  --yellow: #fbc02d;
 
-  --background-color: #f3f6f4;
-  --card-color: #ffffff;
-  --text-color: #263238;
-  --muted-color: #6b7280;
-  --border-color: #e3e8e5;
+  --border-color: #e1e6e3;
 
-  --shadow: 0 4px 18px rgba(0,0,0,0.07);
-  --shadow-hover: 0 8px 24px rgba(0,0,0,0.10);
+  --shadow:
+    0 5px 18px rgba(0,0,0,0.08);
 
-  --radius: 14px;
+  --shadow-heavy:
+    0 10px 30px rgba(0,0,0,0.13);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family:
+    "Segoe UI",
+    Tahoma,
+    Geneva,
+    Verdana,
+    sans-serif;
 }
 
 html {
@@ -49,159 +80,238 @@ html {
 
 body {
   background:
-    linear-gradient(180deg, #edf5ef 0%, #f5f7f6 240px, var(--background-color) 100%);
+    linear-gradient(
+      180deg,
+      #edf6ef 0%,
+      #f5f7f6 35%,
+      #f2f4f3 100%
+    );
+
   color: var(--text-color);
-  padding-bottom: 45px;
+
+  padding-bottom:
+    calc(50px + env(safe-area-inset-bottom));
+
   min-height: 100vh;
 }
 
+
 /* =========================================================
    HEADER
-   ========================================================= */
+========================================================= */
 
 header {
   background:
-    linear-gradient(135deg, var(--primary-dark), var(--primary-color) 60%, #388e3c);
+    linear-gradient(
+      135deg,
+      #0d5c24,
+      #176b2c,
+      #2e8b3f
+    );
+
   color: white;
-  min-height: 68px;
-  padding: 12px 15px;
+
+  min-height: 82px;
+
+  padding:
+    18px 18px
+    calc(16px + env(safe-area-inset-bottom))
+    18px;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  box-shadow: 0 3px 14px rgba(0,0,0,0.18);
+
+  position: relative;
+
+  box-shadow:
+    0 3px 12px rgba(0,0,0,0.15);
+
+  overflow: hidden;
+}
+
+header::after {
+  content: "";
+  position: absolute;
+
+  width: 240px;
+  height: 240px;
+
+  right: -100px;
+  top: -160px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,0.10);
 }
 
 .header-title {
-  flex-grow: 1;
+  flex: 1;
+
   text-align: left;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: .1px;
+
+  font-size: 1.12rem;
+
+  font-weight: 800;
+
+  letter-spacing: 0.2px;
+
+  line-height: 1.35;
+
+  position: relative;
+
+  z-index: 2;
 }
 
 .install-header-btn {
-  background: rgba(255,255,255,.16);
+  background: #0288d1;
+
   color: white;
-  border: 1px solid rgba(255,255,255,.35);
-  padding: 8px 12px;
-  border-radius: 9px;
-  font-size: .75rem;
-  font-weight: 700;
+
+  border: none;
+
+  padding: 9px 12px;
+
+  border-radius: 8px;
+
+  font-size: 0.78rem;
+
+  font-weight: 800;
+
   cursor: pointer;
+
   white-space: nowrap;
-  backdrop-filter: blur(5px);
+
+  position: relative;
+
+  z-index: 3;
+
+  box-shadow:
+    0 3px 8px rgba(0,0,0,0.15);
 }
 
 .install-header-btn:hover {
-  background: rgba(255,255,255,.25);
+  opacity: 0.92;
 }
 
 .install-header-btn:disabled {
-  opacity: .5;
+  opacity: 0.5;
+
   cursor: not-allowed;
 }
 
+
 /* =========================================================
    MAIN CONTAINER
-   ========================================================= */
+========================================================= */
 
 .container {
   width: 100%;
+
   max-width: 760px;
+
+  padding: 14px;
+
   margin: auto;
-  padding: 16px 14px 35px;
 }
+
 
 /* =========================================================
    CLOUD STATUS
-   ========================================================= */
+========================================================= */
 
 #syncStatus {
   text-align: center;
-  font-size: .72rem;
-  color: #607d68;
-  margin: 2px 0 12px;
+
+  font-size: 0.82rem;
+
+  color: #477052;
+
+  margin:
+    2px 0 14px;
+
   font-style: italic;
-  min-height: 17px;
+
+  font-weight: 600;
+
+  min-height: 22px;
 }
 
+
 /* =========================================================
-   CARDS
-   ========================================================= */
+   GENERAL CARD
+========================================================= */
 
 .card {
   background: var(--card-color);
+
   padding: 17px;
-  border-radius: var(--radius);
+
+  border-radius: 18px;
+
   box-shadow: var(--shadow);
-  margin-bottom: 14px;
-  border: 1px solid rgba(0,0,0,.035);
+
+  margin-bottom: 15px;
+
+  border: 1px solid rgba(0,0,0,0.025);
 }
 
-.card:hover {
-  box-shadow: var(--shadow-hover);
-}
+.card h2 {
+  font-size: 1.12rem;
 
-h2 {
-  font-size: .98rem;
   margin-bottom: 10px;
+
   color: var(--primary-color);
-  font-weight: 750;
+
+  font-weight: 800;
 }
 
-p {
-  line-height: 1.45;
+.card p {
+  line-height: 1.55;
 }
+
 
 /* =========================================================
-   LOGIN SCREEN
-   ========================================================= */
+   LOGIN
+========================================================= */
 
 #loginScreen {
   display: flex;
+
   flex-direction: column;
+
   align-items: center;
+
   justify-content: center;
+
   min-height: 40vh;
+
   text-align: left;
-  border-radius: 18px;
-  padding: 22px;
-}
-
-#manualLoginSection {
-  width: 100%;
-}
-
-#manualLoginSection h2 {
-  font-size: 1.15rem !important;
-  margin-bottom: 5px !important;
-}
-
-#manualLoginSection > p {
-  color: var(--muted-color) !important;
-  font-size: .78rem !important;
 }
 
 #portalContent {
   display: none;
 }
 
+
 /* =========================================================
-   FORM ELEMENTS
-   ========================================================= */
+   FORM
+========================================================= */
 
 .form-group {
-  margin-bottom: 11px;
+  margin-bottom: 12px;
 }
 
 label {
   display: block;
-  font-size: .78rem;
+
+  font-size: 0.84rem;
+
   margin-bottom: 5px;
-  font-weight: 700;
+
+  font-weight: 800;
+
   color: #37474f;
 }
 
@@ -209,1492 +319,2485 @@ input,
 select,
 textarea {
   width: 100%;
-  padding: 11px 12px;
-  border: 1px solid #d5dcd8;
+
+  padding: 11px;
+
+  border:
+    1px solid #cfd8dc;
+
   border-radius: 9px;
-  font-size: .88rem;
-  color: #263238;
+
+  font-size: 0.9rem;
+
   background: #fff;
+
+  color: #263238;
+
   outline: none;
-  transition: border .2s, box-shadow .2s;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(76,175,80,.12);
-}
+  border-color: var(--primary-color);
 
-textarea {
-  resize: vertical;
+  box-shadow:
+    0 0 0 3px rgba(46,125,50,0.10);
 }
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
 
 button {
   background-color: var(--secondary-color);
+
   color: white;
+
   border: none;
-  padding: 11px 12px;
+
+  padding: 11px;
+
   width: 100%;
+
   border-radius: 9px;
-  font-size: .9rem;
-  font-weight: 700;
+
+  font-size: 0.95rem;
+
+  font-weight: 800;
+
   cursor: pointer;
+
   margin-top: 5px;
-  transition: transform .15s, opacity .15s, box-shadow .15s;
+
+  transition:
+    transform 0.15s,
+    opacity 0.15s,
+    box-shadow 0.15s;
 }
 
 button:hover {
-  opacity: .94;
-  box-shadow: 0 3px 9px rgba(0,0,0,.10);
+  opacity: 0.94;
 }
 
 button:active {
-  transform: scale(.98);
+  transform: scale(0.99);
 }
 
+
 /* =========================================================
-   LOGIN NOTICE
-   ========================================================= */
+   LOGIN INFORMATION
+========================================================= */
 
 #directAccessNotice {
-  border: 1px solid #c8e6c9;
-  box-shadow: inset 3px 0 0 #43a047;
+  margin-bottom: 15px;
+
+  padding: 11px;
+
+  background: #e8f5e9;
+
+  border-left:
+    4px solid #2e7d32;
+
+  border-radius: 8px;
+
+  font-size: 0.84rem;
+
+  color: #1b5e20;
+
+  line-height: 1.45;
 }
+
 
 /* =========================================================
-   PORTAL HERO / STORE HEADER
-   ========================================================= */
+   MAIN STORE HERO / ACCOUNT CARD
+========================================================= */
 
-#portalContent > .card:first-child {
-  background:
-    linear-gradient(135deg, #174d1c 0%, #2e7d32 58%, #4caf50 100%);
-  color: white;
-  border: none;
-  border-radius: 18px;
-  padding: 20px 17px 17px;
-  box-shadow: 0 8px 25px rgba(27,94,32,.20);
+.store-profile-card {
+
   position: relative;
+
   overflow: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0d5d24 0%,
+      #176b2c 45%,
+      #2f963f 100%
+    );
+
+  color: white;
+
+  border-radius: 24px;
+
+  padding: 25px 18px 20px;
+
+  margin-bottom: 15px;
+
+  box-shadow:
+    0 12px 30px rgba(23,107,44,0.24);
+
+  border: none;
 }
 
-#portalContent > .card:first-child::after {
-  content: "🧹";
+.store-profile-card::before {
+
+  content: "";
+
   position: absolute;
-  right: -5px;
-  top: -17px;
-  font-size: 100px;
-  opacity: .07;
-  transform: rotate(-15deg);
+
+  width: 230px;
+  height: 230px;
+
+  right: -75px;
+  top: -50px;
+
+  background:
+    rgba(255,255,255,0.07);
+
+  border-radius: 50%;
+}
+
+.store-profile-card::after {
+
+  content: "🧹";
+
+  position: absolute;
+
+  right: 15px;
+  bottom: 65px;
+
+  font-size: 7rem;
+
+  opacity: 0.08;
+
+  transform: rotate(-18deg);
+
   pointer-events: none;
 }
 
-#displayStoreName {
-  color: white !important;
-  font-size: 1.35rem !important;
-  font-weight: 800;
+.store-profile-inner {
   position: relative;
+
   z-index: 2;
+}
+
+.store-profile-icon {
+  font-size: 1.35rem;
+
+  margin-right: 5px;
+}
+
+#displayStoreName {
+
+  color: #ffffff !important;
+
+  font-size: 1.65rem !important;
+
+  line-height: 1.25;
+
+  font-weight: 900 !important;
+
+  margin-bottom: 8px !important;
+
+  text-shadow:
+    0 2px 5px rgba(0,0,0,0.15);
+}
+
+#displayStoreName span {
+
+  color: #eaffed !important;
+
+  font-size: 0.85rem !important;
+
+  font-weight: 600;
+
+  text-shadow: none;
 }
 
 #displayStoreStatus {
-  color: #dcedc8 !important;
-  font-size: .76rem !important;
-  font-weight: 600;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: #ffffff !important;
+
+  background:
+    rgba(255,255,255,0.12);
+
+  border:
+    1px solid rgba(255,255,255,0.35);
+
+  padding: 7px 12px;
+
+  border-radius: 30px;
+
+  font-size: 0.78rem !important;
+
+  font-weight: 800;
+
+  margin-bottom: 17px;
+
+  text-shadow:
+    0 1px 2px rgba(0,0,0,0.15);
 }
 
-#portalContent > .card:first-child > div:first-child {
-  position: relative;
-  z-index: 2;
+#displayStoreStatus::before {
+
+  content: "";
+
+  width: 9px;
+
+  height: 9px;
+
+  border-radius: 50%;
+
+  background: #69f57a;
+
+  box-shadow:
+    0 0 0 3px rgba(105,245,122,0.15);
 }
+
 
 /* =========================================================
-   QR LOGIN CARD
-   ========================================================= */
+   QR CODE
+========================================================= */
+
+.qr-login-wrapper {
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  margin:
+    5px 0 17px;
+}
+
+.qr-login-box {
+
+  background: white;
+
+  padding: 11px;
+
+  border-radius: 12px;
+
+  text-align: center;
+
+  box-shadow:
+    0 5px 15px rgba(0,0,0,0.18);
+
+  border: 1px solid rgba(0,0,0,0.05);
+}
 
 #smallQrcode {
-  width: 100px;
-  height: 100px;
+
+  width: 210px !important;
+
+  height: 210px !important;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: white;
 }
 
-#portalContent > .card:first-child > div:nth-child(2) > div {
-  border: none !important;
-  box-shadow: 0 4px 15px rgba(0,0,0,.16);
+#smallQrcode img,
+#smallQrcode canvas {
+
+  max-width: 100%;
+
+  height: auto;
 }
 
-#portalContent > .card:first-child span {
-  color: var(--primary-color) !important;
+.qr-caption {
+
+  color: #225b2e;
+
+  font-size: 0.78rem;
+
+  font-weight: 900;
+
+  display: block;
+
+  margin-top: 7px;
 }
+
 
 /* =========================================================
-   AGREEMENT IFRAME
-   ========================================================= */
+   LOGOUT
+========================================================= */
+
+.logout-btn {
+
+  background:
+    linear-gradient(
+      135deg,
+      #ef3030,
+      #d82020
+    ) !important;
+
+  color: white !important;
+
+  border-radius: 11px !important;
+
+  font-size: 1rem !important;
+
+  font-weight: 900 !important;
+
+  padding: 13px !important;
+
+  box-shadow:
+    0 4px 10px rgba(180,0,0,0.20);
+
+  position: relative;
+
+  z-index: 3;
+}
+
+
+/* =========================================================
+   AGREEMENT
+========================================================= */
+
+.agreement-card {
+
+  padding: 0;
+
+  overflow: hidden;
+
+  background: transparent;
+
+  box-shadow: none;
+
+  border: none;
+
+  margin-bottom: 15px;
+}
+
+.agreement-frame-wrapper {
+
+  background:
+    linear-gradient(
+      135deg,
+      #0d5d24,
+      #176b2c
+    );
+
+  border-radius: 17px;
+
+  padding: 2px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 5px 14px rgba(0,0,0,0.12);
+}
 
 #storeAgreementFrame {
+
   display: block;
-  border-radius: 10px;
+
+  width: 100%;
+
+  min-height: 55px;
+
+  border: none;
+
+  background: transparent;
+
+  overflow: hidden;
 }
+
 
 /* =========================================================
    PRODUCT CATALOG
-   ========================================================= */
+========================================================= */
+
+.catalog-card {
+
+  background: #ffffff;
+
+  border-radius: 20px;
+
+  padding: 17px;
+
+  box-shadow: var(--shadow);
+
+  margin-bottom: 15px;
+}
+
+.catalog-title {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: var(--primary-color);
+
+  font-size: 1.18rem;
+
+  font-weight: 900;
+
+  margin-bottom: 8px;
+}
+
+.catalog-description {
+
+  font-size: 0.87rem;
+
+  color: #59646a;
+
+  line-height: 1.5;
+
+  margin-bottom: 13px;
+}
 
 .style-grid {
+
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 11px;
+
   margin-bottom: 10px;
 }
 
 .style-option-card {
-  border: 1px solid #dfe5e1;
-  border-radius: 12px;
-  padding: 9px;
+
+  border:
+    1px solid #d9dfdc;
+
+  border-radius: 17px;
+
+  padding: 10px;
+
   text-align: center;
+
   cursor: pointer;
-  background: #fff;
-  transition: all .2s ease;
+
+  background: #ffffff;
+
+  transition:
+    all 0.2s;
+
   position: relative;
+
   overflow: hidden;
 }
 
 .style-option-card:hover {
-  border-color: #81c784;
+
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,.07);
+
+  box-shadow:
+    0 5px 15px rgba(0,0,0,0.08);
 }
 
 .style-option-card.selected {
-  border: 2px solid var(--primary-color);
-  background: #f0f8f1;
-  box-shadow: 0 4px 12px rgba(46,125,50,.10);
+
+  border:
+    2px solid var(--primary-color);
+
+  background: #f1fbf3;
 }
 
 .style-option-card img {
+
   width: 100%;
-  height: 125px;
+
+  height: 145px;
+
   object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 7px;
+
+  border-radius: 12px;
+
+  margin-bottom: 8px;
+
   cursor: pointer;
+
+  display: block;
 }
 
 .style-option-card h4 {
-  font-size: .84rem;
+
+  font-size: 1rem;
+
   color: var(--primary-color);
-  margin-bottom: 4px;
-  font-weight: 800;
+
+  margin-bottom: 5px;
+
+  font-weight: 900;
 }
 
 .style-option-card p {
-  font-size: .72rem;
-  color: #69747a;
+
+  font-size: 0.81rem;
+
+  color: #6a7479;
+
+  line-height: 1.45;
+
+  min-height: 48px;
 }
 
 .view-img-btn {
-  background: #1976d2;
+
+  background:
+    linear-gradient(
+      135deg,
+      #1976d2,
+      #2188e5
+    ) !important;
+
   color: white;
+
   border: none;
-  padding: 6px;
-  font-size: .68rem;
-  border-radius: 7px;
+
+  padding: 9px 7px !important;
+
+  font-size: 0.82rem !important;
+
+  border-radius: 8px !important;
+
   cursor: pointer;
-  margin-top: 7px;
+
+  margin-top: 7px !important;
+
   display: inline-block;
+
   width: 100%;
+
+  font-weight: 800;
 }
 
-/* =========================================================
-   SECTION HEADERS
-   ========================================================= */
 
-.card > h2 {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 22px;
+/* =========================================================
+   PREMIUM BADGE
+========================================================= */
+
+.premium-feature {
+
+  margin-top: 6px;
+
+  font-size: 0.75rem;
+
+  background:
+    #fff9c4;
+
+  color:
+    #e08a00;
+
+  padding:
+    5px 4px;
+
+  border-radius: 6px;
+
+  font-weight: 900;
+
+  border:
+    1px dashed #fbc02d;
+
+  line-height: 1.25;
 }
 
+
 /* =========================================================
-   STOCK BOX
-   ========================================================= */
+   STOCK SECTION
+========================================================= */
+
+.stock-card {
+
+  background: #ffffff;
+
+  border-radius: 20px;
+
+  padding: 17px;
+
+  box-shadow: var(--shadow);
+
+  margin-bottom: 15px;
+}
 
 .store-item-box {
-  background: #f8faf9;
-  border: 1px solid #e0e7e2;
-  padding: 13px;
-  border-radius: 11px;
-  margin-bottom: 9px;
-  transition: .2s;
-}
 
-.store-item-box:hover {
-  border-color: #b8cdbd;
-  box-shadow: 0 3px 10px rgba(0,0,0,.04);
+  background:
+    #f8faf9;
+
+  border:
+    1px solid #dfe5e1;
+
+  padding: 13px;
+
+  border-radius: 13px;
+
+  margin-bottom: 10px;
 }
 
 .store-item-box.premium-stock {
-  background: linear-gradient(145deg, #fffdf1, #fff9df);
-  border-color: #ead071;
+
+  background:
+    #fffdf0;
+
+  border-color:
+    #f1d06b;
 }
 
 .store-item-box strong {
-  color: #263238;
+
+  color: #183f22;
 }
+
+.stock-style-title {
+
+  color: var(--primary-color);
+
+  font-weight: 900;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 8px;
+}
+
 
 /* =========================================================
    PENDING DELIVERY
-   ========================================================= */
+========================================================= */
 
 #pendingDeliveryCard {
-  background: linear-gradient(145deg, #eef7ff, #ffffff) !important;
-  border: 1px solid #90caf9 !important;
+
+  background:
+    #edf7ff !important;
+
+  border:
+    1px solid #90caf9 !important;
+
+  border-radius: 18px;
 }
 
 #pendingDeliveryCard h2 {
-  color: #1565c0 !important;
+
+  color:
+    #0277bd !important;
 }
+
 
 /* =========================================================
    PENDING SALES
-   ========================================================= */
+========================================================= */
 
 #pendingSalesCard {
-  background: linear-gradient(145deg, #fff8ee, #ffffff) !important;
-  border: 1px solid #ffcc80 !important;
+
+  background:
+    #fff7eb !important;
+
+  border:
+    1px solid #ffcc80 !important;
+
+  border-radius: 18px;
 }
 
 #pendingSalesCard h2 {
-  color: #e65100 !important;
+
+  color:
+    #ef6c00 !important;
 }
+
 
 /* =========================================================
    NOTIFICATIONS
-   ========================================================= */
+========================================================= */
+
+.notification-header {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 9px;
+}
 
 .notification-item {
-  background: #f1f8f3;
-  border-left: 4px solid #4caf50;
+
+  background:
+    #eaf7ec;
+
+  border-left:
+    4px solid #4caf50;
+
   padding: 10px;
+
   margin-bottom: 7px;
-  font-size: .8rem;
+
+  font-size: 0.84rem;
+
   border-radius: 8px;
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: flex-start;
-  gap: 8px;
+
+  color: #29452e;
 }
 
-.notification-item button {
-  flex-shrink: 0;
-}
 
 /* =========================================================
    RESTOCK
-   ========================================================= */
+========================================================= */
 
-#portalContent .card[style*="fff8e1"] {
-  background: linear-gradient(145deg, #fffaf0, #fffdf8) !important;
-  border: 1px solid #f2d58a !important;
+.restock-card {
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff9e8,
+      #fffdf6
+    );
+
+  border:
+    1px solid #ffe082;
+
+  border-radius: 18px;
+
+  padding: 16px;
+
+  margin-bottom: 15px;
 }
 
-#toggleRestockBtn {
-  background-color: #ef6c00 !important;
-  border-radius: 8px;
+.section-toggle {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 10px;
 }
 
-#restockContentWrapper {
-  border-top: 1px solid #f0dfae;
-  padding-top: 10px;
+.section-toggle h2 {
+
+  margin-bottom: 0;
+
+  flex: 1;
 }
+
+.small-toggle-btn {
+
+  width: auto !important;
+
+  min-width: 70px;
+
+  padding: 7px 10px !important;
+
+  font-size: 0.76rem !important;
+
+  margin-top: 0 !important;
+}
+
 
 /* =========================================================
    CHAT
-   ========================================================= */
+========================================================= */
 
-.chat-msg {
-  background: #f1f8e9;
-  padding: 10px;
-  border-radius: 9px;
-  margin-bottom: 7px;
-  font-size: .8rem;
-  border: 1px solid #d3e8bf;
-  line-height: 1.4;
-}
+.chat-card {
 
-.chat-msg.admin {
-  background: #eaf4ff;
-  border-color: #b7d8f7;
+  background: #ffffff;
+
+  border-radius: 18px;
+
+  padding: 16px;
+
+  box-shadow: var(--shadow);
+
+  margin-bottom: 15px;
 }
 
 #clientChatContainer {
-  background: #f8faf9 !important;
-  border: 1px solid #e1e7e3 !important;
-  border-radius: 10px !important;
+
+  max-height: 260px;
+
+  overflow-y: auto;
+
+  margin-bottom: 9px;
+
+  border:
+    1px solid #e5e9e7;
+
+  padding: 10px;
+
+  border-radius: 10px;
+
+  background:
+    #fafcfb;
 }
+
+.chat-msg {
+
+  background:
+    #f1f8e9;
+
+  padding: 10px;
+
+  border-radius: 10px;
+
+  margin-bottom: 7px;
+
+  font-size: 0.84rem;
+
+  border:
+    1px solid #c5e1a5;
+
+  line-height: 1.45;
+
+  color: #314236;
+}
+
+.chat-msg.admin {
+
+  background:
+    #e3f2fd;
+
+  border-color:
+    #90caf9;
+
+  color:
+    #173d5a;
+}
+
 
 /* =========================================================
    STOP AGREEMENT
-   ========================================================= */
+========================================================= */
 
-#portalContent .card[style*="ffebee"] {
-  background: linear-gradient(145deg, #fff5f5, #ffffff) !important;
-  border: 1px solid #efb2b2 !important;
+.stop-card {
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff1f1,
+      #fffafa
+    );
+
+  border:
+    1px solid #ef9a9a;
+
+  border-radius: 18px;
+
+  padding: 16px;
+
+  margin-bottom: 15px;
 }
 
-#portalContent .card[style*="ffebee"] h2 {
-  color: #b71c1c !important;
+.stop-card h2 {
+
+  color:
+    #c62828 !important;
 }
 
-#portalContent .card[style*="ffebee"] button {
-  border-radius: 9px;
-}
 
 /* =========================================================
    ADMIN LINK
-   ========================================================= */
+========================================================= */
 
-.container > div:last-child a {
+.admin-link {
+
+  text-align: center;
+
+  margin:
+    20px 0 12px;
+}
+
+.admin-link a {
+
   display: inline-block;
-  padding: 7px 12px;
+
+  color: #68747c;
+
+  text-decoration: none;
+
+  font-size: 0.8rem;
+
+  padding: 8px 12px;
+
   border-radius: 8px;
-  transition: background .2s;
+
+  background: rgba(255,255,255,0.7);
 }
 
-.container > div:last-child a:hover {
-  background: #e8efea;
-  color: var(--primary-color) !important;
-}
 
 /* =========================================================
    IMAGE MODAL
-   ========================================================= */
+========================================================= */
 
 #imageModal {
+
   display: none;
+
   position: fixed;
+
   z-index: 9999;
+
   left: 0;
+
   top: 0;
+
   width: 100%;
+
   height: 100%;
-  background-color: rgba(0,0,0,.88);
+
+  background-color:
+    rgba(0,0,0,0.88);
+
   align-items: center;
+
   justify-content: center;
+
   flex-direction: column;
+
   padding: 20px;
 }
 
 #imageModal img {
-  max-width: 94%;
-  max-height: 76%;
-  border-radius: 10px;
-  box-shadow: 0 8px 35px rgba(0,0,0,.45);
+
+  max-width: 95%;
+
+  max-height: 75%;
+
+  border-radius: 12px;
+
+  box-shadow:
+    0 8px 30px rgba(0,0,0,0.4);
 }
 
 #imageModalClose {
+
   margin-top: 15px;
+
   background: white;
+
   color: #333;
-  padding: 9px 24px;
+
+  padding: 9px 22px;
+
   border: none;
+
   border-radius: 8px;
+
   font-weight: bold;
+
   cursor: pointer;
+
   width: auto;
 }
 
-/* =========================================================
-   HR
-   ========================================================= */
 
-hr {
-  border-color: #edf0ee !important;
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  header {
+
+    min-height: 70px;
+
+    padding: 14px 15px;
+  }
+
+  .header-title {
+
+    font-size: 1rem;
+  }
+
+  .container {
+
+    padding:
+      10px;
+  }
+
+  .store-profile-card {
+
+    padding:
+      22px 15px 17px;
+
+    border-radius: 22px;
+  }
+
+  #displayStoreName {
+
+    font-size:
+      1.45rem !important;
+  }
+
+  #smallQrcode {
+
+    width:
+      210px !important;
+
+    height:
+      210px !important;
+  }
+
+  .style-option-card img {
+
+    height:
+      135px;
+  }
+
+  .style-option-card h4 {
+
+    font-size:
+      0.92rem;
+  }
+
+  .style-option-card p {
+
+    font-size:
+      0.76rem;
+  }
+
 }
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 380px) {
+
+  .style-grid {
+
+    grid-template-columns:
+      1fr;
+  }
+
+  .style-option-card img {
+
+    height:
+      160px;
+  }
+
+  #smallQrcode {
+
+    width:
+      190px !important;
+
+    height:
+      190px !important;
+  }
+
+}
+
 
 /* =========================================================
    PRINT
-   ========================================================= */
+========================================================= */
 
 @media print {
+
   body * {
+
     visibility: hidden;
   }
 
   #printableInquirySection,
   #printableInquirySection * {
+
     visibility: visible;
   }
 
   #printableInquirySection {
+
     position: absolute;
+
     left: 0;
+
     top: 0;
+
     width: 100%;
+
     padding: 20px;
+
     background: white;
   }
 
   .no-print {
+
     display: none !important;
   }
+
 }
 
-/* =========================================================
-   MOBILE
-   ========================================================= */
+</style>
+</head>
 
-@media (max-width: 480px) {
 
-  header {
-    min-height: 62px;
-    padding: 10px 11px;
-  }
+<body>
 
-  .header-title {
-    font-size: .86rem;
-    line-height: 1.25;
-  }
 
-  .install-header-btn {
-    padding: 7px 9px;
-    font-size: .68rem;
-  }
+<!-- =======================================================
+     HEADER
+======================================================= -->
 
-  .container {
-    padding: 12px 10px 30px;
-  }
+<header>
 
-  .card {
-    padding: 14px;
-    border-radius: 13px;
-    margin-bottom: 11px;
-  }
-
-  #displayStoreName {
-    font-size: 1.12rem !important;
-  }
-
-  .style-grid {
-    gap: 8px;
-  }
-
-  .style-option-card {
-    padding: 7px;
-  }
-
-  .style-option-card img {
-    height: 105px;
-  }
-
-  .style-option-card h4 {
-    font-size: .77rem;
-  }
-
-  .style-option-card p {
-    font-size: .67rem;
-  }
-
-  .view-img-btn {
-    font-size: .64rem;
-  }
-
-  input,
-  select,
-  textarea {
-    font-size: .84rem;
-  }
-}
-
-/* =========================================================
-   DESKTOP
-   ========================================================= */
-
-@media (min-width: 700px) {
-
-  .container {
-    padding-top: 22px;
-  }
-
-  #portalContent > .card:first-child {
-    padding: 24px;
-  }
-
-  #displayStoreName {
-    font-size: 1.55rem !important;
-  }
-
-  .style-option-card img {
-    height: 155px;
-  }
-}
-
-</style></head><body><header>
-  <div class="header-title">🧹 Doctor's Whisk Broom - Client Portal</div>
-  <button id="headerInstallBtn" class="install-header-btn" style="display:none;">
-    📱 I-Install
-  </button>
-</header><div class="container">  <div id="syncStatus">
-    Kumokonekta sa Cloud Database...
-  </div>  <!-- =====================================================
-       LOGIN SCREEN
-       ===================================================== -->  <div id="loginScreen" class="card"><div id="directAccessNotice"
-     style="display:none; margin-bottom:15px; padding:10px; background:#e8f5e9; border-radius:4px; font-size:0.85rem; color:#2e7d32;">
-
-  🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link.
-  I-click ang button sa ibaba upang buksan ang iyong portal.
-
-</div>
-
-<div id="manualLoginSection">
-
-  <h2>
-    Pribadong Portal ng Tindahan
-  </h2>
-
-  <p style="font-size:0.80rem; color:#666; margin-bottom:15px;">
-    Para mabuksan ang iyong portal, i-type nang eksakto ang rehistradong
-    Pangalan ng iyong Tindahan o gamitin ang Pangalan ng May-ari bilang search batayan.
-  </p>
-
-  <div class="form-group" style="width:100%;">
-
-    <label for="manualStoreNameInput">
-      Pangalan ng Tindahan / May-ari:
-    </label>
-
-    <input
-      type="text"
-      id="manualStoreNameInput"
-      placeholder="Hal. Aling Nena Store o Juan & Maria">
-
+  <div class="header-title">
+    🧹 Doctor's Whisk Broom - Client Portal
   </div>
 
   <button
-    type="button"
-    id="manualLoginBtn"
-    style="background-color:var(--secondary-color); margin-bottom:15px;">
-
-    Buksan ang Aking Portal
-
+    id="headerInstallBtn"
+    class="install-header-btn"
+    style="display:none;">
+    📱 I-Install
   </button>
 
+</header>
+
+
+<div class="container">
+
+
+<!-- CLOUD STATUS -->
+
+<div id="syncStatus">
+  Kumokonekta sa Cloud Database...
 </div>
 
-<button
-  type="button"
-  id="proceedLoginBtn"
-  style="display:none; background-color:var(--secondary-color); margin-bottom:15px;">
 
-  Ituloy sa Aking Portal
+<!-- =======================================================
+     LOGIN SCREEN
+======================================================= -->
 
-</button>
-
-<hr style="width:100%; border:0; border-top:1px solid #eee; margin:10px 0;">
-
-<!-- CREATE ACCOUNT -->
-
-<div id="printableInquirySection" style="width:100%;">
-
-  <h2 style="margin-top:10px; color:#0288d1; font-size:1rem;">
-    Create Account / Bagong Aplikasyon
-  </h2>
+<div id="loginScreen" class="card">
 
   <div
-    class="no-print"
-    style="background:#e3f2fd; border-left:4px solid #0288d1; padding:10px; margin-bottom:12px; font-size:0.82rem; color:#0d47a1; border-radius:4px; line-height:1.4;">
+    id="directAccessNotice"
+    style="display:none;">
 
-    <strong>💡 Impormasyon:</strong>
-    Maaari mong balihan ang iyong account pagkalipas ng
-    <strong>2 araw</strong>.
-    I-type lamang ang iyong
-    <strong>Pangalan ng May-ari o Tindahan</strong>
-    sa Pribadong Portal sa itaas.
+    🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay
+    na link. I-click ang button sa ibaba upang buksan ang iyong portal.
 
   </div>
 
-  <form id="inquiryForm" style="width:100%; margin-top:8px;">
 
-    <div class="form-group">
-      <label>Pangalan ng Tindahan:</label>
+  <div id="manualLoginSection">
 
-      <input
-        type="text"
-        id="inqStoreName"
-        placeholder="Hal. Aling Nena Store"
-        required>
-    </div>
+    <h2>
+      Pribadong Portal ng Tindahan
+    </h2>
 
-    <div class="form-group">
-      <label>
-        Pangalan ng May-ari
-        (Tinatanggap ang special characters gaya ng &, -, _, etc.):
+    <p
+      style="
+        font-size:0.82rem;
+        color:#666;
+        margin-bottom:15px;
+      ">
+
+      Para mabuksan ang iyong portal, i-type nang eksakto
+      ang rehistradong Pangalan ng iyong Tindahan o gamitin
+      ang Pangalan ng May-ari bilang search batayan.
+
+    </p>
+
+
+    <div
+      class="form-group"
+      style="width:100%;">
+
+      <label for="manualStoreNameInput">
+        Pangalan ng Tindahan / May-ari:
       </label>
 
       <input
         type="text"
-        id="inqOwnerName"
-        placeholder="Hal. Juan & Maria Dela Cruz-Santos"
-        required>
-    </div>
-
-    <div class="form-group">
-      <label>Numero ng Telepono / GCash:</label>
-
-      <input
-        type="text"
-        id="inqContact"
-        placeholder="Hal. 09123456789"
-        required>
-    </div>
-
-    <div class="form-group">
-      <label>Gmail / Active Email Address:</label>
-
-      <input
-        type="email"
-        id="inqEmail"
-        placeholder="Hal. alingenastore@gmail.com"
-        required>
-    </div>
-
-    <div class="form-group">
-      <label>Lokasyon / Address:</label>
-
-      <input
-        type="text"
-        id="inqAddress"
-        placeholder="Hal. Brgy. Osiao, Sorsogon"
-        required>
-    </div>
-
-    <!-- STYLE SELECTION -->
-
-    <div class="form-group">
-
-      <label>
-        Piliin ang Gusto mong Uri ng Walis (Style):
-      </label>
-
-      <input
-        type="hidden"
-        id="inqStyleType"
-        value="Ordinary">
-
-      <div class="style-grid">
-
-        <div
-          class="style-option-card selected"
-          onclick="selectInqStyle('Ordinary', this)">
-
-          <img
-            src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg"
-            alt="Ordinary Style Walis Tambo"
-            onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
-
-          <h4>Ordinary Style</h4>
-
-          <p>Standard Quality</p>
-
-          <button
-            type="button"
-            class="view-img-btn"
-            onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">
-
-            🔍 View Image
-
-          </button>
-
-        </div>
-
-        <div
-          class="style-option-card"
-          onclick="selectInqStyle('Premium', this)">
-
-          <img
-            src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg"
-            alt="Premium Style Walis Tambo"
-            onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
-
-          <h4>Premium Style</h4>
-
-          <p>Thick & Durable</p>
-
-          <div
-            style="margin-top:4px; font-size:0.7rem; background:#fff9c4; color:#f57f17; padding:2px 4px; border-radius:3px; font-weight:bold; border:1px dashed #fbc02d;">
-
-            ✨ Gitna ng Hibla (Tampok)
-
-          </div>
-
-          <button
-            type="button"
-            class="view-img-btn"
-            onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">
-
-            🔍 View Image
-
-          </button>
-
-        </div>
-
-      </div>
+        id="manualStoreNameInput"
+        placeholder="Hal. Aling Nena Store o Juan & Maria">
 
     </div>
 
-    <div class="form-group">
-
-      <label>Mensahe / Katanungan (Optional):</label>
-
-      <textarea
-        id="inqMessage"
-        rows="2"
-        placeholder="I-type ang mensahe..."></textarea>
-
-    </div>
 
     <button
-      type="submit"
-      style="background-color:#0288d1;">
+      type="button"
+      id="manualLoginBtn">
 
-      Gumawa ng Account / Ipadala ang Aplikasyon
+      Buksan ang Aking Portal
 
     </button>
 
-  </form>
+  </div>
+
 
   <button
     type="button"
-    onclick="window.print()"
-    class="no-print"
-    style="background-color:#607d8b; margin-top:8px;">
+    id="proceedLoginBtn"
+    style="
+      display:none;
+      background-color:#4caf50;
+      margin-bottom:15px;
+    ">
 
-    🖨️ I-print ang Aplikasyon Form
+    Ituloy sa Aking Portal
 
   </button>
 
-</div>
 
-  </div>  <!-- =====================================================
-       MAIN PORTAL DASHBOARD
-       ===================================================== -->  <div id="portalContent"><!-- STORE HERO -->
+  <hr
+    style="
+      width:100%;
+      border:0;
+      border-top:1px solid #eee;
+      margin:15px 0;
+    ">
 
-<div class="card">
 
-  <div>
+  <!-- =====================================================
+       CREATE ACCOUNT
+  ====================================================== -->
+
+  <div
+    id="printableInquirySection"
+    style="width:100%;">
 
     <h2
-      id="displayStoreName"
-      style="margin-bottom:0; color:#2e7d32;">
+      style="
+        color:#0288d1;
+        font-size:1.05rem;
+      ">
 
-      Pangalan ng Tindahan
+      Create Account / Bagong Aplikasyon
 
     </h2>
 
-    <span
-      style="font-size:0.75rem; color:#555;"
-      id="displayStoreStatus">
 
-      Aktibo ang Consignment
+    <div
+      class="no-print"
+      style="
+        background:#e3f2fd;
+        border-left:4px solid #0288d1;
+        padding:10px;
+        margin-bottom:12px;
+        font-size:0.82rem;
+        color:#0d47a1;
+        border-radius:8px;
+        line-height:1.4;
+      ">
 
-    </span>
+      <strong>💡 Impormasyon:</strong>
+
+      Maaari mong balikan ang iyong account pagkalipas ng
+      <strong>2 araw</strong>.
+
+      I-type lamang ang iyong
+      <strong>Pangalan ng May-ari o Tindahan</strong>
+      sa Pribadong Portal sa itaas.
+
+    </div>
+
+
+    <form
+      id="inquiryForm"
+      style="
+        width:100%;
+        margin-top:8px;
+      ">
+
+
+      <div class="form-group">
+
+        <label>
+          Pangalan ng Tindahan:
+        </label>
+
+        <input
+          type="text"
+          id="inqStoreName"
+          placeholder="Hal. Aling Nena Store"
+          required>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Pangalan ng May-ari
+          (Tinatanggap ang special characters gaya ng &, -, _, etc.):
+        </label>
+
+        <input
+          type="text"
+          id="inqOwnerName"
+          placeholder="Hal. Juan & Maria Dela Cruz-Santos"
+          required>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Numero ng Telepono / GCash:
+        </label>
+
+        <input
+          type="text"
+          id="inqContact"
+          placeholder="Hal. 09123456789"
+          required>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Gmail / Active Email Address:
+        </label>
+
+        <input
+          type="email"
+          id="inqEmail"
+          placeholder="Hal. alingenastore@gmail.com"
+          required>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Lokasyon / Address:
+        </label>
+
+        <input
+          type="text"
+          id="inqAddress"
+          placeholder="Hal. Brgy. Osiao, Sorsogon"
+          required>
+
+      </div>
+
+
+      <!-- STYLE SELECTION -->
+
+      <div class="form-group">
+
+        <label>
+          Piliin ang Gusto mong Uri ng Walis (Style):
+        </label>
+
+        <input
+          type="hidden"
+          id="inqStyleType"
+          value="Ordinary">
+
+
+        <div class="style-grid">
+
+
+          <!-- ORDINARY -->
+
+          <div
+            class="style-option-card selected"
+            onclick="selectInqStyle('Ordinary', this)">
+
+            <img
+              src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg"
+              alt="Ordinary Style Walis Tambo"
+              onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
+
+            <h4>
+              Ordinary Style
+            </h4>
+
+            <p>
+              Standard Quality
+            </p>
+
+            <button
+              type="button"
+              class="view-img-btn"
+              onclick="
+                event.stopPropagation();
+                openImageViewer(
+                  'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg',
+                  'Ordinary Style Walis Tambo'
+                )
+              ">
+
+              🔍 View Image
+
+            </button>
+
+          </div>
+
+
+          <!-- PREMIUM -->
+
+          <div
+            class="style-option-card"
+            onclick="selectInqStyle('Premium', this)">
+
+            <img
+              src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg"
+              alt="Premium Style Walis Tambo"
+              onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
+
+            <h4>
+              Premium Style
+            </h4>
+
+            <p>
+              Thick & Durable
+            </p>
+
+            <div class="premium-feature">
+              ✨ Gitna ng Hibla (Tampok)
+            </div>
+
+            <button
+              type="button"
+              class="view-img-btn"
+              onclick="
+                event.stopPropagation();
+                openImageViewer(
+                  'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg',
+                  'Premium Style Walis Tambo'
+                )
+              ">
+
+              🔍 View Image
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Mensahe / Katanungan (Optional):
+        </label>
+
+        <textarea
+          id="inqMessage"
+          rows="3"
+          placeholder="I-type ang mensahe..."></textarea>
+
+      </div>
+
+
+      <button
+        type="submit"
+        style="
+          background:#0288d1;
+        ">
+
+        Gumawa ng Account / Ipadala ang Aplikasyon
+
+      </button>
+
+    </form>
+
+
+    <button
+      type="button"
+      onclick="window.print()"
+      class="no-print"
+      style="
+        background:#607d8b;
+        margin-top:8px;
+      ">
+
+      🖨️ I-print ang Aplikasyon Form
+
+    </button>
 
   </div>
 
-  <!-- QR CODE -->
+</div>
 
-  <div
-    style="margin-top:15px; display:flex; justify-content:center;">
 
-    <div
-      style="background:white; padding:10px; border-radius:6px; border:2px solid #2e7d32; text-align:center;">
+
+<!-- =======================================================
+     MAIN PORTAL
+======================================================= -->
+
+<div id="portalContent">
+
+
+  <!-- =====================================================
+       STORE PROFILE
+  ====================================================== -->
+
+  <div class="store-profile-card">
+
+    <div class="store-profile-inner">
+
 
       <div
-        id="smallQrcode"
-        style="width:100px; height:100px; display:flex; align-items:center; justify-content:center;">
+        style="
+          font-size:0.8rem;
+          font-weight:700;
+          color:#d9f8df;
+          margin-bottom:5px;
+        ">
+
+        🏪 STORE PARTNER
+
       </div>
 
-      <span
-        style="font-size:0.75rem; color:#2e7d32; font-weight:bold; display:block; margin-top:6px;">
 
-        i-scan para maglogin
+      <h2 id="displayStoreName">
+        Pangalan ng Tindahan
+      </h2>
 
+
+      <span id="displayStoreStatus">
+        Aktibo ang Consignment
+      </span>
+
+
+      <!-- QR -->
+
+      <div class="qr-login-wrapper">
+
+        <div class="qr-login-box">
+
+          <div id="smallQrcode">
+
+          </div>
+
+          <span class="qr-caption">
+            i-scan para maglogin
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- LOGOUT -->
+
+      <button
+        type="button"
+        onclick="requestLogout()"
+        class="logout-btn">
+
+        Mag-logout
+
+      </button>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       AGREEMENT
+  ====================================================== -->
+
+  <div class="agreement-card">
+
+    <div class="agreement-frame-wrapper">
+
+      <iframe
+        id="storeAgreementFrame"
+        src=""
+        width="100%"
+        height="55px"
+        scrolling="no"
+        title="Store Partner Agreements">
+
+      </iframe>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       PRODUCT CATALOG
+  ====================================================== -->
+
+  <div class="catalog-card">
+
+
+    <div class="catalog-title">
+
+      🧹
+      <span>
+        Mga Klase ng Walis Tambo
       </span>
 
     </div>
 
-  </div>
 
-  <!-- LOGOUT -->
+    <p class="catalog-description">
 
-  <div style="margin-top:13px;">
+      Ito ang dalawang opisyal na klase ng walis tambo
+      na available para sa ating mga kasosyong tindahan:
 
-    <button
-      type="button"
-      onclick="requestLogout()"
-      style="background-color:#d32f2f; width:100%; font-size:0.85rem; padding:9px; margin-top:0;">
-
-      Mag-logout
-
-    </button>
-
-  </div>
-
-</div>
+    </p>
 
 
-<!-- AGREEMENT -->
-
-<div style="margin-bottom:10px;">
-
-  <iframe
-    id="storeAgreementFrame"
-    src=""
-    width="100%"
-    height="50px"
-    style="border:none; background:transparent; overflow:hidden;"
-    scrolling="no"
-    title="Store Partner Agreements">
-  </iframe>
-
-</div>
+    <div class="style-grid">
 
 
-<!-- =====================================================
-     PRODUCT CATALOG
-     ===================================================== -->
-
-<div class="card">
-
-  <h2>
-    🧹 Mga Klase ng Walis Tambo
-  </h2>
-
-  <p
-    style="font-size:0.80rem; color:#555; margin-bottom:10px;">
-
-    Ito ang dalawang opisyal na klase ng walis tambo na available
-    para sa ating mga kasosyong tindahan:
-
-  </p>
-
-  <div class="style-grid">
-
-    <div
-      class="style-option-card"
-      style="cursor:default;">
-
-      <img
-        src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg"
-        alt="Ordinary Style Walis Tambo"
-        onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
-
-      <h4>Ordinary Style</h4>
-
-      <p>
-        Standard Quality - Maayos at pulido para sa pang-araw-araw na gamit.
-      </p>
-
-      <button
-        type="button"
-        class="view-img-btn"
-        onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">
-
-        🔍 View Image
-
-      </button>
-
-    </div>
-
-
-    <div
-      class="style-option-card"
-      style="cursor:default;">
-
-      <img
-        src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg"
-        alt="Premium Style Walis Tambo"
-        onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
-
-      <h4>Premium Style</h4>
-
-      <p>
-        Thick & Durable - Mas makapal at matibay gawa sa piling tiger grass.
-      </p>
+      <!-- ORDINARY -->
 
       <div
-        style="margin-top:4px; font-size:0.7rem; background:#fff9c4; color:#f57f17; padding:2px 4px; border-radius:3px; font-weight:bold; border:1px dashed #fbc02d;">
+        class="style-option-card"
+        style="cursor:default;">
 
-        ✨ Gitna ng Hibla (Tampok)
+        <img
+          src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg"
+          alt="Ordinary Style Walis Tambo"
+          onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
+
+
+        <h4>
+          Ordinary Style
+        </h4>
+
+
+        <p>
+          Standard Quality -
+          Maayos at pulido para sa pang-araw-araw
+          na gamit.
+        </p>
+
+
+        <button
+          type="button"
+          class="view-img-btn"
+          onclick="
+            openImageViewer(
+              'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg',
+              'Ordinary Style Walis Tambo'
+            )
+          ">
+
+          🔍 View Image
+
+        </button>
 
       </div>
 
-      <button
-        type="button"
-        class="view-img-btn"
-        onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">
 
-        🔍 View Image
+      <!-- PREMIUM -->
 
-      </button>
+      <div
+        class="style-option-card"
+        style="cursor:default;">
 
-    </div>
+        <img
+          src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg"
+          alt="Premium Style Walis Tambo"
+          onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
 
-  </div>
 
-</div>
-
-
-<!-- =====================================================
-     ACTIVE STOCK
-     ===================================================== -->
-
-<div class="card">
-
-  <h2>
-    📦 Aktibong Stock at mga Paninda
-  </h2>
-
-  <div id="clientItemsContainer">
-
-    <p
-      style="font-size:0.85rem; color:#666;">
-
-      Kinukuha ang data...
-
-    </p>
-
-  </div>
-
-</div>
-
-
-<!-- =====================================================
-     APPROVED RESTOCK
-     ===================================================== -->
-
-<div
-  class="card"
-  id="pendingDeliveryCard"
-  style="display:none; background:#e3f2fd; border:1px solid #90caf9;">
-
-  <h2 style="color:#0288d1;">
-
-    🚚 Mga Na-approve na Restock
-
-  </h2>
-
-  <p
-    style="font-size:0.80rem; color:#333; margin-bottom:8px;">
-
-    Naaprubahan na ito ng admin.
-    I-click ang "Natanggap Ko Na" kapag naihatid na sa iyong tindahan
-    upang madagdag sa iyong stock.
-
-  </p>
-
-  <div id="pendingDeliveryContainer"></div>
-
-</div>
-
-
-<!-- =====================================================
-     PENDING SALES
-     ===================================================== -->
-
-<div
-  class="card"
-  id="pendingSalesCard"
-  style="display:none; background:#fff3e0; border:1px solid #ffb74d;">
-
-  <h2 style="color:#f57c00;">
-
-    ⏳ Mga Nakabinbing Resibo ng Benta
-
-  </h2>
-
-  <p
-    style="font-size:0.80rem; color:#333; margin-bottom:8px;">
-
-    Nai-record na ang mga benta at naghihintay ng
-    kumpirmasyon o pag-apruba ng Admin.
-
-  </p>
-
-  <div id="pendingSalesContainer"></div>
-
-</div>
-
-
-<!-- =====================================================
-     NOTIFICATIONS
-     ===================================================== -->
-
-<div class="card">
-
-  <div
-    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-
-    <h2 style="margin-bottom:0;">
-
-      📢 Mga Abiso at Update
-
-    </h2>
-
-    <button
-      type="button"
-      onclick="clearAllNotifications()"
-      style="background-color:#c62828; width:auto; font-size:0.7rem; padding:6px 9px; margin-top:0;">
-
-      Clear All
-
-    </button>
-
-  </div>
-
-  <div id="clientNotificationsContainer">
-
-    <p
-      style="font-size:0.85rem; color:#666;">
-
-      Wala pang bagong abiso.
-
-    </p>
-
-  </div>
-
-</div>
-
-
-<!-- =====================================================
-     RESTOCK REQUEST
-     ===================================================== -->
-
-<div
-  class="card"
-  style="background:#fff8e1; border:1px solid #ffe082;">
-
-  <div
-    style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-
-    <h2 style="margin-bottom:0;">
-
-      🔄 Humiling ng Karagdagang Restock
-
-    </h2>
-
-    <button
-      type="button"
-      id="toggleRestockBtn"
-      onclick="toggleRestockVisibility()"
-      style="background-color:#f57f17; width:auto; padding:6px 10px; font-size:0.72rem; margin-top:0;">
-
-      Buksan
-
-    </button>
-
-  </div>
-
-  <div
-    id="restockContentWrapper"
-    style="display:none; margin-top:10px;">
-
-    <p
-      style="font-size:0.80rem; color:#555; margin-bottom:8px;">
-
-      Mag-request ng eksaktong 5 pirasong restock
-      (1 beses lamang bawat buwan).
-
-    </p>
-
-    <div class="form-group">
-
-      <label for="restockStyleType">
-
-        Piliin ang Uri ng Istilo:
-
-      </label>
-
-      <select id="restockStyleType">
-
-        <option value="Ordinary">
-          Ordinary Style
-        </option>
-
-        <option value="Premium">
+        <h4>
           Premium Style
-        </option>
+        </h4>
 
-      </select>
+
+        <p>
+          Thick & Durable -
+          Mas makapal at matibay gawa sa piling
+          tiger grass.
+        </p>
+
+
+        <div class="premium-feature">
+          ✨ Gitna ng Hibla (Tampok)
+        </div>
+
+
+        <button
+          type="button"
+          class="view-img-btn"
+          onclick="
+            openImageViewer(
+              'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg',
+              'Premium Style Walis Tambo'
+            )
+          ">
+
+          🔍 View Image
+
+        </button>
+
+      </div>
+
 
     </div>
-
-    <div class="form-group">
-
-      <label>
-        Dami ng Restock (Fixed: 5 pcs):
-      </label>
-
-      <input
-        type="number"
-        id="restockQtyInput"
-        value="5"
-        min="5"
-        max="5"
-        readonly
-        style="background:#eee;">
-
-    </div>
-
-    <button
-      type="button"
-      onclick="submitRestockRequest()"
-      style="background-color:#f57f17;">
-
-      Ipadala ang Request sa Admin
-
-    </button>
 
   </div>
 
-</div>
 
 
-<!-- =====================================================
-     CHAT
-     ===================================================== -->
+  <!-- =====================================================
+       ACTIVE STOCK
+  ====================================================== -->
 
-<div class="card">
+  <div class="stock-card">
 
-  <div
-    style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-
-    <h2 style="margin-bottom:0;">
-
-      💬 Makipag-ugnayan sa Admin
-
+    <h2>
+      📦 Aktibong Stock at mga Paninda
     </h2>
 
-    <button
-      type="button"
-      id="toggleChatBtn"
-      onclick="toggleChatVisibility()"
-      style="background-color:#0288d1; width:auto; padding:6px 10px; font-size:0.72rem; margin-top:0;">
-
-      Buksan
-
-    </button>
-
-  </div>
-
-  <div
-    id="chatContentWrapper"
-    style="display:none; margin-top:10px;">
-
-    <div
-      id="clientChatContainer"
-      style="max-height:220px; overflow-y:auto; margin-bottom:8px; border:1px solid #eee; padding:8px; border-radius:4px; background:#fafafa;">
+    <div id="clientItemsContainer">
 
       <p
-        style="font-size:0.85rem; color:#666;">
+        style="
+          font-size:0.85rem;
+          color:#666;
+        ">
 
-        Wala pang mensahe.
+        Kinukuha ang data...
 
       </p>
 
     </div>
 
-    <div
-      class="form-group"
-      style="margin-bottom:5px;">
+  </div>
 
-      <input
-        type="text"
-        id="clientChatInput"
-        placeholder="I-type ang mensahe o tanong sa admin...">
+
+
+  <!-- =====================================================
+       APPROVED RESTOCK
+  ====================================================== -->
+
+  <div
+    class="card"
+    id="pendingDeliveryCard"
+    style="display:none;">
+
+    <h2>
+      🚚 Mga Na-approve na Restock
+      (Kailangan ng Kumpirmasyon)
+    </h2>
+
+    <p
+      style="
+        font-size:0.82rem;
+        color:#333;
+        margin-bottom:8px;
+      ">
+
+      Naaprubahan na ito ng admin.
+      I-click ang "Natanggap Ko Na" kapag naihatid
+      na sa iyong tindahan upang madagdag sa iyong stock.
+
+    </p>
+
+    <div id="pendingDeliveryContainer"></div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       PENDING SALES
+  ====================================================== -->
+
+  <div
+    class="card"
+    id="pendingSalesCard"
+    style="display:none;">
+
+    <h2>
+      ⏳ Mga Nakabinbing Resibo ng Benta
+    </h2>
+
+    <p
+      style="
+        font-size:0.82rem;
+        color:#333;
+        margin-bottom:8px;
+      ">
+
+      Nai-record na ang mga benta at naghihintay
+      ng kumpirmasyon o pag-apruba ng Admin.
+
+    </p>
+
+    <div id="pendingSalesContainer"></div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       NOTIFICATIONS
+  ====================================================== -->
+
+  <div class="card">
+
+    <div class="notification-header">
+
+      <h2 style="margin-bottom:0;">
+        📢 Mga Abiso at Update
+      </h2>
+
+      <button
+        type="button"
+        onclick="clearAllNotifications()"
+        style="
+          background:#c62828;
+          width:auto;
+          font-size:0.73rem;
+          padding:6px 9px;
+          margin-top:0;
+        ">
+
+        Clear All
+
+      </button>
 
     </div>
 
+
+    <div id="clientNotificationsContainer">
+
+      <p
+        style="
+          font-size:0.85rem;
+          color:#666;
+        ">
+
+        Wala pang bagong abiso.
+
+      </p>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       RESTOCK
+  ====================================================== -->
+
+  <div class="restock-card">
+
+
+    <div class="section-toggle">
+
+      <h2>
+        🔄 Humiling ng Karagdagang Restock
+      </h2>
+
+      <button
+        type="button"
+        id="toggleRestockBtn"
+        onclick="toggleRestockVisibility()"
+        class="small-toggle-btn"
+        style="
+          background:#f57f17;
+        ">
+
+        Buksan
+
+      </button>
+
+    </div>
+
+
+    <div
+      id="restockContentWrapper"
+      style="
+        display:none;
+        margin-top:12px;
+      ">
+
+
+      <p
+        style="
+          font-size:0.82rem;
+          color:#555;
+          margin-bottom:8px;
+        ">
+
+        Mag-request ng eksaktong
+        <strong>5 pirasong restock</strong>
+        (1 beses lamang bawat buwan).
+
+      </p>
+
+
+      <div class="form-group">
+
+        <label for="restockStyleType">
+          Piliin ang Uri ng Istilo:
+        </label>
+
+        <select id="restockStyleType">
+
+          <option value="Ordinary">
+            Ordinary Style
+          </option>
+
+          <option value="Premium">
+            Premium Style
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Dami ng Restock (Fixed: 5 pcs):
+        </label>
+
+        <input
+          type="number"
+          id="restockQtyInput"
+          value="5"
+          min="5"
+          max="5"
+          readonly
+          style="background:#eee;">
+
+      </div>
+
+
+      <button
+        type="button"
+        onclick="submitRestockRequest()"
+        style="
+          background:#f57f17;
+        ">
+
+        Ipadala ang Request sa Admin
+
+      </button>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       CHAT
+  ====================================================== -->
+
+  <div class="chat-card">
+
+
+    <div class="section-toggle">
+
+      <h2>
+        💬 Makipag-ugnayan sa Admin
+      </h2>
+
+      <button
+        type="button"
+        id="toggleChatBtn"
+        onclick="toggleChatVisibility()"
+        class="small-toggle-btn"
+        style="
+          background:#0288d1;
+        ">
+
+        Buksan
+
+      </button>
+
+    </div>
+
+
+    <div
+      id="chatContentWrapper"
+      style="
+        display:none;
+        margin-top:12px;
+      ">
+
+
+      <div id="clientChatContainer">
+
+        <p
+          style="
+            font-size:0.85rem;
+            color:#666;
+          ">
+
+          Wala pang mensahe.
+
+        </p>
+
+      </div>
+
+
+      <div
+        class="form-group"
+        style="margin-bottom:5px;">
+
+        <input
+          type="text"
+          id="clientChatInput"
+          placeholder="I-type ang mensahe o tanong sa admin...">
+
+      </div>
+
+
+      <button
+        type="button"
+        onclick="sendClientMessage()"
+        style="
+          background:#0288d1;
+        ">
+
+        Ipadala ang Mensahe
+
+      </button>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       STOP AGREEMENT
+  ====================================================== -->
+
+  <div class="stop-card">
+
+    <h2>
+      🛑 Pagpapahinto ng Consignment Agreement
+    </h2>
+
+    <p
+      style="
+        font-size:0.82rem;
+        color:#333;
+        margin-bottom:8px;
+      ">
+
+      Kung nais mo nang itigil o tapusin ang kasunduan
+      at consignment sa tindahang ito, i-click ang
+      button sa ibaba.
+
+    </p>
+
+
     <button
       type="button"
-      onclick="sendClientMessage()"
-      style="background-color:#0288d1;">
+      onclick="promptStopAgreement()"
+      style="
+        background:#d32f2f;
+        font-size:0.9rem;
+        padding:10px;
+      ">
 
-      Ipadala ang Mensahe
+      Itigil / I-cancel ang Kasunduan (Stop)
 
     </button>
 
   </div>
 
+
 </div>
 
 
-<!-- =====================================================
-     STOP AGREEMENT
-     ===================================================== -->
+<!-- =======================================================
+     ADMIN LINK
+======================================================= -->
+
+<div class="admin-link">
+
+  <a href="admin.html">
+
+    🔐 Pumunta sa Admin Panel
+
+  </a>
+
+</div>
+
+
+</div>
+
+
+<!-- =======================================================
+     IMAGE VIEWER
+======================================================= -->
 
 <div
-  class="card"
-  style="background:#ffebee; border:1px solid #ef9a9a;">
+  id="imageModal"
+  onclick="closeImageViewer()">
 
-  <h2
-    style="color:#c62828; font-size:0.95rem;">
+  <img
+    id="modalImage"
+    src=""
+    alt="Malaking Larawan">
 
-    🛑 Pagpapahinto ng Consignment Agreement
-
-  </h2>
-
-  <p
-    style="font-size:0.80rem; color:#333; margin-bottom:8px;">
-
-    Kung nais mo nang itigil o tapusin ang kasunduan at
-    consignment sa tindahang ito, i-click ang button sa ibaba.
-
-  </p>
+  <h3
+    id="modalTitle"
+    style="
+      color:white;
+      margin-top:10px;
+      font-size:1rem;
+      text-align:center;
+    ">
+  </h3>
 
   <button
-    type="button"
-    onclick="promptStopAgreement()"
-    style="background-color:#d32f2f; font-size:0.85rem; padding:9px;">
+    id="imageModalClose"
+    onclick="
+      event.stopPropagation();
+      closeImageViewer();
+    ">
 
-    Itigil / I-cancel ang Kasunduan (Stop)
+    Isara
 
   </button>
 
 </div>
 
-  </div>  <!-- ADMIN PANEL -->  <div
-    style="text-align:center; margin-top:20px; margin-bottom:10px;"><a
-  href="admin.html"
-  style="font-size:0.78rem; color:#666; text-decoration:none;">
 
-  🔐 Pumunta sa Admin Panel
 
-</a>
+<!-- =======================================================
+     FIREBASE
+======================================================= -->
 
-  </div></div><!-- =========================================================
-     IMAGE VIEWER MODAL
-     ========================================================= --><div
-  id="imageModal"
-  onclick="closeImageViewer()"><img
-id="modalImage"
-src=""
-alt="Malaking Larawan">
+<script type="module">
 
-  <h3
-    id="modalTitle"
-    style="color:white; margin-top:10px; font-size:1rem;">
-  </h3><button
-id="imageModalClose"
-onclick="closeImageViewer()">
-
-Isara
-
-  </button></div><!-- =========================================================
-     FIREBASE SDKs
-     ========================================================= --><script type="module">
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+  initializeApp
+} from
+"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
 import {
   getFirestore,
   doc,
   getDoc,
   setDoc
-}
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+} from
+"https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
-  authDomain: "dwbe-consignment.firebaseapp.com",
-  projectId: "dwbe-consignment",
-  storageBucket: "dwbe-consignment.firebasestorage.app",
-  messagingSenderId: "205759197252",
-  appId: "1:205759197252:web:b04400821f81791d10cc11"
+
+  apiKey:
+    "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+
+  authDomain:
+    "dwbe-consignment.firebaseapp.com",
+
+  projectId:
+    "dwbe-consignment",
+
+  storageBucket:
+    "dwbe-consignment.firebasestorage.app",
+
+  messagingSenderId:
+    "205759197252",
+
+  appId:
+    "1:205759197252:web:b04400821f81791d10cc11"
+
 };
 
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app =
+  initializeApp(firebaseConfig);
+
+const db =
+  getFirestore(app);
+
 
 let appData = {
+
   homeStock: {
     Ordinary: 0,
     Premium: 0
   },
+
   consignments: [],
+
   pendingInquiries: []
+
 };
 
+
 let currentStoreName =
-  localStorage.getItem('client_logged_store') || '';
+  localStorage.getItem(
+    'client_logged_store'
+  ) || '';
+
 
 const syncStatus =
-  document.getElementById('syncStatus');
+  document.getElementById(
+    'syncStatus'
+  );
+
 
 
 /* =========================================================
    SERVICE WORKER
-   ========================================================= */
+========================================================= */
 
 if ('serviceWorker' in navigator) {
 
   navigator.serviceWorker
     .register('sw.js')
-    .catch(err =>
-      console.log('SW registration failed:', err)
+    .catch(
+      err =>
+        console.log(
+          'SW registration failed:',
+          err
+        )
     );
 
 }
 
 
+
 /* =========================================================
    IMAGE VIEWER
-   ========================================================= */
+========================================================= */
 
-window.openImageViewer = function(src, title) {
+window.openImageViewer =
+function(src, title) {
 
   const modal =
-    document.getElementById('imageModal');
+    document.getElementById(
+      'imageModal'
+    );
 
   const modalImg =
-    document.getElementById('modalImage');
+    document.getElementById(
+      'modalImage'
+    );
 
   const modalTitle =
-    document.getElementById('modalTitle');
+    document.getElementById(
+      'modalTitle'
+    );
 
   modalImg.src = src;
-  modalTitle.textContent = title;
 
-  modal.style.display = 'flex';
+  modalTitle.textContent =
+    title;
+
+  modal.style.display =
+    'flex';
+
+};
+
+
+window.closeImageViewer =
+function() {
+
+  document.getElementById(
+    'imageModal'
+  ).style.display =
+    'none';
 
 };
 
-
-window.closeImageViewer = function() {
-
-  document.getElementById('imageModal')
-    .style.display = 'none';
-
-};
 
 
 /* =========================================================
    INQUIRY STYLE
-   ========================================================= */
+========================================================= */
 
-window.selectInqStyle = function(style, el) {
+window.selectInqStyle =
+function(style, el) {
 
-  document.getElementById('inqStyleType')
-    .value = style;
+  document.getElementById(
+    'inqStyleType'
+  ).value = style;
 
-  const parent = el.parentElement;
+  const parent =
+    el.parentElement;
 
   parent
-    .querySelectorAll('.style-option-card')
-    .forEach(c =>
-      c.classList.remove('selected')
+    .querySelectorAll(
+      '.style-option-card'
+    )
+    .forEach(
+      c =>
+        c.classList.remove(
+          'selected'
+        )
     );
 
-  el.classList.add('selected');
+  el.classList.add(
+    'selected'
+  );
 
 };
 
 
-/* =========================================================
-   TOGGLE RESTOCK
-   ========================================================= */
 
-window.toggleRestockVisibility = function() {
+/* =========================================================
+   RESTOCK TOGGLE
+========================================================= */
+
+window.toggleRestockVisibility =
+function() {
 
   const wrapper =
-    document.getElementById('restockContentWrapper');
+    document.getElementById(
+      'restockContentWrapper'
+    );
 
   const btn =
-    document.getElementById('toggleRestockBtn');
+    document.getElementById(
+      'toggleRestockBtn'
+    );
 
-  if (wrapper.style.display === 'none') {
+  if (
+    wrapper.style.display ===
+    'none'
+  ) {
 
-    wrapper.style.display = 'block';
-    btn.textContent = 'Itago';
+    wrapper.style.display =
+      'block';
+
+    btn.textContent =
+      'Itago';
 
   } else {
 
-    wrapper.style.display = 'none';
-    btn.textContent = 'Buksan';
+    wrapper.style.display =
+      'none';
+
+    btn.textContent =
+      'Buksan';
 
   }
 
 };
 
 
-/* =========================================================
-   TOGGLE CHAT
-   ========================================================= */
 
-window.toggleChatVisibility = function() {
+/* =========================================================
+   CHAT TOGGLE
+========================================================= */
+
+window.toggleChatVisibility =
+function() {
 
   const wrapper =
-    document.getElementById('chatContentWrapper');
+    document.getElementById(
+      'chatContentWrapper'
+    );
 
   const btn =
-    document.getElementById('toggleChatBtn');
+    document.getElementById(
+      'toggleChatBtn'
+    );
 
-  if (wrapper.style.display === 'none') {
+  if (
+    wrapper.style.display ===
+    'none'
+  ) {
 
-    wrapper.style.display = 'block';
-    btn.textContent = 'Itago';
+    wrapper.style.display =
+      'block';
+
+    btn.textContent =
+      'Itago';
 
   } else {
 
-    wrapper.style.display = 'none';
-    btn.textContent = 'Buksan';
+    wrapper.style.display =
+      'none';
+
+    btn.textContent =
+      'Buksan';
 
   }
 
 };
+
 
 
 /* =========================================================
    IFRAME RESIZE
-   ========================================================= */
+========================================================= */
 
-window.addEventListener('message', function(event) {
+window.addEventListener(
+  'message',
+  function(event) {
 
-  if (
-    event.data &&
-    event.data.type === 'resizeAgreement'
-  ) {
+    if (
+      event.data &&
+      event.data.type ===
+      'resizeAgreement'
+    ) {
 
-    const iframe =
-      document.getElementById('storeAgreementFrame');
+      const iframe =
+        document.getElementById(
+          'storeAgreementFrame'
+        );
 
-    if (iframe) {
+      if (iframe) {
 
-      iframe.style.height =
-        event.data.height + 'px';
+        iframe.style.height =
+          event.data.height +
+          'px';
+
+      }
 
     }
 
   }
+);
 
-});
 
 
 /* =========================================================
    PWA INSTALL
-   ========================================================= */
+========================================================= */
 
 let deferredPrompt;
 
 const headerInstallBtn =
-  document.getElementById('headerInstallBtn');
+  document.getElementById(
+    'headerInstallBtn'
+  );
 
 
 window.addEventListener(
@@ -1705,25 +2808,37 @@ window.addEventListener(
 
     deferredPrompt = e;
 
-    if (headerInstallBtn)
-      headerInstallBtn.style.display = 'block';
+    if (headerInstallBtn) {
+
+      headerInstallBtn.style.display =
+        'block';
+
+    }
 
   }
 );
 
 
-const handleInstallClick = async () => {
+const handleInstallClick =
+async () => {
 
   if (deferredPrompt) {
 
     deferredPrompt.prompt();
 
-    const { outcome } =
+    const {
+      outcome
+    } =
       await deferredPrompt.userChoice;
 
-    if (outcome === 'accepted') {
+    if (
+      outcome ===
+      'accepted'
+    ) {
 
-      console.log('Na-install ang app');
+      console.log(
+        'Na-install ang app'
+      );
 
       alert(
         '✅ Matagumpay na na-install ang app!'
@@ -1733,45 +2848,66 @@ const handleInstallClick = async () => {
 
     deferredPrompt = null;
 
-    if (headerInstallBtn)
-      headerInstallBtn.style.display = 'none';
+    if (headerInstallBtn) {
+
+      headerInstallBtn.style.display =
+        'none';
+
+    }
 
   }
 
 };
 
 
-if (headerInstallBtn)
+if (headerInstallBtn) {
+
   headerInstallBtn.addEventListener(
     'click',
     handleInstallClick
   );
 
+}
+
+
 
 /* =========================================================
    LOGOUT
-   ========================================================= */
+========================================================= */
 
-window.requestLogout = function() {
+window.requestLogout =
+function() {
 
-  const storeInput = prompt(
-    "Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:"
-  );
+  const storeInput =
+    prompt(
+      "Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:"
+    );
 
-  if (storeInput === null) return;
+  if (
+    storeInput === null
+  ) return;
+
 
   const store =
     appData.consignments.find(
       c =>
-        c.storeName.toLowerCase() ===
-        currentStoreName.toLowerCase()
+        c.storeName
+          .toLowerCase() ===
+        currentStoreName
+          .toLowerCase()
     );
+
 
   if (!store) return;
 
+
   if (
-    storeInput.toLowerCase().trim() ===
-    store.ownerName.toLowerCase().trim()
+    storeInput
+      .toLowerCase()
+      .trim() ===
+    store.ownerName
+      .toLowerCase()
+      .trim()
   ) {
 
     localStorage.removeItem(
@@ -1781,7 +2917,8 @@ window.requestLogout = function() {
     currentStoreName = '';
 
     window.location.href =
-      window.location.pathname.split('?')[0];
+      window.location.pathname
+        .split('?')[0];
 
   } else {
 
@@ -1794,61 +2931,82 @@ window.requestLogout = function() {
 };
 
 
+
 /* =========================================================
    CLEAR NOTIFICATIONS
-   ========================================================= */
+========================================================= */
 
-window.clearAllNotifications = async function() {
+window.clearAllNotifications =
+async function() {
 
   const store =
     appData.consignments.find(
       c =>
-        c.storeName.toLowerCase() ===
-        currentStoreName.toLowerCase()
+        c.storeName
+          .toLowerCase() ===
+        currentStoreName
+          .toLowerCase()
     );
 
   if (!store) return;
 
-  store.clientNotifications = [];
+  store.clientNotifications =
+    [];
 
   await saveData();
 
 };
 
 
+
 /* =========================================================
    STOP AGREEMENT
-   ========================================================= */
+========================================================= */
 
-window.promptStopAgreement = async function() {
+window.promptStopAgreement =
+async function() {
 
-  const confirmation = confirm(
-    "⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' para kumpirmahin."
-  );
+  const confirmation =
+    confirm(
+      "⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' para kumpirmahin."
+    );
 
   if (!confirmation) {
     return;
   }
 
+
   const store =
     appData.consignments.find(
       c =>
-        c.storeName.toLowerCase() ===
-        currentStoreName.toLowerCase()
+        c.storeName
+          .toLowerCase() ===
+        currentStoreName
+          .toLowerCase()
     );
+
 
   if (!store) return;
 
-  store.agreementAccepted = false;
 
-  store.consignmentStatus = "Stopped";
+  store.agreementAccepted =
+    false;
 
-  if (!store.messages)
+  store.consignmentStatus =
+    "Stopped";
+
+
+  if (!store.messages) {
+
     store.messages = [];
+
+  }
+
 
   store.messages.unshift({
 
-    sender: currentStoreName,
+    sender:
+      currentStoreName,
 
     text:
       "⚠️ Pinal na itinigil / kinansela ng kliyente ang Consignment Agreement.",
@@ -1858,8 +3016,14 @@ window.promptStopAgreement = async function() {
 
   });
 
-  if (!store.clientNotifications)
-    store.clientNotifications = [];
+
+  if (!store.clientNotifications) {
+
+    store.clientNotifications =
+      [];
+
+  }
+
 
   store.clientNotifications.unshift({
 
@@ -1871,80 +3035,107 @@ window.promptStopAgreement = async function() {
 
   });
 
+
   await saveData();
+
 
   alert(
     "Matagumpay na naitala ang iyong pagpapahinto sa kasunduan. Naabisuhan na ang Admin."
   );
 
-  renderClientDashboard(store);
+
+  renderClientDashboard(
+    store
+  );
 
 };
 
 
+
 /* =========================================================
    DISMISS NOTIFICATION
-   ========================================================= */
+========================================================= */
 
-window.dismissNotification = async function(index) {
+window.dismissNotification =
+async function(index) {
 
   const store =
     appData.consignments.find(
       c =>
-        c.storeName.toLowerCase() ===
-        currentStoreName.toLowerCase()
+        c.storeName
+          .toLowerCase() ===
+        currentStoreName
+          .toLowerCase()
     );
 
-  if (!store ||
-      !store.clientNotifications)
-    return;
+  if (
+    !store ||
+    !store.clientNotifications
+  ) return;
 
-  store.clientNotifications.splice(index, 1);
+
+  store.clientNotifications.splice(
+    index,
+    1
+  );
+
 
   await saveData();
 
 };
 
 
+
 /* =========================================================
    RECEIVE RESTOCK
-   ========================================================= */
+========================================================= */
 
-window.confirmReceiveRestock = async function(index) {
+window.confirmReceiveRestock =
+async function(index) {
 
   const store =
     appData.consignments.find(
       c =>
-        c.storeName.toLowerCase() ===
-        currentStoreName.toLowerCase()
+        c.storeName
+          .toLowerCase() ===
+        currentStoreName
+          .toLowerCase()
     );
+
 
   if (
     !store ||
     !store.approvedRestocks ||
     !store.approvedRestocks[index]
-  )
-    return;
+  ) return;
+
 
   const itemToReceive =
     store.approvedRestocks[index];
 
-  if (!appData.homeStock)
+
+  if (!appData.homeStock) {
+
     appData.homeStock = {
       Ordinary: 0,
       Premium: 0
     };
 
+  }
+
+
   appData.homeStock[
     itemToReceive.styleType
-  ] =
-    Math.max(
-      0,
-      (appData.homeStock[
+  ] = Math.max(
+    0,
+    (
+      appData.homeStock[
         itemToReceive.styleType
-      ] || 0) -
-      itemToReceive.qty
-    );
+      ] || 0
+    ) -
+    itemToReceive.qty
+  );
+
 
   let existingItem =
     store.storeItems.find(
@@ -1952,6 +3143,7 @@ window.confirmReceiveRestock = async function(index) {
         i.styleType ===
         itemToReceive.styleType
     );
+
 
   if (existingItem) {
 
@@ -1974,9 +3166,11 @@ window.confirmReceiveRestock = async function(index) {
       currentStock:
         itemToReceive.qty,
 
-      returnedQty: 0,
+      returnedQty:
+        0,
 
-      rejectedQty: 0,
+      rejectedQty:
+        0,
 
       price:
         store.price || 0,
@@ -1988,14 +3182,24 @@ window.confirmReceiveRestock = async function(index) {
 
   }
 
-  store.approvedRestocks.splice(index, 1);
 
-  if (!store.messages)
+  store.approvedRestocks.splice(
+    index,
+    1
+  );
+
+
+  if (!store.messages) {
+
     store.messages = [];
+
+  }
+
 
   store.messages.unshift({
 
-    sender: currentStoreName,
+    sender:
+      currentStoreName,
 
     text:
       `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`,
@@ -2005,7 +3209,9 @@ window.confirmReceiveRestock = async function(index) {
 
   });
 
+
   await saveData();
+
 
   alert(
     "Matagumpay na naidagdag sa iyong stock at nabawas sa inventory ng admin!"
@@ -2014,30 +3220,41 @@ window.confirmReceiveRestock = async function(index) {
 };
 
 
+
 /* =========================================================
    RECORD SALE
-   ========================================================= */
+========================================================= */
 
-window.promptRecordSale = async function(styleType) {
+window.promptRecordSale =
+async function(styleType) {
 
   const store =
     appData.consignments.find(
       c =>
-        c.storeName.toLowerCase() ===
-        currentStoreName.toLowerCase()
+        c.storeName
+          .toLowerCase() ===
+        currentStoreName
+          .toLowerCase()
     );
 
+
   if (!store) return;
+
 
   const sub =
     store.storeItems.find(
       i =>
-        i.styleType === styleType
+        i.styleType ===
+        styleType
     );
+
 
   if (!sub) return;
 
-  if (sub.currentStock <= 0) {
+
+  if (
+    sub.currentStock <= 0
+  ) {
 
     alert(
       "Wala nang natitirang active stock para sa uring ito."
@@ -2047,14 +3264,21 @@ window.promptRecordSale = async function(styleType) {
 
   }
 
-  const inputVal = prompt(
-    `Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`
-  );
 
-  if (inputVal === null) return;
+  const inputVal =
+    prompt(
+      `Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`
+    );
+
+
+  if (
+    inputVal === null
+  ) return;
+
 
   const qtySold =
     parseInt(inputVal);
+
 
   if (
     isNaN(qtySold) ||
@@ -2069,7 +3293,11 @@ window.promptRecordSale = async function(styleType) {
 
   }
 
-  if (qtySold > sub.currentStock) {
+
+  if (
+    qtySold >
+    sub.currentStock
+  ) {
 
     alert(
       `Ang dami ng nabili (${qtySold} pcs) ay lumampas sa iyong natitirang active stock (${sub.currentStock} pcs).`
@@ -2079,16 +3307,26 @@ window.promptRecordSale = async function(styleType) {
 
   }
 
-  const confirmSale = confirm(
-    `Kumpirmahin ang pagbili ng ${qtySold} pcs (${styleType})?\n\nIto ay awtomatikong babawas sa iyong active stock at magpapadala ng pending confirmation receipt sa Admin.`
-  );
+
+  const confirmSale =
+    confirm(
+      `Kumpirmahin ang pagbili ng ${qtySold} pcs (${styleType})?\n\nIto ay awtomatikong babawas sa iyong active stock at magpapadala ng pending confirmation receipt sa Admin.`
+    );
+
 
   if (!confirmSale) return;
 
-  sub.currentStock -= qtySold;
 
-  if (!store.pendingSales)
+  sub.currentStock -=
+    qtySold;
+
+
+  if (!store.pendingSales) {
+
     store.pendingSales = [];
+
+  }
+
 
   store.pendingSales.unshift({
 
@@ -2102,7 +3340,8 @@ window.promptRecordSale = async function(styleType) {
       sub.price || 0,
 
     totalAmount:
-      qtySold * (sub.price || 0),
+      qtySold *
+      (sub.price || 0),
 
     date:
       new Date().toLocaleString(),
@@ -2112,8 +3351,13 @@ window.promptRecordSale = async function(styleType) {
 
   });
 
-  if (!store.messages)
+
+  if (!store.messages) {
+
     store.messages = [];
+
+  }
+
 
   store.messages.unshift({
 
@@ -2128,8 +3372,14 @@ window.promptRecordSale = async function(styleType) {
 
   });
 
-  if (!store.clientNotifications)
-    store.clientNotifications = [];
+
+  if (!store.clientNotifications) {
+
+    store.clientNotifications =
+      [];
+
+  }
+
 
   store.clientNotifications.unshift({
 
@@ -2141,25 +3391,32 @@ window.promptRecordSale = async function(styleType) {
 
   });
 
+
   await saveData();
+
 
   alert(
     "Matagumpay na nabawas ang active stock at naipadala ang pending receipt sa Admin!"
   );
 
-  renderClientDashboard(store);
+
+  renderClientDashboard(
+    store
+  );
 
 };
 
 
+
 /* =========================================================
    LOAD DATA
-   ========================================================= */
+========================================================= */
 
 async function loadData() {
 
   syncStatus.textContent =
     "Kumukuha ng data sa Cloud...";
+
 
   try {
 
@@ -2170,35 +3427,62 @@ async function loadData() {
         "main_inventory"
       );
 
-    const docSnap =
-      await getDoc(docRef);
 
-    if (docSnap.exists()) {
+    const docSnap =
+      await getDoc(
+        docRef
+      );
+
+
+    if (
+      docSnap.exists()
+    ) {
 
       appData =
         docSnap.data();
 
-      if (!appData.homeStock)
+
+      if (!appData.homeStock) {
+
         appData.homeStock = {
           Ordinary: 0,
           Premium: 0
         };
 
-      if (!appData.consignments)
-        appData.consignments = [];
+      }
 
-      if (!appData.pendingInquiries)
-        appData.pendingInquiries = [];
+
+      if (
+        !appData.consignments
+      ) {
+
+        appData.consignments =
+          [];
+
+      }
+
+
+      if (
+        !appData.pendingInquiries
+      ) {
+
+        appData.pendingInquiries =
+          [];
+
+      }
 
     }
+
 
     const urlParams =
       new URLSearchParams(
         window.location.search
       );
 
+
     const paramStore =
       urlParams.get('store');
+
 
     let storeToCheck =
       paramStore ||
@@ -2206,22 +3490,28 @@ async function loadData() {
         'client_logged_store'
       );
 
+
     if (storeToCheck) {
 
       const found =
         appData.consignments.find(
           c =>
-            c.storeName.toLowerCase() ===
-            storeToCheck.toLowerCase()
+            c.storeName
+              .toLowerCase() ===
+            storeToCheck
+              .toLowerCase()
         );
+
 
       if (found) {
 
         found.lastClientAccess =
-          new Date().toLocaleString();
+          new Date()
+            .toLocaleString();
 
         found.clientStatus =
           "Online";
+
 
         await setDoc(
           docRef,
@@ -2232,10 +3522,13 @@ async function loadData() {
 
     }
 
+
     syncStatus.textContent =
       "✅ Nakakonekta sa Cloud Database";
 
+
     initPortalView();
+
 
   } catch (err) {
 
@@ -2243,6 +3536,7 @@ async function loadData() {
       "Error loading cloud data:",
       err
     );
+
 
     syncStatus.textContent =
       "⚠️ Nabigo sa pagkonekta sa Cloud.";
@@ -2252,33 +3546,40 @@ async function loadData() {
 }
 
 
+
 /* =========================================================
    SAVE DATA
-   ========================================================= */
+========================================================= */
 
 async function saveData() {
 
   syncStatus.textContent =
     "Nagse-save sa Cloud...";
 
+
   try {
 
     const store =
       appData.consignments.find(
         c =>
-          c.storeName.toLowerCase() ===
-          currentStoreName.toLowerCase()
+          c.storeName
+            .toLowerCase() ===
+          currentStoreName
+            .toLowerCase()
       );
+
 
     if (store) {
 
       store.lastClientAccess =
-        new Date().toLocaleString();
+        new Date()
+          .toLocaleString();
 
       store.clientStatus =
         "Online";
 
     }
+
 
     await setDoc(
       doc(
@@ -2289,10 +3590,13 @@ async function saveData() {
       appData
     );
 
+
     syncStatus.textContent =
       "✅ Na-save at Nakakonekta sa Cloud";
 
+
     initPortalView();
+
 
   } catch (err) {
 
@@ -2300,6 +3604,7 @@ async function saveData() {
       "Error saving cloud data:",
       err
     );
+
 
     syncStatus.textContent =
       "⚠️ Error sa pag-save sa cloud";
@@ -2309,9 +3614,10 @@ async function saveData() {
 }
 
 
+
 /* =========================================================
-   INIT PORTAL
-   ========================================================= */
+   INIT PORTAL VIEW
+========================================================= */
 
 function initPortalView() {
 
@@ -2320,8 +3626,10 @@ function initPortalView() {
       window.location.search
     );
 
+
   const paramStore =
     urlParams.get('store');
+
 
   if (paramStore) {
 
@@ -2335,40 +3643,55 @@ function initPortalView() {
 
   }
 
+
   if (currentStoreName) {
 
     const found =
       appData.consignments.find(
         c =>
-          c.storeName.toLowerCase() ===
-          currentStoreName.toLowerCase() ||
-
+          c.storeName
+            .toLowerCase() ===
+          currentStoreName
+            .toLowerCase()
+          ||
           (
             c.ownerName &&
-            c.ownerName.toLowerCase() ===
-            currentStoreName.toLowerCase()
+            c.ownerName
+              .toLowerCase() ===
+            currentStoreName
+              .toLowerCase()
           )
       );
+
 
     if (found) {
 
       document.getElementById(
         'loginScreen'
-      ).style.display = 'none';
+      ).style.display =
+        'none';
+
 
       document.getElementById(
         'portalContent'
-      ).style.display = 'block';
+      ).style.display =
+        'block';
+
 
       if (paramStore) {
 
         document.getElementById(
           'directAccessNotice'
-        ).style.display = 'block';
+        ).style.display =
+          'block';
 
       }
 
-      renderClientDashboard(found);
+
+      renderClientDashboard(
+        found
+      );
+
 
     } else {
 
@@ -2376,15 +3699,21 @@ function initPortalView() {
         'client_logged_store'
       );
 
-      currentStoreName = '';
+      currentStoreName =
+        '';
+
 
       document.getElementById(
         'loginScreen'
-      ).style.display = 'flex';
+      ).style.display =
+        'flex';
+
 
       document.getElementById(
         'portalContent'
-      ).style.display = 'none';
+      ).style.display =
+        'none';
+
 
       if (paramStore) {
 
@@ -2396,97 +3725,122 @@ function initPortalView() {
 
     }
 
+
   } else {
 
     document.getElementById(
       'loginScreen'
-    ).style.display = 'flex';
+    ).style.display =
+      'flex';
+
 
     document.getElementById(
       'portalContent'
-    ).style.display = 'none';
+    ).style.display =
+      'none';
 
   }
 
 }
 
 
+
 /* =========================================================
    MANUAL LOGIN
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById('manualLoginBtn')
-  .addEventListener('click', () => {
+  .getElementById(
+    'manualLoginBtn'
+  )
+  .addEventListener(
+    'click',
+    () => {
 
-    const storeInput =
-      document
-        .getElementById(
-          'manualStoreNameInput'
-        )
-        .value
-        .trim();
-
-    if (!storeInput) {
-
-      alert(
-        'Mangyaring ilagay ang pangalan ng iyong tindahan o pangalan ng may-ari.'
-      );
-
-      return;
-
-    }
-
-    const found =
-      appData.consignments.find(
-        c =>
-          c.storeName.toLowerCase() ===
-          storeInput.toLowerCase() ||
-
-          (
-            c.ownerName &&
-            c.ownerName.toLowerCase() ===
-            storeInput.toLowerCase()
+      const storeInput =
+        document
+          .getElementById(
+            'manualStoreNameInput'
           )
+          .value
+          .trim();
+
+
+      if (!storeInput) {
+
+        alert(
+          'Mangyaring ilagay ang pangalan ng iyong tindahan o pangalan ng may-ari.'
+        );
+
+        return;
+
+      }
+
+
+      const found =
+        appData.consignments.find(
+          c =>
+            c.storeName
+              .toLowerCase() ===
+            storeInput
+              .toLowerCase()
+            ||
+            (
+              c.ownerName &&
+              c.ownerName
+                .toLowerCase() ===
+              storeInput
+                .toLowerCase()
+            )
+        );
+
+
+      if (!found) {
+
+        alert(
+          'Hindi natagpuan ang rehistradong tindahan o may-ari na ito. Siguraduhing tama ang baybay.'
+        );
+
+        return;
+
+      }
+
+
+      currentStoreName =
+        found.storeName;
+
+
+      localStorage.setItem(
+        'client_logged_store',
+        currentStoreName
       );
 
-    if (!found) {
 
-      alert(
-        'Hindi natagpuan ang rehistradong tindahan o may-ari na ito. Siguraduhing tama ang baybay.'
-      );
+      found.lastClientAccess =
+        new Date()
+          .toLocaleString();
 
-      return;
+
+      found.clientStatus =
+        "Online";
+
+
+      saveData();
 
     }
+  );
 
-    currentStoreName =
-      found.storeName;
-
-    localStorage.setItem(
-      'client_logged_store',
-      currentStoreName
-    );
-
-    found.lastClientAccess =
-      new Date().toLocaleString();
-
-    found.clientStatus =
-      "Online";
-
-    saveData();
-
-  });
 
 
 /* =========================================================
    INQUIRY FORM
-   ========================================================= */
+========================================================= */
 
 const inquiryForm =
   document.getElementById(
     'inquiryForm'
   );
+
 
 if (inquiryForm) {
 
@@ -2496,6 +3850,7 @@ if (inquiryForm) {
 
       e.preventDefault();
 
+
       const storeName =
         document
           .getElementById(
@@ -2503,6 +3858,7 @@ if (inquiryForm) {
           )
           .value
           .trim();
+
 
       const ownerName =
         document
@@ -2512,6 +3868,7 @@ if (inquiryForm) {
           .value
           .trim();
 
+
       const contact =
         document
           .getElementById(
@@ -2519,6 +3876,7 @@ if (inquiryForm) {
           )
           .value
           .trim();
+
 
       const email =
         document
@@ -2528,6 +3886,7 @@ if (inquiryForm) {
           .value
           .trim();
 
+
       const address =
         document
           .getElementById(
@@ -2536,12 +3895,14 @@ if (inquiryForm) {
           .value
           .trim();
 
+
       const styleType =
         document
           .getElementById(
             'inqStyleType'
           )
           .value;
+
 
       const message =
         document
@@ -2551,8 +3912,16 @@ if (inquiryForm) {
           .value
           .trim();
 
-      if (!appData.pendingInquiries)
-        appData.pendingInquiries = [];
+
+      if (
+        !appData.pendingInquiries
+      ) {
+
+        appData.pendingInquiries =
+          [];
+
+      }
+
 
       appData.pendingInquiries.push({
 
@@ -2565,15 +3934,19 @@ if (inquiryForm) {
         message,
 
         date:
-          new Date().toLocaleString()
+          new Date()
+            .toLocaleString()
 
       });
 
+
       await saveData();
+
 
       alert(
         'Matagumpay na nagawa ang account / naipadala ang aplikasyon! Mangyaring hintayin ang pagsusuri ng admin.'
       );
+
 
       inquiryForm.reset();
 
@@ -2583,26 +3956,39 @@ if (inquiryForm) {
 }
 
 
+
 /* =========================================================
    RENDER CLIENT DASHBOARD
-   ========================================================= */
+========================================================= */
 
 function renderClientDashboard(store) {
+
+
+  /* STORE NAME + OWNER */
 
   document.getElementById(
     'displayStoreName'
   ).innerHTML =
+
     store.storeName +
 
     (
       store.ownerName
-        ? ` <span style="color:#e8f5e9; cursor:pointer; transition:color .3s;"
-             onmouseover="this.style.color='#2e7d32'"
-             onmouseout="this.style.color='#e8f5e9'"
-             title="I-hover para makita">
-             ( ${store.ownerName})
-           </span>`
-        : ''
+
+      ?
+
+      ` <span
+          title="Pangalan ng May-ari"
+          style="
+            color:#eaffed !important;
+            cursor:pointer;
+          ">
+          (${store.ownerName})
+        </span>`
+
+      :
+
+      ''
     );
 
 
@@ -2613,11 +3999,14 @@ function renderClientDashboard(store) {
       'storeAgreementFrame'
     );
 
+
   const targetAgreementUrl =
-    "https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/?store=" +
+    "https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/?store="
+    +
     encodeURIComponent(
       store.storeName
     );
+
 
   if (
     agreementFrame.src !==
@@ -2630,6 +4019,7 @@ function renderClientDashboard(store) {
   }
 
 
+
   /* QR CODE */
 
   const smallQrContainer =
@@ -2637,7 +4027,10 @@ function renderClientDashboard(store) {
       'smallQrcode'
     );
 
-  smallQrContainer.innerHTML = "";
+
+  smallQrContainer.innerHTML =
+    "";
+
 
   const currentUrl =
     window.location.origin +
@@ -2647,6 +4040,7 @@ function renderClientDashboard(store) {
       store.storeName
     );
 
+
   new QRCode(
     smallQrContainer,
     {
@@ -2655,13 +4049,13 @@ function renderClientDashboard(store) {
         currentUrl,
 
       width:
-        100,
+        190,
 
       height:
-        100,
+        190,
 
       colorDark:
-        "#2e7d32",
+        "#176b2c",
 
       colorLight:
         "#ffffff",
@@ -2673,19 +4067,26 @@ function renderClientDashboard(store) {
   );
 
 
-  /* PENDING DELIVERY */
+
+  /* =====================================================
+     PENDING DELIVERY
+  ====================================================== */
 
   const pendingDeliveryCard =
     document.getElementById(
       'pendingDeliveryCard'
     );
 
+
   const pendingDeliveryContainer =
     document.getElementById(
       'pendingDeliveryContainer'
     );
 
-  pendingDeliveryContainer.innerHTML = '';
+
+  pendingDeliveryContainer.innerHTML =
+    '';
+
 
   if (
     store.approvedRestocks &&
@@ -2695,47 +4096,80 @@ function renderClientDashboard(store) {
     pendingDeliveryCard.style.display =
       'block';
 
+
     store.approvedRestocks.forEach(
       (req, index) => {
 
         const div =
-          document.createElement('div');
+          document.createElement(
+            'div'
+          );
+
 
         div.style.cssText =
-          "background:white;border:1px solid #90caf9;padding:10px;border-radius:9px;margin-bottom:7px;font-size:.82rem;";
+
+          "background:white;" +
+          "border:1px solid #90caf9;" +
+          "padding:10px;" +
+          "border-radius:10px;" +
+          "margin-bottom:7px;" +
+          "font-size:0.85rem;";
+
 
         div.innerHTML = `
 
           <div>
             Uri:
-            <strong>${req.styleType}</strong>
+            <strong>
+              ${req.styleType}
+            </strong>
+
             |
+
             Dami:
-            <strong>${req.qty} pcs</strong>
+            <strong>
+              ${req.qty} pcs
+            </strong>
           </div>
 
-          <div style="font-size:.72rem;color:#555;margin-bottom:6px;">
+          <div
+            style="
+              font-size:0.75rem;
+              color:#555;
+              margin-bottom:6px;
+            ">
+
             Na-approve noong:
             ${req.date || 'N/A'}
+
           </div>
 
           <button
             type="button"
             onclick="confirmReceiveRestock(${index})"
-            style="background-color:#2e7d32;padding:7px;font-size:.78rem;margin-top:0;">
+            style="
+              background:#2e7d32;
+              padding:8px;
+              font-size:0.8rem;
+              margin-top:0;
+            ">
 
-            ✅ Natanggap Ko Na (Idagdag sa Stock)
+            ✅ Natanggap Ko Na
+            (Idagdag sa Stock)
 
           </button>
 
         `;
 
-        pendingDeliveryContainer.appendChild(
-          div
-        );
+
+        pendingDeliveryContainer
+          .appendChild(
+            div
+          );
 
       }
     );
+
 
   } else {
 
@@ -2745,19 +4179,26 @@ function renderClientDashboard(store) {
   }
 
 
-  /* PENDING SALES */
+
+  /* =====================================================
+     PENDING SALES
+  ====================================================== */
 
   const pendingSalesCard =
     document.getElementById(
       'pendingSalesCard'
     );
 
+
   const pendingSalesContainer =
     document.getElementById(
       'pendingSalesContainer'
     );
 
-  pendingSalesContainer.innerHTML = '';
+
+  pendingSalesContainer.innerHTML =
+    '';
+
 
   if (
     store.pendingSales &&
@@ -2767,7 +4208,10 @@ function renderClientDashboard(store) {
     pendingSalesCard.style.display =
       'block';
 
-    let totalPendingAmount = 0;
+
+    let totalPendingAmount =
+      0;
+
 
     store.pendingSales.forEach(
       (sale) => {
@@ -2779,59 +4223,119 @@ function renderClientDashboard(store) {
             (sale.price || 0)
           );
 
+
         totalPendingAmount +=
           saleTotal;
 
+
         const div =
-          document.createElement('div');
+          document.createElement(
+            'div'
+          );
+
 
         div.style.cssText =
-          "background:white;border:1px solid #ffb74d;padding:10px;border-radius:9px;margin-bottom:7px;font-size:.82rem;";
+
+          "background:white;" +
+          "border:1px solid #ffb74d;" +
+          "padding:10px;" +
+          "border-radius:10px;" +
+          "margin-bottom:7px;" +
+          "font-size:0.85rem;";
+
 
         div.innerHTML = `
 
           <div>
+
             Uri:
-            <strong>${sale.styleType}</strong>
+            <strong>
+              ${sale.styleType}
+            </strong>
+
             |
+
             Dami:
-            <strong>${sale.qty} pcs</strong>
+            <strong>
+              ${sale.qty} pcs
+            </strong>
+
             |
+
             Halaga:
-            <strong>₱${saleTotal.toLocaleString()}</strong>
+            <strong>
+              ₱${saleTotal.toLocaleString()}
+            </strong>
+
           </div>
 
-          <div style="font-size:.72rem;color:#555;">
+          <div
+            style="
+              font-size:0.75rem;
+              color:#555;
+            ">
+
             Petsa:
             ${sale.date || 'N/A'}
+
             |
+
             Status:
-            <span style="color:#f57c00;font-weight:bold;">
-              Nakabinbin (Pending Approval)
+
+            <span
+              style="
+                color:#f57c00;
+                font-weight:bold;
+              ">
+
+              Nakabinbin
+              (Pending Approval)
+
             </span>
+
           </div>
 
         `;
 
-        pendingSalesContainer.appendChild(
-          div
-        );
+
+        pendingSalesContainer
+          .appendChild(
+            div
+          );
 
       }
     );
 
+
     const totalSummaryDiv =
-      document.createElement('div');
+      document.createElement(
+        'div'
+      );
+
 
     totalSummaryDiv.style.cssText =
-      "margin-top:10px;padding-top:8px;border-top:1px dashed #ffb74d;font-weight:bold;font-size:.88rem;color:#e65100;text-align:right;";
+
+      "margin-top:10px;" +
+      "padding-top:8px;" +
+      "border-top:1px dashed #ffb74d;" +
+      "font-weight:bold;" +
+      "font-size:0.9rem;" +
+      "color:#e65100;" +
+      "text-align:right;";
+
 
     totalSummaryDiv.innerHTML =
-      `Kabuuang Halaga ng Nakabinbing Benta (Total Pending Sales): ₱${totalPendingAmount.toLocaleString()}`;
 
-    pendingSalesContainer.appendChild(
-      totalSummaryDiv
-    );
+      `Kabuuang Halaga ng Nakabinbing Benta
+      (Total Pending Sales):
+      ₱${totalPendingAmount.toLocaleString()}`;
+
+
+    pendingSalesContainer
+      .appendChild(
+        totalSummaryDiv
+      );
+
 
   } else {
 
@@ -2841,14 +4345,20 @@ function renderClientDashboard(store) {
   }
 
 
-  /* NOTIFICATIONS */
+
+  /* =====================================================
+     NOTIFICATIONS
+  ====================================================== */
 
   const notifContainer =
     document.getElementById(
       'clientNotificationsContainer'
     );
 
-  notifContainer.innerHTML = '';
+
+  notifContainer.innerHTML =
+    '';
+
 
   if (
     store.clientNotifications &&
@@ -2859,10 +4369,14 @@ function renderClientDashboard(store) {
       (n, index) => {
 
         const div =
-          document.createElement('div');
+          document.createElement(
+            'div'
+          );
+
 
         div.className =
           'notification-item';
+
 
         div.innerHTML = `
 
@@ -2873,7 +4387,11 @@ function renderClientDashboard(store) {
             </div>
 
             <div
-              style="font-size:.68rem;color:#778;margin-top:3px;">
+              style="
+                font-size:0.7rem;
+                color:#778;
+                margin-top:3px;
+              ">
 
               ${n.date}
 
@@ -2881,10 +4399,21 @@ function renderClientDashboard(store) {
 
           </div>
 
+
           <button
             type="button"
             onclick="dismissNotification(${index})"
-            style="background:none;border:none;color:#d32f2f;font-size:.9rem;cursor:pointer;padding:0 4px;margin-top:0;width:auto;font-weight:bold;"
+            style="
+              background:none;
+              border:none;
+              color:#d32f2f;
+              font-size:0.9rem;
+              cursor:pointer;
+              padding:0 4px;
+              margin-top:0;
+              width:auto;
+              font-weight:bold;
+            "
             title="I-clear ang abiso">
 
             ✕
@@ -2893,6 +4422,7 @@ function renderClientDashboard(store) {
 
         `;
 
+
         notifContainer.appendChild(
           div
         );
@@ -2900,15 +4430,20 @@ function renderClientDashboard(store) {
       }
     );
 
+
   } else {
 
     notifContainer.innerHTML =
-      '<p style="font-size:.85rem;color:#666;">Wala pang bagong abiso.</p>';
+
+      '<p style="font-size:0.85rem;color:#666;">Wala pang bagong abiso.</p>';
 
   }
 
 
-  /* STORE ITEMS */
+
+  /* =====================================================
+     STORE ITEMS
+  ====================================================== */
 
   if (
     !store.storeItems ||
@@ -2930,10 +4465,12 @@ function renderClientDashboard(store) {
           store.currentStock,
 
         returnedQty:
-          store.returnedQty || 0,
+          store.returnedQty ||
+          0,
 
         rejectedQty:
-          store.rejectedQty || 0,
+          store.rejectedQty ||
+          0,
 
         price:
           store.price,
@@ -2953,29 +4490,40 @@ function renderClientDashboard(store) {
       'clientItemsContainer'
     );
 
-  itemsContainer.innerHTML = '';
+
+  itemsContainer.innerHTML =
+    '';
 
 
   store.storeItems.forEach(
     sub => {
 
+
       if (
         sub.returnedQty ===
         undefined
-      )
-        sub.returnedQty = 0;
+      ) {
+
+        sub.returnedQty =
+          0;
+
+      }
+
 
       if (
         sub.rejectedQty ===
         undefined
-      )
-        sub.rejectedQty = 0;
+      ) {
+
+        sub.rejectedQty =
+          0;
+
+      }
 
 
       const subSold =
         Math.max(
           0,
-
           sub.initialQty -
           sub.currentStock -
           sub.returnedQty -
@@ -2989,53 +4537,74 @@ function renderClientDashboard(store) {
 
 
       const div =
-        document.createElement('div');
+        document.createElement(
+          'div'
+        );
 
 
       const isPremium =
-        sub.styleType ===
-        'Premium';
+        (
+          sub.styleType ===
+          'Premium'
+        );
 
 
       div.className =
         'store-item-box' +
         (
           isPremium
-            ? ' premium-stock'
-            : ''
+          ?
+          ' premium-stock'
+          :
+          ''
         );
 
 
       div.innerHTML = `
 
-        <div
-          style="font-weight:bold;color:#2e7d32;display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;gap:8px;">
+        <div class="stock-style-title">
 
           <span>
             ${sub.styleType || 'Ordinary'}
           </span>
 
           <span>
-            Presyo: ₱${sub.price || 0}
+            Presyo:
+            ₱${sub.price || 0}
           </span>
 
         </div>
 
+
         <div
-          style="font-size:.82rem;color:#444;margin-bottom:9px;line-height:1.55;">
+          style="
+            font-size:0.85rem;
+            color:#444;
+            line-height:1.6;
+            margin-bottom:8px;
+          ">
 
           Natitirang Stock:
-          <strong>${sub.currentStock} pcs</strong>
-          /
+          <strong>
+            ${sub.currentStock} pcs
+          </strong>
+
+          <br>
+
           Simulang Dami:
           ${sub.initialQty} pcs
 
           <br>
 
           Kabuuang Nabenta:
-          <strong>${subSold} pcs</strong>
-          (Benta:
-          ₱${subSales.toLocaleString()})
+          <strong>
+            ${subSold} pcs
+          </strong>
+
+          <br>
+
+          Benta:
+          ₱${subSales.toLocaleString()}
 
           <br>
 
@@ -3044,10 +4613,17 @@ function renderClientDashboard(store) {
 
         </div>
 
+
         <button
           type="button"
           onclick="promptRecordSale('${sub.styleType}')"
-          style="background-color:#0288d1;font-size:.82rem;padding:8px;width:100%;margin-top:4px;">
+          style="
+            background:#0288d1;
+            font-size:0.85rem;
+            padding:8px;
+            width:100%;
+            margin-top:4px;
+          ">
 
           🛒 MAY BUMILI
           (I-record ang Benta)
@@ -3055,6 +4631,7 @@ function renderClientDashboard(store) {
         </button>
 
       `;
+
 
       itemsContainer.appendChild(
         div
@@ -3064,14 +4641,19 @@ function renderClientDashboard(store) {
   );
 
 
-  /* CHAT */
+
+  /* =====================================================
+     CHAT
+  ====================================================== */
 
   const chatContainer =
     document.getElementById(
       'clientChatContainer'
     );
 
-  chatContainer.innerHTML = '';
+
+  chatContainer.innerHTML =
+    '';
 
 
   if (
@@ -3083,16 +4665,25 @@ function renderClientDashboard(store) {
       m => {
 
         const isAdmin =
-          m.sender === 'Admin' ||
-          m.sender === 'Admin (Broadcast)';
+          m.sender ===
+            'Admin'
+          ||
+          m.sender ===
+            'Admin (Broadcast)';
 
 
         const div =
-          document.createElement('div');
+          document.createElement(
+            'div'
+          );
 
 
         div.className =
-          `chat-msg ${isAdmin ? 'admin' : ''}`;
+          `chat-msg ${
+            isAdmin
+              ? 'admin'
+              : ''
+          }`;
 
 
         div.innerHTML = `
@@ -3104,7 +4695,12 @@ function renderClientDashboard(store) {
           ${m.text}
 
           <div
-            style="font-size:.64rem;color:#778;text-align:right;">
+            style="
+              font-size:0.65rem;
+              color:#778;
+              text-align:right;
+              margin-top:3px;
+            ">
 
             ${m.date}
 
@@ -3120,201 +4716,249 @@ function renderClientDashboard(store) {
       }
     );
 
+
     chatContainer.scrollTop =
       chatContainer.scrollHeight;
+
 
   } else {
 
     chatContainer.innerHTML =
-      '<p style="font-size:.85rem;color:#666;">Wala pang mensahe.</p>';
+
+      '<p style="font-size:0.85rem;color:#666;">Wala pang mensahe.</p>';
 
   }
 
 }
 
 
+
 /* =========================================================
    SUBMIT RESTOCK
-   ========================================================= */
+========================================================= */
 
 window.submitRestockRequest =
-  async function() {
+async function() {
 
-    const promptConfirm =
-      confirm(
-        "Gusto mo bang mag-request ng restock na eksaktong 5 piraso?"
-      );
-
-    if (!promptConfirm)
-      return;
-
-    const styleType =
-      document.getElementById(
-        'restockStyleType'
-      ).value;
-
-    const qty = 5;
-
-    const store =
-      appData.consignments.find(
-        c =>
-          c.storeName.toLowerCase() ===
-          currentStoreName.toLowerCase()
-      );
-
-    if (!store)
-      return;
-
-    const currentMonthYear =
-      new Date()
-        .toISOString()
-        .slice(0, 7);
-
-    if (!store.lastRestockMonth)
-      store.lastRestockMonth = "";
-
-    if (
-      store.lastRestockMonth ===
-      currentMonthYear
-    ) {
-
-      alert(
-        "Paalala: Isang beses lamang bawat buwan ang pag-request ng restock. Nag-request ka na ngayong buwan."
-      );
-
-      return;
-
-    }
-
-    if (!store.activeRequests)
-      store.activeRequests = [];
-
-    store.activeRequests.push({
-
-      styleType:
-        styleType,
-
-      qty:
-        qty,
-
-      date:
-        new Date().toLocaleString()
-
-    });
-
-    store.lastRestockMonth =
-      currentMonthYear;
-
-
-    if (!store.messages)
-      store.messages = [];
-
-
-    store.messages.unshift({
-
-      sender:
-        currentStoreName,
-
-      text:
-        `Humiling ng restock: ${qty} pcs (${styleType})`,
-
-      date:
-        new Date().toLocaleString()
-
-    });
-
-
-    await saveData();
-
-
-    alert(
-      'Matagumpay na naipadala ang iyong kahilingan sa Admin!'
+  const promptConfirm =
+    confirm(
+      "Gusto mo bang mag-request ng restock na eksaktong 5 piraso?"
     );
 
+
+  if (!promptConfirm) return;
+
+
+  const styleType =
+    document.getElementById(
+      'restockStyleType'
+    ).value;
+
+
+  const qty =
+    5;
+
+
+  const store =
+    appData.consignments.find(
+      c =>
+        c.storeName
+          .toLowerCase() ===
+        currentStoreName
+          .toLowerCase()
+    );
+
+
+  if (!store) return;
+
+
+  const currentMonthYear =
+    new Date()
+      .toISOString()
+      .slice(0, 7);
+
+
+  if (
+    !store.lastRestockMonth
+  ) {
+
+    store.lastRestockMonth =
+      "";
+
+  }
+
+
+  if (
+    store.lastRestockMonth ===
+    currentMonthYear
+  ) {
+
+    alert(
+      "Paalala: Isang beses lamang bawat buwan ang pag-request ng restock. Nag-request ka na ngayong buwan."
+    );
+
+    return;
+
+  }
+
+
+  if (!store.activeRequests) {
+
+    store.activeRequests =
+      [];
+
+  }
+
+
+  store.activeRequests.push({
+
+    styleType:
+      styleType,
+
+    qty:
+      qty,
+
+    date:
+      new Date()
+        .toLocaleString()
+
+  });
+
+
+  store.lastRestockMonth =
+    currentMonthYear;
+
+
+  if (!store.messages) {
+
+    store.messages =
+      [];
+
+  }
+
+
+  store.messages.unshift({
+
+    sender:
+      currentStoreName,
+
+    text:
+      `Humiling ng restock: ${qty} pcs (${styleType})`,
+
+    date:
+      new Date()
+        .toLocaleString()
+
+  });
+
+
+  await saveData();
+
+
+  alert(
+    'Matagumpay na naipadala ang iyong kahilingan sa Admin!'
+  );
+
 };
+
 
 
 /* =========================================================
    SEND CLIENT MESSAGE
-   ========================================================= */
+========================================================= */
 
 window.sendClientMessage =
-  async function() {
+async function() {
 
-    const input =
-      document.getElementById(
-        'clientChatInput'
-      );
-
-    const text =
-      input.value.trim();
-
-    if (!text)
-      return;
-
-
-    const store =
-      appData.consignments.find(
-        c =>
-          c.storeName.toLowerCase() ===
-          currentStoreName.toLowerCase()
-      );
-
-    if (!store)
-      return;
-
-
-    if (!store.messages)
-      store.messages = [];
-
-
-    store.messages.unshift({
-
-      sender:
-        currentStoreName,
-
-      text:
-        text,
-
-      date:
-        new Date().toLocaleString()
-
-    });
-
-
-    input.value = '';
-
-
-    await saveData();
-
-
-    renderClientDashboard(
-      store
+  const input =
+    document.getElementById(
+      'clientChatInput'
     );
+
+
+  const text =
+    input.value.trim();
+
+
+  if (!text) return;
+
+
+  const store =
+    appData.consignments.find(
+      c =>
+        c.storeName
+          .toLowerCase() ===
+        currentStoreName
+          .toLowerCase()
+    );
+
+
+  if (!store) return;
+
+
+  if (!store.messages) {
+
+    store.messages =
+      [];
+
+  }
+
+
+  store.messages.unshift({
+
+    sender:
+      currentStoreName,
+
+    text:
+      text,
+
+    date:
+      new Date()
+        .toLocaleString()
+
+  });
+
+
+  input.value =
+    '';
+
+
+  await saveData();
+
+
+  renderClientDashboard(
+    store
+  );
 
 };
 
 
+
 /* =========================================================
    INITIAL LOAD
-   ========================================================= */
+========================================================= */
 
 loadData();
 
 
+
 /* =========================================================
    HEARTBEAT
-   ========================================================= */
+========================================================= */
 
-setInterval(() => {
+setInterval(
+  () => {
 
-  if (currentStoreName) {
+    if (currentStoreName) {
 
-    sendHeartbeatSilent();
+      sendHeartbeatSilent();
 
-  }
+    }
 
-}, 20000);
+  },
+  20000
+);
+
 
 
 async function sendHeartbeatSilent() {
@@ -3328,28 +4972,41 @@ async function sendHeartbeatSilent() {
         "main_inventory"
       );
 
-    const docSnap =
-      await getDoc(docRef);
 
-    if (docSnap.exists()) {
+    const docSnap =
+      await getDoc(
+        docRef
+      );
+
+
+    if (
+      docSnap.exists()
+    ) {
 
       let freshData =
         docSnap.data();
 
+
       let store =
         freshData.consignments.find(
           c =>
-            c.storeName.toLowerCase() ===
-            currentStoreName.toLowerCase()
+            c.storeName
+              .toLowerCase() ===
+            currentStoreName
+              .toLowerCase()
         );
+
 
       if (store) {
 
         store.lastClientAccess =
-          new Date().toLocaleString();
+          new Date()
+            .toLocaleString();
+
 
         store.clientStatus =
           "Online";
+
 
         await setDoc(
           docRef,
@@ -3372,19 +5029,24 @@ async function sendHeartbeatSilent() {
 }
 
 
+
 /* =========================================================
    SILENT CLOUD SYNC
-   ========================================================= */
+========================================================= */
 
-setInterval(() => {
+setInterval(
+  () => {
 
-  if (currentStoreName) {
+    if (currentStoreName) {
 
-    loadDataSilent();
+      loadDataSilent();
 
-  }
+    }
 
-}, 10000);
+  },
+  10000
+);
+
 
 
 async function loadDataSilent() {
@@ -3398,20 +5060,30 @@ async function loadDataSilent() {
         "main_inventory"
       );
 
-    const docSnap =
-      await getDoc(docRef);
 
-    if (docSnap.exists()) {
+    const docSnap =
+      await getDoc(
+        docRef
+      );
+
+
+    if (
+      docSnap.exists()
+    ) {
 
       appData =
         docSnap.data();
 
+
       const found =
         appData.consignments.find(
           c =>
-            c.storeName.toLowerCase() ===
-            currentStoreName.toLowerCase()
+            c.storeName
+              .toLowerCase() ===
+            currentStoreName
+              .toLowerCase()
         );
+
 
       if (found) {
 
@@ -3434,5 +5106,7 @@ async function loadDataSilent() {
 
 }
 
-</script></body>
+</script>
+
+</body>
 </html>
