@@ -82,28 +82,36 @@ button:hover { opacity: 0.9; }
 <div class="container">
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-  <!-- Secure Login Screen -->
+  <!-- Secure Login Screen na may Password -->
   <div id="loginScreen" class="card">
     <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
-      🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. I-click ang button sa ibaba upang buksan ang iyong portal.
+      🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. Ilagay lamang ang iyong Security Password upang buksan ang portal.
     </div>
-    <div id="manualLoginSection">
+    <div id="manualLoginSection" style="width: 100%;">
       <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan</h2>
-      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Para mabuksan ang iyong portal, i-type nang eksakto ang rehistradong Pangalan ng iyong Tindahan o gamitin ang Pangalan ng May-ari bilang search batayan.</p>
+      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Ilagay ang rehistradong Pangalan ng Tindahan (o May-ari) at ang iyong Security Password.</p>
+      
       <div class="form-group" style="width: 100%;">
         <label for="manualStoreNameInput">Pangalan ng Tindahan / May-ari:</label>
         <input type="text" id="manualStoreNameInput" placeholder="Hal. Aling Nena Store o Juan & Maria">
       </div>
+      
+      <div class="form-group" style="width: 100%;">
+        <label for="manualPasswordInput">Security Password:</label>
+        <input type="password" id="manualPasswordInput" placeholder="Ilagay ang iyong security password">
+      </div>
+
       <button type="button" id="manualLoginBtn" style="background-color: var(--secondary-color); margin-bottom: 15px;">Buksan ang Aking Portal</button>
     </div>
+    
     <button type="button" id="proceedLoginBtn" style="display:none; background-color: var(--secondary-color); margin-bottom: 15px;">Ituloy sa Aking Portal</button>
     <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
 
-    <!-- Simple Create Account / Aplikasyon Section -->
+    <!-- Simple Create Account / Aplikasyon Section na may Password Setup -->
     <div id="printableInquirySection" style="width: 100%;">
       <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Create Account / Bagong Aplikasyon</h2>
       <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
-        <strong>💡 Impormasyon:</strong> Maaari mong balikan ang iyong account pagkalipas ng <strong>2 araw</strong>. I-type lamang ang iyong <strong>Pangalan ng May-ari o Tindahan</strong> sa Pribadong Portal sa itaas.
+        <strong>💡 Impormasyon:</strong> Magtakda ng sarili mong <strong>Security Password</strong> para maging ligtas ang iyong portal. Maaari mo itong buksan pagkalipas ng pagsusuri.
       </div>
       <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
         <div class="form-group">
@@ -111,8 +119,12 @@ button:hover { opacity: 0.9; }
           <input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required>
         </div>
         <div class="form-group">
-          <label>Pangalan ng May-ari (Tinatanggap ang special characters gaya ng &, -, _, etc.):</label>
+          <label>Pangalan ng May-ari:</label>
           <input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required>
+        </div>
+        <div class="form-group">
+          <label>Magtakda ng Security Password (Para sa iyong Portal):</label>
+          <input type="password" id="inqPassword" placeholder="Gumawa ng sariling password" required>
         </div>
         <div class="form-group">
           <label>Numero ng Telepono / GCash:</label>
@@ -348,7 +360,6 @@ window.selectInqStyle = function(style, el) {
   el.classList.add('selected');
 };
 
-// Toggle functions para sa Restock at Chat buttons
 window.toggleRestockVisibility = function() {
   const wrapper = document.getElementById('restockContentWrapper');
   const btn = document.getElementById('toggleRestockBtn');
@@ -373,15 +384,6 @@ window.toggleChatVisibility = function() {
   }
 };
 
-window.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'resizeAgreement') {
-    const iframe = document.getElementById('storeAgreementFrame');
-    if (iframe) {
-      iframe.style.height = event.data.height + 'px';
-    }
-  }
-});
-
 let deferredPrompt;
 const headerInstallBtn = document.getElementById('headerInstallBtn');
 
@@ -396,7 +398,6 @@ const handleInstallClick = async () => {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') { 
-      console.log('Na-install ang app');
       alert('✅ Matagumpay na na-install ang app!');
     }
     deferredPrompt = null;
@@ -517,17 +518,6 @@ async function loadData() {
       if (!appData.consignments) appData.consignments = [];
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
     }
-    const urlParams = new URLSearchParams(window.location.search);
-    const paramStore = urlParams.get('store');
-    let storeToCheck = paramStore || localStorage.getItem('client_logged_store');
-    if (storeToCheck) {
-      const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeToCheck.toLowerCase());
-      if (found) {
-        found.lastClientAccess = new Date().toLocaleString();
-        found.clientStatus = "Online";
-        await setDoc(docRef, appData);
-      }
-    }
     syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
     initPortalView();
   } catch (err) {
@@ -556,75 +546,96 @@ async function saveData() {
 function initPortalView() {
   const urlParams = new URLSearchParams(window.location.search);
   const paramStore = urlParams.get('store');
-  if (paramStore) {
-    currentStoreName = paramStore;
-    localStorage.setItem('client_logged_store', currentStoreName);
-  }
-  if (currentStoreName) {
-    const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase() || (c.ownerName && c.ownerName.toLowerCase() === currentStoreName.toLowerCase()));
+  let loggedStore = localStorage.getItem('client_logged_store');
+  
+  if (paramStore && !loggedStore) {
+    const found = appData.consignments.find(c => c.storeName.toLowerCase() === paramStore.toLowerCase());
     if (found) {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('portalContent').style.display = 'block';
-      if (paramStore) {
-        document.getElementById('directAccessNotice').style.display = 'block';
-      }
-      renderClientDashboard(found);
-    } else {
-      localStorage.removeItem('client_logged_store');
-      currentStoreName = '';
       document.getElementById('loginScreen').style.display = 'flex';
       document.getElementById('portalContent').style.display = 'none';
-      if (paramStore) {
-        alert(`Ang tindahan o may-ari na "${paramStore}" ay hindi pa rehistrado o aktibo sa sistema.`);
-      }
+      document.getElementById('manualStoreNameInput').value = found.storeName;
+      document.getElementById('directAccessNotice').style.display = 'block';
+      return;
     }
-  } else {
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('portalContent').style.display = 'none';
   }
+
+  if (loggedStore) {
+    const found = appData.consignments.find(c => c.storeName.toLowerCase() === loggedStore.toLowerCase());
+    if (found) {
+      currentStoreName = found.storeName;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('portalContent').style.display = 'block';
+      renderClientDashboard(found);
+      return;
+    }
+  }
+
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('portalContent').style.display = 'none';
 }
 
-document.getElementById('manualLoginBtn').addEventListener('click', () => {
+// Login Button Click Handler na may Password Check
+document.getElementById('manualLoginBtn').addEventListener('click', async () => {
   const storeInput = document.getElementById('manualStoreNameInput').value.trim();
-  if (!storeInput) {
-    alert('Mangyaring ilagay ang pangalan ng iyong tindahan o pangalan ng may-ari.');
+  const passInput = document.getElementById('manualPasswordInput').value.trim();
+  
+  if (!storeInput || !passInput) {
+    alert('Mangyaring ilagay ang pangalan ng tindahan/may-ari at ang security password.');
     return;
   }
-  const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeInput.toLowerCase() || (c.ownerName && c.ownerName.toLowerCase() === storeInput.toLowerCase()));
+  
+  const found = appData.consignments.find(c => 
+    c.storeName.toLowerCase() === storeInput.toLowerCase() || 
+    (c.ownerName && c.ownerName.toLowerCase() === storeInput.toLowerCase())
+  );
+  
   if (!found) {
-    alert('Hindi natagpuan ang rehistradong tindahan o may-ari na ito. Siguraduhing tama ang baybay.');
+    alert('Hindi natagpuan ang rehistradong tindahan o may-ari.');
     return;
   }
+
+  // Suriin ang password (kung naka-set)
+  if (found.clientPassword && found.clientPassword !== passInput) {
+    alert('Mali ang security password. Subukang muli.');
+    return;
+  } else if (!found.clientPassword) {
+    // Kung lumang account na wala pang password, itakda na agad ang bagong input password
+    found.clientPassword = passInput;
+  }
+
   currentStoreName = found.storeName;
   localStorage.setItem('client_logged_store', currentStoreName);
   found.lastClientAccess = new Date().toLocaleString();
   found.clientStatus = "Online";
-  saveData();
+  await saveData();
+  initPortalView();
 });
 
+// Aplikasyon Form Submit na may Password
 const inquiryForm = document.getElementById('inquiryForm');
 if (inquiryForm) {
   inquiryForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const storeName = document.getElementById('inqStoreName').value.trim();
     const ownerName = document.getElementById('inqOwnerName').value.trim();
+    const clientPassword = document.getElementById('inqPassword').value.trim();
     const contact = document.getElementById('inqContact').value.trim();
     const email = document.getElementById('inqEmail').value.trim();
     const address = document.getElementById('inqAddress').value.trim();
     const styleType = document.getElementById('inqStyleType').value;
     const message = document.getElementById('inqMessage').value.trim();
+    
     if (!appData.pendingInquiries) appData.pendingInquiries = [];
-    appData.pendingInquiries.push({ storeName, ownerName, contact, email, address, styleType, message, date: new Date().toLocaleString() });
+    appData.pendingInquiries.push({ storeName, ownerName, clientPassword, contact, email, address, styleType, message, date: new Date().toLocaleString() });
     await saveData();
-    alert('Matagumpay na nagawa ang account / naipadala ang aplikasyon! Mangyaring hintayin ang pagsusuri ng admin.');
+    alert('Matagumpay na nagawa ang account at naitakda ang password! Mangyaring hintayin ang pagsusuri ng admin.');
     inquiryForm.reset();
   });
 }
 
 function renderClientDashboard(store) {
-  document.getElementById('displayStoreName').innerHTML = store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9; cursor: pointer; transition: color 0.3s;" onmouseover="this.style.color='#2e7d32'" onmouseout="this.style.color='#e8f5e9'" title="I-hover para makita">( ${store.ownerName})</span>` : '');
+  document.getElementById('displayStoreName').innerHTML = store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9; cursor: pointer;" title="May-ari">( ${store.ownerName})</span>` : '');
 
-  // Render QR Code para sa easy sharing at login
   const smallQrContainer = document.getElementById('smallQrcode');
   smallQrContainer.innerHTML = "";
   const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
@@ -675,7 +686,7 @@ function renderClientDashboard(store) {
     });
     const totalSummaryDiv = document.createElement('div');
     totalSummaryDiv.style.cssText = "margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ffb74d; font-weight: bold; font-size: 0.9rem; color: #e65100; text-align: right;";
-    totalSummaryDiv.innerHTML = `Kabuuang Halaga ng Nakabinbing Benta (Total Pending Sales): ₱${totalPendingAmount.toLocaleString()}`;
+    totalSummaryDiv.innerHTML = `Kabuuang Halaga ng Nakabinbing Benta: ₱${totalPendingAmount.toLocaleString()}`;
     pendingSalesContainer.appendChild(totalSummaryDiv);
   } else {
     pendingSalesCard.style.display = 'none';
@@ -781,52 +792,6 @@ window.sendClientMessage = async function() {
 };
 
 loadData();
-
-setInterval(() => {
-  if (currentStoreName) {
-    sendHeartbeatSilent();
-  }
-}, 20000);
-
-async function sendHeartbeatSilent() {
-  try {
-    const docRef = doc(db, "app_data", "main_inventory");
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      let freshData = docSnap.data();
-      let store = freshData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-      if (store) {
-        store.lastClientAccess = new Date().toLocaleString();
-        store.clientStatus = "Online";
-        await setDoc(docRef, freshData);
-      }
-    }
-  } catch (e) {
-    console.log("Heartbeat error", e);
-  }
-}
-
-setInterval(() => {
-  if (currentStoreName) {
-    loadDataSilent();
-  }
-}, 10000);
-
-async function loadDataSilent() {
-  try {
-    const docRef = doc(db, "app_data", "main_inventory");
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      appData = docSnap.data();
-      const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-      if (found) {
-        renderClientDashboard(found);
-      }
-    }
-  } catch (e) {
-    console.log("Silent sync error", e);
-  }
-}
 </script>
 </body>
 </html>
