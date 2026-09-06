@@ -119,7 +119,6 @@
             <button type="button" class="tab-btn active" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>  
             <button type="button" class="tab-btn" onclick="switchTab('inquiriesTab', this)">📥 Inquiries</button>  
             <button type="button" class="tab-btn" onclick="switchTab('storesTab', this)">🏢 Tindahan</button>  
-            <button type="button" class="tab-btn" style="display:none;" onclick="switchTab('restockTab', this)">📦 Restock</button>  
             <button type="button" class="tab-btn" onclick="switchTab('salesTab', this)">💰 Mga Benta</button>  
             <button type="button" class="tab-btn" onclick="switchTab('inventoryTab', this)">📋 Inventory</button>  
         </div>  
@@ -164,7 +163,7 @@
 
             <div class="summary-box">  
                 <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>  
-                <div class="summary-row" style="color: #c62828; font-weight: bold; display:none;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>  
+                <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>  
                 <div class="summary-row"><span>Konsignment Stock:</span><span id="totalStock">0 pcs</span></div>  
                 <div class="summary-row"><span>Kabuuang Nabenta:</span><span id="totalSold">0 pcs</span></div>  
                 <div class="summary-row summary-row-highlight"><span>Kabuuang Benta:</span><span id="totalSales">₱0</span></div>  
@@ -242,7 +241,7 @@
                             <label for="dateDelivered">Petsa ng Simula (Start):</label>  
                             <input type="date" id="dateDelivered">  
                         </div>  
-                        <div class="form-group" style="display:none;">  
+                        <div class="form-group">  
                             <label for="collectionDate">Target na Petsa ng Koleksyon:</label>  
                             <input type="date" id="collectionDate">  
                         </div>  
@@ -256,20 +255,7 @@
             </div>  
         </div>  
 
-        <!-- TAB 4: RESTOCK -->  
-        <div id="restockTab" class="tab-content" style="display:none;">  
-            <div class="card">  
-                <h2>📦 Mga Pending Request at Restock</h2>  
-                <div class="form-group" style="margin-bottom: 10px;">  
-                    <input type="text" id="requestSearchInput" placeholder="🔍 I-filter o i-type ang pangalan ng tindahan..." oninput="renderApp()" style="font-size: 0.85rem; padding: 8px;">  
-                </div>  
-                <div id="adminRequestsContainer">  
-                    <p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request o restock.</p>  
-                </div>  
-            </div>  
-        </div>  
-
-        <!-- TAB 5: MGA BENTA -->  
+        <!-- TAB 4: MGA BENTA -->  
         <div id="salesTab" class="tab-content">  
             <div class="card" style="background: #e8f5e9; border: 1px solid #c5e1a5;">  
                 <h2>💰 Bubble Head / Tab ng mga Benta</h2>  
@@ -283,7 +269,7 @@
             </div>  
         </div>  
 
-        <!-- TAB 6: INVENTORY -->  
+        <!-- TAB 5: INVENTORY -->  
         <div id="inventoryTab" class="tab-content">  
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">  
                 <h2>CONSIGNMENT INVENTORY AND MONITORING</h2>  
@@ -309,7 +295,7 @@
 <div class="floating-container" id="floatingContainer">  
     <button class="fab-btn fab-broadcast" id="fabBroadcastBtn" title="Overall Broadcast Chatbox" onclick="openModal('broadcastModal')">📢</button>  
     <button class="fab-btn fab-backup" id="fabBackupBtn" title="Data Backup & Recovery" onclick="openModal('backupModal')">💾</button>  
-    <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock at Sales Request" onclick="openModal('requestModal')" style="display:none;">  
+    <button class="fab-btn fab-request" id="fabRequestBtn" title="Mga Pending Restock at Sales Request" onclick="openModal('requestModal')">  
         📦<span class="fab-badge" id="requestBadge">0</span>  
     </button>  
     <button class="fab-btn fab-inquiry" id="fabInquiryBtn" title="Mga Bagong Inquiry / Aplikasyon" onclick="openModal('inquiryModal')">  
@@ -543,6 +529,19 @@
         formCard.style.display = formCard.style.display === 'none' ? 'block' : 'none';  
         if (formCard.style.display === 'block') formCard.scrollIntoView({ behavior: 'smooth' });  
     };  
+
+    // Automatic download function kapag may pagbabago
+    function autoDownloadBackup() {  
+        try {  
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));  
+            const downloadAnchor = document.createElement('a');  
+            downloadAnchor.setAttribute("href", dataStr);  
+            downloadAnchor.setAttribute("download", `DWBE_Admin_Backup_${new Date().toISOString().slice(0,10)}.json`);  
+            document.body.appendChild(downloadAnchor);  
+            downloadAnchor.click();  
+            downloadAnchor.remove();  
+        } catch (e) {}  
+    }  
   
     function deduplicateConsignments() {  
         if (!appData.consignments || !Array.isArray(appData.consignments)) return;  
@@ -723,10 +722,12 @@
             await setDoc(doc(db, "app_data", "main_inventory"), appData);  
             localStorage.setItem('consignments_v3', JSON.stringify(appData));  
             syncStatus.textContent = "✅ Na-save sa Cloud";  
+            autoDownloadBackup(); // Automatic download kapag may binago
             renderApp();  
         } catch (err) {  
             syncStatus.textContent = "⚠️ Error sa pag-save";  
             localStorage.setItem('consignments_v3', JSON.stringify(appData));  
+            autoDownloadBackup(); // Automatic download kahit offline/local
             renderApp();  
         }  
     }  
@@ -788,7 +789,7 @@
             const qty = parseInt(document.getElementById('quantity').value);  
             const price = parseFloat(document.getElementById('price').value);  
             const startD = document.getElementById('dateDelivered').value;  
-            const collD = document.getElementById('collectionDate') ? document.getElementById('collectionDate').value : new Date().toISOString().slice(0, 10);  
+            const collD = document.getElementById('collectionDate').value;  
   
             if (appData.homeStock[styleType] < qty) {  
                 if (!confirm(`Babala: Ang Home stock para sa ${styleType} ay kulang (${appData.homeStock[styleType]} pcs). Ituloy pa rin?`)) return;  
@@ -844,10 +845,8 @@
   
             form.reset();  
             document.getElementById('dateDelivered').valueAsDate = new Date();  
-            if(document.getElementById('collectionDate')) {  
-                let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);  
-                document.getElementById('collectionDate').valueAsDate = nextMonth;  
-            }  
+            let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);  
+            document.getElementById('collectionDate').valueAsDate = nextMonth;  
             document.getElementById('addStoreCard').style.display = 'none';  
             saveToCloud();  
         });  
@@ -1078,12 +1077,10 @@
                             Initial Qty: ${subItem.initialQty} pcs | Nabenta: <strong>${subSold} pcs</strong> | Total: ₱${totalOrderAmount.toLocaleString()}  
                         </div>  
                         <div style="font-size: 0.75rem; color: #555; margin-bottom: 6px;">  
-                            Start: ${subItem.dateDelivered || 'N/A'}  
+                            Start: ${subItem.dateDelivered || 'N/A'} | Target: ${subItem.collectionDate || 'N/A'}  
                         </div>  
                         <div class="btn-group">  
-                            <button type="button" onclick="checkupStoreSub(${index}, ${subIdx})" style="background-color: #2e7d32;">Koleksyon</button>  
                             <button type="button" onclick="bawasStockSub(${index}, ${subIdx})" style="background-color: #ff9800;">Bawas</button>  
-                            <button type="button" onclick="restockStoreSub(${index}, ${subIdx})" style="background-color: #388e3c;">Restock</button>  
                         </div>  
                     </div>  
                 `;  
@@ -1383,7 +1380,8 @@
   
         appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);  
         const todayStr = new Date().toISOString().slice(0, 10);  
-        const collDateStr = new Date().toISOString().slice(0, 10);  
+        let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);  
+        const collDateStr = nextMonth.toISOString().slice(0, 10);  
   
         let notifications = [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}).`, date: new Date().toLocaleString() }];  
         if (isSameName) {  
@@ -1512,7 +1510,8 @@
             basePrice = item.storeItems[0].price;  
         }  
         const todayStr = new Date().toISOString().slice(0, 10);  
-        const collDateStr = new Date().toISOString().slice(0, 10);  
+        let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);  
+        const collDateStr = nextMonth.toISOString().slice(0, 10);  
   
         if (!item.storeItems) item.storeItems = [];  
         let existingSub = item.storeItems.find(sub => sub.styleType === style);  
@@ -1550,17 +1549,6 @@
         saveToCloud();  
     };  
   
-    window.checkupStoreSub = function(storeIdx, subIdx) {  
-        const store = appData.consignments[storeIdx];  
-        const subItem = store.storeItems[subIdx];  
-        const count = parseInt(prompt(`Ilang piraso ng ${subItem.styleType} ang nabenta?`, '1'));  
-        if (!isNaN(count) && count > 0) {  
-            subItem.currentStock = Math.max(0, subItem.currentStock - count);  
-            store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nabenta: ${count} pcs (${subItem.styleType})` });  
-            saveToCloud();  
-        }  
-    };  
-  
     window.bawasStockSub = function(storeIdx, subIdx) {  
         const store = appData.consignments[storeIdx];  
         const subItem = store.storeItems[subIdx];  
@@ -1572,21 +1560,6 @@
             subItem.returnedQty = (subItem.returnedQty || 0) + count;  
             appData.homeStock[style] += count;  
             store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagbawas ng ${count} pcs (${style})` });  
-            saveToCloud();  
-        }  
-    };  
-  
-    window.restockStoreSub = function(storeIdx, subIdx) {  
-        const store = appData.consignments[storeIdx];  
-        const subItem = store.storeItems[subIdx];  
-        const style = subItem.styleType || 'Ordinary';  
-        const count = parseInt(prompt(`Ilang stock ang idadagdag para sa ${style}?`, '10'));  
-        if (!isNaN(count) && count > 0) {  
-            if (appData.homeStock[style] < count) { alert('Kulang ang stock sa bahay.'); return; }  
-            appData.homeStock[style] -= count;  
-            subItem.initialQty += count;  
-            subItem.currentStock += count;  
-            store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${count} pcs (${style})` });  
             saveToCloud();  
         }  
     };  
@@ -1672,4 +1645,4 @@
     });  
 </script>  
 </body>  
-</html>
+</html>  
