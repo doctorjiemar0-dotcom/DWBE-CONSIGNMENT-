@@ -2595,13 +2595,37 @@ window.addEventListener(
   
 
   /* =========================================================
-   PWA INSTALL SUPPORT (IMPROVED VERSION)
+   PWA INSTALL SUPPORT (AUTOMATIC INSTALLATION)
 ========================================================= */
 
 let deferredPrompt = null;
+let installPromptShown = false;
 
 const headerInstallBtn =
   document.getElementById('headerInstallBtn');
+
+
+/* ---------------------------------------------------------
+   CHECK IF APP IS ALREADY INSTALLED
+--------------------------------------------------------- */
+
+function checkIfInstalled() {
+  if (window.navigator.standalone === true) {
+    // App is already installed (iOS)
+    headerInstallBtn.textContent = '✅ App Installed';
+    headerInstallBtn.disabled = true;
+    return true;
+  }
+
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    // App is running in standalone mode (Android)
+    headerInstallBtn.textContent = '✅ App Installed';
+    headerInstallBtn.disabled = true;
+    return true;
+  }
+
+  return false;
+}
 
 
 /* ---------------------------------------------------------
@@ -2612,122 +2636,97 @@ window.addEventListener(
   'beforeinstallprompt',
   (event) => {
 
-    console.log(
-      '✅ PWA install prompt detected.'
-    );
+    console.log('✅ PWA install prompt detected - READY TO INSTALL');
 
-    /* Huwag hayaang automatic na lumabas
-       ang browser install prompt */
+    /* Prevent default behavior */
     event.preventDefault();
 
-    /* Itago muna ang event para magamit
-       kapag pinindot ang sariling button */
+    /* Store the event */
     deferredPrompt = event;
 
-    /* Update button text to indicate ready */
     if (headerInstallBtn) {
-
-      headerInstallBtn.textContent = 
-        '📱 Install App';
-
-      headerInstallBtn.style.display =
-        'block';
-
+      headerInstallBtn.textContent = '📱 Install App';
+      headerInstallBtn.style.display = 'block';
+      headerInstallBtn.style.cursor = 'pointer';
     }
 
+    /* Automatically show install prompt after 2 seconds */
+    if (!installPromptShown) {
+      setTimeout(() => {
+        triggerInstallPrompt();
+      }, 2000);
+      installPromptShown = true;
+    }
   }
 );
 
 
 /* ---------------------------------------------------------
-   INSTALL BUTTON
+   AUTOMATIC INSTALL TRIGGER
+--------------------------------------------------------- */
+
+async function triggerInstallPrompt() {
+  if (!deferredPrompt) return;
+
+  try {
+    console.log('🚀 Showing install prompt...');
+    const result = await deferredPrompt.prompt();
+
+    console.log('Installation result:', result.outcome);
+
+    if (result.outcome === 'accepted') {
+      console.log('✅ User accepted installation');
+      headerInstallBtn.textContent = '✅ Installing...';
+      
+      setTimeout(() => {
+        headerInstallBtn.textContent = '✅ App Installed';
+        headerInstallBtn.disabled = true;
+      }, 1500);
+
+    } else {
+      console.log('❌ User dismissed installation');
+      headerInstallBtn.textContent = '📱 Install App';
+    }
+
+    deferredPrompt = null;
+
+  } catch (error) {
+    console.error('Install prompt error:', error);
+    headerInstallBtn.textContent = '📱 Install App';
+  }
+}
+
+
+/* ---------------------------------------------------------
+   INSTALL BUTTON CLICK
 --------------------------------------------------------- */
 
 if (headerInstallBtn) {
 
   headerInstallBtn.addEventListener(
     'click',
-    async () => {
+    async (e) => {
+      e.preventDefault();
 
-      /* Walang install prompt - show fallback */
       if (!deferredPrompt) {
-
-        console.log(
-          'No install prompt available'
-        );
-
+        console.log('❌ No install prompt available');
+        
         alert(
-          '📱 Installation Instructions:\n\n' +
+          '📱 Manual Installation:\n\n' +
           '📌 Android (Chrome):\n' +
-          '1. Tap the menu (⋮) at top right\n' +
-          '2. Select "Install app" or "Add to Home screen"\n\n' +
+          '1. Tap menu (⋮) → "Install app"\n' +
+          '2. Or: Home button long press → "Add to Home"\n\n' +
           '📌 iPhone (Safari):\n' +
-          '1. Tap Share button at bottom\n' +
-          '2. Select "Add to Home Screen"\n\n' +
-          '✅ Your app will be installed!'
+          '1. Tap Share (⬆️) → "Add to Home Screen"\n\n' +
+          '✅ App will appear on home screen!'
         );
-
         return;
-
       }
 
-
-      try {
-
-        /* Ipakita ang native install prompt */
-        const result =
-          await deferredPrompt.prompt();
-
-        console.log(
-          'Install result:',
-          result.outcome
-        );
-
-
-        if (
-          result.outcome ===
-          'accepted'
-        ) {
-
-          console.log(
-            '✅ Successfully installed PWA.'
-          );
-
-          headerInstallBtn.textContent =
-            '✅ App Installed';
-
-          headerInstallBtn.disabled = true;
-
-        } else {
-
-          console.log(
-            'Installation cancelled.'
-          );
-
-        }
-
-
-      } catch (error) {
-
-        console.error(
-          'Install error:',
-          error
-        );
-
-        alert(
-          'Could not install. Please try again.'
-        );
-
-      }
-
-
-      /* Isang beses lang maaaring gamitin
-         ang parehong install prompt */
-      deferredPrompt = null;
-
+      /* Trigger the install prompt */
+      await triggerInstallPrompt();
     }
   );
-
 }
 
 
@@ -2738,24 +2737,33 @@ if (headerInstallBtn) {
 window.addEventListener(
   'appinstalled',
   () => {
-
-    console.log(
-      '✅ Doctor\'s Whisk Broom PWA installed.'
-    );
+    console.log('🎉 Doctor\'s Whisk Broom PWA successfully installed!');
 
     if (headerInstallBtn) {
-
-      headerInstallBtn.textContent =
-        '✅ Installed';
-
+      headerInstallBtn.textContent = '✅ App Installed';
       headerInstallBtn.disabled = true;
-
     }
 
     deferredPrompt = null;
-
   }
 );
+
+
+/* ---------------------------------------------------------
+   CHECK INSTALLATION STATUS ON LOAD
+--------------------------------------------------------- */
+
+window.addEventListener('load', () => {
+  checkIfInstalled();
+  
+  /* Monitor for display mode changes */
+  window.matchMedia('(display-mode: standalone)').addListener((e) => {
+    if (e.matches) {
+      console.log('App is running in standalone mode');
+      checkIfInstalled();
+    }
+  });
+});
   
   
 /* =========================================================  
