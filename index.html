@@ -1433,7 +1433,7 @@ button:active {
   </div>  <button  
 id="headerInstallBtn"  
 class="install-header-btn"  
-style="display:none;">
+style="display:block;">
 📱 I-Install
 </button>
 
@@ -2595,7 +2595,7 @@ window.addEventListener(
   
 
   /* =========================================================
-   PWA INSTALL SUPPORT
+   PWA INSTALL SUPPORT (IMPROVED VERSION)
 ========================================================= */
 
 let deferredPrompt = null;
@@ -2624,8 +2624,11 @@ window.addEventListener(
        kapag pinindot ang sariling button */
     deferredPrompt = event;
 
-    /* Ipakita ang sariling INSTALL button */
+    /* Update button text to indicate ready */
     if (headerInstallBtn) {
+
+      headerInstallBtn.textContent = 
+        '📱 Install App';
 
       headerInstallBtn.style.display =
         'block';
@@ -2646,12 +2649,22 @@ if (headerInstallBtn) {
     'click',
     async () => {
 
-      /* Walang install prompt */
+      /* Walang install prompt - show fallback */
       if (!deferredPrompt) {
 
+        console.log(
+          'No install prompt available'
+        );
+
         alert(
-          '📱 Hindi pa available ang automatic install prompt sa browser na ito.\n\n' +
-          'Kung Android Chrome ang gamit mo, buksan ang browser menu ⋮ at piliin ang "Install app" o "Add to Home screen".'
+          '📱 Installation Instructions:\n\n' +
+          '📌 Android (Chrome):\n' +
+          '1. Tap the menu (⋮) at top right\n' +
+          '2. Select "Install app" or "Add to Home screen"\n\n' +
+          '📌 iPhone (Safari):\n' +
+          '1. Tap Share button at bottom\n' +
+          '2. Select "Add to Home Screen"\n\n' +
+          '✅ Your app will be installed!'
         );
 
         return;
@@ -2677,13 +2690,18 @@ if (headerInstallBtn) {
         ) {
 
           console.log(
-            '✅ Matagumpay na na-install ang PWA.'
+            '✅ Successfully installed PWA.'
           );
+
+          headerInstallBtn.textContent =
+            '✅ App Installed';
+
+          headerInstallBtn.disabled = true;
 
         } else {
 
           console.log(
-            'ℹ️ Kinansela ng user ang installation.'
+            'Installation cancelled.'
           );
 
         }
@@ -2692,8 +2710,12 @@ if (headerInstallBtn) {
       } catch (error) {
 
         console.error(
-          'Install prompt error:',
+          'Install error:',
           error
+        );
+
+        alert(
+          'Could not install. Please try again.'
         );
 
       }
@@ -2703,9 +2725,6 @@ if (headerInstallBtn) {
          ang parehong install prompt */
       deferredPrompt = null;
 
-      headerInstallBtn.style.display =
-        'none';
-
     }
   );
 
@@ -2713,7 +2732,7 @@ if (headerInstallBtn) {
 
 
 /* ---------------------------------------------------------
-   APP INSTALLED
+   APP INSTALLED EVENT
 --------------------------------------------------------- */
 
 window.addEventListener(
@@ -2724,14 +2743,16 @@ window.addEventListener(
       '✅ Doctor\'s Whisk Broom PWA installed.'
     );
 
-    deferredPrompt = null;
-
     if (headerInstallBtn) {
 
-      headerInstallBtn.style.display =
-        'none';
+      headerInstallBtn.textContent =
+        '✅ Installed';
+
+      headerInstallBtn.disabled = true;
 
     }
+
+    deferredPrompt = null;
 
   }
 );
@@ -4931,4 +4952,4 @@ async function loadDataSilent() {
 }  
   
 </script>  </body>  
-</html>  
+</html>
