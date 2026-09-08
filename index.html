@@ -1,797 +1,5012 @@
-<!DOCTYPE html>
-<html lang="tl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Doctor's Whisk Broom - Client Portal</title>
+<!DOCTYPE html>  <html lang="tl">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">  <title>Doctor's Whisk Broom - Client Portal</title>  <!-- PWA Manifest -->  <link rel="manifest" href="manifest.json">  <!-- Theme Color -->  <meta name="theme-color" content="#176b2c">  
+<meta name="msapplication-navbutton-color" content="#176b2c">  <!-- PWA Configuration -->  <meta name="mobile-web-app-capable" content="yes">  
+<meta name="mobile-web-app-status-bar-style" content="black-translucent">  
+<meta name="apple-mobile-web-app-capable" content="yes">  
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">  
+<meta name="apple-mobile-web-app-title" content="Whisk Broom">  <!-- Apple Touch Icon -->  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23176b2c' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">  <!-- Favicon -->  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%23176b2c' width='32' height='32'/><text x='50%' y='50%' font-size='24' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">  <!-- QRCode JS -->  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>  <style>  
+  
+/* =========================================================  
+   ROOT / GLOBAL  
+========================================================= */  
+  
+:root {  
+  --primary-color: #176b2c;  
+  --primary-dark: #0d5420;  
+  --primary-light: #2e8b3f;  
+  
+  --secondary-color: #4caf50;  
+  
+  --background-color: #f2f7f3;  
+  --card-color: #ffffff;  
+  
+  --text-color: #263238;  
+  --muted-color: #68747c;  
+  
+  --blue: #1976d2;  
+  --red: #e53935;  
+  --orange: #f57c00;  
+  --yellow: #fbc02d;  
+  
+  --border-color: #e1e6e3;  
+  
+  --shadow:  
+    0 5px 18px rgba(0,0,0,0.08);  
+  
+  --shadow-heavy:  
+    0 10px 30px rgba(0,0,0,0.13);  
+}  
+  
+* {  
+  box-sizing: border-box;  
+  margin: 0;  
+  padding: 0;  
+  font-family:  
+    "Segoe UI",  
+    Tahoma,  
+    Geneva,  
+    Verdana,  
+    sans-serif;  
+}  
+  
+html {  
+  scroll-behavior: smooth;  
+}  
+  
+body {  
+  background:  
+    linear-gradient(  
+      180deg,  
+      #edf6ef 0%,  
+      #f5f7f6 35%,  
+      #f2f4f3 100%  
+    );  
+  
+  color: var(--text-color);  
+  
+  padding-bottom:  
+    calc(50px + env(safe-area-inset-bottom));  
+  
+  min-height: 100vh;  
+}  
+  
+  
+/* =========================================================  
+   HEADER  
+========================================================= */  
+  
+header {  
+  background:  
+    linear-gradient(  
+      135deg,  
+      #0d5c24,  
+      #176b2c,  
+      #2e8b3f  
+    );  
+  
+  color: white;  
+  
+  min-height: 82px;  
+  
+  padding:  
+    18px 18px  
+    calc(16px + env(safe-area-inset-bottom))  
+    18px;  
+  
+  display: flex;  
+  justify-content: space-between;  
+  align-items: center;  
+  
+  position: relative;  
+  
+  box-shadow:  
+    0 3px 12px rgba(0,0,0,0.15);  
+  
+  overflow: hidden;  
+}  
+  
+header::after {  
+  content: "";  
+  position: absolute;  
+  
+  width: 240px;  
+  height: 240px;  
+  
+  right: -100px;  
+  top: -160px;  
+  
+  border-radius: 50%;  
+  
+  background:  
+    rgba(255,255,255,0.10);  
+}  
+  
+.header-title {  
+  flex: 1;  
+  
+  text-align: left;  
+  
+  font-size: 1.12rem;  
+  
+  font-weight: 800;  
+  
+  letter-spacing: 0.2px;  
+  
+  line-height: 1.35;  
+  
+  position: relative;  
+  
+  z-index: 2;  
+}  
+  
+.install-header-btn {  
+  background: #0288d1;  
+  
+  color: white;  
+  
+  border: none;  
+  
+  padding: 9px 12px;  
+  
+  border-radius: 8px;  
+  
+  font-size: 0.78rem;  
+  
+  font-weight: 800;  
+  
+  cursor: pointer;  
+  
+  white-space: nowrap;  
+  
+  position: relative;  
+  
+  z-index: 3;  
+  
+  box-shadow:  
+    0 3px 8px rgba(0,0,0,0.15);  
+}  
+  
+.install-header-btn:hover {  
+  opacity: 0.92;  
+}  
+  
+.install-header-btn:disabled {  
+  opacity: 0.5;  
+  
+  cursor: not-allowed;  
+}  
+  
+  
+/* =========================================================  
+   MAIN CONTAINER  
+========================================================= */  
+  
+.container {  
+  width: 100%;  
+  
+  max-width: 760px;  
+  
+  padding: 10px;  
+  
+  margin: auto;  
+}  
+  
+  
+/* =========================================================  
+   CLOUD STATUS  
+========================================================= */  
+  
+#syncStatus {  
+  text-align: center;  
+  
+  font-size: 0.82rem;  
+  
+  color: #477052;  
+  
+  margin:  
+    2px 0 14px;  
+  
+  font-style: italic;  
+  
+  font-weight: 600;  
+  
+  min-height: 22px;  
+}  
+  
+  
+/* =========================================================  
+   GENERAL CARD  
+========================================================= */  
+  
+.card {  
+  background: var(--card-color);  
+  
+  padding: 14px;  
+  
+  border-radius: 18px;  
+  
+  box-shadow: var(--shadow);  
+  
+  margin-bottom: 12px;  
+  
+  border: 1px solid rgba(0,0,0,0.025);  
+}  
+  
+.card h2 {  
+  font-size: 1.05rem;  
+  
+  margin-bottom: 8px;  
+  
+  color: var(--primary-color);  
+  
+  font-weight: 800;  
+}  
+  
+.card p {  
+  line-height: 1.55;  
+}  
+  
+  
+/* =========================================================  
+   LOGIN  
+========================================================= */  
+  
+#loginScreen {  
+  display: flex;  
+  
+  flex-direction: column;  
+  
+  align-items: center;  
+  
+  justify-content: center;  
+  
+  min-height: 40vh;  
+  
+  text-align: left;  
+}  
+  
+#portalContent {  
+  display: none;  
+}  
+  
+  
+/* =========================================================  
+   FORM  
+========================================================= */  
+  
+.form-group {  
+  margin-bottom: 12px;  
+}  
+  
+label {  
+  display: block;  
+  
+  font-size: 0.84rem;  
+  
+  margin-bottom: 5px;  
+  
+  font-weight: 800;  
+  
+  color: #37474f;  
+}  
+  
+input,  
+select,  
+textarea {  
+  width: 100%;  
+  
+  padding: 11px;  
+  
+  border:  
+    1px solid #cfd8dc;  
+  
+  border-radius: 9px;  
+  
+  font-size: 0.9rem;  
+  
+  background: #fff;  
+  
+  color: #263238;  
+  
+  outline: none;  
+  
+  transition:  
+    border-color 0.2s,  
+    box-shadow 0.2s;  
+}  
+  
+input:focus,  
+select:focus,  
+textarea:focus {  
+  border-color: var(--primary-color);  
+  
+  box-shadow:  
+    0 0 0 3px rgba(46,125,50,0.10);  
+}  
+  
+button {  
+  background-color: var(--secondary-color);  
+  
+  color: white;  
+  
+  border: none;  
+  
+  padding: 11px;  
+  
+  width: 100%;  
+  
+  border-radius: 9px;  
+  
+  font-size: 0.95rem;  
+  
+  font-weight: 800;  
+  
+  cursor: pointer;  
+  
+  margin-top: 5px;  
+  
+  transition:  
+    transform 0.15s,  
+    opacity 0.15s,  
+    box-shadow 0.15s;  
+}  
+  
+button:hover {  
+  opacity: 0.94;  
+}  
+  
+button:active {  
+  transform: scale(0.99);  
+}  
+  
+  
+/* =========================================================  
+   LOGIN INFORMATION  
+========================================================= */  
+  
+#directAccessNotice {  
+  margin-bottom: 15px;  
+  
+  padding: 11px;  
+  
+  background: #e8f5e9;  
+  
+  border-left:  
+    4px solid #2e7d32;  
+  
+  border-radius: 8px;  
+  
+  font-size: 0.84rem;  
+  
+  color: #1b5e20;  
+  
+  line-height: 1.45;  
+}  
+  
+  
+/* =========================================================  
+   MAIN STORE HERO / ACCOUNT CARD  
+========================================================= */  
+  
+.store-profile-card {  
+  
+  position: relative;  
+  
+  overflow: hidden;  
+  
+  background:  
+    linear-gradient(  
+      135deg,  
+      #0d5d24 0%,  
+      #176b2c 45%,  
+      #2f963f 100%  
+    );  
+  
+  color: white;  
+  
+  border-radius: 24px;  
+  
+  padding: 12px 18px 10px;  
+  
+  margin-bottom: 10px;  
+  
+  box-shadow:  
+    0 12px 30px rgba(23,107,44,0.24);  
+  
+  border: none;  
+}  
+  
+.store-profile-card::before {  
+  
+  content: "";  
+  
+  position: absolute;  
+  
+  width: 230px;  
+  height: 230px;  
+  
+  right: -75px;  
+  top: -50px;  
+  
+  background:  
+    rgba(255,255,255,0.07);  
+  
+  border-radius: 50%;  
+}  
+  
+.store-profile-card::after {  
+  
+  content: "🧹";  
+  
+  position: absolute;  
+  
+  right: 15px;  
+  bottom: 65px;  
+  
+  font-size: 7rem;  
+  
+  opacity: 0.08;  
+  
+  transform: rotate(-18deg);  
+  
+  pointer-events: none;  
+}  
+  
+.store-profile-inner {  
+  position: relative;  
+  
+  z-index: 2;  
+}  
+  
+.store-profile-icon {  
+  font-size: 1.35rem;  
+  
+  margin-right: 5px;  
+}  
+  
+#displayStoreName {  
+  
+  color: #ffffff !important;  
+  
+  font-size: 1.35rem !important;  
+  
+  line-height: 1.2;  
+  
+  font-weight: 900 !important;  
+  
+  margin-bottom: 5px !important;  
+  
+  text-shadow:  
+    0 2px 5px rgba(0,0,0,0.15);  
+}  
+  
+#displayStoreName span {  
+  
+  color: #eaffed !important;  
+  
+  font-size: 0.85rem !important;  
+  
+  font-weight: 600;  
+  
+  text-shadow: none;  
+}  
+  
+#displayStoreStatus {  
+  
+  display: inline-flex;  
+  
+  align-items: center;  
+  
+  gap: 7px;  
+  
+  color: #ffffff !important;  
+  
+  background:  
+    rgba(255,255,255,0.12);  
+  
+  border:  
+    1px solid rgba(255,255,255,0.35);  
+  
+  padding: 5px 10px;  
+  
+  border-radius: 30px;  
+  
+  font-size: 0.7rem !important;  
+  
+  font-weight: 800;  
+  
+  margin-bottom: 10px;  
+  
+  text-shadow:  
+    0 1px 2px rgba(0,0,0,0.15);  
+}  
+  
+#displayStoreStatus::before {  
+  
+  content: "";  
+  
+  width: 9px;  
+  
+  height: 9px;  
+  
+  border-radius: 50%;  
+  
+  background: #69f57a;  
+  
+  box-shadow:  
+    0 0 0 3px rgba(105,245,122,0.15);  
+}  
+  
+  
+/* =========================================================  
+   QR CODE  
+========================================================= */  
+  
+.qr-login-wrapper {  
+  
+  display: flex;  
+  
+  justify-content: center;  
+  
+  align-items: center;  
+  
+  margin:  
+    5px 0 8px;  
+}  
+  
+.qr-login-box {  
+  
+  background: white;  
+  
+  padding: 11px;  
+  
+  border-radius: 12px;  
+  
+  text-align: center;  
+  
+  box-shadow:  
+    0 5px 15px rgba(0,0,0,0.18);  
+  
+  border: 1px solid rgba(0,0,0,0.05);  
+}  
+  
+#smallQrcode {  
+  
+  width: 160px !important;  
+  
+  height: 160px !important;  
+  
+  display: flex;  
+  
+  align-items: center;  
+  
+  justify-content: center;  
+  
+  background: white;  
+}  
+  
+#smallQrcode img,  
+#smallQrcode canvas {  
+  
+  max-width: 100%;  
+  
+  height: auto;  
+}  
+  
+.qr-caption {  
+  
+  color: #225b2e;  
+  
+  font-size: 0.78rem;  
+  
+  font-weight: 900;  
+  
+  display: block;  
+  
+  margin-top: 7px;  
+}  
+  
+  
+/* =========================================================  
+   LOGOUT  
+========================================================= */  
+  
+.logout-btn {  
+  
+  background:  
+    linear-gradient(  
+      135deg,  
+      #ef3030,  
+      #d82020  
+    ) !important;  
+  
+  color: white !important;  
+  
+  border-radius: 11px !important;  
+  
+  font-size: 0.9rem !important;  
+  
+  font-weight: 900 !important;  
+  
+  padding: 10px !important;  
+  
+  box-shadow:  
+    0 4px 10px rgba(180,0,0,0.20);  
+  
+  position: relative;  
+  
+  z-index: 3;  
+}  
+  
+  
+/* =========================================================  
+   AGREEMENT  
+========================================================= */  
+  
+.agreement-card {  
+  
+  padding: 0;  
+  
+  overflow: hidden;  
+  
+  background: transparent;  
+  
+  box-shadow: none;  
+  
+  border: none;  
+  
+  margin-bottom: 10px;  
+}  
+  
+.agreement-frame-wrapper {  
+  
+  background:  
+    linear-gradient(  
+      135deg,  
+      #0d5d24,  
+      #176b2c  
+    );  
+  
+  border-radius: 17px;  
+  
+  padding: 2px;  
+  
+  overflow: hidden;  
+  
+  box-shadow:  
+    0 5px 14px rgba(0,0,0,0.12);  
+}  
+  
+#storeAgreementFrame {  
+  
+  display: block;  
+  
+  width: 100%;  
+  
+  min-height: 40px;  
+  
+  border: none;  
+  
+  background: transparent;  
+  
+  overflow: hidden;  
+}  
+  
+  
+/* =========================================================  
+   PRODUCT CATALOG  
+========================================================= */  
+  
+.catalog-card {  
+  
+  background: #ffffff;  
+  
+  border-radius: 20px;  
+  
+  padding: 14px;  
+  
+  box-shadow: var(--shadow);  
+  
+  margin-bottom: 12px;  
+}  
+  
+.catalog-title {  
+  
+  display: flex;  
+  
+  align-items: center;  
+  
+  gap: 7px;  
+  
+  color: var(--primary-color);  
+  
+  font-size: 1.18rem;  
+  
+  font-weight: 900;  
+  
+  margin-bottom: 8px;  
+}  
+  
+.catalog-description {  
+  
+  font-size: 0.87rem;  
+  
+  color: #59646a;  
+  
+  line-height: 1.5;  
+  
+  margin-bottom: 13px;  
+}  
+  
+.style-grid {  
+  
+  display: grid;  
+  
+  grid-template-columns:  
+    repeat(2, minmax(0, 1fr));  
+  
+  gap: 11px;  
+  
+  margin-bottom: 10px;  
+}  
+  
+.style-option-card {  
+  
+  border:  
+    1px solid #d9dfdc;  
+  
+  border-radius: 17px;  
+  
+  padding: 10px;  
+  
+  text-align: center;  
+  
+  cursor: pointer;  
+  
+  background: #ffffff;  
+  
+  transition:  
+    all 0.2s;  
+  
+  position: relative;  
+  
+  overflow: hidden;  
+}  
+  
+.style-option-card:hover {  
+  
+  transform: translateY(-2px);  
+  
+  box-shadow:  
+    0 5px 15px rgba(0,0,0,0.08);  
+}  
+  
+.style-option-card.selected {  
+  
+  border:  
+    2px solid var(--primary-color);  
+  
+  background: #f1fbf3;  
+}  
+  
+.style-option-card img {  
+  
+  width: 100%;  
+  
+  height: 145px;  
+  
+  object-fit: cover;  
+  
+  border-radius: 12px;  
+  
+  margin-bottom: 8px;  
+  
+  cursor: pointer;  
+  
+  display: block;  
+}  
+  
+.style-option-card h4 {  
+  
+  font-size: 1rem;  
+  
+  color: var(--primary-color);  
+  
+  margin-bottom: 5px;  
+  
+  font-weight: 900;  
+}  
+  
+.style-option-card p {  
+  
+  font-size: 0.81rem;  
+  
+  color: #6a7479;  
+  
+  line-height: 1.45;  
+  
+  min-height: 48px;  
+}  
+  
+.view-img-btn {  
+  
+  background:  
+    linear-gradient(  
+      135deg,  
+      #1976d2,  
+      #2188e5  
+    ) !important;  
+  
+  color: white;  
+  
+  border: none;  
+  
+  padding: 9px 7px !important;  
+  
+  font-size: 0.82rem !important;  
+  
+  border-radius: 8px !important;  
+  
+  cursor: pointer;  
+  
+  margin-top: 7px !important;  
+  
+  display: inline-block;  
+  
+  width: 100%;  
+  
+  font-weight: 800;  
+}  
+  
+  
+/* =========================================================  
+   PREMIUM BADGE  
+========================================================= */  
+  
+.premium-feature {  
+  
+  margin-top: 6px;  
+  
+  font-size: 0.75rem;  
+  
+  background:  
+    #fff9c4;  
+  
+  color:  
+    #e08a00;  
+  
+  padding:  
+    5px 4px;  
+  
+  border-radius: 6px;  
+  
+  font-weight: 900;  
+  
+  border:  
+    1px dashed #fbc02d;  
+  
+  line-height: 1.25;  
+}  
+  
+  
+/* =========================================================  
+   STOCK SECTION  
+========================================================= */  
+  
+.stock-card {  
+  
+  background: #ffffff;  
+  
+  border-radius: 20px;  
+  
+  padding: 14px;  
+  
+  box-shadow: var(--shadow);  
+  
+  margin-bottom: 12px;  
+}  
+  
+.store-item-box {  
+  
+  background:  
+    #f8faf9;  
+  
+  border:  
+    1px solid #dfe5e1;  
+  
+  padding: 13px;  
+  
+  border-radius: 13px;  
+  
+  margin-bottom: 10px;  
+}  
+  
+.store-item-box.premium-stock {  
+  
+  background:  
+    #fffdf0;  
+  
+  border-color:  
+    #f1d06b;  
+}  
+  
+.store-item-box strong {  
+  
+  color: #183f22;  
+}  
+  
+.stock-style-title {  
+  
+  color: var(--primary-color);  
+  
+  font-weight: 900;  
+  
+  display: flex;  
+  
+  justify-content: space-between;  
+  
+  align-items: center;  
+  
+  margin-bottom: 8px;  
+}  
+  
+  
+/* =========================================================  
+   PENDING DELIVERY  
+========================================================= */  
+  
+#pendingDeliveryCard {  
+  
+  background:  
+    #edf7ff !important;  
+  
+  border:  
+    1px solid #90caf9 !important;  
+  
+  border-radius: 18px;  
+}  
+  
+#pendingDeliveryCard h2 {  
+  
+  color:  
+    #0277bd !important;  
+}  
+  
+  
+/* =========================================================  
+   PENDING SALES  
+========================================================= */  
+  
+#pendingSalesCard {  
+  
+  background:  
+    #fff7eb !important;  
+  
+  border:  
+    1px solid #ffcc80 !important;  
+  
+  border-radius: 18px;  
+}  
+  
+#pendingSalesCard h2 {  
+  
+  color:  
+    #ef6c00 !important;  
+}  
+  
+  
+/* =========================================================  
+   NOTIFICATIONS  
+========================================================= */  
+  
+.notification-header {  
+  
+  display: flex;  
+  
+  justify-content: space-between;  
+  
+  align-items: center;  
+  
+  margin-bottom: 9px;  
+}  
+  
+.notification-item {  
+  
+  background:  
+    #eaf7ec;  
+  
+  border-left:  
+    4px solid #4caf50;  
+  
+  padding: 10px;  
+  
+  margin-bottom: 7px;  
+  
+  font-size: 0.84rem;  
+  
+  border-radius: 8px;  
+  
+  display: flex;  
+  
+  justify-content: space-between;  
+  
+  align-items: flex-start;  
+  
+  color: #29452e;  
+}  
+  
+  
+/* =========================================================  
+   RESTOCK  
+========================================================= */  
+  
+.restock-card {  
+  
+  background:  
+    linear-gradient(  
+      135deg,  
+      #fff9e8,  
+      #fffdf6  
+    );  
+  
+  border:  
+    1px solid #ffe082;  
+  
+  border-radius: 18px;  
+  
+  padding: 12px;  
+  
+  margin-bottom: 12px;  
+}  
+  
+.section-toggle {  
+  
+  display: flex;  
+  
+  justify-content: space-between;  
+  
+  align-items: center;  
+  
+  gap: 10px;  
+}  
+  
+.section-toggle h2 {  
+  
+  margin-bottom: 0;  
+  
+  flex: 1;  
+}  
+  
+.small-toggle-btn {  
+  
+  width: auto !important;  
+  
+  min-width: 70px;  
+  
+  padding: 7px 10px !important;  
+  
+  font-size: 0.76rem !important;  
+  
+  margin-top: 0 !important;  
+}  
+  
+  
+/* =========================================================  
+   CHAT  
+========================================================= */  
+  
+.chat-card {  
+  
+  background: #ffffff;  
+  
+  border-radius: 18px;  
+  
+  padding: 12px;  
+  
+  box-shadow: var(--shadow);  
+  
+  margin-bottom: 12px;  
+}  
+  
+#clientChatContainer {  
+  
+  max-height: 260px;  
+  
+  overflow-y: auto;  
+  
+  margin-bottom: 9px;  
+  
+  border:  
+    1px solid #e5e9e7;  
+  
+  padding: 10px;  
+  
+  border-radius: 10px;  
+  
+  background:  
+    #fafcfb;  
+}  
+  
+.chat-msg {  
+  
+  background:  
+    #f1f8e9;  
+  
+  padding: 10px;  
+  
+  border-radius: 10px;  
+  
+  margin-bottom: 7px;  
+  
+  font-size: 0.84rem;  
+  
+  border:  
+    1px solid #c5e1a5;  
+  
+  line-height: 1.45;  
+  
+  color: #314236;  
+}  
+  
+.chat-msg.admin {  
+  
+  background:  
+    #e3f2fd;  
+  
+  border-color:  
+    #90caf9;  
+  
+  color:  
+    #173d5a;  
+}  
+  
+  
+/* =========================================================  
+   STOP AGREEMENT  
+========================================================= */  
+  
+.stop-card {  
+  
+  background:  
+    linear-gradient(  
+      135deg,  
+      #fff1f1,  
+      #fffafa  
+    );  
+  
+  border:  
+    1px solid #ef9a9a;  
+  
+  border-radius: 18px;  
+  
+  padding: 12px;  
+  
+  margin-bottom: 12px;  
+}  
+  
+.stop-card h2 {  
+  
+  color:  
+    #c62828 !important;  
+}  
+  
+  
+/* =========================================================  
+   ADMIN LINK  
+========================================================= */  
+  
+.admin-link {  
+  
+  text-align: center;  
+  
+  margin:  
+    20px 0 12px;  
+}  
+  
+.admin-link a {  
+  
+  display: inline-block;  
+  
+  color: #68747c;  
+  
+  text-decoration: none;  
+  
+  font-size: 0.8rem;  
+  
+  padding: 8px 12px;  
+  
+  border-radius: 8px;  
+  
+  background: rgba(255,255,255,0.7);  
+}  
+  
+  
+/* =========================================================  
+   IMAGE MODAL  
+========================================================= */  
+  
+#imageModal {  
+  
+  display: none;  
+  
+  position: fixed;  
+  
+  z-index: 9999;  
+  
+  left: 0;  
+  
+  top: 0;  
+  
+  width: 100%;  
+  
+  height: 100%;  
+  
+  background-color:  
+    rgba(0,0,0,0.88);  
+  
+  align-items: center;  
+  
+  justify-content: center;  
+  
+  flex-direction: column;  
+  
+  padding: 20px;  
+}  
+  
+#imageModal img {  
+  
+  max-width: 95%;  
+  
+  max-height: 75%;  
+  
+  border-radius: 12px;  
+  
+  box-shadow:  
+    0 8px 30px rgba(0,0,0,0.4);  
+}  
+  
+#imageModalClose {  
+  
+  margin-top: 15px;  
+  
+  background: white;  
+  
+  color: #333;  
+  
+  padding: 9px 22px;  
+  
+  border: none;  
+  
+  border-radius: 8px;  
+  
+  font-weight: bold;  
+  
+  cursor: pointer;  
+  
+  width: auto;  
+}  
+  
+  
+/* =========================================================  
+   MOBILE  
+========================================================= */  
+  
+@media (max-width: 600px) {  
+  
+  header {  
+  
+    min-height: 70px;  
+  
+    padding: 14px 15px;  
+  }  
+  
+  .header-title {  
+  
+    font-size: 1rem;  
+  }  
+  
+  .container {  
+  
+    padding:  
+      10px;  
+  }  
+  
+  .store-profile-card {  
+  
+    padding:  
+      22px 15px 17px;  
+  
+    border-radius: 22px;  
+  }  
+  
+  #displayStoreName {  
+  
+    font-size:  
+      1.45rem !important;  
+  }  
+  
+  #smallQrcode {  
+  
+    width:  
+      210px !important;  
+  
+    height:  
+      210px !important;  
+  }  
+  
+  .style-option-card img {  
+  
+    height:  
+      135px;  
+  }  
+  
+  .style-option-card h4 {  
+  
+    font-size:  
+      0.92rem;  
+  }  
+  
+  .style-option-card p {  
+  
+    font-size:  
+      0.76rem;  
+  }  
+  
+}  
+  
+  
+/* =========================================================  
+   VERY SMALL MOBILE  
+========================================================= */  
+  
+@media (max-width: 380px) {  
+  
+  .style-grid {  
+  
+    grid-template-columns:  
+      1fr;  
+  }  
+  
+  .style-option-card img {  
+  
+    height:  
+      160px;  
+  }  
+  
+  #smallQrcode {  
+  
+    width:  
+      190px !important;  
+  
+    height:  
+      190px !important;  
+  }  
+  
+}  
+  
+  
+/* =========================================================  
+   PRINT  
+========================================================= */  
+  
+@media print {  
+  
+  body * {  
+  
+    visibility: hidden;  
+  }  
+  
+  #printableInquirySection,  
+  #printableInquirySection * {  
+  
+    visibility: visible;  
+  }  
+  
+  #printableInquirySection {  
+  
+    position: absolute;  
+  
+    left: 0;  
+  
+    top: 0;  
+  
+    width: 100%;  
+  
+    padding: 20px;  
+  
+    background: white;  
+  }  
+  
+  .no-print {  
+  
+    display: none !important;  
+  }  
+  
+}  
+  
+</style>  </head>  <body>  <!-- =======================================================  
+     HEADER  
+======================================================= -->  <header>    <div class="header-title">  
+    🧹 Doctor's Whisk Broom - Client Portal  
+  </div>  <button  
+id="headerInstallBtn"  
+class="install-header-btn"  
+style="display:block;">
+📱 I-Install
+</button>
 
-<!-- PWA Manifest -->
-<link rel="manifest" href="manifest.json">
+</header>  <div class="container">  <!-- CLOUD STATUS - HIDDEN -->  <div id="syncStatus" style="display:none;">  
+  Kumokonekta sa Cloud Database...  
+</div>  <!-- =======================================================  
+     LOGIN SCREEN  
+======================================================= -->  <div id="loginScreen" class="card">    <div  
+    id="directAccessNotice"  
+    style="display:none;">  🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay  
+na link. I-click ang button sa ibaba upang buksan ang iyong portal.
 
-<!-- Theme Color -->
-<meta name="theme-color" content="#2e7d32">
-<meta name="msapplication-navbutton-color" content="#2e7d32">
+  </div>    <div id="manualLoginSection">  <h2>  
+  Pribadong Portal ng Tindahan  
+</h2>  
 
-<!-- PWA Configuration -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Whisk Broom">
+<p  
+  style="  
+    font-size:0.82rem;  
+    color:#666;  
+    margin-bottom:15px;  
+  ">  
 
-<!-- Apple Touch Icon -->
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232e7d32' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
+  Para mabuksan ang iyong portal, i-type nang eksakto  
+  ang rehistradong Pangalan ng iyong Tindahan o gamitin  
+  ang Pangalan ng May-ari bilang search batayan.  
 
-<!-- Shortcut Icons -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%232e7d32' width='32' height='32'/><text x='50%' y='50%' font-size='24' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
+</p>  
 
-<!-- QRCode JS Library para sa QR Code generator -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<style>
-:root { --primary-color: #2e7d32; --secondary-color: #4caf50; --background-color: #f4f6f8; --text-color: #333; }
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
-body { background-color: var(--background-color); color: var(--text-color); padding-bottom: 50px; }
-header { background-color: var(--primary-color); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-.header-title { flex-grow: 1; text-align: center; }
-.install-header-btn { background-color: #0288d1; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
-.install-header-btn:hover { opacity: 0.9; }
-.install-header-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.container { padding: 15px; max-width: 600px; margin: auto; }
-.card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
-h2 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-color); }
-.form-group { margin-bottom: 10px; }
-label { display: block; font-size: 0.85rem; margin-bottom: 3px; font-weight: bold; }
-input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
-button { background-color: var(--secondary-color); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
-button:hover { opacity: 0.9; }
-#loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40vh; text-align: left; }
-#portalContent { display: none; }
-.store-item-box { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
-.store-item-box.premium-stock { background: #fffde7; border-color: #fbc02d; }
-.notification-item { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 8px; margin-bottom: 6px; font-size: 0.85rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: flex-start; }
-.chat-msg { background: #f1f8e9; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85rem; border: 1px solid #c5e1a5; }
-.chat-msg.admin { background: #e3f2fd; border-color: #90caf9; }
-#syncStatus { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; font-style: italic; }
-.qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
-#qrcode { background: white; padding: 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
-.style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.style-option-card { border: 2px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; position: relative; }
-.style-option-card.selected { border-color: var(--primary-color); background: #e8f5e9; }
-.style-option-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; cursor: pointer; }
-.style-option-card h4 { font-size: 0.85rem; color: var(--primary-color); margin-bottom: 3px; }
-.style-option-card p { font-size: 0.75rem; color: #666; }
-.view-img-btn { background: #0288d1; color: white; border: none; padding: 3px 6px; font-size: 0.7rem; border-radius: 3px; cursor: pointer; margin-top: 4px; display: inline-block; width: 100%; }
-#imageModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; flex-direction: column; }
-#imageModal img { max-width: 90%; max-height: 80%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-#imageModalClose { margin-top: 15px; background: white; color: #333; padding: 8px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; width: auto; }
-@media print {
-  body * { visibility: hidden; }
-  #printableInquirySection, #printableInquirySection * { visibility: visible; }
-  #printableInquirySection { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; }
-  .no-print { display: none !important; }
-}
-</style>
-</head>
-<body>
-<header>
-  <div class="header-title">🧹 Doctor's Whisk Broom - Client Portal</div>
-  <button id="headerInstallBtn" class="install-header-btn" style="display:none;">📱 I-Install</button>
-</header>
+<div  
+  class="form-group"  
+  style="width:100%;">  
 
-<div class="container">
-  <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
+  <label for="manualStoreNameInput">  
+    Pangalan ng Tindahan / May-ari:  
+  </label>  
 
-  <!-- Secure Login Screen na may Password -->
-  <div id="loginScreen" class="card">
-    <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
-      🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. Ilagay lamang ang iyong Security Password upang buksan ang portal.
-    </div>
-    <div id="manualLoginSection" style="width: 100%;">
-      <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan</h2>
-      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Ilagay ang rehistradong Pangalan ng Tindahan (o May-ari) at ang iyong Security Password.</p>
-      
-      <div class="form-group" style="width: 100%;">
-        <label for="manualStoreNameInput">Pangalan ng Tindahan / May-ari:</label>
-        <input type="text" id="manualStoreNameInput" placeholder="Hal. Aling Nena Store o Juan & Maria">
-      </div>
-      
-      <div class="form-group" style="width: 100%;">
-        <label for="manualPasswordInput">Security Password:</label>
-        <input type="password" id="manualPasswordInput" placeholder="Ilagay ang iyong security password">
-      </div>
+  <input  
+    type="text"  
+    id="manualStoreNameInput"  
+    placeholder="Hal. Aling Nena Store o Juan & Maria">  
 
-      <button type="button" id="manualLoginBtn" style="background-color: var(--secondary-color); margin-bottom: 15px;">Buksan ang Aking Portal</button>
-    </div>
+</div>  
+
+
+<button  
+  type="button"  
+  id="manualLoginBtn">  
+
+  Buksan ang Aking Portal  
+
+</button>
+
+  </div>  <button  
+type="button"  
+id="proceedLoginBtn"  
+style="  
+display:none;  
+background-color:#4caf50;  
+margin-bottom:15px;  
+">
+
+Ituloy sa Aking Portal
+
+  </button>    <hr  
+    style="  
+      width:100%;  
+      border:0;  
+      border-top:1px solid #eee;  
+      margin:15px 0;  
+    ">    <!-- =====================================================  
+       CREATE ACCOUNT  
+  ====================================================== -->    <div  
+    id="printableInquirySection"  
+    style="width:100%;">  <h2  
+  style="  
+    color:#0288d1;  
+    font-size:1.05rem;  
+  ">  
+
+  Create Account / Bagong Aplikasyon  
+
+</h2>  
+
+
+<div  
+  class="no-print"  
+  style="  
+    background:#e3f2fd;  
+    border-left:4px solid #0288d1;  
+    padding:10px;  
+    margin-bottom:12px;  
+    font-size:0.82rem;  
+    color:#0d47a1;  
+    border-radius:8px;  
+    line-height:1.4;  
+  ">  
+
+  <strong>💡 Impormasyon:</strong>  
+
+  Maaari mong balikan ang iyong account pagkalipas ng  
+  <strong>2 araw</strong>.  
+
+  I-type lamang ang iyong  
+  <strong>Pangalan ng May-ari o Tindahan</strong>  
+  sa Pribadong Portal sa itaas.  
+
+</div>  
+
+
+<form  
+  id="inquiryForm"  
+  style="  
+    width:100%;  
+    margin-top:8px;  
+  ">  
+
+
+  <div class="form-group">  
+
+    <label>  
+      Pangalan ng Tindahan:  
+    </label>  
+
+    <input  
+      type="text"  
+      id="inqStoreName"  
+      placeholder="Hal. Aling Nena Store"  
+      required>  
+
+  </div>  
+
+
+  <div class="form-group">  
+
+    <label>  
+      Pangalan ng May-ari  
+      (Tinatanggap ang special characters gaya ng &, -, _, etc.):  
+    </label>  
+
+    <input  
+      type="text"  
+      id="inqOwnerName"  
+      placeholder="Hal. Juan & Maria Dela Cruz-Santos"  
+      required>  
+
+  </div>  
+
+
+  <div class="form-group">  
+
+    <label>  
+      Numero ng Telepono / GCash:  
+    </label>  
+
+    <input  
+      type="text"  
+      id="inqContact"  
+      placeholder="Hal. 09123456789"  
+      required>  
+
+  </div>  
+
+
+  <div class="form-group">  
+
+    <label>  
+      Gmail / Active Email Address:  
+    </label>  
+
+    <input  
+      type="email"  
+      id="inqEmail"  
+      placeholder="Hal. alingenastore@gmail.com"  
+      required>  
+
+  </div>  
+
+
+  <div class="form-group">  
+
+    <label>  
+      Lokasyon / Address:  
+    </label>  
+
+    <input  
+      type="text"  
+      id="inqAddress"  
+      placeholder="Hal. Brgy. Osiao, Sorsogon"  
+      required>  
+
+  </div>  
+
+
+  <!-- STYLE SELECTION -->  
+
+  <div class="form-group">  
+
+    <label>  
+      Piliin ang Gusto mong Uri ng Walis (Style):  
+    </label>  
+
+    <input  
+      type="hidden"  
+      id="inqStyleType"  
+      value="Ordinary">  
+
+
+    <div class="style-grid">  
+
+
+      <!-- ORDINARY -->  
+
+      <div  
+        class="style-option-card selected"  
+        onclick="selectInqStyle('Ordinary', this)">  
+
+        <img  
+          src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg"  
+          alt="Ordinary Style Walis Tambo"  
+          onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">  
+
+        <h4>  
+          Ordinary Style  
+        </h4>  
+
+        <p>  
+          Standard Quality  
+        </p>  
+
+        <button  
+          type="button"  
+          class="view-img-btn"  
+          onclick="  
+            event.stopPropagation();  
+            openImageViewer(  
+              'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg',  
+              'Ordinary Style Walis Tambo'  
+            )  
+          ">  
+
+          🔍 View Image  
+
+        </button>  
+
+      </div>  
+
+
+      <!-- PREMIUM -->  
+
+      <div  
+        class="style-option-card"  
+        onclick="selectInqStyle('Premium', this)">  
+
+        <img  
+          src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg"  
+          alt="Premium Style Walis Tambo"  
+          onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">  
+
+        <h4>  
+          Premium Style  
+        </h4>  
+
+        <p>  
+          Thick & Durable  
+        </p>  
+
+        <div class="premium-feature">  
+          ✨ Gitna ng Hibla (Tampok)  
+        </div>  
+
+        <button  
+          type="button"  
+          class="view-img-btn"  
+          onclick="  
+            event.stopPropagation();  
+            openImageViewer(  
+              'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg',  
+              'Premium Style Walis Tambo'  
+            )  
+          ">  
+
+          🔍 View Image  
+
+        </button>  
+
+      </div>  
+
+    </div>  
+
+  </div>  
+
+
+  <div class="form-group">  
+
+    <label>  
+      Mensahe / Katanungan (Optional):  
+    </label>  
+
+    <textarea  
+      id="inqMessage"  
+      rows="3"  
+      placeholder="I-type ang mensahe..."></textarea>  
+
+  </div>  
+
+
+  <button  
+    type="submit"  
+    style="  
+      background:#0288d1;  
+    ">  
+
+    Gumawa ng Account / Ipadala ang Aplikasyon  
+
+  </button>  
+
+</form>  
+
+
+<button  
+  type="button"  
+  onclick="window.print()"  
+  class="no-print"  
+  style="  
+    background:#607d8b;  
+    margin-top:8px;  
+  ">  
+
+  🖨️ I-print ang Aplikasyon Form  
+
+</button>
+
+  </div>  </div>  <!-- =======================================================  
+     MAIN PORTAL  
+======================================================= -->  <div id="portalContent">    <!-- =====================================================  
+       STORE PROFILE  
+  ====================================================== -->    <div class="store-profile-card">  <div class="store-profile-inner">  
+
+
+  <div  
+    style="  
+      font-size:0.8rem;  
+      font-weight:700;  
+      color:#d9f8df;  
+      margin-bottom:5px;  
+    ">  
+
+    🏪 STORE PARTNER  
+
+  </div>  
+
+
+  <h2 id="displayStoreName">  
+    Pangalan ng Tindahan  
+  </h2>  
+
+
+  <span id="displayStoreStatus">  
+    Aktibo ang Consignment  
+  </span>  
+
+
+  <!-- QR -->  
+
+  <div class="qr-login-wrapper">  
+
+    <div class="qr-login-box">  
+
+      <div id="smallQrcode">  
+
+      </div>  
+
+      <span class="qr-caption">  
+        i-scan para maglogin  
+      </span>  
+
+    </div>  
+
+  </div>  
+
+
+  <!-- LOGOUT -->  
+
+  <button  
+    type="button"  
+    onclick="requestLogout()"  
+    class="logout-btn">  
+
+    Mag-logout  
+
+  </button>  
+
+
+</div>
+
+  </div>    <!-- =====================================================  
+       AGREEMENT  
+  ====================================================== -->    <div class="agreement-card">  <div class="agreement-frame-wrapper">  
+
+  <iframe  
+    id="storeAgreementFrame"  
+    src=""  
+    width="100%"  
+    height="55px"  
+    scrolling="no"  
+    title="Store Partner Agreements">  
+
+  </iframe>  
+
+</div>
+
+  </div>    <!-- =====================================================  
+       PRODUCT CATALOG  
+  ====================================================== -->    <div class="catalog-card">  <div class="catalog-title">  
+
+  🧹  
+  <span>  
+    Mga Klase ng Walis Tambo  
+  </span>  
+
+</div>  
+
+
+<p class="catalog-description">  
+
+  Ito ang dalawang opisyal na klase ng walis tambo  
+  na available para sa ating mga kasosyong tindahan:  
+
+</p>  
+
+
+<div class="style-grid">  
+
+
+  <!-- ORDINARY -->  
+
+  <div  
+    class="style-option-card"  
+    style="cursor:default;">  
+
+    <img  
+      src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg"  
+      alt="Ordinary Style Walis Tambo"  
+      onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">  
+
+
+    <h4>  
+      Ordinary Style  
+    </h4>  
+
+
+    <p>  
+      Standard Quality -  
+      Maayos at pulido para sa pang-araw-araw  
+      na gamit.  
+    </p>  
+
+
+    <button  
+      type="button"  
+      class="view-img-btn"  
+      onclick="  
+        openImageViewer(  
+          'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg',  
+          'Ordinary Style Walis Tambo'  
+        )  
+      ">  
+
+      🔍 View Image  
+
+    </button>  
+
+  </div>  
+
+
+  <!-- PREMIUM -->  
+
+  <div  
+    class="style-option-card"  
+    style="cursor:default;">  
+
+    <img  
+      src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg"  
+      alt="Premium Style Walis Tambo"  
+      onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">  
+
+
+    <h4>  
+      Premium Style  
+    </h4>  
+
+
+    <p>  
+      Thick & Durable -  
+      Mas makapal at matibay gawa sa piling  
+      tiger grass.  
+    </p>  
+
+
+    <div class="premium-feature">  
+      ✨ Gitna ng Hibla (Tampok)  
+    </div>  
+
+
+    <button  
+      type="button"  
+      class="view-img-btn"  
+      onclick="  
+        openImageViewer(  
+          'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg',  
+          'Premium Style Walis Tambo'  
+        )  
+      ">  
+
+      🔍 View Image  
+
+    </button>  
+
+  </div>  
+
+
+</div>
+
+  </div>    <!-- =====================================================  
+       ACTIVE STOCK  
+  ====================================================== -->    <div class="stock-card">  <h2>  
+  📦 Aktibong Stock at mga Paninda  
+</h2>  
+
+<div id="clientItemsContainer">  
+
+  <p  
+    style="  
+      font-size:0.85rem;  
+      color:#666;  
+    ">  
+
+    Kinukuha ang data...  
+
+  </p>  
+
+</div>
+
+  </div>    <!-- =====================================================  
+       APPROVED RESTOCK  
+  ====================================================== -->    <div  
+    class="card"  
+    id="pendingDeliveryCard"  
+    style="display:none;">  <h2>  
+  🚚 Mga Na-approve na Restock  
+  (Kailangan ng Kumpirmasyon)  
+</h2>  
+
+<p  
+  style="  
+    font-size:0.82rem;  
+    color:#333;  
+    margin-bottom:8px;  
+  ">  
+
+  Naaprubahan na ito ng admin.  
+  I-click ang "Natanggap Ko Na" kapag naihatid  
+  na sa iyong tindahan upang madagdag sa iyong stock.  
+
+</p>  
+
+<div id="pendingDeliveryContainer"></div>
+
+  </div>    <!-- =====================================================  
+       PENDING SALES  
+  ====================================================== -->    <div  
+    class="card"  
+    id="pendingSalesCard"  
+    style="display:none;">  <h2>  
+  ⏳ Mga Nakabinbing Resibo ng Benta  
+</h2>  
+
+<p  
+  style="  
+    font-size:0.82rem;  
+    color:#333;  
+    margin-bottom:8px;  
+  ">  
+
+  Nai-record na ang mga benta at naghihintay  
+  ng kumpirmasyon o pag-apruba ng Admin.  
+
+</p>  
+
+<div id="pendingSalesContainer"></div>
+
+  </div>    <!-- =====================================================  
+       NOTIFICATIONS  
+  ====================================================== -->    <div class="card">  <div class="notification-header">  
+
+  <h2 style="margin-bottom:0;">  
+    📢 Mga Abiso at Update  
+  </h2>  
+
+  <button  
+    type="button"  
+    onclick="clearAllNotifications()"  
+    style="  
+      background:#c62828;  
+      width:auto;  
+      font-size:0.73rem;  
+      padding:6px 9px;  
+      margin-top:0;  
+    ">  
+
+    Clear All  
+
+  </button>  
+
+</div>  
+
+
+<div id="clientNotificationsContainer">  
+
+  <p  
+    style="  
+      font-size:0.85rem;  
+      color:#666;  
+    ">  
+
+    Wala pang bagong abiso.  
+
+  </p>  
+
+</div>
+
+  </div>    <!-- =====================================================  
+       RESTOCK  
+  ====================================================== -->    <div class="restock-card">  <div class="section-toggle">  
+
+  <h2>  
+    🔄 Humiling ng Karagdagang Restock  
+  </h2>  
+
+  <button  
+    type="button"  
+    id="toggleRestockBtn"  
+    onclick="toggleRestockVisibility()"  
+    class="small-toggle-btn"  
+    style="  
+      background:#f57f17;  
+    ">  
+
+    Buksan  
+
+  </button>  
+
+</div>  
+
+
+<div  
+  id="restockContentWrapper"  
+  style="  
+    display:none;  
+    margin-top:12px;  
+  ">  
+
+
+  <p  
+    style="  
+      font-size:0.82rem;  
+      color:#555;  
+      margin-bottom:8px;  
+    ">  
+
+    Mag-request ng eksaktong  
+    <strong>5 pirasong restock</strong>  
+    (1 beses lamang bawat buwan).  
+
+  </p>  
+
+
+  <div class="form-group">  
+
+    <label for="restockStyleType">  
+      Piliin ang Uri ng Istilo:  
+    </label>  
+
+    <select id="restockStyleType">  
+
+      <option value="Ordinary">  
+        Ordinary Style  
+      </option>  
+
+      <option value="Premium">  
+        Premium Style  
+      </option>  
+
+    </select>  
+
+  </div>  
+
+
+  <div class="form-group">  
+
+    <label>  
+      Dami ng Restock (Fixed: 5 pcs):  
+    </label>  
+
+    <input  
+      type="number"  
+      id="restockQtyInput"  
+      value="5"  
+      min="5"  
+      max="5"  
+      readonly  
+      style="background:#eee;">  
+
+  </div>  
+
+
+  <button  
+    type="button"  
+    onclick="submitRestockRequest()"  
+    style="  
+      background:#f57f17;  
+    ">  
+
+    Ipadala ang Request sa Admin  
+
+  </button>  
+
+
+</div>
+
+  </div>    <!-- =====================================================  
+       CHAT  
+  ====================================================== -->    <div class="chat-card">  <div class="section-toggle">  
+
+  <h2>  
+    💬 Makipag-ugnayan sa Admin  
+  </h2>  
+
+  <button  
+    type="button"  
+    id="toggleChatBtn"  
+    onclick="toggleChatVisibility()"  
+    class="small-toggle-btn"  
+    style="  
+      background:#0288d1;  
+    ">  
+
+    Buksan  
+
+  </button>  
+
+</div>  
+
+
+<div  
+  id="chatContentWrapper"  
+  style="  
+    display:none;  
+    margin-top:12px;  
+  ">  
+
+
+  <div id="clientChatContainer">  
+
+    <p  
+      style="  
+        font-size:0.85rem;  
+        color:#666;  
+      ">  
+
+      Wala pang mensahe.  
+
+    </p>  
+
+  </div>  
+
+
+  <div  
+    class="form-group"  
+    style="margin-bottom:5px;">  
+
+    <input  
+      type="text"  
+      id="clientChatInput"  
+      placeholder="I-type ang mensahe o tanong sa admin...">  
+
+  </div>  
+
+
+  <button  
+    type="button"  
+    onclick="sendClientMessage()"  
+    style="  
+      background:#0288d1;  
+    ">  
+
+    Ipadala ang Mensahe  
+
+  </button>  
+
+
+</div>
+
+  </div>    <!-- =====================================================  
+       STOP AGREEMENT  
+  ====================================================== -->    <div class="stop-card">  <h2>  
+  🛑 Pagpapahinto ng Consignment Agreement  
+</h2>  
+
+<p  
+  style="  
+    font-size:0.82rem;  
+    color:#333;  
+    margin-bottom:8px;  
+  ">  
+
+  Kung nais mo nang itigil o tapusin ang kasunduan  
+  at consignment sa tindahang ito, i-click ang  
+  button sa ibaba.  
+
+</p>  
+
+
+<button  
+  type="button"  
+  onclick="promptStopAgreement()"  
+  style="  
+    background:#d32f2f;  
+    font-size:0.9rem;  
+    padding:10px;  
+  ">  
+
+  Itigil / I-cancel ang Kasunduan (Stop)  
+
+</button>
+
+  </div>  </div>  <!-- =======================================================  
+     ADMIN LINK  
+======================================================= -->  <div class="admin-link">    <a href="admin.html">  🔐 Pumunta sa Admin Panel
+
+  </a>  </div>  </div>  <!-- =======================================================  
+     IMAGE VIEWER  
+======================================================= -->  <div  
+  id="imageModal"  
+  onclick="closeImageViewer()">  <img  
+id="modalImage"  
+src=""  
+alt="Malaking Larawan">
+
+  <h3  
+    id="modalTitle"  
+    style="  
+      color:white;  
+      margin-top:10px;  
+      font-size:1rem;  
+      text-align:center;  
+    ">  
+  </h3>  <button  
+id="imageModalClose"  
+onclick="  
+event.stopPropagation();  
+closeImageViewer();  
+">
+
+Isara
+
+  </button>  </div>  <!-- =======================================================  
+     FIREBASE  
+======================================================= -->  <script type="module">  
+  
+import {  
+  initializeApp  
+} from  
+"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";  
+  
+import {  
+  getFirestore,  
+  doc,  
+  getDoc,  
+  setDoc  
+} from  
+"https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";  
+  
+  
+const firebaseConfig = {  
+  
+  apiKey:  
+    "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",  
+  
+  authDomain:  
+    "dwbe-consignment.firebaseapp.com",  
+  
+  projectId:  
+    "dwbe-consignment",  
+  
+  storageBucket:  
+    "dwbe-consignment.firebasestorage.app",  
+  
+  messagingSenderId:  
+    "205759197252",  
+  
+  appId:  
+    "1:205759197252:web:b04400821f81791d10cc11"  
+  
+};  
+  
+  
+const app =  
+  initializeApp(firebaseConfig);  
+  
+const db =  
+  getFirestore(app);  
+  
+  
+let appData = {  
+  
+  homeStock: {  
+    Ordinary: 0,  
+    Premium: 0  
+  },  
+  
+  consignments: [],  
+  
+  pendingInquiries: []  
+  
+};  
+  
+  
+let currentStoreName =  
+  localStorage.getItem(  
+    'client_logged_store'  
+  ) || '';  
+  
+  
+const syncStatus =  
+  document.getElementById(  
+    'syncStatus'  
+  );  
+  
+  
+  
+/* =========================================================  
+   SERVICE WORKER  
+========================================================= */  
+  
+if ('serviceWorker' in navigator) {  
+  
+  navigator.serviceWorker  
+    .register('sw.js')  
+    .catch(  
+      err =>  
+        console.log(  
+          'SW registration failed:',  
+          err  
+        )  
+    );  
+  
+}  
+  
+  
+  
+/* =========================================================  
+   IMAGE VIEWER  
+========================================================= */  
+  
+window.openImageViewer =  
+function(src, title) {  
+  
+  const modal =  
+    document.getElementById(  
+      'imageModal'  
+    );  
+  
+  const modalImg =  
+    document.getElementById(  
+      'modalImage'  
+    );  
+  
+  const modalTitle =  
+    document.getElementById(  
+      'modalTitle'  
+    );  
+  
+  modalImg.src = src;  
+  
+  modalTitle.textContent =  
+    title;  
+  
+  modal.style.display =  
+    'flex';  
+  
+};  
+  
+  
+window.closeImageViewer =  
+function() {  
+  
+  document.getElementById(  
+    'imageModal'  
+  ).style.display =  
+    'none';  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   INQUIRY STYLE  
+========================================================= */  
+  
+window.selectInqStyle =  
+function(style, el) {  
+  
+  document.getElementById(  
+    'inqStyleType'  
+  ).value = style;  
+  
+  const parent =  
+    el.parentElement;  
+  
+  parent  
+    .querySelectorAll(  
+      '.style-option-card'  
+    )  
+    .forEach(  
+      c =>  
+        c.classList.remove(  
+          'selected'  
+        )  
+    );  
+  
+  el.classList.add(  
+    'selected'  
+  );  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   RESTOCK TOGGLE  
+========================================================= */  
+  
+window.toggleRestockVisibility =  
+function() {  
+  
+  const wrapper =  
+    document.getElementById(  
+      'restockContentWrapper'  
+    );  
+  
+  const btn =  
+    document.getElementById(  
+      'toggleRestockBtn'  
+    );  
+  
+  if (  
+    wrapper.style.display ===  
+    'none'  
+  ) {  
+  
+    wrapper.style.display =  
+      'block';  
+  
+    btn.textContent =  
+      'Itago';  
+  
+  } else {  
+  
+    wrapper.style.display =  
+      'none';  
+  
+    btn.textContent =  
+      'Buksan';  
+  
+  }  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   CHAT TOGGLE  
+========================================================= */  
+  
+window.toggleChatVisibility =  
+function() {  
+  
+  const wrapper =  
+    document.getElementById(  
+      'chatContentWrapper'  
+    );  
+  
+  const btn =  
+    document.getElementById(  
+      'toggleChatBtn'  
+    );  
+  
+  if (  
+    wrapper.style.display ===  
+    'none'  
+  ) {  
+  
+    wrapper.style.display =  
+      'block';  
+  
+    btn.textContent =  
+      'Itago';  
+  
+  } else {  
+  
+    wrapper.style.display =  
+      'none';  
+  
+    btn.textContent =  
+      'Buksan';  
+  
+  }  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   IFRAME RESIZE  
+========================================================= */  
+  
+window.addEventListener(  
+  'message',  
+  function(event) {  
+  
+    if (  
+      event.data &&  
+      event.data.type ===  
+      'resizeAgreement'  
+    ) {  
+  
+      const iframe =  
+        document.getElementById(  
+          'storeAgreementFrame'  
+        );  
+  
+      if (iframe) {  
+  
+        iframe.style.height =  
+          event.data.height +  
+          'px';  
+  
+      }  
+  
+    }  
+  
+  }  
+);  
+  
+  
+  
+
+  /* =========================================================
+   PWA INSTALL SUPPORT (AUTO-HIDE AFTER INSTALLATION)
+========================================================= */
+
+let deferredPrompt = null;
+let installPromptShown = false;
+
+const headerInstallBtn =
+  document.getElementById('headerInstallBtn');
+
+
+/* ---------------------------------------------------------
+   CHECK IF APP IS ALREADY INSTALLED
+   - HIDE BUTTON PERMANENTLY IF INSTALLED
+--------------------------------------------------------- */
+
+function checkIfInstalled() {
+  const isInstalledIOS = window.navigator.standalone === true;
+  const isInstalledAndroid = window.matchMedia('(display-mode: standalone)').matches;
+  const isInstalled = isInstalledIOS || isInstalledAndroid;
+
+  if (isInstalled) {
+    console.log('✅ App is already installed - hiding button');
     
-    <button type="button" id="proceedLoginBtn" style="display:none; background-color: var(--secondary-color); margin-bottom: 15px;">Ituloy sa Aking Portal</button>
-    <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+    if (headerInstallBtn) {
+      /* Completely hide the button */
+      headerInstallBtn.style.display = 'none';
+      headerInstallBtn.setAttribute('aria-hidden', 'true');
+    }
+    
+    return true;
+  }
 
-    <!-- Simple Create Account / Aplikasyon Section na may Password Setup -->
-    <div id="printableInquirySection" style="width: 100%;">
-      <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Create Account / Bagong Aplikasyon</h2>
-      <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
-        <strong>💡 Impormasyon:</strong> Magtakda ng sarili mong <strong>Security Password</strong> para maging ligtas ang iyong portal. Maaari mo itong buksan pagkalipas ng pagsusuri.
-      </div>
-      <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
-        <div class="form-group">
-          <label>Pangalan ng Tindahan:</label>
-          <input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required>
-        </div>
-        <div class="form-group">
-          <label>Pangalan ng May-ari:</label>
-          <input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required>
-        </div>
-        <div class="form-group">
-          <label>Magtakda ng Security Password (Para sa iyong Portal):</label>
-          <input type="password" id="inqPassword" placeholder="Gumawa ng sariling password" required>
-        </div>
-        <div class="form-group">
-          <label>Numero ng Telepono / GCash:</label>
-          <input type="text" id="inqContact" placeholder="Hal. 09123456789" required>
-        </div>
-        <div class="form-group">
-          <label>Gmail / Active Email Address:</label>
-          <input type="email" id="inqEmail" placeholder="Hal. alingenastore@gmail.com" required>
-        </div>
-        <div class="form-group">
-          <label>Lokasyon / Address:</label>
-          <input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required>
-        </div>
-        <!-- Walis Tambo Style Selection with Pictures for Inquirers -->
-        <div class="form-group">
-          <label>Piliin ang Gusto mong Uri ng Walis (Style):</label>
-          <input type="hidden" id="inqStyleType" value="Ordinary">
-          <div class="style-grid">
-            <div class="style-option-card selected" onclick="selectInqStyle('Ordinary', this)">
-              <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
-              <h4>Ordinary Style</h4>
-              <p>Standard Quality</p>
-              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
-            </div>
-            <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
-              <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
-              <h4>Premium Style</h4>
-              <p>Thick & Durable</p>
-              <div style="margin-top: 4px; font-size: 0.7rem; background: #fff9c4; color: #f57f17; padding: 2px 4px; border-radius: 3px; font-weight: bold; border: 1px dashed #fbc02d;">✨ Gitna ng Hibla (Tampok)</div>
-              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Mensahe / Katanungan (Optional):</label>
-          <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
-        </div>
-        <button type="submit" style="background-color: #0288d1;">Gumawa ng Account / Ipadala ang Aplikasyon</button>
-      </form>
-      <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon Form</button>
-    </div>
-  </div>
-
-  <!-- Main Portal Dashboard -->
-  <div id="portalContent">
-    <div class="card" style="background: #e8f5e9; text-align: center;">
-      <div>
-        <h2 id="displayStoreName" style="margin-bottom: 0; color: #2e7d32;">Pangalan ng Tindahan</h2>
-        <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
-      </div>
-      
-      <!-- QR Code para sa sharing -->
-      <div style="margin-top: 12px; display: flex; justify-content: center;">
-        <div style="background: white; padding: 10px; border-radius: 6px; border: 2px solid #2e7d32; text-align: center;">
-          <div id="smallQrcode" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;"></div>
-          <span style="font-size: 0.75rem; color: #2e7d32; font-weight: bold; display: block; margin-top: 6px;">i-scan para maglogin</span>
-        </div>
-      </div>
-      
-      <!-- Logout Button -->
-      <div style="margin-top: 12px;">
-        <button type="button" onclick="requestLogout()" style="background-color: #d32f2f; width: 100%; font-size: 0.9rem; padding: 10px; margin-top: 0;">Mag-logout</button>
-      </div>
-    </div>
-
-    <!-- Buksan ang Kasunduan Button - Prominent -->
-    <div class="card" style="background: #e8f5e9; border-left: 4px solid #2e7d32;">
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <span style="font-size: 1.5rem;">✅</span>
-        <h2 style="margin-bottom: 0;">Kasunduan at Konsinyasyon</h2>
-      </div>
-      <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Basahin at suriin ang iyong agreement at konsinyasyon na kasama ng admin.</p>
-      <button type="button" style="background-color: #2e7d32; width: 100%; margin-top: 0;">📋 Buksan ang Kasunduan</button>
-    </div>
-
-    <!-- Product Catalog Section -->
-    <div class="card">
-      <h2>🧹 Mga Klase ng Walis Tambo (Catalog)</h2>
-      <p style="font-size: 0.80rem; color: #555; margin-bottom: 8px;">Ito ang dalawang opisyal na klase ng walis tambo na available para sa ating mga kasosyong tindahan:</p>
-      <div class="style-grid">
-        <div class="style-option-card" style="cursor: default;">
-          <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
-          <h4>Ordinary Style</h4>
-          <p>Standard Quality - Maayos at pulido para sa pang-araw-araw na gamit.</p>
-          <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
-        </div>
-        <div class="style-option-card" style="cursor: default;">
-          <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
-          <h4>Premium Style</h4>
-          <p>Thick & Durable - Mas makapal at matibay gawa sa piling tiger grass.</p>
-          <div style="margin-top: 4px; font-size: 0.7rem; background: #fff9c4; color: #f57f17; padding: 2px 4px; border-radius: 3px; font-weight: bold; border: 1px dashed #fbc02d;">✨ Gitna ng Hibla (Tampok)</div>
-          <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Active Stock Section -->
-    <div class="card">
-      <h2>📦 Aktibong Stock at mga Paninda</h2>
-      <div id="clientItemsContainer">
-        <p style="font-size: 0.85rem; color: #666;">Kinukuha ang data...</p>
-      </div>
-    </div>
-
-    <!-- Notifications Section -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h2 style="margin-bottom: 0;">📢 Mga Abiso at Update</h2>
-        <button type="button" onclick="clearAllNotifications()" style="background-color: #c62828; width: auto; font-size: 0.75rem; padding: 4px 8px; margin-top: 0;">Clear All</button>
-      </div>
-      <div id="clientNotificationsContainer">
-        <p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>
-      </div>
-    </div>
-
-    <!-- Pending Deliveries Section -->
-    <div class="card" id="pendingDeliveryCard" style="display:none; background: #e3f2fd; border-left: 4px solid #0288d1;">
-      <h2 style="color: #0288d1;">🚚 Mga Na-approve na Restock</h2>
-      <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Naaprubahan na ito ng admin. I-click ang "Natanggap Ko Na" kapag naihatid na sa iyong tindahan upang madagdag sa iyong stock.</p>
-      <div id="pendingDeliveryContainer"></div>
-    </div>
-
-    <!-- Pending Sales Section -->
-    <div class="card" id="pendingSalesCard" style="display:none; background: #fff3e0; border-left: 4px solid #f57c00;">
-      <h2 style="color: #f57c00;">⏳ Mga Nakabinbing Resibo ng Benta</h2>
-      <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Nai-record na ang mga benta at naghihintay ng kumpirmasyon o pag-apruba ng Admin.</p>
-      <div id="pendingSalesContainer"></div>
-    </div>
-
-    <!-- Request Restock Section -->
-    <div class="card" style="background: #fff8e1; border-left: 4px solid #f57f17;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin-bottom: 0;">🔄 Humiling ng Karagdagang Restock</h2>
-        <button type="button" id="toggleRestockBtn" onclick="toggleRestockVisibility()" style="background-color: #f57f17; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Buksan</button>
-      </div>
-      <div id="restockContentWrapper" style="display: none; margin-top: 10px;">
-        <p style="font-size: 0.80rem; color: #555; margin-bottom: 6px;">Mag-request ng eksaktong 5 pirasong restock (1 beses lamang bawat buwan).</p>
-        <div class="form-group">
-          <label for="restockStyleType">Piliin ang Uri ng Istilo:</label>
-          <select id="restockStyleType">
-            <option value="Ordinary">Ordinary Style</option>
-            <option value="Premium">Premium Style</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Dami ng Restock (Fixed: 5 pcs):</label>
-          <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
-        </div>
-        <button type="button" onclick="submitRestockRequest()" style="background-color: #f57f17;">Ipadala ang Request sa Admin</button>
-      </div>
-    </div>
-
-    <!-- Chat Section -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin-bottom: 0;">💬 Makipag-ugnayan sa Admin</h2>
-        <button type="button" id="toggleChatBtn" onclick="toggleChatVisibility()" style="background-color: #0288d1; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Buksan</button>
-      </div>
-      <div id="chatContentWrapper" style="display: none; margin-top: 10px;">
-        <div id="clientChatContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 8px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background: #fafafa;">
-          <p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>
-        </div>
-        <div class="form-group" style="margin-bottom: 5px;">
-          <input type="text" id="clientChatInput" placeholder="I-type ang mensahe o tanong sa admin...">
-        </div>
-        <button type="button" onclick="sendClientMessage()" style="background-color: #0288d1;">Ipadala ang Mensahe</button>
-      </div>
-    </div>
-
-    <!-- Stop Agreement Section -->
-    <div class="card" style="background: #ffebee; border-left: 4px solid #c62828;">
-      <h2 style="color: #c62828; font-size: 0.95rem;">🛑 Pagpapahinto ng Consignment Agreement</h2>
-      <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Kung nais mo nang itigil o tapusin ang kasunduan at consignment sa tindahang ito, i-click ang button sa ibaba.</p>
-      <button type="button" onclick="promptStopAgreement()" style="background-color: #d32f2f; font-size: 0.9rem; padding: 8px;">Itigil / I-cancel ang Kasunduan (Stop)</button>
-    </div>
-  </div>
-
-  <!-- Admin Panel Link -->
-  <div style="text-align: center; margin-top: 20px; margin-bottom: 10px;">
-    <a href="admin.html" style="font-size: 0.8rem; color: #666; text-decoration: none;">🔐 Pumunta sa Admin Panel</a>
-  </div>
-</div>
-
-<!-- Modal para sa Image Viewer -->
-<div id="imageModal" onclick="closeImageViewer()">
-  <img id="modalImage" src="" alt="Malaking Larawan">
-  <h3 id="modalTitle" style="color: white; margin-top: 10px; font-size: 1rem;"></h3>
-  <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
-</div>
-
-<!-- Firebase SDKs -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyClUKM0tA4bXuon8nIOSM0Lay9J16n4ao",
-  authDomain: "consider-501b6.firebaseapp.com",
-  projectId: "consider-501b6",
-  storageBucket: "consider-501b6.firebasestorage.app",
-  messagingSenderId: "540286886994",
-  appId: "1:540286886994:web:e6872faeed78516c372b8b"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
-let currentStoreName = localStorage.getItem('client_logged_store') || '';
-const syncStatus = document.getElementById('syncStatus');
-
-// Register Service Worker para sa Offline Support
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+  return false;
 }
 
-window.openImageViewer = function(src, title) {
-  const modal = document.getElementById('imageModal');
-  const modalImg = document.getElementById('modalImage');
-  const modalTitle = document.getElementById('modalTitle');
-  modalImg.src = src;
-  modalTitle.textContent = title;
-  modal.style.display = 'flex';
-};
 
-window.closeImageViewer = function() {
-  document.getElementById('imageModal').style.display = 'none';
-};
+/* ---------------------------------------------------------
+   DETECT INSTALLABLE PWA
+--------------------------------------------------------- */
 
-window.selectInqStyle = function(style, el) {
-  document.getElementById('inqStyleType').value = style;
-  const parent = el.parentElement;
-  parent.querySelectorAll('.style-option-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-};
+window.addEventListener(
+  'beforeinstallprompt',
+  (event) => {
 
-window.toggleRestockVisibility = function() {
-  const wrapper = document.getElementById('restockContentWrapper');
-  const btn = document.getElementById('toggleRestockBtn');
-  if (wrapper.style.display === 'none') {
-    wrapper.style.display = 'block';
-    btn.textContent = 'Itago';
-  } else {
-    wrapper.style.display = 'none';
-    btn.textContent = 'Buksan';
-  }
-};
+    console.log('✅ PWA install prompt detected - READY TO INSTALL');
 
-window.toggleChatVisibility = function() {
-  const wrapper = document.getElementById('chatContentWrapper');
-  const btn = document.getElementById('toggleChatBtn');
-  if (wrapper.style.display === 'none') {
-    wrapper.style.display = 'block';
-    btn.textContent = 'Itago';
-  } else {
-    wrapper.style.display = 'none';
-    btn.textContent = 'Buksan';
-  }
-};
+    /* Prevent default browser behavior */
+    event.preventDefault();
 
-let deferredPrompt;
-const headerInstallBtn = document.getElementById('headerInstallBtn');
+    /* Store the event */
+    deferredPrompt = event;
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (headerInstallBtn) headerInstallBtn.style.display = 'block';
-});
-
-const handleInstallClick = async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') { 
-      alert('✅ Matagumpay na na-install ang app!');
+    if (headerInstallBtn) {
+      headerInstallBtn.textContent = '📱 Install App';
+      headerInstallBtn.style.display = 'block';
+      headerInstallBtn.style.cursor = 'pointer';
     }
+
+    /* Automatically show install prompt after 3 seconds */
+    if (!installPromptShown) {
+      setTimeout(() => {
+        triggerInstallPrompt();
+      }, 3000);
+      installPromptShown = true;
+    }
+  }
+);
+
+
+/* ---------------------------------------------------------
+   AUTOMATIC INSTALL TRIGGER
+--------------------------------------------------------- */
+
+async function triggerInstallPrompt() {
+  if (!deferredPrompt) return;
+
+  try {
+    console.log('🚀 Showing install prompt...');
+    const result = await deferredPrompt.prompt();
+
+    console.log('Installation result:', result.outcome);
+
+    if (result.outcome === 'accepted') {
+      console.log('✅ User accepted installation - hiding button');
+      
+      /* Show success message */
+      if (headerInstallBtn) {
+        headerInstallBtn.textContent = '✅ Installing...';
+      }
+      
+      /* Hide button after short delay */
+      setTimeout(() => {
+        if (headerInstallBtn) {
+          headerInstallBtn.style.display = 'none';
+          headerInstallBtn.setAttribute('aria-hidden', 'true');
+          console.log('🎉 Install button hidden successfully');
+        }
+      }, 2000);
+
+    } else {
+      console.log('❌ User dismissed installation');
+      /* Keep showing button if user dismissed */
+      if (headerInstallBtn) {
+        headerInstallBtn.textContent = '📱 Install App';
+      }
+    }
+
     deferredPrompt = null;
-    if (headerInstallBtn) headerInstallBtn.style.display = 'none';
-  }
-};
 
-if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleInstallClick);
-
-window.requestLogout = function() {
-  const storeInput = prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
-  if (storeInput === null) return;
-  
-  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-  if (!store) return;
-  
-  if (storeInput.toLowerCase().trim() === store.ownerName.toLowerCase().trim()) {
-    localStorage.removeItem('client_logged_store');
-    currentStoreName = '';
-    window.location.href = window.location.pathname.split('?')[0];
-  } else {
-    alert("Mali ang pangalan ng may-ari. Puwede mo i-try ulit.");
-  }
-};
-
-window.clearAllNotifications = async function() {
-  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-  if (!store) return;
-  store.clientNotifications = [];
-  await saveData();
-};
-
-window.promptStopAgreement = async function() {
-  const confirmation = confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' para kumpirmahin.");
-  if (!confirmation) { return; }
-  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-  if (!store) return;
-  store.agreementAccepted = false;
-  store.consignmentStatus = "Stopped";
-  if (!store.messages) store.messages = [];
-  store.messages.unshift({ sender: currentStoreName, text: "⚠️ Pinal na itinigil / kinansela ng kliyente ang Consignment Agreement.", date: new Date().toLocaleString() });
-  if (!store.clientNotifications) store.clientNotifications = [];
-  store.clientNotifications.unshift({ text: "Matagumpay na nai-submit ang hiling na itigil ang Consignment Agreement.", date: new Date().toLocaleString() });
-  await saveData();
-  alert("Matagumpay na naitala ang iyong pagpapahinto sa kasunduan. Naabisuhan na ang Admin.");
-  renderClientDashboard(store);
-};
-
-window.dismissNotification = async function(index) {
-  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-  if (!store || !store.clientNotifications) return;
-  store.clientNotifications.splice(index, 1);
-  await saveData();
-};
-
-window.confirmReceiveRestock = async function(index) {
-  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-  if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
-  const itemToReceive = store.approvedRestocks[index];
-  if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-  appData.homeStock[itemToReceive.styleType] = Math.max(0, (appData.homeStock[itemToReceive.styleType] || 0) - itemToReceive.qty);
-  let existingItem = store.storeItems.find(i => i.styleType === itemToReceive.styleType);
-  if (existingItem) {
-    existingItem.currentStock += itemToReceive.qty;
-    existingItem.initialQty += itemToReceive.qty;
-  } else {
-    store.storeItems.push({ styleType: itemToReceive.styleType, initialQty: itemToReceive.qty, currentStock: itemToReceive.qty, returnedQty: 0, rejectedQty: 0, price: store.price || 0, collectionDate: store.collectionDate || 'N/A' });
-  }
-  store.approvedRestocks.splice(index, 1);
-  if (!store.messages) store.messages = [];
-  store.messages.unshift({ sender: currentStoreName, text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`, date: new Date().toLocaleString() });
-  await saveData();
-  alert("Matagumpay na naidagdag sa iyong stock at nabawas sa inventory ng admin!");
-};
-
-window.promptRecordSale = async function(styleType) {
-  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-  if (!store) return;
-  const sub = store.storeItems.find(i => i.styleType === styleType);
-  if (!sub) return;
-  if (sub.currentStock <= 0) {
-    alert("Wala nang natitirang active stock para sa uring ito.");
-    return;
-  }
-  const inputVal = prompt(`Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`);
-  if (inputVal === null) return;
-  const qtySold = parseInt(inputVal);
-  if (isNaN(qtySold) || qtySold <= 0) {
-    alert("Mangyaring maglagay ng wastong bilang ng nabili (mahigit sa zero).");
-    return;
-  }
-  if (qtySold > sub.currentStock) {
-    alert(`Ang dami ng nabili (${qtySold} pcs) ay lumampas sa iyong natitirang active stock (${sub.currentStock} pcs).`);
-    return;
-  }
-  const confirmSale = confirm(`Kumpirmahin ang pagbili ng ${qtySold} pcs (${styleType})?\n\nIto ay awtomatikong babawas sa iyong active stock at magpapadala ng pending confirmation receipt sa Admin.`);
-  if (!confirmSale) return;
-  sub.currentStock -= qtySold;
-  if (!store.pendingSales) store.pendingSales = [];
-  store.pendingSales.unshift({ styleType: styleType, qty: qtySold, price: sub.price || 0, totalAmount: qtySold * (sub.price || 0), date: new Date().toLocaleString(), status: "Pending" });
-  if (!store.messages) store.messages = [];
-  store.messages.unshift({ sender: currentStoreName, text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType}) - Naghihintay ng kumpirmasyon ng Admin.`, date: new Date().toLocaleString() });
-  if (!store.clientNotifications) store.clientNotifications = [];
-  store.clientNotifications.unshift({ text: `Matagumpay na nai-record ang pagbili ng ${qtySold} pcs (${styleType}). Nakabinbin ang kumpirmasyon ng Admin.`, date: new Date().toLocaleString() });
-  await saveData();
-  alert("Matagumpay na nabawas ang active stock at naipadala ang pending receipt sa Admin!");
-  renderClientDashboard(store);
-};
-
-async function loadData() {
-  syncStatus.textContent = "Kumukuha ng data sa Cloud...";
-  try {
-    const docRef = doc(db, "app_data", "main_inventory");
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      appData = docSnap.data();
-      if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-      if (!appData.consignments) appData.consignments = [];
-      if (!appData.pendingInquiries) appData.pendingInquiries = [];
+  } catch (error) {
+    console.error('Install prompt error:', error);
+    if (headerInstallBtn) {
+      headerInstallBtn.textContent = '📱 Install App';
     }
-    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
-    initPortalView();
-  } catch (err) {
-    console.error("Error loading cloud data:", err);
-    syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
   }
 }
 
-async function saveData() {
-  syncStatus.textContent = "Nagse-save sa Cloud...";
-  try {
-    const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-    if (store) {
-      store.lastClientAccess = new Date().toLocaleString();
-      store.clientStatus = "Online";
+
+/* ---------------------------------------------------------
+   INSTALL BUTTON CLICK
+   - MANUAL TRIGGER
+--------------------------------------------------------- */
+
+if (headerInstallBtn) {
+
+  headerInstallBtn.addEventListener(
+    'click',
+    async (e) => {
+      e.preventDefault();
+
+      if (!deferredPrompt) {
+        console.log('❌ No install prompt available');
+        
+        alert(
+          '📱 Manual Installation:\n\n' +
+          '📌 Android (Chrome):\n' +
+          '1. Tap menu (⋮) → "Install app"\n' +
+          '2. Or: Long press home icon → "Add to Home"\n\n' +
+          '📌 iPhone (Safari):\n' +
+          '1. Tap Share (⬆️) at bottom\n' +
+          '2. Select "Add to Home Screen"\n\n' +
+          '✅ App will appear on home screen!'
+        );
+        return;
+      }
+
+      /* Trigger the install prompt manually */
+      await triggerInstallPrompt();
     }
-    await setDoc(doc(db, "app_data", "main_inventory"), appData);
-    syncStatus.textContent = "✅ Na-save at Nakakonekta sa Cloud";
-    initPortalView();
-  } catch (err) {
-    console.error("Error saving cloud data:", err);
-    syncStatus.textContent = "⚠️ Error sa pag-save sa cloud";
-  }
-}
-
-function initPortalView() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const paramStore = urlParams.get('store');
-  let loggedStore = localStorage.getItem('client_logged_store');
-  
-  if (paramStore && !loggedStore) {
-    const found = appData.consignments.find(c => c.storeName.toLowerCase() === paramStore.toLowerCase());
-    if (found) {
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('portalContent').style.display = 'none';
-      document.getElementById('manualStoreNameInput').value = found.storeName;
-      document.getElementById('directAccessNotice').style.display = 'block';
-      return;
-    }
-  }
-
-  if (loggedStore) {
-    const found = appData.consignments.find(c => c.storeName.toLowerCase() === loggedStore.toLowerCase());
-    if (found) {
-      currentStoreName = found.storeName;
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('portalContent').style.display = 'block';
-      renderClientDashboard(found);
-      return;
-    }
-  }
-
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('portalContent').style.display = 'none';
-}
-
-// Login Button Click Handler na may Password Check
-document.getElementById('manualLoginBtn').addEventListener('click', async () => {
-  const storeInput = document.getElementById('manualStoreNameInput').value.trim();
-  const passInput = document.getElementById('manualPasswordInput').value.trim();
-  
-  if (!storeInput || !passInput) {
-    alert('Mangyaring ilagay ang pangalan ng tindahan/may-ari at ang security password.');
-    return;
-  }
-  
-  const found = appData.consignments.find(c => 
-    c.storeName.toLowerCase() === storeInput.toLowerCase() || 
-    (c.ownerName && c.ownerName.toLowerCase() === storeInput.toLowerCase())
   );
+}
+
+
+/* ---------------------------------------------------------
+   APP INSTALLED EVENT - CONFIRMED INSTALLATION
+   - HIDE BUTTON PERMANENTLY
+--------------------------------------------------------- */
+
+window.addEventListener(
+  'appinstalled',
+  () => {
+    console.log('🎉 Doctor\'s Whisk Broom PWA successfully installed!');
+
+    if (headerInstallBtn) {
+      /* Hide button immediately upon successful installation */
+      headerInstallBtn.style.display = 'none';
+      headerInstallBtn.setAttribute('aria-hidden', 'true');
+      console.log('✅ Install button hidden after successful installation');
+    }
+
+    /* Save installation status to localStorage */
+    localStorage.setItem('dwb_app_installed', 'true');
+    
+    deferredPrompt = null;
+  }
+);
+
+
+/* ---------------------------------------------------------
+   CHECK INSTALLATION STATUS ON PAGE LOAD
+   - IF INSTALLED, HIDE BUTTON IMMEDIATELY
+--------------------------------------------------------- */
+
+window.addEventListener('load', () => {
+  console.log('🔍 Checking installation status...');
   
-  if (!found) {
-    alert('Hindi natagpuan ang rehistradong tindahan o may-ari.');
-    return;
+  /* Check if already installed */
+  const wasInstalled = checkIfInstalled();
+  
+  if (!wasInstalled) {
+    console.log('⏳ App not installed - waiting for install prompt');
   }
-
-  // Suriin ang password (kung naka-set)
-  if (found.clientPassword && found.clientPassword !== passInput) {
-    alert('Mali ang security password. Subukang muli.');
-    return;
-  } else if (!found.clientPassword) {
-    // Kung lumang account na wala pang password, itakda na agad ang bagong input password
-    found.clientPassword = passInput;
-  }
-
-  currentStoreName = found.storeName;
-  localStorage.setItem('client_logged_store', currentStoreName);
-  found.lastClientAccess = new Date().toLocaleString();
-  found.clientStatus = "Online";
-  await saveData();
-  initPortalView();
+  
+  /* Monitor for display mode changes (dynamic installation detection) */
+  const displayModeQuery = window.matchMedia('(display-mode: standalone)');
+  
+  displayModeQuery.addListener((e) => {
+    if (e.matches) {
+      console.log('✅ Standalone mode detected - hiding install button');
+      checkIfInstalled();
+    }
+  });
 });
 
-// Aplikasyon Form Submit na may Password
-const inquiryForm = document.getElementById('inquiryForm');
-if (inquiryForm) {
-  inquiryForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const storeName = document.getElementById('inqStoreName').value.trim();
-    const ownerName = document.getElementById('inqOwnerName').value.trim();
-    const clientPassword = document.getElementById('inqPassword').value.trim();
-    const contact = document.getElementById('inqContact').value.trim();
-    const email = document.getElementById('inqEmail').value.trim();
-    const address = document.getElementById('inqAddress').value.trim();
-    const styleType = document.getElementById('inqStyleType').value;
-    const message = document.getElementById('inqMessage').value.trim();
-    
-    if (!appData.pendingInquiries) appData.pendingInquiries = [];
-    appData.pendingInquiries.push({ storeName, ownerName, clientPassword, contact, email, address, styleType, message, date: new Date().toLocaleString() });
-    await saveData();
-    alert('Matagumpay na nagawa ang account at naitakda ang password! Mangyaring hintayin ang pagsusuri ng admin.');
-    inquiryForm.reset();
-  });
-}
 
-function renderClientDashboard(store) {
-  document.getElementById('displayStoreName').innerHTML = store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9; cursor: pointer;" title="May-ari">( ${store.ownerName})</span>` : '');
+/* ---------------------------------------------------------
+   PREVENT BUTTON REAPPEARANCE
+   - Check every 5 seconds
+--------------------------------------------------------- */
 
-  const smallQrContainer = document.getElementById('smallQrcode');
-  smallQrContainer.innerHTML = "";
-  const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
-  new QRCode(smallQrContainer, {
-    text: currentUrl,
-    width: 100,
-    height: 100,
-    colorDark: "#2e7d32",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.H
-  });
-
-  const pendingDeliveryCard = document.getElementById('pendingDeliveryCard');
-  const pendingDeliveryContainer = document.getElementById('pendingDeliveryContainer');
-  pendingDeliveryContainer.innerHTML = '';
-  if (store.approvedRestocks && store.approvedRestocks.length > 0) {
-    pendingDeliveryCard.style.display = 'block';
-    store.approvedRestocks.forEach((req, index) => {
-      const div = document.createElement('div');
-      div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
-      div.innerHTML = `
-        <div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong></div>
-        <div style="font-size: 0.75rem; color: #555; margin-bottom: 5px;">Na-approve noong: ${req.date || 'N/A'}</div>
-        <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 0;">✅ Natanggap Ko Na (Idagdag sa Stock)</button>
-      `;
-      pendingDeliveryContainer.appendChild(div);
-    });
-  } else {
-    pendingDeliveryCard.style.display = 'none';
+setInterval(() => {
+  if (headerInstallBtn && headerInstallBtn.style.display !== 'none') {
+    const isInstalled = checkIfInstalled();
+    if (isInstalled) {
+      headerInstallBtn.style.display = 'none';
+    }
   }
-
-  const pendingSalesCard = document.getElementById('pendingSalesCard');
-  const pendingSalesContainer = document.getElementById('pendingSalesContainer');
-  pendingSalesContainer.innerHTML = '';
-  if (store.pendingSales && store.pendingSales.length > 0) {
-    pendingSalesCard.style.display = 'block';
-    let totalPendingAmount = 0;
-    store.pendingSales.forEach((sale) => {
-      const saleTotal = sale.totalAmount || (sale.qty * (sale.price || 0));
-      totalPendingAmount += saleTotal;
-      const div = document.createElement('div');
-      div.style.cssText = "background: white; border: 1px solid #ffb74d; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
-      div.innerHTML = `
-        <div>Uri: <strong>${sale.styleType}</strong> | Dami: <strong>${sale.qty} pcs</strong> | Halaga: <strong>₱${saleTotal.toLocaleString()}</strong></div>
-        <div style="font-size: 0.75rem; color: #555;">Petsa: ${sale.date || 'N/A'} | Status: <span style="color: #f57c00; font-weight: bold;">Nakabinbin (Pending Approval)</span></div>
-      `;
-      pendingSalesContainer.appendChild(div);
-    });
-    const totalSummaryDiv = document.createElement('div');
-    totalSummaryDiv.style.cssText = "margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ffb74d; font-weight: bold; font-size: 0.9rem; color: #e65100; text-align: right;";
-    totalSummaryDiv.innerHTML = `Kabuuang Halaga ng Nakabinbing Benta: ₱${totalPendingAmount.toLocaleString()}`;
-    pendingSalesContainer.appendChild(totalSummaryDiv);
-  } else {
-    pendingSalesCard.style.display = 'none';
-  }
-
-  const notifContainer = document.getElementById('clientNotificationsContainer');
-  notifContainer.innerHTML = '';
-  if (store.clientNotifications && store.clientNotifications.length > 0) {
-    store.clientNotifications.forEach((n, index) => {
-      const div = document.createElement('div');
-      div.className = 'notification-item';
-      div.innerHTML = `
-        <div>
-          <div>${n.text}</div>
-          <div style="font-size:0.7rem; color:#778; margin-top:2px;">${n.date}</div>
-        </div>
-        <button type="button" onclick="dismissNotification(${index})" style="background: none; border: none; color: #d32f2f; font-size: 0.9rem; cursor: pointer; padding: 0 4px; margin-top: 0; width: auto; font-weight: bold;" title="I-clear ang abiso">✕</button>
-      `;
-      notifContainer.appendChild(div);
-    });
-  } else {
-    notifContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
-  }
-
-  if (!store.storeItems || store.storeItems.length === 0) {
-    store.storeItems = [{ styleType: store.styleType || 'Ordinary', initialQty: store.initialQty, currentStock: store.currentStock, returnedQty: store.returnedQty || 0, rejectedQty: store.rejectedQty || 0, price: store.price, collectionDate: store.collectionDate }];
-  }
-
-  const itemsContainer = document.getElementById('clientItemsContainer');
-  itemsContainer.innerHTML = '';
-  store.storeItems.forEach(sub => {
-    if (sub.returnedQty === undefined) sub.returnedQty = 0;
-    if (sub.rejectedQty === undefined) sub.rejectedQty = 0;
-    const subSold = Math.max(0, sub.initialQty - sub.currentStock - sub.returnedQty - sub.rejectedQty);
-    const subSales = subSold * (sub.price || 0);
-    const div = document.createElement('div');
-    const isPremium = (sub.styleType === 'Premium');
-    div.className = 'store-item-box' + (isPremium ? ' premium-stock' : '');
-    div.innerHTML = `
-      <div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-        <span>${sub.styleType || 'Ordinary'}</span>
-        <span>Presyo: ₱${sub.price || 0}</span>
-      </div>
-      <div style="font-size: 0.85rem; color: #444; margin-bottom: 8px;">
-        Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Simulang Dami: ${sub.initialQty} pcs<br>
-        Kabuuang Nabenta: <strong>${subSold} pcs</strong> (Benta: ₱${subSales.toLocaleString()})<br>
-        Target na Petsa ng Koleksyon: ${sub.collectionDate || 'N/A'}
-      </div>
-      <button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px; width: 100%; margin-top: 4px;">🛒 MAY BUMILI (I-record ang Benta)</button>
-    `;
-    itemsContainer.appendChild(div);
-  });
-
-  const chatContainer = document.getElementById('clientChatContainer');
-  chatContainer.innerHTML = '';
-  if (store.messages && store.messages.length > 0) {
-    store.messages.forEach(m => {
-      const isAdmin = m.sender === 'Admin' || m.sender === 'Admin (Broadcast)';
-      const div = document.createElement('div');
-      div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
-      div.innerHTML = `<strong>${m.sender}:</strong> ${m.text} <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
-      chatContainer.appendChild(div);
-    });
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-  } else {
-    chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
-  }
-}
-
-window.submitRestockRequest = async function() {
-  const promptConfirm = confirm("Gusto mo bang mag-request ng restock na eksaktong 5 piraso?");
-  if (!promptConfirm) return;
-  const styleType = document.getElementById('restockStyleType').value;
-  const qty = 5;
-  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-  if (!store) return;
-  const currentMonthYear = new Date().toISOString().slice(0, 7);
-  if (!store.lastRestockMonth) store.lastRestockMonth = "";
-  if (store.lastRestockMonth === currentMonthYear) {
-    alert("Paalala: Isang beses lamang bawat buwan ang pag-request ng restock. Nag-request ka na ngayong buwan.");
-    return;
-  }
-  if (!store.activeRequests) store.activeRequests = [];
-  store.activeRequests.push({ styleType: styleType, qty: qty, date: new Date().toLocaleString() });
-  store.lastRestockMonth = currentMonthYear;
-  if (!store.messages) store.messages = [];
-  store.messages.unshift({ sender: currentStoreName, text: `Humiling ng restock: ${qty} pcs (${styleType})`, date: new Date().toLocaleString() });
-  await saveData();
-  alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
-};
-
-window.sendClientMessage = async function() {
-  const input = document.getElementById('clientChatInput');
-  const text = input.value.trim();
-  if (!text) return;
-  const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
-  if (!store) return;
-  if (!store.messages) store.messages = [];
-  store.messages.unshift({ sender: currentStoreName, text: text, date: new Date().toLocaleString() });
-  input.value = '';
-  await saveData();
-  renderClientDashboard(store);
-};
-
-loadData();
-</script>
-</body>
+}, 5000);
+  
+  
+/* =========================================================  
+   LOGOUT (Updated: No password prompt)  
+========================================================= */  
+  
+window.requestLogout =  
+function() {  
+  localStorage.removeItem(  
+    'client_logged_store'  
+  );  
+  
+  currentStoreName = '';  
+  
+  window.location.href =  
+    window.location.pathname  
+      .split('?')[0];  
+};  
+  
+  
+  
+/* =========================================================  
+   CLEAR NOTIFICATIONS  
+========================================================= */  
+  
+window.clearAllNotifications =  
+async function() {  
+  
+  const store =  
+    appData.consignments.find(  
+      c =>  
+        c.storeName  
+          .toLowerCase() ===  
+        currentStoreName  
+          .toLowerCase()  
+    );  
+  
+  if (!store) return;  
+  
+  store.clientNotifications =  
+    [];  
+  
+  await saveData();  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   STOP AGREEMENT  
+========================================================= */  
+  
+window.promptStopAgreement =  
+async function() {  
+  
+  const confirmation =  
+    confirm(  
+      "⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?\n\nI-click ang 'OK' para kumpirmahin."  
+    );  
+  
+  if (!confirmation) {  
+    return;  
+  }  
+  
+  
+  const store =  
+    appData.consignments.find(  
+      c =>  
+        c.storeName  
+          .toLowerCase() ===  
+        currentStoreName  
+          .toLowerCase()  
+    );  
+  
+  
+  if (!store) return;  
+  
+  
+  store.agreementAccepted =  
+    false;  
+  
+  store.consignmentStatus =  
+    "Stopped";  
+  
+  
+  if (!store.messages) {  
+  
+    store.messages = [];  
+  
+  }  
+  
+  
+  store.messages.unshift({  
+  
+    sender:  
+      currentStoreName,  
+  
+    text:  
+      "⚠️ Pinal na itinigil / kinansela ng kliyente ang Consignment Agreement.",  
+  
+    date:  
+      new Date().toLocaleString()  
+  
+  });  
+  
+  
+  if (!store.clientNotifications) {  
+  
+    store.clientNotifications =  
+      [];  
+  
+  }  
+  
+  
+  store.clientNotifications.unshift({  
+  
+    text:  
+      "Matagumpay na nai-submit ang hiling na itigil ang Consignment Agreement.",  
+  
+    date:  
+      new Date().toLocaleString()  
+  
+  });  
+  
+  
+  await saveData();  
+  
+  
+  alert(  
+    "Matagumpay na naitala ang iyong pagpapahinto sa kasunduan. Naabisuhan na ang Admin."  
+  );  
+  
+  
+  renderClientDashboard(  
+    store  
+  );  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   DISMISS NOTIFICATION  
+========================================================= */  
+  
+window.dismissNotification =  
+async function(index) {  
+  
+  const store =  
+    appData.consignments.find(  
+      c =>  
+        c.storeName  
+          .toLowerCase() ===  
+        currentStoreName  
+          .toLowerCase()  
+    );  
+  
+  if (  
+    !store ||  
+    !store.clientNotifications  
+  ) return;  
+  
+  
+  store.clientNotifications.splice(  
+    index,  
+    1  
+  );  
+  
+  
+  await saveData();  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   RECEIVE RESTOCK  
+========================================================= */  
+  
+window.confirmReceiveRestock =  
+async function(index) {  
+  
+  const store =  
+    appData.consignments.find(  
+      c =>  
+        c.storeName  
+          .toLowerCase() ===  
+        currentStoreName  
+          .toLowerCase()  
+    );  
+  
+  
+  if (  
+    !store ||  
+    !store.approvedRestocks ||  
+    !store.approvedRestocks[index]  
+  ) return;  
+  
+  
+  const itemToReceive =  
+    store.approvedRestocks[index];  
+  
+  
+  if (!appData.homeStock) {  
+  
+    appData.homeStock = {  
+      Ordinary: 0,  
+      Premium: 0  
+    };  
+  
+  }  
+  
+  
+  appData.homeStock[  
+    itemToReceive.styleType  
+  ] = Math.max(  
+    0,  
+    (  
+      appData.homeStock[  
+        itemToReceive.styleType  
+      ] || 0  
+    ) -  
+    itemToReceive.qty  
+  );  
+  
+  
+  let existingItem =  
+    store.storeItems.find(  
+      i =>  
+        i.styleType ===  
+        itemToReceive.styleType  
+    );  
+  
+  
+  if (existingItem) {  
+  
+    existingItem.currentStock +=  
+      itemToReceive.qty;  
+  
+    existingItem.initialQty +=  
+      itemToReceive.qty;  
+  
+  } else {  
+  
+    store.storeItems.push({  
+  
+      styleType:  
+        itemToReceive.styleType,  
+  
+      initialQty:  
+        itemToReceive.qty,  
+  
+      currentStock:  
+        itemToReceive.qty,  
+  
+      returnedQty:  
+        0,  
+  
+      rejectedQty:  
+        0,  
+  
+      price:  
+        store.price || 0,  
+  
+      collectionDate:  
+        store.collectionDate || 'N/A'  
+  
+    });  
+  
+  }  
+  
+  
+  store.approvedRestocks.splice(  
+    index,  
+    1  
+  );  
+  
+  
+  if (!store.messages) {  
+  
+    store.messages = [];  
+  
+  }  
+  
+  
+  store.messages.unshift({  
+  
+    sender:  
+      currentStoreName,  
+  
+    text:  
+      `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`,  
+  
+    date:  
+      new Date().toLocaleString()  
+  
+  });  
+  
+  
+  await saveData();  
+  
+  
+  alert(  
+    "Matagumpay na naidagdag sa iyong stock at nabawas sa inventory ng admin!"  
+  );  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   RECORD SALE  
+========================================================= */  
+  
+window.promptRecordSale =  
+async function(styleType) {  
+  
+  const store =  
+    appData.consignments.find(  
+      c =>  
+        c.storeName  
+          .toLowerCase() ===  
+        currentStoreName  
+          .toLowerCase()  
+    );  
+  
+  
+  if (!store) return;  
+  
+  
+  const sub =  
+    store.storeItems.find(  
+      i =>  
+        i.styleType ===  
+        styleType  
+    );  
+  
+  
+  if (!sub) return;  
+  
+  
+  if (  
+    sub.currentStock <= 0  
+  ) {  
+  
+    alert(  
+      "Wala nang natitirang active stock para sa uring ito."  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const inputVal =  
+    prompt(  
+      `Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`  
+    );  
+  
+  
+  if (  
+    inputVal === null  
+  ) return;  
+  
+  
+  const qtySold =  
+    parseInt(inputVal);  
+  
+  
+  if (  
+    isNaN(qtySold) ||  
+    qtySold <= 0  
+  ) {  
+  
+    alert(  
+      "Mangyaring maglagay ng wastong bilang ng nabili (mahigit sa zero)."  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  if (  
+    qtySold >  
+    sub.currentStock  
+  ) {  
+  
+    alert(  
+      `Ang dami ng nabili (${qtySold} pcs) ay lumampas sa iyong natitirang active stock (${sub.currentStock} pcs).`  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const confirmSale =  
+    confirm(  
+      `Kumpirmahin ang pagbili ng ${qtySold} pcs (${styleType})?\n\nIto ay awtomatikong babawas sa iyong active stock at magpapadala ng pending confirmation receipt sa Admin.`  
+    );  
+  
+  
+  if (!confirmSale) return;  
+  
+  
+  sub.currentStock -=  
+    qtySold;  
+  
+  
+  if (!store.pendingSales) {  
+  
+    store.pendingSales = [];  
+  
+  }  
+  
+  
+  store.pendingSales.unshift({  
+  
+    styleType:  
+      styleType,  
+  
+    qty:  
+      qtySold,  
+  
+    price:  
+      sub.price || 0,  
+  
+    totalAmount:  
+      qtySold *  
+      (sub.price || 0),  
+  
+    date:  
+      new Date().toLocaleString(),  
+  
+    status:  
+      "Pending"  
+  
+  });  
+  
+  
+  if (!store.messages) {  
+  
+    store.messages = [];  
+  
+  }  
+  
+  
+  store.messages.unshift({  
+  
+    sender:  
+      currentStoreName,  
+  
+    text:  
+      `Nag-ulat ng benta: ${qtySold} pcs (${styleType}) - Naghihintay ng kumpirmasyon ng Admin.`,  
+  
+    date:  
+      new Date().toLocaleString()  
+  
+  });  
+  
+  
+  if (!store.clientNotifications) {  
+  
+    store.clientNotifications =  
+      [];  
+  
+  }  
+  
+  
+  store.clientNotifications.unshift({  
+  
+    text:  
+      `Matagumpay na nai-record ang pagbili ng ${qtySold} pcs (${styleType}). Nakabinbin ang kumpirmasyon ng Admin.`,  
+  
+    date:  
+      new Date().toLocaleString()  
+  
+  });  
+  
+  
+  await saveData();  
+  
+  
+  alert(  
+    "Matagumpay na nabawas ang active stock at naipadala ang pending receipt sa Admin!"  
+  );  
+  
+  
+  renderClientDashboard(  
+    store  
+  );  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   LOAD DATA  
+========================================================= */  
+  
+async function loadData() {  
+  
+  syncStatus.textContent =  
+    "Kumukuha ng data sa Cloud...";  
+  
+  
+  try {  
+  
+    const docRef =  
+      doc(  
+        db,  
+        "app_data",  
+        "main_inventory"  
+      );  
+  
+  
+    const docSnap =  
+      await getDoc(  
+        docRef  
+      );  
+  
+  
+    if (  
+      docSnap.exists()  
+    ) {  
+  
+      appData =  
+        docSnap.data();  
+  
+  
+      if (!appData.homeStock) {  
+  
+        appData.homeStock = {  
+          Ordinary: 0,  
+          Premium: 0  
+        };  
+  
+      }  
+  
+  
+      if (  
+        !appData.consignments  
+      ) {  
+  
+        appData.consignments =  
+          [];  
+  
+      }  
+  
+  
+      if (  
+        !appData.pendingInquiries  
+      ) {  
+  
+        appData.pendingInquiries =  
+          [];  
+  
+      }  
+  
+    }  
+  
+  
+    const urlParams =  
+      new URLSearchParams(  
+        window.location.search  
+      );  
+  
+  
+    const paramStore =  
+      urlParams.get('store');  
+  
+  
+    let storeToCheck =  
+      paramStore ||  
+      localStorage.getItem(  
+        'client_logged_store'  
+      );  
+  
+  
+    if (storeToCheck) {  
+  
+      const found =  
+        appData.consignments.find(  
+          c =>  
+            c.storeName  
+              .toLowerCase() ===  
+            storeToCheck  
+              .toLowerCase()  
+        );  
+  
+  
+      if (found) {  
+  
+        found.lastClientAccess =  
+          new Date()  
+            .toLocaleString();  
+  
+        found.clientStatus =  
+          "Online";  
+  
+  
+        await setDoc(  
+          docRef,  
+          appData  
+        );  
+  
+      }  
+  
+    }  
+  
+  
+    syncStatus.textContent =  
+      "✅ Nakakonekta sa Cloud Database";  
+  
+  
+    initPortalView();  
+  
+  
+  } catch (err) {  
+  
+    console.error(  
+      "Error loading cloud data:",  
+      err  
+    );  
+  
+  
+    syncStatus.textContent =  
+      "⚠️ Nabigo sa pagkonekta sa Cloud.";  
+  
+  }  
+  
+}  
+  
+  
+  
+/* =========================================================  
+   SAVE DATA  
+========================================================= */  
+  
+async function saveData() {  
+  
+  syncStatus.textContent =  
+    "Nagse-save sa Cloud...";  
+  
+  
+  try {  
+  
+    const store =  
+      appData.consignments.find(  
+        c =>  
+          c.storeName  
+            .toLowerCase() ===  
+          currentStoreName  
+            .toLowerCase()  
+      );  
+  
+  
+    if (store) {  
+  
+      store.lastClientAccess =  
+        new Date()  
+          .toLocaleString();  
+  
+      store.clientStatus =  
+        "Online";  
+  
+    }  
+  
+  
+    await setDoc(  
+      doc(  
+        db,  
+        "app_data",  
+        "main_inventory"  
+      ),  
+      appData  
+    );  
+  
+  
+    syncStatus.textContent =  
+      "✅ Na-save at Nakakonekta sa Cloud";  
+  
+  
+    initPortalView();  
+  
+  
+  } catch (err) {  
+  
+    console.error(  
+      "Error saving cloud data:",  
+      err  
+    );  
+  
+  
+    syncStatus.textContent =  
+      "⚠️ Error sa pag-save sa cloud";  
+  
+  }  
+  
+}  
+  
+  
+  
+/* =========================================================  
+   INIT PORTAL VIEW  
+========================================================= */  
+  
+function initPortalView() {  
+  
+  const urlParams =  
+    new URLSearchParams(  
+      window.location.search  
+    );  
+  
+  
+  const paramStore =  
+    urlParams.get('store');  
+  
+  
+  if (paramStore) {  
+  
+    currentStoreName =  
+      paramStore;  
+  
+    localStorage.setItem(  
+      'client_logged_store',  
+      currentStoreName  
+    );  
+  
+  }  
+  
+  
+  if (currentStoreName) {  
+  
+    const found =  
+      appData.consignments.find(  
+        c =>  
+          c.storeName  
+            .toLowerCase() ===  
+          currentStoreName  
+            .toLowerCase()  
+          ||  
+          (  
+            c.ownerName &&  
+            c.ownerName  
+              .toLowerCase() ===  
+            currentStoreName  
+              .toLowerCase()  
+          )  
+      );  
+  
+  
+    if (found) {  
+  
+      document.getElementById(  
+        'loginScreen'  
+      ).style.display =  
+        'none';  
+  
+  
+      document.getElementById(  
+        'portalContent'  
+      ).style.display =  
+        'block';  
+  
+  
+      if (paramStore) {  
+  
+        document.getElementById(  
+          'directAccessNotice'  
+        ).style.display =  
+          'block';  
+  
+      }  
+  
+  
+      renderClientDashboard(  
+        found  
+      );  
+  
+  
+    } else {  
+  
+      localStorage.removeItem(  
+        'client_logged_store'  
+      );  
+  
+      currentStoreName =  
+        '';  
+  
+  
+      document.getElementById(  
+        'loginScreen'  
+      ).style.display =  
+        'flex';  
+  
+  
+      document.getElementById(  
+        'portalContent'  
+      ).style.display =  
+        'none';  
+  
+  
+      if (paramStore) {  
+  
+        alert(  
+          `Ang tindahan o may-ari na "${paramStore}" ay hindi pa rehistrado o aktibo sa sistema.`  
+        );  
+  
+      }  
+  
+    }  
+  
+  
+  } else {  
+  
+    document.getElementById(  
+      'loginScreen'  
+    ).style.display =  
+      'flex';  
+  
+  
+    document.getElementById(  
+      'portalContent'  
+    ).style.display =  
+      'none';  
+  
+  }  
+  
+}  
+  
+  
+  
+/* =========================================================  
+   MANUAL LOGIN  
+========================================================= */  
+  
+document  
+  .getElementById(  
+    'manualLoginBtn'  
+  )  
+  .addEventListener(  
+    'click',  
+    () => {  
+  
+      const storeInput =  
+        document  
+          .getElementById(  
+            'manualStoreNameInput'  
+          )  
+          .value  
+          .trim();  
+  
+  
+      if (!storeInput) {  
+  
+        alert(  
+          'Mangyaring ilagay ang pangalan ng iyong tindahan o pangalan ng may-ari.'  
+        );  
+  
+        return;  
+  
+      }  
+  
+  
+      const found =  
+        appData.consignments.find(  
+          c =>  
+            c.storeName  
+              .toLowerCase() ===  
+            storeInput  
+              .toLowerCase()  
+            ||  
+            (  
+              c.ownerName &&  
+              c.ownerName  
+                .toLowerCase() ===  
+              storeInput  
+                .toLowerCase()  
+            )  
+        );  
+  
+  
+      if (!found) {  
+  
+        alert(  
+          'Hindi natagpuan ang rehistradong tindahan o may-ari na ito. Siguraduhing tama ang baybay.'  
+        );  
+  
+        return;  
+  
+      }  
+  
+  
+      currentStoreName =  
+        found.storeName;  
+  
+  
+      localStorage.setItem(  
+        'client_logged_store',  
+        currentStoreName  
+      );  
+  
+  
+      found.lastClientAccess =  
+        new Date()  
+          .toLocaleString();  
+  
+  
+      found.clientStatus =  
+        "Online";  
+  
+  
+      saveData();  
+  
+    }  
+  );  
+  
+  
+  
+/* =========================================================  
+   INQUIRY FORM  
+========================================================= */  
+  
+const inquiryForm =  
+  document.getElementById(  
+    'inquiryForm'  
+  );  
+  
+  
+if (inquiryForm) {  
+  
+  inquiryForm.addEventListener(  
+    'submit',  
+    async (e) => {  
+  
+      e.preventDefault();  
+  
+  
+      const storeName =  
+        document  
+          .getElementById(  
+            'inqStoreName'  
+          )  
+          .value  
+          .trim();  
+  
+  
+      const ownerName =  
+        document  
+          .getElementById(  
+            'inqOwnerName'  
+          )  
+          .value  
+          .trim();  
+  
+  
+      const contact =  
+        document  
+          .getElementById(  
+            'inqContact'  
+          )  
+          .value  
+          .trim();  
+  
+  
+      const email =  
+        document  
+          .getElementById(  
+            'inqEmail'  
+          )  
+          .value  
+          .trim();  
+  
+  
+      const address =  
+        document  
+          .getElementById(  
+            'inqAddress'  
+          )  
+          .value  
+          .trim();  
+  
+  
+      const styleType =  
+        document  
+          .getElementById(  
+            'inqStyleType'  
+          )  
+          .value;  
+  
+  
+      const message =  
+        document  
+          .getElementById(  
+            'inqMessage'  
+          )  
+          .value  
+          .trim();  
+  
+  
+      if (  
+        !appData.pendingInquiries  
+      ) {  
+  
+        appData.pendingInquiries =  
+          [];  
+  
+      }  
+  
+  
+      appData.pendingInquiries.push({  
+  
+        storeName,  
+        ownerName,  
+        contact,  
+        email,  
+        address,  
+        styleType,  
+        message,  
+  
+        date:  
+          new Date()  
+            .toLocaleString()  
+  
+      });  
+  
+  
+      await saveData();  
+  
+  
+      alert(  
+        'Matagumpay na nagawa ang account / naipadala ang aplikasyon! Mangyaring hintayin ang pagsusuri ng admin.'  
+      );  
+  
+  
+      inquiryForm.reset();  
+  
+    }  
+  );  
+  
+}  
+  
+  
+  
+/* =========================================================  
+   RENDER CLIENT DASHBOARD  
+========================================================= */  
+  
+function renderClientDashboard(store) {  
+  
+  
+  /* STORE NAME + OWNER */  
+  
+  document.getElementById(  
+    'displayStoreName'  
+  ).innerHTML =  
+  
+    store.storeName +  
+  
+    (  
+      store.ownerName  
+  
+      ?  
+  
+      ` <span  
+          title="Pangalan ng May-ari"  
+          style="  
+            color:#eaffed !important;  
+            cursor:pointer;  
+          ">  
+          (${store.ownerName})  
+        </span>`  
+  
+      :  
+  
+      ''  
+    );  
+  
+  
+  /* AGREEMENT */  
+  
+  const agreementFrame =  
+    document.getElementById(  
+      'storeAgreementFrame'  
+    );  
+  
+  
+  const targetAgreementUrl =  
+    "https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/?store="  
+    +  
+    encodeURIComponent(  
+      store.storeName  
+    );  
+  
+  
+  if (  
+    agreementFrame.src !==  
+    targetAgreementUrl  
+  ) {  
+  
+    agreementFrame.src =  
+      targetAgreementUrl;  
+  
+  }  
+  
+  
+  
+  /* QR CODE */  
+  
+  const smallQrContainer =  
+    document.getElementById(  
+      'smallQrcode'  
+    );  
+  
+  
+  smallQrContainer.innerHTML =  
+    "";  
+  
+  
+  const currentUrl =  
+    window.location.origin +  
+    window.location.pathname +  
+    "?store=" +  
+    encodeURIComponent(  
+      store.storeName  
+    );  
+  
+  
+  new QRCode(  
+    smallQrContainer,  
+    {  
+  
+      text:  
+        currentUrl,  
+  
+      width:  
+        190,  
+  
+      height:  
+        190,  
+  
+      colorDark:  
+        "#176b2c",  
+  
+      colorLight:  
+        "#ffffff",  
+  
+      correctLevel:  
+        QRCode.CorrectLevel.H  
+  
+    }  
+  );  
+  
+  
+  
+  /* =====================================================  
+     PENDING DELIVERY  
+  ====================================================== */  
+  
+  const pendingDeliveryCard =  
+    document.getElementById(  
+      'pendingDeliveryCard'  
+    );  
+  
+  
+  const pendingDeliveryContainer =  
+    document.getElementById(  
+      'pendingDeliveryContainer'  
+    );  
+  
+  
+  pendingDeliveryContainer.innerHTML =  
+    '';  
+  
+  
+  if (  
+    store.approvedRestocks &&  
+    store.approvedRestocks.length > 0  
+  ) {  
+  
+    pendingDeliveryCard.style.display =  
+      'block';  
+  
+  
+    store.approvedRestocks.forEach(  
+      (req, index) => {  
+  
+        const div =  
+          document.createElement(  
+            'div'  
+          );  
+  
+  
+        div.style.cssText =  
+  
+          "background:white;" +  
+          "border:1px solid #90caf9;" +  
+          "padding:10px;" +  
+          "border-radius:10px;" +  
+          "margin-bottom:7px;" +  
+          "font-size:0.85rem;";  
+  
+  
+        div.innerHTML = `  
+  
+          <div>  
+            Uri:  
+            <strong>  
+              ${req.styleType}  
+            </strong>  
+  
+            |  
+  
+            Dami:  
+            <strong>  
+              ${req.qty} pcs  
+            </strong>  
+          </div>  
+  
+          <div  
+            style="  
+              font-size:0.75rem;  
+              color:#555;  
+              margin-bottom:6px;  
+            ">  
+  
+            Na-approve noong:  
+            ${req.date || 'N/A'}  
+  
+          </div>  
+  
+          <button  
+            type="button"  
+            onclick="confirmReceiveRestock(${index})"  
+            style="  
+              background:#2e7d32;  
+              padding:8px;  
+              font-size:0.8rem;  
+              margin-top:0;  
+            ">  
+  
+            ✅ Natanggap Ko Na  
+            (Idagdag sa Stock)  
+  
+          </button>  
+  
+        `;  
+  
+  
+        pendingDeliveryContainer  
+          .appendChild(  
+            div  
+          );  
+  
+      }  
+    );  
+  
+  
+  } else {  
+  
+    pendingDeliveryCard.style.display =  
+      'none';  
+  
+  }  
+  
+  
+  
+  /* =====================================================  
+     PENDING SALES  
+  ====================================================== */  
+  
+  const pendingSalesCard =  
+    document.getElementById(  
+      'pendingSalesCard'  
+    );  
+  
+  
+  const pendingSalesContainer =  
+    document.getElementById(  
+      'pendingSalesContainer'  
+    );  
+  
+  
+  pendingSalesContainer.innerHTML =  
+    '';  
+  
+  
+  if (  
+    store.pendingSales &&  
+    store.pendingSales.length > 0  
+  ) {  
+  
+    pendingSalesCard.style.display =  
+      'block';  
+  
+  
+    let totalPendingAmount =  
+      0;  
+  
+  
+    store.pendingSales.forEach(  
+      (sale) => {  
+  
+        const saleTotal =  
+          sale.totalAmount ||  
+          (  
+            sale.qty *  
+            (sale.price || 0)  
+          );  
+  
+  
+        totalPendingAmount +=  
+          saleTotal;  
+  
+  
+        const div =  
+          document.createElement(  
+            'div'  
+          );  
+  
+  
+        div.style.cssText =  
+  
+          "background:white;" +  
+          "border:1px solid #ffb74d;" +  
+          "padding:10px;" +  
+          "border-radius:10px;" +  
+          "margin-bottom:7px;" +  
+          "font-size:0.85rem;";  
+  
+  
+        div.innerHTML = `  
+  
+          <div>  
+  
+            Uri:  
+            <strong>  
+              ${sale.styleType}  
+            </strong>  
+  
+            |  
+  
+            Dami:  
+            <strong>  
+              ${sale.qty} pcs  
+            </strong>  
+  
+            |  
+  
+            Halaga:  
+            <strong>  
+              ₱${saleTotal.toLocaleString()}  
+            </strong>  
+  
+          </div>  
+  
+          <div  
+            style="  
+              font-size:0.75rem;  
+              color:#555;  
+            ">  
+  
+            Petsa:  
+            ${sale.date || 'N/A'}  
+  
+            |  
+  
+            Status:  
+  
+            <span  
+              style="  
+                color:#f57c00;  
+                font-weight:bold;  
+              ">  
+  
+              Nakabinbin  
+              (Pending Approval)  
+  
+            </span>  
+  
+          </div>  
+  
+        `;  
+  
+  
+        pendingSalesContainer  
+          .appendChild(  
+            div  
+          );  
+  
+      }  
+    );  
+  
+  
+    const totalSummaryDiv =  
+      document.createElement(  
+        'div'  
+      );  
+  
+  
+    totalSummaryDiv.style.cssText =  
+  
+      "margin-top:10px;" +  
+      "padding-top:8px;" +  
+      "border-top:1px dashed #ffb74d;" +  
+      "font-weight:bold;" +  
+      "font-size:0.9rem;" +  
+      "color:#e65100;" +  
+      "text-align:right;";  
+  
+  
+    totalSummaryDiv.innerHTML =  
+  
+      `Kabuuang Halaga ng Nakabinbing Benta  
+      (Total Pending Sales):  
+      ₱${totalPendingAmount.toLocaleString()}`;  
+  
+  
+    pendingSalesContainer  
+      .appendChild(  
+        totalSummaryDiv  
+      );  
+  
+  
+  } else {  
+  
+    pendingSalesCard.style.display =  
+      'none';  
+  
+  }  
+  
+  
+  
+  /* =====================================================  
+     NOTIFICATIONS  
+  ====================================================== */  
+  
+  const notifContainer =  
+    document.getElementById(  
+      'clientNotificationsContainer'  
+    );  
+  
+  
+  notifContainer.innerHTML =  
+    '';  
+  
+  
+  if (  
+    store.clientNotifications &&  
+    store.clientNotifications.length > 0  
+  ) {  
+  
+    store.clientNotifications.forEach(  
+      (n, index) => {  
+  
+        const div =  
+          document.createElement(  
+            'div'  
+          );  
+  
+  
+        div.className =  
+          'notification-item';  
+  
+  
+        div.innerHTML = `  
+  
+          <div>  
+  
+            <div>  
+              ${n.text}  
+            </div>  
+  
+            <div  
+              style="  
+                font-size:0.7rem;  
+                color:#778;  
+                margin-top:3px;  
+              ">  
+  
+              ${n.date}  
+  
+            </div>  
+  
+          </div>  
+  
+  
+          <button  
+            type="button"  
+            onclick="dismissNotification(${index})"  
+            style="  
+              background:none;  
+              border:none;  
+              color:#d32f2f;  
+              font-size:0.9rem;  
+              cursor:pointer;  
+              padding:0 4px;  
+              margin-top:0;  
+              width:auto;  
+              font-weight:bold;  
+            "  
+            title="I-clear ang abiso">  
+  
+            ✕  
+  
+          </button>  
+  
+        `;  
+  
+  
+        notifContainer.appendChild(  
+          div  
+        );  
+  
+      }  
+    );  
+  
+  
+  } else {  
+  
+    notifContainer.innerHTML =  
+  
+      '<p style="font-size:0.85rem;color:#666;">Wala pang bagong abiso.</p>';  
+  
+  }  
+  
+  
+  
+  /* =====================================================  
+     STORE ITEMS  
+  ====================================================== */  
+  
+  if (  
+    !store.storeItems ||  
+    store.storeItems.length === 0  
+  ) {  
+  
+    store.storeItems = [  
+  
+      {  
+  
+        styleType:  
+          store.styleType ||  
+          'Ordinary',  
+  
+        initialQty:  
+          store.initialQty,  
+  
+        currentStock:  
+          store.currentStock,  
+  
+        returnedQty:  
+          store.returnedQty ||  
+          0,  
+  
+        rejectedQty:  
+          store.rejectedQty ||  
+          0,  
+  
+        price:  
+          store.price,  
+  
+        collectionDate:  
+          store.collectionDate  
+  
+      }  
+  
+    ];  
+  
+  }  
+  
+  
+  const itemsContainer =  
+    document.getElementById(  
+      'clientItemsContainer'  
+    );  
+  
+  
+  itemsContainer.innerHTML =  
+    '';  
+  
+  
+  store.storeItems.forEach(  
+    sub => {  
+  
+  
+      if (  
+        sub.returnedQty ===  
+        undefined  
+      ) {  
+  
+        sub.returnedQty =  
+          0;  
+  
+      }  
+  
+  
+      if (  
+        sub.rejectedQty ===  
+        undefined  
+      ) {  
+  
+        sub.rejectedQty =  
+          0;  
+  
+      }  
+  
+  
+      const subSold =  
+        Math.max(  
+          0,  
+          sub.initialQty -  
+          sub.currentStock -  
+          sub.returnedQty -  
+          sub.rejectedQty  
+        );  
+  
+  
+      const subSales =  
+        subSold *  
+        (sub.price || 0);  
+  
+  
+      const div =  
+        document.createElement(  
+          'div'  
+        );  
+  
+  
+      const isPremium =  
+        (  
+          sub.styleType ===  
+          'Premium'  
+        );  
+  
+  
+      div.className =  
+        'store-item-box' +  
+        (  
+          isPremium  
+          ?  
+          ' premium-stock'  
+          :  
+          ''  
+        );  
+  
+  
+      div.innerHTML = `  
+  
+        <div class="stock-style-title">  
+  
+          <span>  
+            ${sub.styleType || 'Ordinary'}  
+          </span>  
+  
+          <span>  
+            Presyo:  
+            ₱${sub.price || 0}  
+          </span>  
+  
+        </div>  
+  
+  
+        <div  
+          style="  
+            font-size:0.85rem;  
+            color:#444;  
+            line-height:1.6;  
+            margin-bottom:8px;  
+          ">  
+  
+          Natitirang Stock:  
+          <strong>  
+            ${sub.currentStock} pcs  
+          </strong>  
+  
+          <br>  
+  
+          Simulang Dami:  
+          ${sub.initialQty} pcs  
+  
+          <br>  
+  
+          Kabuuang Nabenta:  
+          <strong>  
+            ${subSold} pcs  
+          </strong>  
+  
+          <br>  
+  
+          Benta:  
+          ₱${subSales.toLocaleString()}  
+  
+          <br>  
+  
+          Target na Petsa ng Koleksyon:  
+          ${sub.collectionDate || 'N/A'}  
+  
+        </div>  
+  
+  
+        <button  
+          type="button"  
+          onclick="promptRecordSale('${sub.styleType}')"  
+          style="  
+            background:#0288d1;  
+            font-size:0.85rem;  
+            padding:8px;  
+            width:100%;  
+            margin-top:4px;  
+          ">  
+  
+          🛒 MAY BUMILI  
+          (I-record ang Benta)  
+  
+        </button>  
+  
+      `;  
+  
+  
+      itemsContainer.appendChild(  
+        div  
+      );  
+  
+    }  
+  );  
+  
+  
+  
+  /* =====================================================  
+     CHAT  
+  ====================================================== */  
+  
+  const chatContainer =  
+    document.getElementById(  
+      'clientChatContainer'  
+    );  
+  
+  
+  chatContainer.innerHTML =  
+    '';  
+  
+  
+  if (  
+    store.messages &&  
+    store.messages.length > 0  
+  ) {  
+  
+    store.messages.forEach(  
+      m => {  
+  
+        const isAdmin =  
+          m.sender ===  
+            'Admin'  
+          ||  
+          m.sender ===  
+            'Admin (Broadcast)';  
+  
+  
+        const div =  
+          document.createElement(  
+            'div'  
+          );  
+  
+  
+        div.className =  
+          `chat-msg ${  
+            isAdmin  
+              ? 'admin'  
+              : ''  
+          }`;  
+  
+  
+        div.innerHTML = `  
+  
+          <strong>  
+            ${m.sender}:  
+          </strong>  
+  
+          ${m.text}  
+  
+          <div  
+            style="  
+              font-size:0.65rem;  
+              color:#778;  
+              text-align:right;  
+              margin-top:3px;  
+            ">  
+  
+            ${m.date}  
+  
+          </div>  
+  
+        `;  
+  
+  
+        chatContainer.appendChild(  
+          div  
+        );  
+  
+      }  
+    );  
+  
+  
+    chatContainer.scrollTop =  
+      chatContainer.scrollHeight;  
+  
+  
+  } else {  
+  
+    chatContainer.innerHTML =  
+  
+      '<p style="font-size:0.85rem;color:#666;">Wala pang mensahe.</p>';  
+  
+  }  
+  
+}  
+  
+  
+  
+/* =========================================================  
+   SUBMIT RESTOCK  
+========================================================= */  
+  
+window.submitRestockRequest =  
+async function() {  
+  
+  const promptConfirm =  
+    confirm(  
+      "Gusto mo bang mag-request ng restock na eksaktong 5 piraso?"  
+    );  
+  
+  
+  if (!promptConfirm) return;  
+  
+  
+  const styleType =  
+    document.getElementById(  
+      'restockStyleType'  
+    ).value;  
+  
+  
+  const qty =  
+    5;  
+  
+  
+  const store =  
+    appData.consignments.find(  
+      c =>  
+        c.storeName  
+          .toLowerCase() ===  
+        currentStoreName  
+          .toLowerCase()  
+    );  
+  
+  
+  if (!store) return;  
+  
+  
+  const currentMonthYear =  
+    new Date()  
+      .toISOString()  
+      .slice(0, 7);  
+  
+  
+  if (  
+    !store.lastRestockMonth  
+  ) {  
+  
+    store.lastRestockMonth =  
+      "";  
+  
+  }  
+  
+  
+  if (  
+    store.lastRestockMonth ===  
+    currentMonthYear  
+  ) {  
+  
+    alert(  
+      "Paalala: Isang beses lamang bawat buwan ang pag-request ng restock. Nag-request ka na ngayong buwan."  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  if (!store.activeRequests) {  
+  
+    store.activeRequests =  
+      [];  
+  
+  }  
+  
+  
+  store.activeRequests.push({  
+  
+    styleType:  
+      styleType,  
+  
+    qty:  
+      qty,  
+  
+    date:  
+      new Date()  
+        .toLocaleString()  
+  
+  });  
+  
+  
+  store.lastRestockMonth =  
+    currentMonthYear;  
+  
+  
+  if (!store.messages) {  
+  
+    store.messages =  
+      [];  
+  
+  }  
+  
+  
+  store.messages.unshift({  
+  
+    sender:  
+      currentStoreName,  
+  
+    text:  
+      `Humiling ng restock: ${qty} pcs (${styleType})`,  
+  
+    date:  
+      new Date()  
+        .toLocaleString()  
+  
+  });  
+  
+  
+  await saveData();  
+  
+  
+  alert(  
+    'Matagumpay na naipadala ang iyong kahilingan sa Admin!'  
+  );  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   SEND CLIENT MESSAGE  
+========================================================= */  
+  
+window.sendClientMessage =  
+async function() {  
+  
+  const input =  
+    document.getElementById(  
+      'clientChatInput'  
+    );  
+  
+  
+  const text =  
+    input.value.trim();  
+  
+  
+  if (!text) return;  
+  
+  
+  const store =  
+    appData.consignments.find(  
+      c =>  
+        c.storeName  
+          .toLowerCase() ===  
+        currentStoreName  
+          .toLowerCase()  
+    );  
+  
+  
+  if (!store) return;  
+  
+  
+  if (!store.messages) {  
+  
+    store.messages =  
+      [];  
+  
+  }  
+  
+  
+  store.messages.unshift({  
+  
+    sender:  
+      currentStoreName,  
+  
+    text:  
+      text,  
+  
+    date:  
+      new Date()  
+        .toLocaleString()  
+  
+  });  
+  
+  
+  input.value =  
+    '';  
+  
+  
+  await saveData();  
+  
+  
+  renderClientDashboard(  
+    store  
+  );  
+  
+};  
+  
+  
+  
+/* =========================================================  
+   INITIAL LOAD  
+========================================================= */  
+  
+loadData();  
+  
+  
+  
+/* =========================================================  
+   HEARTBEAT  
+========================================================= */  
+  
+setInterval(  
+  () => {  
+  
+    if (currentStoreName) {  
+  
+      sendHeartbeatSilent();  
+  
+    }  
+  
+  },  
+  20000  
+);  
+  
+  
+  
+async function sendHeartbeatSilent() {  
+  
+  try {  
+  
+    const docRef =  
+      doc(  
+        db,  
+        "app_data",  
+        "main_inventory"  
+      );  
+  
+  
+    const docSnap =  
+      await getDoc(  
+        docRef  
+      );  
+  
+  
+    if (  
+      docSnap.exists()  
+    ) {  
+  
+      let freshData =  
+        docSnap.data();  
+  
+  
+      let store =  
+        freshData.consignments.find(  
+          c =>  
+            c.storeName  
+              .toLowerCase() ===  
+            currentStoreName  
+              .toLowerCase()  
+        );  
+  
+  
+      if (store) {  
+  
+        store.lastClientAccess =  
+          new Date()  
+            .toLocaleString();  
+  
+  
+        store.clientStatus =  
+          "Online";  
+  
+  
+        await setDoc(  
+          docRef,  
+          freshData  
+        );  
+  
+      }  
+  
+    }  
+  
+  } catch (e) {  
+  
+    console.log(  
+      "Heartbeat error",  
+      e  
+    );  
+  
+  }  
+  
+}  
+  
+  
+  
+/* =========================================================  
+   SILENT CLOUD SYNC  
+========================================================= */  
+  
+setInterval(  
+  () => {  
+  
+    if (currentStoreName) {  
+  
+      loadDataSilent();  
+  
+    }  
+  
+  },  
+  10000  
+);  
+  
+  
+  
+async function loadDataSilent() {  
+  
+  try {  
+  
+    const docRef =  
+      doc(  
+        db,  
+        "app_data",  
+        "main_inventory"  
+      );  
+  
+  
+    const docSnap =  
+      await getDoc(  
+        docRef  
+      );  
+  
+  
+    if (  
+      docSnap.exists()  
+    ) {  
+  
+      appData =  
+        docSnap.data();  
+  
+  
+      const found =  
+        appData.consignments.find(  
+          c =>  
+            c.storeName  
+              .toLowerCase() ===  
+            currentStoreName  
+              .toLowerCase()  
+        );  
+  
+  
+      if (found) {  
+  
+        renderClientDashboard(  
+          found  
+        );  
+  
+      }  
+  
+    }  
+  
+  } catch (e) {  
+  
+    console.log(  
+      "Silent sync error",  
+      e  
+    );  
+  
+  }  
+  
+}  
+  
+</script>  </body>  
 </html>
