@@ -2,12 +2,11 @@
    DOCTOR'S WHISK BROOM - SERVICE WORKER
 ========================================================= */
 
-const CACHE_NAME = 'whisk-broom-v1';
+const CACHE_NAME = 'whisk-broom-v2'; // Tinaas ang version para ma-clear ang luma
 const urlsToCache = [
   './',
   './index.html',
-  './manifest.json',
-  './sw.js'
+  './manifest.json'
 ];
 
 /* =========================================================
@@ -21,16 +20,13 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('📦 Caching app shell');
-        return cache.addAll(urlsToCache)
-          .catch(err => {
-            console.log('⚠️ Some resources could not be cached:', err);
-            // Continue anyway - don't fail on caching errors
-          });
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => self.skipWaiting())
+      .catch(err => {
+        console.log('⚠️ Caching failed:', err);
       })
   );
-  
-  /* Force the waiting service worker to become the active service worker */
-  self.skipWaiting();
 });
 
 /* =========================================================
@@ -50,15 +46,12 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  
-  /* Immediately claim clients */
-  return self.clients.claim();
 });
 
 /* =========================================================
-   FETCH EVENT - NETWORK FIRST STRATEGY
+   FETCH EVENT - STALE-WHILE-REVALIDATE / NETWORK FIRST
 ========================================================= */
 
 self.addEventListener('fetch', (event) => {
@@ -66,50 +59,48 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   /* Only handle GET requests */
-  if (request.method !== 'GET') {
-    return;
-  }
+  if (request.method !== 'GET') return;
 
   /* Skip cross-origin requests */
-  if (url.origin !== location.origin) {
+  if (url.origin !== location.origin) return;
+
+  /* Para sa HTML/Navigation requests: Network First, fallback to index.html/cache */
+  if (request.mode === 'navigate' || request.headers.get('accept').includes('text/html')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match('./index.html').then((cachedResponse) => {
+            return cachedResponse || caches.match(request);
+          });
+        })
+    );
     return;
   }
 
-  /* Network first, fallback to cache */
+  /* Para sa ibang assets (CSS, JS, Images): Cache First, fallback to Network */
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        /* Only cache successful responses */
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-
-        /* Clone the response */
-        const responseToCache = response.clone();
-        
-        caches.open(CACHE_NAME)
-          .then((cache) => {
+    caches.match(request).then((cachedResponse) => {
+      const fetchPromise = fetch(request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
             cache.put(request, responseToCache);
           });
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Silent fail kung offline at walang network
+      });
 
-        return response;
-      })
-      .catch(() => {
-        /* Network request failed, try cache */
-        return caches.match(request)
-          .then((response) => {
-            return response || new Response(
-              '<h1>Offline</h1><p>No internet connection and page not cached.</p>',
-              { 
-                status: 503,
-                statusText: 'Service Unavailable',
-                headers: new Headers({
-                  'Content-Type': 'text/html'
-                })
-              }
-            );
-          });
-      })
+      return cachedResponse || fetchPromise;
+    })
   );
 });
 
@@ -123,5 +114,3 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
-
-console.log('✨ Service Worker loaded successfully');
