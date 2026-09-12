@@ -82,7 +82,7 @@ button:hover { opacity: 0.9; }
 <div class="container">
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-  <!-- Secure Login Screen na may Firebase Authentication at Store Selection -->
+  <!-- Secure Login Screen na may Unified Simplified Login -->
   <div id="loginScreen" class="card">
     <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
       🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. I-click ang button sa ibaba upang buksan ang iyong portal.
@@ -90,27 +90,18 @@ button:hover { opacity: 0.9; }
     
     <div id="manualLoginSection" style="width: 100%;">
       <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan (Login)</h2>
-      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Mag-sign in gamit ang iyong Firebase Auth Account o i-type ang pangalan ng iyong tindahan.</p>
+      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Ilagay ang pangalan ng iyong tindahan, may-ari, o email upang buksan ang iyong portal.</p>
       
-      <!-- Firebase Authentication Login Form -->
+      <!-- Unified Login Form (Store Name + Password / Simplified) -->
       <div class="form-group" style="width: 100%;">
-        <label for="loginEmail">Email Address:</label>
-        <input type="email" id="loginEmail" placeholder="Hal. client1@test.com">
+        <label for="unifiedStoreInput">Pangalan ng Tindahan / May-ari / Email:</label>
+        <input type="text" id="unifiedStoreInput" placeholder="Hal. Aling Nena Store o Juan & Maria">
       </div>
       <div class="form-group" style="width: 100%;">
-        <label for="loginPassword">Password:</label>
-        <input type="password" id="loginPassword" placeholder="Ilagay ang password">
+        <label for="unifiedPasswordInput">Password (Optional):</label>
+        <input type="password" id="unifiedPasswordInput" placeholder="Ilagay ang password (kung meron)">
       </div>
-      <button type="button" id="firebaseLoginBtn" style="background-color: var(--primary-color); margin-bottom: 10px;">Mag-sign In (Firebase Authentication)</button>
-
-      <hr style="width: 100%; border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
-
-      <!-- Legacy / Store Name Search Option -->
-      <div class="form-group" style="width: 100%;">
-        <label for="manualStoreNameInput">O Pangalan ng Tindahan / May-ari:</label>
-        <input type="text" id="manualStoreNameInput" placeholder="Hal. Aling Nena Store o Juan & Maria">
-      </div>
-      <button type="button" id="manualLoginBtn" style="background-color: var(--secondary-color); margin-bottom: 15px;">Buksan ang Aking Portal sa Pamamagitan ng Tindahan</button>
+      <button type="button" id="unifiedLoginBtn" style="background-color: var(--primary-color); margin-bottom: 15px;">Buksan ang Aking Portal</button>
     </div>
 
     <button type="button" id="proceedLoginBtn" style="display:none; background-color: var(--secondary-color); margin-bottom: 15px;">Ituloy sa Aking Portal</button>
@@ -421,39 +412,64 @@ const handleInstallClick = async () => {
 
 if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleInstallClick);
 
-// Firebase Authentication Login Logic
-document.getElementById('firebaseLoginBtn').addEventListener('click', async () => {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value.trim();
-  if (!email || !password) {
-    alert('Mangyaring ilagay ang iyong Email at Password.');
+// Unified Simplified Login Logic (Store Name / Owner Name / Email & Optional Password / Firebase Auth)
+document.getElementById('unifiedLoginBtn').addEventListener('click', async () => {
+  const inputVal = document.getElementById('unifiedStoreInput').value.trim();
+  const passwordVal = document.getElementById('unifiedPasswordInput').value.trim();
+  
+  if (!inputVal) {
+    alert('Mangyaring ilagay ang pangalan ng iyong tindahan, may-ari, o email.');
     return;
   }
-  try {
-    syncStatus.textContent = "Nag-a-authenticate...";
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    alert('✅ Matagumpay na nag-log in gamit ang Firebase Auth!');
-    
-    // Hanapin ang tindahan na nauugnay sa email na ito o hayaang magbukas ang portal
-    let found = appData.consignments.find(c => c.email && c.email.toLowerCase() === email.toLowerCase());
-    if (!found && appData.consignments.length > 0) {
-      // Kung walang exact match, i-default sa unang consignment o hilingin ang store name
-      found = appData.consignments[0];
-    }
-    if (found) {
-      currentStoreName = found.storeName;
-      localStorage.setItem('client_logged_store', currentStoreName);
-      initPortalView();
-    } else {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('portalContent').style.display = 'block';
-      document.getElementById('displayStoreName').textContent = "Authenticated User (" + email + ")";
-    }
-  } catch (error) {
-    console.error("Auth error:", error);
-    alert('⚠️ Nabigo ang pag-login: ' + error.message);
-    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+  
+  // Hanapin muna sa local data (consignments)
+  const found = appData.consignments.find(c => 
+    c.storeName.toLowerCase() === inputVal.toLowerCase() || 
+    (c.ownerName && c.ownerName.toLowerCase() === inputVal.toLowerCase()) ||
+    (c.email && c.email.toLowerCase() === inputVal.toLowerCase())
+  );
+  
+  if (found) {
+    currentStoreName = found.storeName;
+    localStorage.setItem('client_logged_store', currentStoreName);
+    found.lastClientAccess = new Date().toLocaleString();
+    found.clientStatus = "Online";
+    await saveData();
+    alert('✅ Matagumpay na nag-log in!');
+    initPortalView();
+    return;
   }
+  
+  // Kung may nilagay na password at email, subukan din ang Firebase Auth
+  if (passwordVal && inputVal.includes('@')) {
+    try {
+      syncStatus.textContent = "Nag-a-authenticate...";
+      await signInWithEmailAndPassword(auth, inputVal, passwordVal);
+      alert('✅ Matagumpay na nag-log in gamit ang Firebase Auth!');
+      
+      let emailFound = appData.consignments.find(c => c.email && c.email.toLowerCase() === inputVal.toLowerCase());
+      if (emailFound) {
+        currentStoreName = emailFound.storeName;
+      } else if (appData.consignments.length > 0) {
+        currentStoreName = appData.consignments[0].storeName;
+      }
+      
+      if (currentStoreName) {
+        localStorage.setItem('client_logged_store', currentStoreName);
+        initPortalView();
+      } else {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('portalContent').style.display = 'block';
+        document.getElementById('displayStoreName').textContent = "Authenticated User (" + inputVal + ")";
+      }
+      return;
+    } catch (error) {
+      console.error("Auth error:", error);
+    }
+  }
+  
+  alert('⚠️ Hindi natagpuan ang rehistradong tindahan, may-ari, o email na ito. Pakitiyak na tama ang iyong inilagay.');
+  syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
 });
 
 window.requestLogout = async function() {
@@ -632,24 +648,6 @@ function initPortalView() {
     document.getElementById('portalContent').style.display = 'none';
   }
 }
-
-document.getElementById('manualLoginBtn').addEventListener('click', () => {
-  const storeInput = document.getElementById('manualStoreNameInput').value.trim();
-  if (!storeInput) {
-    alert('Mangyaring ilagay ang pangalan ng iyong tindahan o pangalan ng may-ari.');
-    return;
-  }
-  const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeInput.toLowerCase() || (c.ownerName && c.ownerName.toLowerCase() === storeInput.toLowerCase()));
-  if (!found) {
-    alert('Hindi natagpuan ang rehistradong tindahan o may-ari na ito.');
-    return;
-  }
-  currentStoreName = found.storeName;
-  localStorage.setItem('client_logged_store', currentStoreName);
-  found.lastClientAccess = new Date().toLocaleString();
-  found.clientStatus = "Online";
-  saveData();
-});
 
 const inquiryForm = document.getElementById('inquiryForm');
 if (inquiryForm) {
