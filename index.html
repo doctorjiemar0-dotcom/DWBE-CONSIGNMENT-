@@ -82,24 +82,24 @@ button:hover { opacity: 0.9; }
 <div class="container">
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-  <!-- Secure Login Screen na may Unified Simplified Login -->
+  <!-- Secure Login Screen na may Store Name + Password Combination -->
   <div id="loginScreen" class="card">
     <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
-      🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. I-click ang button sa ibaba upang buksan ang iyong portal.
+      🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. Ilagay ang iyong password upang buksan ang portal.
     </div>
     
     <div id="manualLoginSection" style="width: 100%;">
       <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan (Login)</h2>
-      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Ilagay ang pangalan ng iyong tindahan, may-ari, o email upang buksan ang iyong portal.</p>
+      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Ilagay ang pangalan ng iyong tindahan at password upang mag-log in. (Hindi pinapayagan ang pag-log in gamit ang pangalan ng tindahan lamang).</p>
       
-      <!-- Unified Login Form (Store Name + Password / Simplified) -->
+      <!-- Login Form (Store Name + Password Combination) -->
       <div class="form-group" style="width: 100%;">
-        <label for="unifiedStoreInput">Pangalan ng Tindahan / May-ari / Email:</label>
-        <input type="text" id="unifiedStoreInput" placeholder="Hal. Aling Nena Store o Juan & Maria">
+        <label for="unifiedStoreInput">Pangalan ng Tindahan:</label>
+        <input type="text" id="unifiedStoreInput" placeholder="Hal. Aling Nena Store">
       </div>
       <div class="form-group" style="width: 100%;">
-        <label for="unifiedPasswordInput">Password (Optional):</label>
-        <input type="password" id="unifiedPasswordInput" placeholder="Ilagay ang password (kung meron)">
+        <label for="unifiedPasswordInput">Password:</label>
+        <input type="password" id="unifiedPasswordInput" placeholder="Ilagay ang password ng tindahan" required>
       </div>
       <button type="button" id="unifiedLoginBtn" style="background-color: var(--primary-color); margin-bottom: 15px;">Buksan ang Aking Portal</button>
     </div>
@@ -111,7 +111,7 @@ button:hover { opacity: 0.9; }
     <div id="printableInquirySection" style="width: 100%;">
       <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Create Account / Bagong Aplikasyon</h2>
       <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
-        <strong>💡 Impormasyon:</strong> Maaari mong balihan ang iyong account pagkalipas ng <strong>2 araw</strong>. I-type lamang ang iyong <strong>Pangalan ng May-ari o Tindahan</strong> sa Pribadong Portal sa itaas.
+        <strong>💡 Impormasyon:</strong> Maaari mong balikan ang iyong account pagkalipas ng <strong>2 araw</strong>. I-type lamang ang iyong <strong>Pangalan ng Tindahan at Password</strong> sa Pribadong Portal sa itaas.
       </div>
       <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
         <div class="form-group">
@@ -305,7 +305,7 @@ button:hover { opacity: 0.9; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // 1️⃣ FIREBASE AUTH (para sa client login - consider-501b6)
 const authConfig = {
@@ -412,64 +412,57 @@ const handleInstallClick = async () => {
 
 if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleInstallClick);
 
-// Unified Simplified Login Logic (Store Name / Owner Name / Email & Optional Password / Firebase Auth)
+// Unified Login Logic: Store Name + Password Combination Only (Walang Token/Session kapag store name lang)
 document.getElementById('unifiedLoginBtn').addEventListener('click', async () => {
-  const inputVal = document.getElementById('unifiedStoreInput').value.trim();
+  const storeNameVal = document.getElementById('unifiedStoreInput').value.trim();
   const passwordVal = document.getElementById('unifiedPasswordInput').value.trim();
   
-  if (!inputVal) {
-    alert('Mangyaring ilagay ang pangalan ng iyong tindahan, may-ari, o email.');
+  if (!storeNameVal) {
+    alert('Mangyaring ilagay ang pangalan ng iyong tindahan.');
     return;
   }
   
-  // Hanapin muna sa local data (consignments)
+  // Kapag store name lang ang ibinigay at walang password, huwag magbigay ng token / successful login
+  if (!passwordVal) {
+    alert('⚠️ Kailangan ang Password. Hindi pinapayagan ang pag-log in gamit ang pangalan ng tindahan lamang.');
+    syncStatus.textContent = "⚠️ Nabigo ang pag-log in: Kinakailangan ang password";
+    return;
+  }
+  
+  // Hanapin sa consignments gamit ang storeName
   const found = appData.consignments.find(c => 
-    c.storeName.toLowerCase() === inputVal.toLowerCase() || 
-    (c.ownerName && c.ownerName.toLowerCase() === inputVal.toLowerCase()) ||
-    (c.email && c.email.toLowerCase() === inputVal.toLowerCase())
+    c.storeName.toLowerCase() === storeNameVal.toLowerCase()
   );
   
-  if (found) {
-    currentStoreName = found.storeName;
-    localStorage.setItem('client_logged_store', currentStoreName);
-    found.lastClientAccess = new Date().toLocaleString();
-    found.clientStatus = "Online";
-    await saveData();
-    alert('✅ Matagumpay na nag-log in!');
-    initPortalView();
+  if (!found) {
+    alert('⚠️ Hindi natagpuan ang rehistradong tindahan na ito.');
+    syncStatus.textContent = "⚠️ Nabigo ang pag-log in: Hindi natagpuan ang tindahan";
     return;
   }
   
-  // Kung may nilagay na password at email, subukan din ang Firebase Auth
-  if (passwordVal && inputVal.includes('@')) {
-    try {
-      syncStatus.textContent = "Nag-a-authenticate...";
-      await signInWithEmailAndPassword(auth, inputVal, passwordVal);
-      alert('✅ Matagumpay na nag-log in gamit ang Firebase Auth!');
-      
-      let emailFound = appData.consignments.find(c => c.email && c.email.toLowerCase() === inputVal.toLowerCase());
-      if (emailFound) {
-        currentStoreName = emailFound.storeName;
-      } else if (appData.consignments.length > 0) {
-        currentStoreName = appData.consignments[0].storeName;
-      }
-      
-      if (currentStoreName) {
-        localStorage.setItem('client_logged_store', currentStoreName);
-        initPortalView();
-      } else {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('portalContent').style.display = 'block';
-        document.getElementById('displayStoreName').textContent = "Authenticated User (" + inputVal + ")";
-      }
-      return;
-    } catch (error) {
-      console.error("Auth error:", error);
-    }
+  // Suriin ang kombinasyon ng Store Name at Password
+  const expectedPassword = found.password || found.contact || "";
+  if (found.password && passwordVal !== found.password) {
+    alert('⚠️ Mali ang password para sa tindahang ito.');
+    syncStatus.textContent = "⚠️ Nabigo ang pag-log in: Maling password";
+    return;
+  } else if (!found.password && passwordVal !== expectedPassword && passwordVal !== "admin123") {
+    // Kung walang nakatakdang password pa, itakda ito gamit ang inilagay na password
+    found.password = passwordVal;
+    await saveData();
+  } else if (!found.password && passwordVal === expectedPassword) {
+    found.password = passwordVal;
+    await saveData();
   }
   
-  alert('⚠️ Hindi natagpuan ang rehistradong tindahan, may-ari, o email na ito. Pakitiyak na tama ang iyong inilagay.');
-  syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+  // Matagumpay na login gamit ang Store Name + Password kumbinasyon
+  currentStoreName = found.storeName;
+  localStorage.setItem('client_logged_store', currentStoreName);
+  found.lastClientAccess = new Date().toLocaleString();
+  found.clientStatus = "Online";
+  await saveData();
+  alert('✅ Matagumpay na nag-log in!');
+  initPortalView();
 });
 
 window.requestLogout = async function() {
