@@ -310,13 +310,14 @@ button:hover { opacity: 0.9; }
   <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
 </div>
 
-<!-- Firebase SDKs (Firestore + Auth) -->
+<!-- Firebase SDKs (Firestore + Auth) - DUAL SETUP -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-const firebaseConfig = {
+// 1️⃣ FIREBASE AUTH (para sa client login - consider-501b6)
+const authConfig = {
   apiKey: "AIzaSyCUqdkM0tA6bxu6n0nIO5MGLey9J16n4ao",
   authDomain: "consider-501b6.firebaseapp.com",
   projectId: "consider-501b6",
@@ -325,9 +326,23 @@ const firebaseConfig = {
   appId: "1:540286886994:web:e6872faeed78516c372b8b"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// 2️⃣ FIREBASE DATA (para sa store data mula sa admin - dwbe-consignment)
+const dataConfig = {
+  apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+  authDomain: "dwbe-consignment.firebaseapp.com",
+  projectId: "dwbe-consignment",
+  storageBucket: "dwbe-consignment.firebasestorage.app",
+  messagingSenderId: "205759197252",
+  appId: "1:205759197252:web:b04400821f81791d10cc11"
+};
+
+// Initialize Auth App
+const authApp = initializeApp(authConfig);
+const auth = getAuth(authApp);
+
+// Initialize Data App (para sa Firestore data mula sa admin)
+const dataApp = initializeApp(dataConfig, "data");
+const db = getFirestore(dataApp);
 
 let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
 let currentStoreName = localStorage.getItem('client_logged_store') || '';
