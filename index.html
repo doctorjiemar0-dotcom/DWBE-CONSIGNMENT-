@@ -242,6 +242,19 @@ button:hover { opacity: 0.9; }
       </div>
     </div>
 
+    <!-- Collapsible Transaction History Section -->
+    <div class="card" style="background: #e0f7fa; border-left: 4px solid #00acc1;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: #00acc1; font-size: 0.95rem; margin-bottom: 0;">📜 Kasaysayan ng Transaksyon (Transaction History)</h2>
+        <button type="button" id="toggleTransactionBtn" onclick="toggleTransactionVisibility()" style="background-color: #00acc1; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Buksan</button>
+      </div>
+      <div id="transactionContentWrapper" style="display: none; margin-top: 10px;">
+        <div id="clientTransactionContainer">
+          <p style="font-size: 0.85rem; color: #666;">Wala pang naitalang transaksyon.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Notifications Section -->
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -388,6 +401,13 @@ window.togglePasswordVisibility = function() {
   btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
 };
 
+window.toggleTransactionVisibility = function() {
+  const wrapper = document.getElementById('transactionContentWrapper');
+  const btn = document.getElementById('toggleTransactionBtn');
+  wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+  btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
+};
+
 window.toggleRestockVisibility = function() {
   const wrapper = document.getElementById('restockContentWrapper');
   const btn = document.getElementById('toggleRestockBtn');
@@ -412,9 +432,14 @@ window.updateClientPassword = async function() {
   const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
   if (!store) return;
   store.password = newPass;
+  
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Security', text: 'Binago ang password ng tindahan.', date: new Date().toLocaleString() });
+
   await saveData();
   alert("✅ Matagumpay na na-update ang password ng iyong tindahan!");
   document.getElementById('newClientPassword').value = '';
+  renderClientDashboard(store);
 };
 
 document.getElementById('unifiedLoginBtn').addEventListener('click', async () => {
@@ -479,6 +504,10 @@ window.promptStopAgreement = async function() {
   store.consignmentStatus = "Stopped";
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: "⚠️ Pinal na itinigil ng kliyente ang Consignment Agreement.", date: new Date().toLocaleString() });
+  
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Kasunduan', text: 'Itinigil/Ikinansela ang Consignment Agreement.', date: new Date().toLocaleString() });
+
   await saveData();
   alert("Matagumpay na naitala ang iyong pagpapahinto sa kasunduan.");
   renderClientDashboard(store);
@@ -507,8 +536,13 @@ window.confirmReceiveRestock = async function(index) {
   store.approvedRestocks.splice(index, 1);
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`, date: new Date().toLocaleString() });
+  
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Restock', text: `Natanggap ang restock na ${itemToReceive.qty} pcs (${itemToReceive.styleType})`, date: new Date().toLocaleString() });
+
   await saveData();
   alert("Matagumpay na naidagdag sa iyong stock!");
+  renderClientDashboard(store);
 };
 
 window.promptRecordSale = async function(styleType) {
@@ -531,6 +565,10 @@ window.promptRecordSale = async function(styleType) {
   store.pendingSales.unshift({ styleType: styleType, qty: qtySold, price: sub.price || 0, totalAmount: qtySold * (sub.price || 0), date: new Date().toLocaleString(), status: "Pending" });
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType})`, date: new Date().toLocaleString() });
+
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Benta', text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType})`, date: new Date().toLocaleString() });
+
   await saveData();
   alert("Matagumpay na naipadala ang pending receipt sa Admin!");
   renderClientDashboard(store);
@@ -653,6 +691,21 @@ function renderClientDashboard(store) {
     pendingSalesCard.style.display = 'none';
   }
 
+  // Render Transaction History (Pinakalatest ay nasa unahan)
+  const transContainer = document.getElementById('clientTransactionContainer');
+  transContainer.innerHTML = '';
+  if (!store.transactionHistory) store.transactionHistory = [];
+  if (store.transactionHistory.length > 0) {
+    store.transactionHistory.forEach(tx => {
+      const div = document.createElement('div');
+      div.style.cssText = "background: white; border: 1px solid #b2ebf2; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
+      div.innerHTML = `<div><strong style="color: #00838f;">[${tx.type}]</strong> ${tx.text}</div><div style="font-size: 0.7rem; color: #778; text-align: right; margin-top: 2px;">${tx.date}</div>`;
+      transContainer.appendChild(div);
+    });
+  } else {
+    transContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang naitalang transaksyon.</p>';
+  }
+
   const notifContainer = document.getElementById('clientNotificationsContainer');
   notifContainer.innerHTML = '';
   if (store.clientNotifications && store.clientNotifications.length > 0) {
@@ -713,8 +766,13 @@ window.submitRestockRequest = async function() {
   store.activeRequests.push({ styleType: styleType, qty: 5, date: new Date().toLocaleString() });
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: `Humiling ng restock: 5 pcs (${styleType})`, date: new Date().toLocaleString() });
+
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Request', text: `Humiling ng restock: 5 pcs (${styleType})`, date: new Date().toLocaleString() });
+
   await saveData();
   alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
+  renderClientDashboard(store);
 };
 
 window.sendClientMessage = async function() {
