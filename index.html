@@ -219,6 +219,24 @@ button:hover { opacity: 0.9; }
       </div>
     </div>
 
+    <!-- Collapsible Consignment Agreement Section -->
+    <div class="card" style="background: #e8f5e9; border-left: 4px solid #2e7d32;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: #2e7d32; font-size: 0.95rem; margin-bottom: 0;">📜 Kasunduan sa Consignment (Agreement)</h2>
+        <button type="button" id="toggleAgreementBtn" onclick="toggleAgreementVisibility()" style="background-color: #2e7d32; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Buksan</button>
+      </div>
+      <div id="agreementContentWrapper" style="display: none; margin-top: 10px; font-size: 0.85rem; line-height: 1.5; color: #333;">
+        <p style="margin-bottom: 8px;"><strong>Mga Tuntunin at Kundisyon ng Consignment:</strong></p>
+        <ul style="padding-left: 20px; margin-bottom: 8px;">
+          <li>Ang mga walis tambo ay nasa ilalim ng kasunduang consignment sa pagitan ng Doctor's Whisk Broom at ng tindahan.</li>
+          <li>Ang bawat restock ay may paunang bilang (hal. 5 piraso) ayon sa inaprubahan ng Admin.</li>
+          <li>Ang mga nabentang paninda ay kailangang i-record sa portal upang maitala at maresolba sa takdang koleksyon.</li>
+          <li>Maaaring ihinto o kanselahin ang kasunduan anumang oras sa pamamagitan ng pagpindot sa pindutan ng pagpapahinto sa ibaba.</li>
+        </ul>
+        <div id="agreementStatusDisplay" style="font-weight: bold; color: #2e7d32; margin-top: 6px;">Status: Aktibo ang Consignment</div>
+      </div>
+    </div>
+
     <!-- Collapsible Change Password Section para sa Existing Clients -->
     <div class="card" style="background: #f1f8e9; border-left: 4px solid #2e7d32;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -367,7 +385,6 @@ const db = getFirestore(dataApp);
 
 let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
 let currentStoreName = localStorage.getItem('client_logged_store') || '';
-let selectedStoreRealName = ''; // Variable para itabi ang totoong pangalan ng tindahan nang hindi ito lumalabas sa input field
 const syncStatus = document.getElementById('syncStatus');
 
 window.openImageViewer = function(src, title) {
@@ -394,6 +411,13 @@ window.toggleQrVisibility = function() {
   const isHidden = wrapper.style.display === 'none';
   wrapper.style.display = isHidden ? 'flex' : 'none';
   btn.textContent = isHidden ? 'Itago ang QR Code' : 'Ipakita ang QR Code';
+};
+
+window.toggleAgreementVisibility = function() {
+  const wrapper = document.getElementById('agreementContentWrapper');
+  const btn = document.getElementById('toggleAgreementBtn');
+  wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+  btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
 };
 
 window.togglePasswordVisibility = function() {
@@ -438,7 +462,6 @@ const storeSuggestions = document.getElementById('storeSuggestions');
 
 if (unifiedStoreInput) {
   unifiedStoreInput.addEventListener('input', () => {
-    selectedStoreRealName = ''; // I-reset kung mag-i-type ang user manually
     const query = unifiedStoreInput.value.trim().toLowerCase();
     storeSuggestions.innerHTML = '';
     if (!query) {
@@ -451,10 +474,9 @@ if (unifiedStoreInput) {
       matches.forEach(c => {
         const div = document.createElement('div');
         div.style.cssText = "padding: 8px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #eee; background: white;";
-        div.textContent = maskStoreName(c.storeName);
+        div.textContent = maskStoreName(c.storeName); // Naka-mask sa suggestion dropdown para iwas buong exposure
         div.addEventListener('click', () => {
-          selectedStoreRealName = c.storeName; // Itago ang totoong pangalan sa likod para sa login
-          unifiedStoreInput.value = maskStoreName(c.storeName); // Mananatiling naka-mask ang lalabas sa input field
+          unifiedStoreInput.value = c.storeName; // Awtomatikong isasama ang buong totoong pangalan kapag pinili sa dropdown
           storeSuggestions.style.display = 'none';
         });
         div.addEventListener('mouseenter', () => div.style.background = '#f1f8e9');
@@ -494,17 +516,15 @@ window.updateClientPassword = async function() {
 };
 
 document.getElementById('unifiedLoginBtn').addEventListener('click', async () => {
-  const storeInputVal = unifiedStoreInput.value.trim();
+  const storeNameVal = document.getElementById('unifiedStoreInput').value.trim();
   const passwordVal = document.getElementById('unifiedPasswordInput').value.trim();
   
-  if (!storeInputVal || !passwordVal) {
+  if (!storeNameVal || !passwordVal) {
     alert('Mangyaring ilagay ang pangalan ng tindahan at password.');
     return;
   }
   
-  // Gamitin ang selectedStoreRealName kung pinili sa dropdown, o i-match ang input kung manual tinype
-  const targetStoreName = selectedStoreRealName || storeInputVal;
-  const found = appData.consignments.find(c => c.storeName.toLowerCase() === targetStoreName.toLowerCase());
+  const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeNameVal.toLowerCase());
   
   if (!found) {
     alert('⚠️ Hindi natagpuan ang rehistradong tindahan na ito.');
@@ -707,6 +727,11 @@ if (inquiryForm) {
 function renderClientDashboard(store) {
   document.getElementById('displayStoreName').innerHTML = store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${store.ownerName})</span>` : '');
 
+  const agreementStatusDisplay = document.getElementById('agreementStatusDisplay');
+  if (agreementStatusDisplay) {
+    agreementStatusDisplay.textContent = `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
+  }
+
   const smallQrContainer = document.getElementById('smallQrcode');
   smallQrContainer.innerHTML = "";
   const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
@@ -744,7 +769,7 @@ function renderClientDashboard(store) {
     pendingSalesCard.style.display = 'none';
   }
 
-  // Render Transaction History (Pinakalatest ay nasa unahan)
+  // Render Transaction History
   const transContainer = document.getElementById('clientTransactionContainer');
   transContainer.innerHTML = '';
   if (!store.transactionHistory) store.transactionHistory = [];
