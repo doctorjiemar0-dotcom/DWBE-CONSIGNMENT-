@@ -367,6 +367,7 @@ const db = getFirestore(dataApp);
 
 let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
 let currentStoreName = localStorage.getItem('client_logged_store') || '';
+let selectedStoreRealName = ''; // Variable para itabi ang totoong pangalan ng tindahan nang hindi ito lumalabas sa input field
 const syncStatus = document.getElementById('syncStatus');
 
 window.openImageViewer = function(src, title) {
@@ -437,6 +438,7 @@ const storeSuggestions = document.getElementById('storeSuggestions');
 
 if (unifiedStoreInput) {
   unifiedStoreInput.addEventListener('input', () => {
+    selectedStoreRealName = ''; // I-reset kung mag-i-type ang user manually
     const query = unifiedStoreInput.value.trim().toLowerCase();
     storeSuggestions.innerHTML = '';
     if (!query) {
@@ -451,7 +453,8 @@ if (unifiedStoreInput) {
         div.style.cssText = "padding: 8px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #eee; background: white;";
         div.textContent = maskStoreName(c.storeName);
         div.addEventListener('click', () => {
-          unifiedStoreInput.value = c.storeName; // Isasama ang totoong pangalan kapag pinili sa dropdown
+          selectedStoreRealName = c.storeName; // Itago ang totoong pangalan sa likod para sa login
+          unifiedStoreInput.value = maskStoreName(c.storeName); // Mananatiling naka-mask ang lalabas sa input field
           storeSuggestions.style.display = 'none';
         });
         div.addEventListener('mouseenter', () => div.style.background = '#f1f8e9');
@@ -491,15 +494,17 @@ window.updateClientPassword = async function() {
 };
 
 document.getElementById('unifiedLoginBtn').addEventListener('click', async () => {
-  const storeNameVal = document.getElementById('unifiedStoreInput').value.trim();
+  const storeInputVal = unifiedStoreInput.value.trim();
   const passwordVal = document.getElementById('unifiedPasswordInput').value.trim();
   
-  if (!storeNameVal || !passwordVal) {
+  if (!storeInputVal || !passwordVal) {
     alert('Mangyaring ilagay ang pangalan ng tindahan at password.');
     return;
   }
   
-  const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeNameVal.toLowerCase());
+  // Gamitin ang selectedStoreRealName kung pinili sa dropdown, o i-match ang input kung manual tinype
+  const targetStoreName = selectedStoreRealName || storeInputVal;
+  const found = appData.consignments.find(c => c.storeName.toLowerCase() === targetStoreName.toLowerCase());
   
   if (!found) {
     alert('⚠️ Hindi natagpuan ang rehistradong tindahan na ito.');
