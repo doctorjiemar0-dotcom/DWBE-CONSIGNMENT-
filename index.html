@@ -80,7 +80,7 @@ button:hover { opacity: 0.9; }
 <div class="container">
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-  <!-- Secure Login Screen na may Store Name + Password Combination -->
+  <!-- Secure Login Screen na may Masked Store Dropdown/Search -->
   <div id="loginScreen" class="card">
     <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
       🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. Ilagay ang iyong password upang buksan ang portal.
@@ -88,11 +88,12 @@ button:hover { opacity: 0.9; }
     
     <div id="manualLoginSection" style="width: 100%;">
       <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan (Login)</h2>
-      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Ilagay ang pangalan ng iyong tindahan at password upang mag-log in.</p>
+      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">I-type ang unang titik o pangalan ng tindahan upang lumitaw ang naka-mask na pagpipilian.</p>
       
-      <div class="form-group" style="width: 100%;">
+      <div class="form-group" style="width: 100%; position: relative;">
         <label for="unifiedStoreInput">Pangalan ng Tindahan:</label>
-        <input type="text" id="unifiedStoreInput" placeholder="Hal. Aling Nena Store">
+        <input type="text" id="unifiedStoreInput" placeholder="I-type ang unang titik..." autocomplete="off">
+        <div id="storeSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; display: none; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"></div>
       </div>
       <div class="form-group" style="width: 100%;">
         <label for="unifiedPasswordInput">Password:</label>
@@ -104,11 +105,11 @@ button:hover { opacity: 0.9; }
     <button type="button" id="proceedLoginBtn" style="display:none; background-color: var(--secondary-color); margin-bottom: 15px;">Ituloy sa Aking Portal</button>
     <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
 
-    <!-- Create Account / Aplikasyon Section na may Sariling Password, Initial Quantity at Paalala -->
+    <!-- Create Account / Aplikasyon Section na may Sariling Password, Initial Quantity at Paalala (Digital Consignment para sa mga Bagong Kliyente) -->
     <div id="printableInquirySection" style="width: 100%;">
-      <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Create Account / Bagong Aplikasyon</h2>
+      <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Digital Consignment / Bagong Aplikasyon</h2>
       <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
-        <strong>💡 Impormasyon:</strong> Maaari mong itakda ang iyong sariling password at dami ng nais i-order. <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong> dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
+        <strong>💡 Impormasyon:</strong> Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order. <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong> dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
       </div>
       <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
         <div class="form-group">
@@ -167,7 +168,7 @@ button:hover { opacity: 0.9; }
           <label>Mensahe / Katanungan (Optional):</label>
           <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
         </div>
-        <button type="submit" style="background-color: #0288d1;">Gumawa ng Account / Ipadala ang Aplikasyon</button>
+        <button type="submit" style="background-color: #0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
       <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon Form</button>
     </div>
@@ -218,6 +219,33 @@ button:hover { opacity: 0.9; }
       </div>
     </div>
 
+    <!-- Official Consignment Agreement Section (Para sa Existing Clients - Ayon sa Opisyal na Kontrata ni Doctor's Whisk Broom Etc.) -->
+    <div class="card" style="background: #e8f5e9; border-left: 4px solid #2e7d32;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: #2e7d32; font-size: 0.95rem; margin-bottom: 0;">📜 Opisyal na Kasunduan sa Consignment</h2>
+        <button type="button" id="toggleAgreementBtn" onclick="toggleAgreementVisibility()" style="background-color: #2e7d32; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Buksan</button>
+      </div>
+      <div id="agreementContentWrapper" style="display: none; margin-top: 10px; font-size: 0.83rem; line-height: 1.5; color: #333;">
+        <div style="text-align: center; font-weight: bold; margin-bottom: 10px; color: #2e7d32;">
+          DOCTOR'S WHISK BROOM ETC.<br>
+          <span style="font-size: 0.75rem; font-weight: normal; color: #555;">Osiao, Sorsogon City • FB: Jiemar Garais Doc Tor • 09104057065</span><br>
+          <strong>CONSIGNMENT AGREEMENT (STORE PARTNER)</strong>
+        </div>
+        
+        <p style="margin-bottom: 8px; background-color: #e8f5e9; padding: 8px; border-left: 4px solid #2e7d32; border-radius: 4px;"><strong>SA MGA KINAUUKULAN:</strong> Ang kasunduang ito ay pinagbisa sa pagitan ng Owner (<strong style="color: #c62828;">JIEMAR GARAIS DOCTOR</strong>) at ng Store Partner / Consignee (<span id="agreementStorePartner" style="font-weight: bold; color: #2e7d32;">Tindahan</span>) upang pormal na itakda ang mga sumusunod na detalyadong alituntunin:</p>
+
+        <ol style="padding-left: 18px; margin-bottom: 10px;">
+          <li style="margin-bottom: 6px;"><strong>SISTEMA NG SUPPLY:</strong> Mag-iiwan ang Owner ng mga produktong Walis Tambo sa tindahan ng Store Partner nang <span style="background-color: #ffcdd2; font-weight: bold;">walang anumang advance na bayad o deposito</span>. Ang <span style="background-color: #fff59d; font-weight: bold;">pagbaba ng bagong supply ay nakadepende sa takbo ng benta at space ng tindahan</span>.</li>
+          <li style="margin-bottom: 6px;"><strong>SUPPLIER PRICE AT MARK-UP:</strong> Ang pinal na presyo ng bawat isang (1) piraso ng bawat uri ng Walis Tambo (<span style="background-color: #fff59d; font-weight: bold;">Ordinary at Premium</span>) ay <span style="background-color: #fff59d; font-weight: bold;">idinedetermine ng Owner at ibabahagi sa Store Partner sa simula ng consignment</span>. Ang <span style="background-color: #fff59d; font-weight: bold;">Store Partner ay may karapatang magtakda ng sarili nilang retail price o patong (mark-up)</span> na magsisilbing direktang kita nila sa pagbebenta.</li>
+          <li style="margin-bottom: 6px;"><strong>REMITTANCE AT SETTLEMENT (ONE MONTH CUT-OFF):</strong> Ang Store Partner ay makakapag-record ng kanilang benta real-time gamit ang <span style="background-color: #fff59d; font-weight: bold;">"May Bumili" button sa portal</span>. Ang cut-off ng bentahan ay <span style="background-color: #fff59d; font-weight: bold;">buwanan (end of month)</span>. Tuwing may <span style="background-color: #fff59d; font-weight: bold;">pending sales</span> na naka-record sa portal, ang Owner ay magbibisita upang kolektahin ang remittance at isagawa ang physical inventory count <em>(Formula: <span style="background-color: #ffcdd2; font-weight: bold;">Bilang ng Naibenta × Supplier Price</span>)</em>. Kung walang pending sales sa loob ng mahabang panahon, ang Owner ay magbibisita pa rin sa loob ng <span style="background-color: #fff59d; font-weight: bold;">30 days</span> para sa monitoring at pag-ensure ng store condition. Ang <span style="background-color: #fff59d; font-weight: bold;">mga hindi nabentang yunit ay mananatiling pag-aari ng Owner</span> bilang consignment stocks.</li>
+          <li style="margin-bottom: 6px;"><strong>MONTHLY RESTOCK REQUESTS:</strong> Ang Store Partner ay makakapag-submit ng <span style="background-color: #fff59d; font-weight: bold;">ONE (1) restock request bawat buwan</span>. Ang minimum at maximum na dami ng restock per request ay <span style="background-color: #ffcdd2; font-weight: bold;">FIXED AT EXACTLY 5 PIECES (pcs) lamang</span>. Kung kailangan ng mas maraming restock, maaaring isubmit ang bagong request sa susunod na buwan. Ang <span style="background-color: #fff59d; font-weight: bold;">Owner ay may diskresyon na aprubahan o tanggihan</span> ang restock request batay sa inventory availability at business conditions.</li>
+          <li style="margin-bottom: 6px;"><strong>PAGWAWAKAS NG KASUNDUAN:</strong> Ang kasunduan ay <span style="background-color: #fff59d; font-weight: bold;">patuloy na magagawi hanggang sa alinmang panig ay mag-desisyon na itapos ito</span>. Ang Store Partner ay maaaring magpadala ng termination notice <span style="background-color: #fff59d; font-weight: bold;">anumang oras</span> sa pamamagitan ng pag-click ng <span style="background-color: #ffeb3b; color: #d32f2f; font-size: 1.1em; font-weight: bold; padding: 2px 6px; border-radius: 3px;">"STOP/CANCEL"</span> button sa kanilang portal. Sa araw ng pagwawakas, gagawin ang pinal na <span style="background-color: #fff59d; font-weight: bold;">settlement/accounting</span>: <span style="background-color: #fff59d; font-weight: bold;">babayaran ng Store Partner ang lahat ng aktibong na benta at ibabalik naman ng buo sa Owner ang lahat ng natitirang walang sirang stocks</span>.</li>
+        </ol>
+
+        <div id="agreementStatusDisplay" style="font-weight: bold; color: white; background-color: #2e7d32; margin-top: 12px; border-radius: 4px; padding: 8px; text-align: center; font-size: 1.05em;">✅ Status: Aktibo ang Consignment</div>
+      </div>
+    </div>
+
     <!-- Collapsible Change Password Section para sa Existing Clients -->
     <div class="card" style="background: #f1f8e9; border-left: 4px solid #2e7d32;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -239,6 +267,19 @@ button:hover { opacity: 0.9; }
       <h2>📦 Aktibong Stock at mga Paninda</h2>
       <div id="clientItemsContainer">
         <p style="font-size: 0.85rem; color: #666;">Kinukuha ang data...</p>
+      </div>
+    </div>
+
+    <!-- Collapsible Transaction History Section -->
+    <div class="card" style="background: #e0f7fa; border-left: 4px solid #00acc1;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: #00acc1; font-size: 0.95rem; margin-bottom: 0;">📜 Kasaysayan ng Transaksyon (Transaction History)</h2>
+        <button type="button" id="toggleTransactionBtn" onclick="toggleTransactionVisibility()" style="background-color: #00acc1; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Buksan</button>
+      </div>
+      <div id="transactionContentWrapper" style="display: none; margin-top: 10px;">
+        <div id="clientTransactionContainer">
+          <p style="font-size: 0.85rem; color: #666;">Wala pang naitalang transaksyon.</p>
+        </div>
       </div>
     </div>
 
@@ -381,9 +422,23 @@ window.toggleQrVisibility = function() {
   btn.textContent = isHidden ? 'Itago ang QR Code' : 'Ipakita ang QR Code';
 };
 
+window.toggleAgreementVisibility = function() {
+  const wrapper = document.getElementById('agreementContentWrapper');
+  const btn = document.getElementById('toggleAgreementBtn');
+  wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+  btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
+};
+
 window.togglePasswordVisibility = function() {
   const wrapper = document.getElementById('passwordContentWrapper');
   const btn = document.getElementById('togglePasswordBtn');
+  wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+  btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
+};
+
+window.toggleTransactionVisibility = function() {
+  const wrapper = document.getElementById('transactionContentWrapper');
+  const btn = document.getElementById('toggleTransactionBtn');
   wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
   btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
 };
@@ -402,6 +457,53 @@ window.toggleChatVisibility = function() {
   btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
 };
 
+// Masking helper para sa privacy ng store names
+function maskStoreName(name) {
+  return name.split(' ').map(word => {
+    if (word.length <= 1) return word;
+    return word[0] + '*'.repeat(word.length - 1);
+  }).join(' ');
+}
+
+// Search & Masked Suggestion Logic para sa Login
+const unifiedStoreInput = document.getElementById('unifiedStoreInput');
+const storeSuggestions = document.getElementById('storeSuggestions');
+
+if (unifiedStoreInput) {
+  unifiedStoreInput.addEventListener('input', () => {
+    const query = unifiedStoreInput.value.trim().toLowerCase();
+    storeSuggestions.innerHTML = '';
+    if (!query) {
+      storeSuggestions.style.display = 'none';
+      return;
+    }
+    const matches = appData.consignments.filter(c => c.storeName.toLowerCase().includes(query));
+    if (matches.length > 0) {
+      storeSuggestions.style.display = 'block';
+      matches.forEach(c => {
+        const div = document.createElement('div');
+        div.style.cssText = "padding: 8px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #eee; background: white;";
+        div.textContent = maskStoreName(c.storeName);
+        div.addEventListener('click', () => {
+          unifiedStoreInput.value = c.storeName;
+          storeSuggestions.style.display = 'none';
+        });
+        div.addEventListener('mouseenter', () => div.style.background = '#f1f8e9');
+        div.addEventListener('mouseleave', () => div.style.background = 'white');
+        storeSuggestions.appendChild(div);
+      });
+    } else {
+      storeSuggestions.style.display = 'none';
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#unifiedStoreInput') && !e.target.closest('#storeSuggestions')) {
+      storeSuggestions.style.display = 'none';
+    }
+  });
+}
+
 // Existing client password update function
 window.updateClientPassword = async function() {
   const newPass = document.getElementById('newClientPassword').value.trim();
@@ -412,9 +514,14 @@ window.updateClientPassword = async function() {
   const store = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
   if (!store) return;
   store.password = newPass;
+  
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Security', text: 'Binago ang password ng tindahan.', date: new Date().toLocaleString() });
+
   await saveData();
   alert("✅ Matagumpay na na-update ang password ng iyong tindahan!");
   document.getElementById('newClientPassword').value = '';
+  renderClientDashboard(store);
 };
 
 document.getElementById('unifiedLoginBtn').addEventListener('click', async () => {
@@ -479,6 +586,10 @@ window.promptStopAgreement = async function() {
   store.consignmentStatus = "Stopped";
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: "⚠️ Pinal na itinigil ng kliyente ang Consignment Agreement.", date: new Date().toLocaleString() });
+  
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Kasunduan', text: 'Itinigil/Ikinansela ang Consignment Agreement.', date: new Date().toLocaleString() });
+
   await saveData();
   alert("Matagumpay na naitala ang iyong pagpapahinto sa kasunduan.");
   renderClientDashboard(store);
@@ -507,8 +618,13 @@ window.confirmReceiveRestock = async function(index) {
   store.approvedRestocks.splice(index, 1);
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`, date: new Date().toLocaleString() });
+  
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Restock', text: `Natanggap ang restock na ${itemToReceive.qty} pcs (${itemToReceive.styleType})`, date: new Date().toLocaleString() });
+
   await saveData();
   alert("Matagumpay na naidagdag sa iyong stock!");
+  renderClientDashboard(store);
 };
 
 window.promptRecordSale = async function(styleType) {
@@ -531,6 +647,10 @@ window.promptRecordSale = async function(styleType) {
   store.pendingSales.unshift({ styleType: styleType, qty: qtySold, price: sub.price || 0, totalAmount: qtySold * (sub.price || 0), date: new Date().toLocaleString(), status: "Pending" });
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType})`, date: new Date().toLocaleString() });
+
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Benta', text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType})`, date: new Date().toLocaleString() });
+
   await saveData();
   alert("Matagumpay na naipadala ang pending receipt sa Admin!");
   renderClientDashboard(store);
@@ -590,7 +710,7 @@ function initPortalView() {
   }
 }
 
-// Inquiry Form Submission na kasama ang Initial Quantity at Password
+// Inquiry Form Submission para sa Digital Consignment (Bagong Kliyente)
 const inquiryForm = document.getElementById('inquiryForm');
 if (inquiryForm) {
   inquiryForm.addEventListener('submit', async (e) => {
@@ -608,13 +728,29 @@ if (inquiryForm) {
     if (!appData.pendingInquiries) appData.pendingInquiries = [];
     appData.pendingInquiries.push({ storeName, ownerName, password, contact, email, address, styleType, initialQty, message, date: new Date().toLocaleString() });
     await saveData();
-    alert('Matagumpay na nagawa ang account / naipadala ang aplikasyon kasama ang dami ng nais i-order at password!');
+    alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!');
     inquiryForm.reset();
   });
 }
 
 function renderClientDashboard(store) {
   document.getElementById('displayStoreName').innerHTML = store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${store.ownerName})</span>` : '');
+
+  // I-update ang opisyal na kasunduan para sa existing clients
+  const agreementStorePartner = document.getElementById('agreementStorePartner');
+  if (agreementStorePartner) {
+    agreementStorePartner.textContent = `${store.storeName} (${store.ownerName || 'May-ari'})`;
+  }
+  const agreementSupplierPrice = document.getElementById('agreementSupplierPrice');
+  if (agreementSupplierPrice) {
+    const activeItem = store.storeItems && store.storeItems[0] ? store.storeItems[0] : null;
+    agreementSupplierPrice.textContent = activeItem ? (activeItem.price || store.price || '___') : (store.price || '___');
+  }
+
+  const agreementStatusDisplay = document.getElementById('agreementStatusDisplay');
+  if (agreementStatusDisplay) {
+    agreementStatusDisplay.textContent = `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
+  }
 
   const smallQrContainer = document.getElementById('smallQrcode');
   smallQrContainer.innerHTML = "";
@@ -651,6 +787,21 @@ function renderClientDashboard(store) {
     });
   } else {
     pendingSalesCard.style.display = 'none';
+  }
+
+  // Render Transaction History
+  const transContainer = document.getElementById('clientTransactionContainer');
+  transContainer.innerHTML = '';
+  if (!store.transactionHistory) store.transactionHistory = [];
+  if (store.transactionHistory.length > 0) {
+    store.transactionHistory.forEach(tx => {
+      const div = document.createElement('div');
+      div.style.cssText = "background: white; border: 1px solid #b2ebf2; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
+      div.innerHTML = `<div><strong style="color: #00838f;">[${tx.type}]</strong> ${tx.text}</div><div style="font-size: 0.7rem; color: #778; text-align: right; margin-top: 2px;">${tx.date}</div>`;
+      transContainer.appendChild(div);
+    });
+  } else {
+    transContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang naitalang transaksyon.</p>';
   }
 
   const notifContainer = document.getElementById('clientNotificationsContainer');
@@ -713,8 +864,13 @@ window.submitRestockRequest = async function() {
   store.activeRequests.push({ styleType: styleType, qty: 5, date: new Date().toLocaleString() });
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: `Humiling ng restock: 5 pcs (${styleType})`, date: new Date().toLocaleString() });
+
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Request', text: `Humiling ng restock: 5 pcs (${styleType})`, date: new Date().toLocaleString() });
+
   await saveData();
   alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
+  renderClientDashboard(store);
 };
 
 window.sendClientMessage = async function() {
