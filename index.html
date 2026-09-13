@@ -80,7 +80,7 @@ button:hover { opacity: 0.9; }
 <div class="container">
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-  <!-- Secure Login Screen na may Store Name + Password Combination -->
+  <!-- Secure Login Screen na may Masked Store Dropdown/Search -->
   <div id="loginScreen" class="card">
     <div id="directAccessNotice" style="display:none; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem; color: #2e7d32;">
       🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. Ilagay ang iyong password upang buksan ang portal.
@@ -88,11 +88,12 @@ button:hover { opacity: 0.9; }
     
     <div id="manualLoginSection" style="width: 100%;">
       <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan (Login)</h2>
-      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">Ilagay ang pangalan ng iyong tindahan at password upang mag-log in.</p>
+      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">I-type ang unang titik o pangalan ng tindahan upang lumitaw ang naka-mask na pagpipilian.</p>
       
-      <div class="form-group" style="width: 100%;">
+      <div class="form-group" style="width: 100%; position: relative;">
         <label for="unifiedStoreInput">Pangalan ng Tindahan:</label>
-        <input type="text" id="unifiedStoreInput" placeholder="Hal. Aling Nena Store">
+        <input type="text" id="unifiedStoreInput" placeholder="I-type ang unang titik..." autocomplete="off">
+        <div id="storeSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; display: none; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"></div>
       </div>
       <div class="form-group" style="width: 100%;">
         <label for="unifiedPasswordInput">Password:</label>
@@ -421,6 +422,53 @@ window.toggleChatVisibility = function() {
   wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
   btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
 };
+
+// Masking helper para sa privacy ng store names
+function maskStoreName(name) {
+  return name.split(' ').map(word => {
+    if (word.length <= 1) return word;
+    return word[0] + '*'.repeat(word.length - 1);
+  }).join(' ');
+}
+
+// Search & Masked Suggestion Logic para sa Login
+const unifiedStoreInput = document.getElementById('unifiedStoreInput');
+const storeSuggestions = document.getElementById('storeSuggestions');
+
+if (unifiedStoreInput) {
+  unifiedStoreInput.addEventListener('input', () => {
+    const query = unifiedStoreInput.value.trim().toLowerCase();
+    storeSuggestions.innerHTML = '';
+    if (!query) {
+      storeSuggestions.style.display = 'none';
+      return;
+    }
+    const matches = appData.consignments.filter(c => c.storeName.toLowerCase().includes(query));
+    if (matches.length > 0) {
+      storeSuggestions.style.display = 'block';
+      matches.forEach(c => {
+        const div = document.createElement('div');
+        div.style.cssText = "padding: 8px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #eee; background: white;";
+        div.textContent = maskStoreName(c.storeName);
+        div.addEventListener('click', () => {
+          unifiedStoreInput.value = c.storeName; // Isasama ang totoong pangalan kapag pinili sa dropdown
+          storeSuggestions.style.display = 'none';
+        });
+        div.addEventListener('mouseenter', () => div.style.background = '#f1f8e9');
+        div.addEventListener('mouseleave', () => div.style.background = 'white');
+        storeSuggestions.appendChild(div);
+      });
+    } else {
+      storeSuggestions.style.display = 'none';
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#unifiedStoreInput') && !e.target.closest('#storeSuggestions')) {
+      storeSuggestions.style.display = 'none';
+    }
+  });
+}
 
 // Existing client password update function
 window.updateClientPassword = async function() {
