@@ -181,11 +181,14 @@ button:hover { opacity: 0.9; }
         <span style="font-size: 0.75rem; color: #555;" id="displayStoreStatus">Aktibo ang Consignment</span>
       </div>
       
-      <!-- QR Code para sa sharing -->
-      <div style="margin-top: 12px; display: flex; justify-content: center;">
-        <div style="background: white; padding: 10px; border-radius: 6px; border: 2px solid #2e7d32; text-align: center;">
-          <div id="smallQrcode" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;"></div>
-          <span style="font-size: 0.75rem; color: #2e7d32; font-weight: bold; display: block; margin-top: 6px;">i-scan para maglogin</span>
+      <!-- Collapsible QR Code para sa sharing -->
+      <div style="margin-top: 12px;">
+        <button type="button" id="toggleQrBtn" onclick="toggleQrVisibility()" style="background-color: #2e7d32; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Ipakita ang QR Code</button>
+        <div id="qrContentWrapper" style="display: none; margin-top: 10px; display: flex; justify-content: center;">
+          <div style="background: white; padding: 10px; border-radius: 6px; border: 2px solid #2e7d32; text-align: center;">
+            <div id="smallQrcode" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;"></div>
+            <span style="font-size: 0.75rem; color: #2e7d32; font-weight: bold; display: block; margin-top: 6px;">i-scan para maglogin</span>
+          </div>
         </div>
       </div>
       
@@ -215,15 +218,20 @@ button:hover { opacity: 0.9; }
       </div>
     </div>
 
-    <!-- Change Password Section para sa Existing Clients -->
+    <!-- Collapsible Change Password Section para sa Existing Clients -->
     <div class="card" style="background: #f1f8e9; border-left: 4px solid #2e7d32;">
-      <h2 style="color: #2e7d32; font-size: 0.95rem;">🔒 Palitan ang Password ng Tindahan</h2>
-      <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Maaari mong baguhin ang iyong password anumang oras.</p>
-      <div class="form-group">
-        <label>Bagong Password:</label>
-        <input type="password" id="newClientPassword" placeholder="Ilagay ang bagong password">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: #2e7d32; font-size: 0.95rem; margin-bottom: 0;">🔒 Palitan ang Password ng Tindahan</h2>
+        <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" style="background-color: #2e7d32; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Buksan</button>
       </div>
-      <button type="button" onclick="updateClientPassword()" style="background-color: #2e7d32;">I-save ang Bagong Password</button>
+      <div id="passwordContentWrapper" style="display: none; margin-top: 10px;">
+        <p style="font-size: 0.80rem; color: #333; margin-bottom: 8px;">Maaari mong baguhin ang iyong password anumang oras.</p>
+        <div class="form-group">
+          <label>Bagong Password:</label>
+          <input type="password" id="newClientPassword" placeholder="Ilagay ang bagong password">
+        </div>
+        <button type="button" onclick="updateClientPassword()" style="background-color: #2e7d32;">I-save ang Bagong Password</button>
+      </div>
     </div>
 
     <!-- Active Stock Section -->
@@ -363,6 +371,21 @@ window.selectInqStyle = function(style, el) {
   const parent = el.parentElement;
   parent.querySelectorAll('.style-option-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
+};
+
+window.toggleQrVisibility = function() {
+  const wrapper = document.getElementById('qrContentWrapper');
+  const btn = document.getElementById('toggleQrBtn');
+  const isHidden = wrapper.style.display === 'none';
+  wrapper.style.display = isHidden ? 'flex' : 'none';
+  btn.textContent = isHidden ? 'Itago ang QR Code' : 'Ipakita ang QR Code';
+};
+
+window.togglePasswordVisibility = function() {
+  const wrapper = document.getElementById('passwordContentWrapper');
+  const btn = document.getElementById('togglePasswordBtn');
+  wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+  btn.textContent = wrapper.style.display === 'block' ? 'Itago' : 'Buksan';
 };
 
 window.toggleRestockVisibility = function() {
