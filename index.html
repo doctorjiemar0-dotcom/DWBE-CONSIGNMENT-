@@ -105,11 +105,11 @@ button:hover { opacity: 0.9; }
     <button type="button" id="proceedLoginBtn" style="display:none; background-color: var(--secondary-color); margin-bottom: 15px;">Ituloy sa Aking Portal</button>
     <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
 
-    <!-- Create Account / Aplikasyon Section na may Sariling Password, Initial Quantity at Paalala -->
+    <!-- Create Account / Aplikasyon Section na may Sariling Password, Initial Quantity at Paalala (Digital Consignment para sa mga Bagong Kliyente) -->
     <div id="printableInquirySection" style="width: 100%;">
-      <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Create Account / Bagong Aplikasyon</h2>
+      <h2 style="margin-top: 10px; color: #0288d1; font-size: 1rem;">Digital Consignment / Bagong Aplikasyon</h2>
       <div class="no-print" style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #0d47a1; border-radius: 4px; line-height: 1.4;">
-        <strong>💡 Impormasyon:</strong> Maaari mong itakda ang iyong sariling password at dami ng nais i-order. <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong> dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
+        <strong>💡 Impormasyon:</strong> Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order. <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong> dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
       </div>
       <form id="inquiryForm" style="width: 100%; margin-top: 8px;">
         <div class="form-group">
@@ -168,7 +168,7 @@ button:hover { opacity: 0.9; }
           <label>Mensahe / Katanungan (Optional):</label>
           <textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea>
         </div>
-        <button type="submit" style="background-color: #0288d1;">Gumawa ng Account / Ipadala ang Aplikasyon</button>
+        <button type="submit" style="background-color: #0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
       <button type="button" onclick="window.print()" class="no-print" style="background-color: #607d8b; margin-top: 8px;">🖨️ I-print ang Aplikasyon Form</button>
     </div>
@@ -219,21 +219,31 @@ button:hover { opacity: 0.9; }
       </div>
     </div>
 
-    <!-- Collapsible Consignment Agreement Section -->
+    <!-- Official Consignment Agreement Section (Para sa Existing Clients - Ayon sa Opisyal na Kontrata ni Doctor's Whisk Broom Etc.) -->
     <div class="card" style="background: #e8f5e9; border-left: 4px solid #2e7d32;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="color: #2e7d32; font-size: 0.95rem; margin-bottom: 0;">📜 Kasunduan sa Consignment (Agreement)</h2>
+        <h2 style="color: #2e7d32; font-size: 0.95rem; margin-bottom: 0;">📜 Opisyal na Kasunduan sa Consignment</h2>
         <button type="button" id="toggleAgreementBtn" onclick="toggleAgreementVisibility()" style="background-color: #2e7d32; width: auto; padding: 4px 10px; font-size: 0.75rem; margin-top: 0;">Buksan</button>
       </div>
-      <div id="agreementContentWrapper" style="display: none; margin-top: 10px; font-size: 0.85rem; line-height: 1.5; color: #333;">
-        <p style="margin-bottom: 8px;"><strong>Mga Tuntunin at Kundisyon ng Consignment:</strong></p>
-        <ul style="padding-left: 20px; margin-bottom: 8px;">
-          <li>Ang mga walis tambo ay nasa ilalim ng kasunduang consignment sa pagitan ng Doctor's Whisk Broom at ng tindahan.</li>
-          <li>Ang bawat restock ay may paunang bilang (hal. 5 piraso) ayon sa inaprubahan ng Admin.</li>
-          <li>Ang mga nabentang paninda ay kailangang i-record sa portal upang maitala at maresolba sa takdang koleksyon.</li>
-          <li>Maaaring ihinto o kanselahin ang kasunduan anumang oras sa pamamagitan ng pagpindot sa pindutan ng pagpapahinto sa ibaba.</li>
-        </ul>
-        <div id="agreementStatusDisplay" style="font-weight: bold; color: #2e7d32; margin-top: 6px;">Status: Aktibo ang Consignment</div>
+      <div id="agreementContentWrapper" style="display: none; margin-top: 10px; font-size: 0.83rem; line-height: 1.5; color: #333;">
+        <div style="text-align: center; font-weight: bold; margin-bottom: 10px; color: #2e7d32;">
+          DOCTOR'S WHISK BROOM ETC.<br>
+          <span style="font-size: 0.75rem; font-weight: normal; color: #555;">Osiao, Sorsogon City • FB: Jiemar Garais Doc Tor • 09104057065</span><br>
+          <strong>CONSIGNMENT AGREEMENT (STORE PARTNER)</strong>
+        </div>
+        
+        <p style="margin-bottom: 8px;"><strong>SA MGA KINAUUKULAN:</strong> Ang kasunduang ito ay pinagbisa sa pagitan ng Owner (<strong>JIEMAR GARAIS DOCTOR</strong>) at ng Store Partner / Consignee (<span id="agreementStorePartner" style="font-weight: bold; color: #2e7d32;">Tindahan</span>) upang pormal na itakda ang mga sumusunod na detalyadong alituntunin:</p>
+
+        <ol style="padding-left: 18px; margin-bottom: 10px;">
+          <li style="margin-bottom: 6px;"><strong>SISTEMA NG SUPPLY:</strong> Mag-iiwan ang Owner ng mga produktong Walis Tambo sa tindahan ng Store Partner nang walang anumang advance na bayad o deposito. Ang pagbaba ng bagong supply ay nakadepende sa takbo ng benta at space ng tindahan.</li>
+          <li style="margin-bottom: 6px;"><strong>SUPPLIER PRICE AT MARK-UP:</strong> Ang pinal na presyo ng bawat isang (1) piraso ng Walis Tambo mula sa Owner ay nagkakahalaga ng Php <span id="agreementSupplierPrice" style="font-weight: bold;">[Presyo]</span> (Supplier Price). Ang Store Partner ay may karapatang magtakda ng sarili nilang retail price o patong (mark-up) na magsisilbing direktang kita nila sa pagbebenta.</li>
+          <li style="margin-bottom: 6px;"><strong>REMITTANCE (ONE MONTH TO PAY):</strong> Ang cut-off ng bentahan ay buwanan. Tuwing katapusan ng buwan, ire-remit o babayaran ng Store Partner ang kabuuang halaga ng mga yunit na naibenta sa loob ng buwang iyon <em>(Formula: Bilang ng Naibenta × Supplier Price)</em>. Ang mga hindi nabentang yunit ay mananatiling pag-aari ng Owner bilang consignment stocks.</li>
+          <li style="margin-bottom: 6px;"><strong>PHYSICAL INVENTORY AT RESTOCK:</strong> Obligasyon ng Owner o ng kanyang kinatawan na bisitahin ang tindahan tuwing katapusan ng buwan o sa itinakdang araw ng bentahan upang magkasamang isagawa ang physical counting ng naritang stocks, kolektahin ang remittance ng benta, at magbaba ng dagdag na supply kung kinakailangan.</li>
+          <li style="margin-bottom: 6px;"><strong>VALIDITY AT REPLENISHMENT (DALAWANG BUWAN):</strong> Ang kasunduan ay may pinal na bisa sa dalawang (2) buwan lamang. Ang Store Partner ay may buong pananagutan sa seguridad ng mga produkto; anumang nawala o nasira ay ituturing na benta. Pagkatapos ng dalawang buwan, awtomatikong magwawakas ang kasunduan at ito ay kinakailangang gumawa ng panibagong kontrata para sa mga susunod na transaksyon.</li>
+          <li style="margin-bottom: 6px;"><strong>PAGWAWAKAS NG KASUNDUAN:</strong> Kung nais tapusin ng alinmang panig ang kasunduan bago lumipas ang dalawang buwan, maaari itong gawin sa anumang oras sa pamamagitan ng maayos na komunikasyon. Sa araw ng pagwawakas, gagawin ang pinal na kuwentuhan: babayaran ng Store Partner ang lahat ng aktibong na benta at ibabalik naman ng buo sa Owner ang lahat ng natitirang walang sirang stocks.</li>
+        </ol>
+
+        <div id="agreementStatusDisplay" style="font-weight: bold; color: #2e7d32; margin-top: 8px; border-top: 1px dashed #a5d6a7; padding-top: 6px;">Status: Aktibo ang Consignment</div>
       </div>
     </div>
 
@@ -474,9 +484,9 @@ if (unifiedStoreInput) {
       matches.forEach(c => {
         const div = document.createElement('div');
         div.style.cssText = "padding: 8px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #eee; background: white;";
-        div.textContent = maskStoreName(c.storeName); // Naka-mask sa suggestion dropdown para iwas buong exposure
+        div.textContent = maskStoreName(c.storeName);
         div.addEventListener('click', () => {
-          unifiedStoreInput.value = c.storeName; // Awtomatikong isasama ang buong totoong pangalan kapag pinili sa dropdown
+          unifiedStoreInput.value = c.storeName;
           storeSuggestions.style.display = 'none';
         });
         div.addEventListener('mouseenter', () => div.style.background = '#f1f8e9');
@@ -701,7 +711,7 @@ function initPortalView() {
   }
 }
 
-// Inquiry Form Submission na kasama ang Initial Quantity at Password
+// Inquiry Form Submission para sa Digital Consignment (Bagong Kliyente)
 const inquiryForm = document.getElementById('inquiryForm');
 if (inquiryForm) {
   inquiryForm.addEventListener('submit', async (e) => {
@@ -719,13 +729,24 @@ if (inquiryForm) {
     if (!appData.pendingInquiries) appData.pendingInquiries = [];
     appData.pendingInquiries.push({ storeName, ownerName, password, contact, email, address, styleType, initialQty, message, date: new Date().toLocaleString() });
     await saveData();
-    alert('Matagumpay na nagawa ang account / naipadala ang aplikasyon kasama ang dami ng nais i-order at password!');
+    alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!');
     inquiryForm.reset();
   });
 }
 
 function renderClientDashboard(store) {
   document.getElementById('displayStoreName').innerHTML = store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${store.ownerName})</span>` : '');
+
+  // I-update ang opisyal na kasunduan para sa existing clients
+  const agreementStorePartner = document.getElementById('agreementStorePartner');
+  if (agreementStorePartner) {
+    agreementStorePartner.textContent = `${store.storeName} (${store.ownerName || 'May-ari'})`;
+  }
+  const agreementSupplierPrice = document.getElementById('agreementSupplierPrice');
+  if (agreementSupplierPrice) {
+    const activeItem = store.storeItems && store.storeItems[0] ? store.storeItems[0] : null;
+    agreementSupplierPrice.textContent = activeItem ? (activeItem.price || store.price || '___') : (store.price || '___');
+  }
 
   const agreementStatusDisplay = document.getElementById('agreementStatusDisplay');
   if (agreementStatusDisplay) {
