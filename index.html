@@ -88,11 +88,15 @@ button:hover { opacity: 0.9; }
     
     <div id="manualLoginSection" style="width: 100%;">
       <h2 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 5px;">Pribadong Portal ng Tindahan (Login)</h2>
-      <p style="font-size: 0.80rem; color: #666; margin-bottom: 15px;">I-type ang unang titik o pangalan ng tindahan upang lumitaw ang naka-mask na pagpipilian.</p>
+      <p style="font-size: 0.80rem; color: #666; margin-bottom: 8px;">I-type ang unang titik o pangalan ng tindahan upang lumitaw ang naka-mask na pagpipilian.</p>
+      <div style="background-color: #e3f2fd; border-left: 4px solid #0288d1; padding: 8px; margin-bottom: 12px; font-size: 0.75rem; color: #0d47a1; border-radius: 4px;">
+        🔒 <strong>Privacy Notice:</strong> Ang mga pangalan ng tindahan ay naka-mask para sa iyong seguridad at privacy. Ang nakikita mo dito ay hindi ang buong pangalan ng tindahan.
+      </div>
       
       <div class="form-group" style="width: 100%; position: relative;">
         <label for="unifiedStoreInput">Pangalan ng Tindahan:</label>
         <input type="text" id="unifiedStoreInput" placeholder="I-type ang unang titik..." autocomplete="off">
+        <input type="hidden" id="unifiedStoreActual">
         <div id="storeSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; display: none; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"></div>
       </div>
       <div class="form-group" style="width: 100%;">
@@ -467,17 +471,22 @@ function maskStoreName(name) {
 
 // Search & Masked Suggestion Logic para sa Login
 const unifiedStoreInput = document.getElementById('unifiedStoreInput');
+const unifiedStoreActual = document.getElementById('unifiedStoreActual');
 const storeSuggestions = document.getElementById('storeSuggestions');
 
 if (unifiedStoreInput) {
   unifiedStoreInput.addEventListener('input', () => {
     const query = unifiedStoreInput.value.trim().toLowerCase();
     storeSuggestions.innerHTML = '';
+    
     if (!query) {
       storeSuggestions.style.display = 'none';
+      unifiedStoreActual.value = '';
       return;
     }
+    
     const matches = appData.consignments.filter(c => c.storeName.toLowerCase().includes(query));
+    
     if (matches.length > 0) {
       storeSuggestions.style.display = 'block';
       matches.forEach(c => {
@@ -485,7 +494,8 @@ if (unifiedStoreInput) {
         div.style.cssText = "padding: 8px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #eee; background: white;";
         div.textContent = maskStoreName(c.storeName);
         div.addEventListener('click', () => {
-          unifiedStoreInput.value = c.storeName;
+          unifiedStoreInput.value = maskStoreName(c.storeName);
+          unifiedStoreActual.value = c.storeName;
           storeSuggestions.style.display = 'none';
         });
         div.addEventListener('mouseenter', () => div.style.background = '#f1f8e9');
@@ -525,11 +535,12 @@ window.updateClientPassword = async function() {
 };
 
 document.getElementById('unifiedLoginBtn').addEventListener('click', async () => {
-  const storeNameVal = document.getElementById('unifiedStoreInput').value.trim();
+  const storeNameVal = document.getElementById('unifiedStoreActual').value.trim();
+  const maskedDisplayVal = document.getElementById('unifiedStoreInput').value.trim();
   const passwordVal = document.getElementById('unifiedPasswordInput').value.trim();
   
   if (!storeNameVal || !passwordVal) {
-    alert('Mangyaring ilagay ang pangalan ng tindahan at password.');
+    alert('Mangyaring pumili ng tindahan at ilagay ang password.');
     return;
   }
   
