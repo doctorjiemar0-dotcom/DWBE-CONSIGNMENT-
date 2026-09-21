@@ -81,6 +81,42 @@
     .store-header-row { display: flex; justify-content: space-between; align-items: center; }    
     .toggle-store-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--primary-color); width: auto; margin-top: 0; padding: 0 4px; font-weight: bold; }    
     .store-body-content { margin-top: 10px; }    
+
+    .password-display-box {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+    .password-display-box strong {
+        color: #f57f17;
+    }
+    .password-display-box .password-value {
+        font-family: monospace;
+        background: white;
+        padding: 6px 10px;
+        border-radius: 3px;
+        color: #d32f2f;
+        font-weight: bold;
+        display: inline-block;
+        margin: 0 6px;
+    }
+    .password-copy-btn {
+        background: #0288d1 !important;
+        color: white !important;
+        border: none !important;
+        padding: 4px 10px !important;
+        border-radius: 3px !important;
+        font-size: 0.75rem !important;
+        cursor: pointer !important;
+        margin-top: 0 !important;
+        width: auto !important;
+    }
+    .password-copy-btn:hover {
+        background: #0277bd !important;
+    }
 </style>
 
 </head>    
@@ -346,6 +382,13 @@
     const passwordInput = document.getElementById('adminPasswordInput');    
     const syncStatus = document.getElementById('syncStatus');    
     const logoutBtn = document.getElementById('logoutBtn');    
+    
+    // ========== NEW: Copy to Clipboard Function ==========
+    window.copyToClipboard = function(text) {
+      navigator.clipboard.writeText(text);
+      alert('✅ Password copied sa clipboard!');
+    };
+    // ====================================================
     
     window.switchTab = function(tabId, btnElement) {    
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));    
@@ -884,14 +927,26 @@
             appData.pendingInquiries.forEach((inq, inqIdx) => {    
                 const div = document.createElement('div');    
                 div.className = 'inquiry-card-box';    
+                
+                // ========== NEW: PASSWORD DISPLAY SECTION ==========
+                const passwordDisplay = inq.password ? `
+                    <div class="password-display-box">
+                        <strong>🔑 PASSWORD:</strong> 
+                        <span class="password-value">${inq.password}</span>
+                        <button type="button" onclick="copyToClipboard('${inq.password}')" class="password-copy-btn">📋 Copy</button>
+                    </div>
+                ` : '';
+                // ================================================
+                
                 div.innerHTML = `    
                     <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>    
                     📞 Contact: ${inq.contact} | 📧 Email: <strong style="color:#2e7d32;">${inq.email || 'Wala'}</strong><br>    
                     📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>    
-                    📦 Hiniling na Qty: <strong>${inq.qty || 10} pcs</strong><br>    
+                    📦 Hiniling na Qty: <strong>${inq.initialQty || inq.qty || 5} pcs</strong><br>    
                     💬 <strong>Mensahe/Inquiry:</strong> <span style="color:#333; font-style:italic;">"${inq.message || inq.notes || 'Walang mensahe'}"</span><br>    
+                    ${passwordDisplay}
                     <div class="btn-group" style="margin-top: 6px;">    
-                        <button type="button" class="btn-approve" onclick="approveInquiry(${inqIdx})">✅ Aprubahan (Auto-Bawas)</button>    
+                        <button type="button" class="btn-approve" onclick="approveInquiryWithPassword(${inqIdx})">✅ Aprubahan (Auto-Bawas)</button>    
                         <button type="button" class="btn-decline" onclick="declineInquiry(${inqIdx})">❌ Tanggihan</button>    
                     </div>    
                 `;    
@@ -1272,55 +1327,75 @@
         document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();    
     }    
     
-    window.approveInquiry = async function(inqIdx) {    
+    // ========== NEW: Approve Inquiry With Password ==========
+    window.approveInquiryWithPassword = async function(inqIdx) {    
         const inq = appData.pendingInquiries[inqIdx];    
-        const defaultQty = inq.qty || 10;    
+        const defaultQty = inq.initialQty || inq.qty || 10;    
         const initialStockStr = prompt(`[Prompt] Simulang stock para sa ${inq.storeName} (${inq.styleType || 'Ordinary'}):`, defaultQty);    
         if (initialStockStr === null) return;    
         const initialStock = parseInt(initialStockStr) || 0;    
-    
+
         const priceStr = prompt(`[Prompt] Presyo bawat piraso (₱):`, '150');    
         if (priceStr === null) return;    
         const price = parseFloat(priceStr) || 150;    
-    
+
         const style = inq.styleType || 'Ordinary';    
-    
+
         if (appData.homeStock[style] < initialStock) {    
             alert(`Hindi ma-aprube: Kulang ang Home stock para sa ${style} (${appData.homeStock[style]} pcs lamang ang available)!`);    
             return;    
         }    
-    
+
         const isSameName = inq.ownerName && inq.storeName && inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();    
         const searchValidationMsg = isSameName ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";    
-    
+
         appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);    
         const todayStr = new Date().toISOString().slice(0, 10);    
         let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);    
         const collDateStr = nextMonth.toISOString().slice(0, 10);    
-    
+
         let notifications = [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}).`, date: new Date().toLocaleString() }];    
         if (isSameName) {    
             notifications.push({ id: Date.now() + 1, text: searchValidationMsg, date: new Date().toLocaleString() });    
         }    
-    
+
         deduplicateConsignments();    
         cleanSourceData();    
+        
+        // 🔑 SAVE PASSWORD FROM INQUIRY
         appData.consignments.push({    
-            id: Date.now(), storeName: inq.storeName, ownerName: inq.ownerName || '', email: inq.email || '', address: inq.address || '', styleType: style, initialQty: initialStock,    
-            currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr,    
+            id: Date.now(), 
+            storeName: inq.storeName, 
+            ownerName: inq.ownerName || '', 
+            password: inq.password || '', // ✅ PASSWORD MULA SA INQUIRY
+            email: inq.email || '', 
+            address: inq.address || '', 
+            styleType: style, 
+            initialQty: initialStock,    
+            currentStock: initialStock, 
+            returnedQty: 0, 
+            rejectedQty: 0, 
+            price: price, 
+            dateDelivered: todayStr, 
+            collectionDate: collDateStr,    
             storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],    
-            activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: notifications, messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],    
+            activeRequests: [], 
+            pendingSales: [], 
+            approvedRestocks: [], 
+            clientNotifications: notifications, 
+            messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],    
             lastClientAccess: null,    
             searchValidation: searchValidationMsg,    
             isCollected: false,    
             history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory` }]    
         });    
-    
+
         appData.pendingInquiries.splice(inqIdx, 1);    
         await saveToCloud();    
         closeModal('inquiryModal');    
-        alert('Matagumpay na na-aprube ang inquiry at naibawas na sa inventory!');    
+        alert(`Matagumpay na na-aprube ang inquiry!\n\n🔑 Password: ${inq.password}\n\nKasama na sa consignment list.`);    
     };    
+    // ================================================
     
     window.declineInquiry = async function(inqIdx) {    
         if (confirm('Tanggihan ang aplikasyong ito?')) {    
