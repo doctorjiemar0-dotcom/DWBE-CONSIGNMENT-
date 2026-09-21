@@ -701,30 +701,112 @@ async function saveData() {
 function initPortalView() {
   const urlParams = new URLSearchParams(window.location.search);
   const paramStore = urlParams.get('store');
+
+  const loginScreen = document.getElementById('loginScreen');
+  const portalContent = document.getElementById('portalContent');
+  const directAccessNotice = document.getElementById('directAccessNotice');
+  const unifiedStoreInput = document.getElementById('unifiedStoreInput');
+  const unifiedStoreActual = document.getElementById('unifiedStoreActual');
+  const unifiedPasswordInput = document.getElementById('unifiedPasswordInput');
+
+  /*
+   * STEP 1 SECURITY:
+   * Ang ?store=... ay hindi na automatic login.
+   * Ginagamit lamang ito upang tukuyin/piliin ang store.
+   */
+
   if (paramStore) {
-    currentStoreName = paramStore;
-    localStorage.setItem('client_logged_store', currentStoreName);
-  }
-  if (currentStoreName) {
-    const found = appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+    const found = appData.consignments.find(
+      c => c.storeName &&
+           c.storeName.toLowerCase() === paramStore.toLowerCase()
+    );
+
     if (found) {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('portalContent').style.display = 'block';
-      if (paramStore) document.getElementById('directAccessNotice').style.display = 'block';
-      renderClientDashboard(found);
-    } else {
+      // I-clear muna ang dating local login state.
       localStorage.removeItem('client_logged_store');
       currentStoreName = '';
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('portalContent').style.display = 'none';
+
+      // Ipakita ang login screen.
+      loginScreen.style.display = 'flex';
+      portalContent.style.display = 'none';
+
+      // Ipakita ang direct-access notice.
+      if (directAccessNotice) {
+        directAccessNotice.style.display = 'block';
+      }
+
+      /*
+       * I-prefill ang hidden store value para hindi na
+       * kailangang hanapin ulit ng client ang store.
+       *
+       * Ang full store name ay nasa hidden field lamang
+       * para sa kasalukuyang UI flow.
+       */
+      if (unifiedStoreActual) {
+        unifiedStoreActual.value = found.storeName;
+      }
+
+      if (unifiedStoreInput) {
+        unifiedStoreInput.value = maskStoreName(found.storeName);
+      }
+
+      // Siguraduhing password ang susunod na kailangan.
+      if (unifiedPasswordInput) {
+        unifiedPasswordInput.value = '';
+        setTimeout(() => {
+          unifiedPasswordInput.focus();
+        }, 100);
+      }
+
+      return;
     }
-  } else {
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('portalContent').style.display = 'none';
+
+    /*
+     * Kung invalid ang ?store= value,
+     * huwag itong gamitin bilang login.
+     */
+    localStorage.removeItem('client_logged_store');
+    currentStoreName = '';
+  }
+
+  /*
+   * Normal login session.
+   * Bubuksan lamang ang portal kung may dating
+   * authenticated login state.
+   */
+  if (currentStoreName) {
+    const found = appData.consignments.find(
+      c => c.storeName &&
+           c.storeName.toLowerCase() === currentStoreName.toLowerCase()
+    );
+
+    if (found) {
+      loginScreen.style.display = 'none';
+      portalContent.style.display = 'block';
+
+      if (directAccessNotice) {
+        directAccessNotice.style.display = 'none';
+      }
+
+      renderClientDashboard(found);
+      return;
+    }
+
+    // Invalid/expired local session.
+    localStorage.removeItem('client_logged_store');
+    currentStoreName = '';
+  }
+
+  // Default: Login screen lamang.
+  loginScreen.style.display = 'flex';
+  portalContent.style.display = 'none';
+
+  if (directAccessNotice && !paramStore) {
+    directAccessNotice.style.display = 'none';
   }
 }
 
-// Inquiry Form Submission para sa Digital Consignment (Bagong Kliyente)
+  // Inquiry Form Submission para sa Digital Consignment (Bagong Kliyente)
 const inquiryForm = document.getElementById('inquiryForm');
 if (inquiryForm) {
   inquiryForm.addEventListener('submit', async (e) => {
