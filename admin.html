@@ -137,16 +137,15 @@
     </div>    <div id="mainAppContent">    
     <div id="syncStatus">Kumokonekta sa Cloud Database...</div>    
 
-    <!-- Tab Navigation Menu with Badges -->    
+    <!-- Tab Navigation Menu without "Mga Benta" tab button -->    
     <div class="nav-tabs">    
         <button type="button" class="tab-btn active" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>    
         <button type="button" class="tab-btn" onclick="switchTab('inquiriesTab', this)">📥 Inquiries<span class="tab-badge" id="inquiryTabBadge">0</span></button>    
         <button type="button" class="tab-btn" onclick="switchTab('storesTab', this)">🏢 Tindahan</button>    
-        <button type="button" class="tab-btn" onclick="switchTab('salesTab', this)">💰 Mga Benta<span class="tab-badge" id="salesTabBadge">0</span></button>    
         <button type="button" class="tab-btn" onclick="switchTab('inventoryTab', this)">📋 Inventory</button>    
     </div>    
 
-    <!-- Top Action Bar replacing floating buttons (Pinag-isa ang Benta at Requests) -->    
+    <!-- Top Action Bar containing Benta & Requests modal trigger -->    
     <div class="action-bar-top">    
         <button type="button" onclick="openModal('broadcastModal')" style="background-color: #6a1b9a;">📢 Broadcast</button>    
         <button type="button" onclick="openModal('backupModal')" style="background-color: #00796b;">💾 Backup</button>    
@@ -285,21 +284,7 @@
         </div>    
     </div>    
 
-    <!-- TAB 4: MGA BENTA -->    
-    <div id="salesTab" class="tab-content">    
-        <div class="card" style="background: #e8f5e9; border: 1px solid #c5e1a5;">    
-            <h2>💰 Tab ng mga Benta</h2>    
-            <div class="form-group" style="margin-bottom: 10px;">    
-                <input type="text" id="salesSearchInput" placeholder="🔍 Hanapin ang tindahan sa benta..." oninput="renderApp()" style="font-size: 0.85rem; padding: 8px;">    
-            </div>    
-            <div id="salesModalTotalSales" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; color: #2e7d32; background: white; padding: 10px; border-radius: 6px; border: 1px solid #c5e1a5; display: none;"></div>    
-            <div id="adminSalesContainer">    
-                <p style="font-size: 0.85rem; color: #666;">Wala pang pending o na-report na benta.</p>    
-            </div>    
-        </div>    
-    </div>    
-
-    <!-- TAB 5: INVENTORY -->    
+    <!-- TAB 4: INVENTORY -->    
     <div id="inventoryTab" class="tab-content">    
         <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">    
             <h2>CONSIGNMENT INVENTORY AND MONITORING</h2>    
@@ -928,7 +913,6 @@
                 const div = document.createElement('div');    
                 div.className = 'inquiry-card-box';    
                 
-                // ========== NEW: PASSWORD DISPLAY SECTION ==========
                 const passwordDisplay = inq.password ? `
                     <div class="password-display-box">
                         <strong>🔑 PASSWORD:</strong> 
@@ -936,7 +920,6 @@
                         <button type="button" onclick="copyToClipboard('${inq.password}')" class="password-copy-btn">📋 Copy</button>
                     </div>
                 ` : '';
-                // ================================================
                 
                 div.innerHTML = `    
                     <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>    
@@ -963,26 +946,17 @@
         const requestsContainerModal = document.getElementById('adminRequestsContainerModal');    
         if(requestsContainerModal) requestsContainerModal.innerHTML = '';    
     
-        const salesContainer = document.getElementById('adminSalesContainer');    
-        if(salesContainer) salesContainer.innerHTML = '';    
-    
         let hasRequests = false;    
         let totalActiveReqsCount = appData.pendingInquiries.length;    
         let actionReqCount = 0;    
         let onlineStoreCount = 0;    
         let pendingRestockCount = 0;    
     
-        const salesSearchInput = document.getElementById('salesSearchInput');    
-        const salesFilter = salesSearchInput ? salesSearchInput.value.toLowerCase().trim() : '';    
-    
-        let filteredSalesTabTotal = 0;    
-    
         let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;    
         const currentYM = new Date().toISOString().slice(0, 7);    
     
         let dashboardEarningsHtml = '';    
   
-        // Sorting consignments: Uncollected first, sorted by start date ascending. Collected ones at the bottom.  
         appData.consignments.sort((a, b) => {  
             if (a.isCollected !== b.isCollected) {  
                 return a.isCollected ? 1 : -1;  
@@ -1063,8 +1037,6 @@
             let rating = item.isCollected ? 'Nakolektahan' : (storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos'));    
             let badgeClass = item.isCollected ? 'badge-good' : (storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good'));    
     
-            const storeMatchesSalesFilter = !salesFilter || item.storeName.toLowerCase().includes(salesFilter);    
-    
             if (item.activeRequests.length > 0) {    
                 hasRequests = true;    
                 actionReqCount += item.activeRequests.length;    
@@ -1091,10 +1063,6 @@
                 actionReqCount += item.pendingSales.length;    
                 totalActiveReqsCount += item.pendingSales.length;    
     
-                item.pendingSales.forEach((sale) => {    
-                    if (storeMatchesSalesFilter) filteredSalesTabTotal += (sale.totalAmount || 0);    
-                });    
-    
                 item.pendingSales.forEach((sale, saleIdx) => {    
                     const saleStyle = sale.styleType || 'Ordinary';    
                     const saleRow = document.createElement('div');    
@@ -1102,31 +1070,14 @@
                     saleRow.style.background = '#e8f5e9';    
                     saleRow.style.borderColor = '#a5d6a7';    
                     saleRow.innerHTML = `    
-                        <span><strong>${item.storeName} (${saleStyle})</strong> nag-ulat ng benta: <strong>${sale.qty} pcs</strong> (₱${(sale.totalAmount || 0).toLocaleString()}).</span>    
+                        <span>🏢 <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong></span>    
                         <div>    
-                            <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Approve</button>    
-                            <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Decline</button>    
+                            <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>    
+                            <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Tanggihan</button>    
                         </div>    
                     `;    
                     if(requestsContainerModal) requestsContainerModal.appendChild(saleRow);    
                 });    
-    
-                if (storeMatchesSalesFilter && salesContainer) {    
-                    item.pendingSales.forEach((sale, saleIdx) => {    
-                        const saleStyle = sale.styleType || 'Ordinary';    
-                        const saleRow = document.createElement('div');    
-                        saleRow.className = 'request-action-row';    
-                        saleRow.style.background = '#e8f5e9';    
-                        saleRow.style.borderColor = '#a5d6a7';    
-                        saleRow.innerHTML = `    
-                            <span>🏢 <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong></span>    
-                            <div>    
-                                <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>    
-                            </div>    
-                        `;    
-                        salesContainer.appendChild(saleRow);    
-                    });    
-                }    
             }    
     
             let approvedRestocksHtml = '';    
@@ -1286,26 +1237,6 @@
             if (input) input.value = savedReplies[idx];    
         });    
     
-        const salesTabTotalBox = document.getElementById('salesModalTotalSales');    
-        if (salesTabTotalBox) {    
-            salesTabTotalBox.style.display = 'block';    
-            salesTabTotalBox.innerHTML = `📊 Kabuuang Pending na Benta: <strong style="color: #1b5e20;">₱${filteredSalesTabTotal.toLocaleString()}</strong>`;    
-        }    
-    
-        const salesTabBadge = document.getElementById('salesTabBadge');    
-        let pendingSalesCountTotal = 0;  
-        appData.consignments.forEach(c => { if(c.pendingSales) pendingSalesCountTotal += c.pendingSales.length; });  
-        if (pendingSalesCountTotal > 0) {  
-            salesTabBadge.style.display = 'block';  
-            salesTabBadge.textContent = pendingSalesCountTotal;  
-        } else {  
-            salesTabBadge.style.display = 'none';  
-        }  
-  
-        if (salesContainer && salesContainer.children.length === 0) {    
-            salesContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang na-report na benta.</p>';    
-        }    
-    
         const requestTopBadge = document.getElementById('requestTopBadge');  
         if (actionReqCount > 0) {    
             requestTopBadge.style.display = 'inline-block';    
@@ -1327,7 +1258,6 @@
         document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();    
     }    
     
-    // ========== NEW: Approve Inquiry With Password ==========
     window.approveInquiryWithPassword = async function(inqIdx) {    
         const inq = appData.pendingInquiries[inqIdx];    
         const defaultQty = inq.initialQty || inq.qty || 10;    
@@ -1362,12 +1292,11 @@
         deduplicateConsignments();    
         cleanSourceData();    
         
-        // 🔑 SAVE PASSWORD FROM INQUIRY
         appData.consignments.push({    
             id: Date.now(), 
             storeName: inq.storeName, 
             ownerName: inq.ownerName || '', 
-            password: inq.password || '', // ✅ PASSWORD MULA SA INQUIRY
+            password: inq.password || '', 
             email: inq.email || '', 
             address: inq.address || '', 
             styleType: style, 
@@ -1395,7 +1324,6 @@
         closeModal('inquiryModal');    
         alert(`Matagumpay na na-aprube ang inquiry!\n\n🔑 Password: ${inq.password}\n\nKasama na sa consignment list.`);    
     };    
-    // ================================================
     
     window.declineInquiry = async function(inqIdx) {    
         if (confirm('Tanggihan ang aplikasyong ito?')) {    
