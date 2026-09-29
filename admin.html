@@ -117,6 +117,16 @@
     .password-copy-btn:hover {
         background: #0277bd !important;
     }
+
+.rpt { width:100%; border-collapse:collapse; margin:8px 0; }
+.rpt th, .rpt td { border:1px solid #ccc; padding:4px; font-size:0.75rem; text-align:left; }
+#storesList a { color:#1565c0; }
+@media print {
+  body > *:not(#reportModal) { display:none !important; }
+  #reportModal { position:static !important; display:block !important; background:none !important; padding:0 !important; }
+  #reportModal .modal-content { box-shadow:none; border:none; max-height:none; overflow:visible; }
+  .no-print { display:none !important; }
+}
 </style>
 
 </head>
@@ -150,6 +160,7 @@
     <div class="action-bar-top">
         <button type="button" onclick="openModal('broadcastModal')" style="background-color: #6a1b9a;">📢 Broadcast</button>
         <button type="button" onclick="openModal('backupModal')" style="background-color: #00796b;">💾 Backup</button>
+        <button type="button" onclick="openModal('auditModal')" style="background-color: #455a64;">📜 Audit</button>
     </div>
 
     <!-- TAB 1: DASHBOARD -->
@@ -190,6 +201,7 @@
             </div>
         </div>
 
+        <div id="dashAlerts"></div><div id="dashCharts"></div>
         <div class="summary-box">
             <div class="summary-row"><span>Kabuuang Tindahan:</span><span id="totalStores">0</span></div>
             <div class="summary-row" style="color: #c62828; font-weight: bold;"><span>⚠️ For Collection:</span><span id="totalDue">0</span></div>
@@ -278,6 +290,12 @@
                 </form>
             </div>
 
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <input type="text" id="storeSearch" placeholder="🔍 Hanapin ang tindahan..." oninput="applyStoreFilters()" style="flex:2;padding:8px;font-size:0.85rem;">
+                <select id="storeSort" onchange="applyStoreFilters()" style="flex:1;padding:8px;font-size:0.85rem;">
+                    <option value="">Default</option><option value="name">Pangalan</option><option value="balance">Pinakamalaking balanse</option><option value="sales">Pinakamalaking benta</option><option value="visit">Pinakamatagal na 'di nabisita</option>
+                </select>
+            </div>
             <div id="storesList">
                 <p style="text-align:center; color:#778; font-size:0.9rem;">Nag-load ng mga tindahan...</p>
             </div>
@@ -302,6 +320,7 @@
     <div id="inventoryTab" class="tab-content">
         <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
             <h2>CONSIGNMENT INVENTORY AND MONITORING</h2>
+            <div id="lowStockAlert"></div>
             <div style="font-size: 0.9rem; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e0e0e0;">
                 <span>Ordinary: <strong id="homeOrdStock" style="color: #2e7d32;">0</strong> pcs</span>
                 <div style="display: flex; gap: 4px;">
@@ -332,6 +351,7 @@
         <div style="display: flex; gap: 8px;">
             <button type="button" id="exportBtn" style="background-color: #0288d1; margin-top:0; font-size:0.85rem;">📤 I-download</button>
             <button type="button" id="importTextBtn" style="background-color: #388e3c; margin-top:0; font-size:0.85rem;">📥 I-load</button>
+            <button type="button" id="csvBtn" onclick="exportCSV()" style="background-color: #6a1b9a; margin-top:0; font-size:0.85rem;">📊 CSV Ulat</button>
         </div>
     </div>
 </div>    <div class="modal-overlay" id="broadcastModal">
@@ -346,7 +366,16 @@
         </div>
         <button type="button" onclick="sendBroadcastMessage()" style="background-color: #6a1b9a;">I-broadcast sa Lahat</button>
     </div>
-</div>    <script type="module">
+</div>    <div class="modal-overlay" id="reportModal"><div class="modal-content">
+        <div class="modal-header no-print"><h2>🧾 Statement / Ulat</h2><button class="modal-close" onclick="closeModal('reportModal')">✕</button></div>
+        <div id="reportBody"></div>
+        <button type="button" class="no-print" onclick="window.print()" style="background-color:#0288d1;">🖨️ I-print / Save as PDF</button>
+    </div></div>
+    <div class="modal-overlay" id="auditModal"><div class="modal-content">
+        <div class="modal-header"><h2>📜 Audit Log</h2><button class="modal-close" onclick="closeModal('auditModal')">✕</button></div>
+        <div id="auditBody"></div>
+    </div></div>
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -465,7 +494,7 @@
     };
 
     window.closeModal = function(modalId) {
-        document.getElementById(modalId).style.display = 'none';
+        const _m = document.getElementById(modalId); if (_m) _m.style.display = 'none';
     };
 
     window.toggleAddStoreForm = function() {
@@ -474,7 +503,8 @@
         if (formCard.style.display === 'block') formCard.scrollIntoView({ behavior: 'smooth' });
     };
 
-    function autoDownloadBackup() {
+    function autoDownloadBackup() { return; }
+    function downloadBackup() {
         try {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
             const downloadAnchor = document.createElement('a');
@@ -494,6 +524,7 @@
             const key = item.storeName.trim().toLowerCase();
             if (uniqueMap.has(key)) {
                 let existing = uniqueMap.get(key);
+                if (!existing.password && item.password) existing.password = item.password;
                 if (item.storeItems && item.storeItems.length > 0) {
                     item.storeItems.forEach(sub => {
                         let exSub = existing.storeItems.find(s => s.styleType === sub.styleType);
@@ -887,7 +918,7 @@
         await saveToCloud();
     };
 
-    function renderApp() {
+    function renderAppBase() {
         if (!auth.currentUser) return;
 
         const savedReplies = {};
@@ -1619,18 +1650,144 @@
         } catch (err) { alert('Mali ang format.'); }
     });
 
-    let deferredPrompt;
-    const installCard = document.getElementById('installCard');
-    const installBtn = document.getElementById('installBtn');
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); deferredPrompt = e; installCard.style.display = 'block';
-    });
-    installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt = null;
-            installCard.style.display = 'none';
+        // ================= MGA BAGONG FEATURE =================
+    const money = n => '₱' + Math.round(n || 0).toLocaleString();
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const localYM = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const stamp = () => new Date().toLocaleString();
+
+    function logAudit(action, store, detail) {
+        if (!appData.auditLog) appData.auditLog = [];
+        appData.auditLog.unshift({ date: stamp(), action, store: store || '-', detail: detail || '' });
+        appData.auditLog = appData.auditLog.slice(0, 200);
+    }
+    function addHistory(c, text) { if (!c.history) c.history = []; c.history.unshift({ id: Date.now(), date: stamp(), text }); }
+    function notifyClient(c, text) { if (!c.clientNotifications) c.clientNotifications = []; c.clientNotifications.push({ id: Date.now() + Math.random(), text, date: stamp() }); }
+    function soldOf(s) { return Math.max(0, s.initialQty - s.currentStock - (s.returnedQty || 0) - (s.rejectedQty || 0)); }
+    function storeTotals(c) {
+        let sold = 0, sales = 0, stock = 0;
+        (c.storeItems || []).forEach(s => { const q = soldOf(s); sold += q; sales += q * s.price; stock += s.currentStock; });
+        const paid = (c.payments || []).reduce((a, p) => a + (p.amount || 0), 0);
+        return { sold, sales, stock, paid, balance: sales - paid };
+    }
+
+    // 1. Ledger ng koleksyon
+    window.recordPayment = function (i) {
+        const c = appData.consignments[i], t = storeTotals(c);
+        const v = prompt(`Magkano ang nakolekta mula sa ${c.storeName}?\n(Balanse ngayon: ${money(t.balance)})`, Math.max(0, Math.round(t.balance)));
+        const amt = parseFloat(v);
+        if (v === null || isNaN(amt) || amt <= 0) return;
+        const note = prompt('Tala (opsyonal, hal. Cash / GCash):', '') || '';
+        if (!c.payments) c.payments = [];
+        c.payments.unshift({ id: Date.now(), date: stamp(), ym: localYM(new Date()), amount: amt, note });
+        addHistory(c, `Nakolekta: ${money(amt)} ${note}`);
+        notifyClient(c, `💰 Natanggap ni Admin ang bayad mo: ${money(amt)}. Salamat!`);
+        logAudit('Bayad', c.storeName, money(amt));
+        saveToCloud();
+    };
+
+    // 2. Itinigil na kasunduan
+    window.finalizeSettlement = function (i) {
+        const c = appData.consignments[i], t = storeTotals(c);
+        if (!confirm(`Tapusin ang settlement ng ${c.storeName}?\nDapat bayaran: ${money(t.balance)}\nIbabalik na stock: ${t.stock} pcs (idadagdag sa Home inventory)`)) return;
+        (c.storeItems || []).forEach(s => {
+            if (s.currentStock > 0) { appData.homeStock[s.styleType || 'Ordinary'] += s.currentStock; s.returnedQty = (s.returnedQty || 0) + s.currentStock; s.currentStock = 0; }
+        });
+        c.consignmentStatus = 'Closed'; c.isCollected = true;
+        addHistory(c, `Settlement tapos na. Balanse: ${money(t.balance)}, ibinalik: ${t.stock} pcs`);
+        notifyClient(c, `📜 Natapos na ang settlement ng iyong consignment. Balanse: ${money(t.balance)}.`);
+        logAudit('Settlement', c.storeName, `Balanse ${money(t.balance)}, ibinalik ${t.stock} pcs`);
+        saveToCloud();
+    };
+    window.reactivateStore = function (i) {
+        const c = appData.consignments[i];
+        if (!confirm(`Ibalik ang kasunduan ng ${c.storeName}?`)) return;
+        c.consignmentStatus = 'Aktibo ang Consignment'; c.agreementAccepted = true;
+        addHistory(c, 'Ibinalik ni Admin ang kasunduan'); logAudit('Ibalik ang Kasunduan', c.storeName, '');
+        saveToCloud();
+    };
+
+    // 3. Password / contact / bisita / sira
+    window.editStorePassword = function (i) {
+        const c = appData.consignments[i];
+        const p = prompt(`Bagong password para sa ${c.storeName}:`, '');
+        if (p === null || !p.trim()) return;
+        c.password = p.trim(); addHistory(c, 'Nag-reset ng password si Admin'); logAudit('Reset Password', c.storeName, '');
+        saveToCloud(); alert('✅ Na-save. Ibigay ang bagong password sa kliyente.');
+    };
+    window.editStoreContact = function (i) {
+        const c = appData.consignments[i], v = prompt('Numero ng telepono / GCash:', c.contact || '');
+        if (v !== null) { c.contact = v.trim(); logAudit('Edit Contact', c.storeName, ''); saveToCloud(); }
+    };
+    window.markVisit = function (i) {
+        const c = appData.consignments[i]; c.lastVisit = new Date().toISOString();
+        addHistory(c, 'Nabisita ni Admin'); logAudit('Bisita', c.storeName, ''); saveToCloud();
+    };
+    window.siraStock = function (i, j) {
+        const c = appData.consignments[i], s = c.storeItems[j];
+        const q = parseInt(prompt(`Ilang piraso ng ${s.styleType} ang sira/rejected? (Stock: ${s.currentStock})`, '1'));
+        if (isNaN(q) || q <= 0) return;
+        if (q > s.currentStock) { alert('Lampas sa kasalukuyang stock!'); return; }
+        s.currentStock -= q; s.rejectedQty = (s.rejectedQty || 0) + q;
+        addHistory(c, `Sira/Rejected: ${q} pcs (${s.styleType})`); logAudit('Sira/Rejected', c.storeName, `${q} pcs ${s.styleType}`);
+        saveToCloud();
+    };
+    window.setLowStock = function () {
+        const v = parseInt(prompt('Babala kapag ang Home stock ay pumantay o bumaba sa:', appData.lowStockThreshold ?? 20));
+        if (!isNaN(v) && v >= 0) { appData.lowStockThreshold = v; saveToCloud(); }
+    };
+
+    // 4. Restock rules (1 kada buwan, 5 pcs) + audit
+    const _pr = window.processRestock;
+    window.processRestock = async function (si, ri, qty, style, ok) {
+        const c = appData.consignments[si], ym = localYM(new Date());
+        if (ok) {
+            const w = [];
+            if (qty !== 5) w.push('hindi 5 pcs ang hiniling');
+            if (c.lastRestockMonth === ym) w.push('may na-approve nang restock ngayong buwan');
+            if (c.activeRequests.length > 1) w.push('higit sa isa ang request');
+            if (['Stopped', 'Closed'].includes(c.consignmentStatus)) w.push('itinigil na ang kasunduan');
+            if (w.length && !confirm('⚠️ Paglabag sa alituntunin: ' + w.join('; ') + '.\nIpagpatuloy pa rin ang approve?')) return;
         }
-    });
-</script>    </body>
-</html>
+        const before = c.activeRequests.length;
+        await _pr(si, ri, qty, style, ok);
+        if (c.activeRequests.length < before) {
+            if (ok) c.lastRestockMonth = ym;
+            logAudit(ok ? 'Restock Approved' : 'Restock Declined', c.storeName, `${qty} pcs ${style}`);
+            saveToCloud();
+        }
+    };
+
+    // Audit log para sa iba pang aksyon
+    function audited(name, snap, describe) {
+        const orig = window[name];
+        window[name] = async function (...a) {
+            const b = snap(...a), r = await orig.apply(this, a), n = snap(...a);
+            if (b !== n) { const d = describe(b, n, ...a); logAudit(d[0], d[1], d[2]); saveToCloud(); }
+            return r;
+        };
+    }
+    const nm = i => (appData.consignments[i] || {}).storeName;
+    audited('adjustHomeStock', s => appData.homeStock[s] || 0, (b, n, s) => ['Home Stock', '-', `${s}: ${b} → ${n}`]);
+    audited('bawasStockSub', (i, j) => appData.consignments[i].storeItems[j].currentStock, (b, n, i) => ['Bawas Stock', nm(i), `${b} → ${n}`]);
+    audited('deleteEntireStore', i => appData.consignments.length + '|' + nm(i), b => ['Burahin Tindahan', b.split('|')[1], '']);
+    audited('deleteHistory', (i, h) => appData.consignments[i].history.length + '|' + (appData.consignments[i].history[h] || {}).text, (b, n, i) => ['Burahin History', nm(i), b.split('|').slice(1).join('|')]);
+    audited('editHistory', (i, h) => appData.consignments[i].history[h].text, (b, n, i) => ['Edit History', nm(i), `"${b}" → "${n}"`]);
+    audited('processPendingSales', i => appData.consignments[i].pendingSales.length, (b, n, i, k, q, st, ok) => [ok ? 'Benta Approved' : 'Benta Declined', nm(i), `${q} pcs ${st}`]);
+
+    const _apr = window.approveInquiryWithPassword;
+    window.approveInquiryWithPassword = async function (i) {
+        const inq = appData.pendingInquiries[i], before = appData.pendingInquiries.length;
+        await _apr(i);
+        if (!inq || appData.pendingInquiries.length >= before) return;
+        const s = appData.consignments.find(c => c.storeName === (inq.storeName || '').trim());
+        if (s) { if (!s.contact && inq.contact) s.contact = inq.contact; logAudit('Aprubado ang Aplikasyon', s.storeName, ''); saveToCloud(); }
+    };
+
+    // 5. Statement at CSV
+    window.showStatement = function (i) {
+        const c = appData.consignments[i], t = storeTotals(c), ym = localYM(new Date());
+        const rows = (c.storeItems || []).map(s => `<tr><td>${esc(s.styleType)}</td><td>${s.initialQty}</td><td>${soldOf(s)}</td><td>${s.currentStock}</td><td>${money(s.price)}</td><td>${money(soldOf(s) * s.price)}</td></tr>`).join('');
+        const pays = (c.payments || []).map(p => `<tr><td>${esc(p.date)}</td><td>${esc(p.note || '')}</td><td>${money(p.amount)}</td></tr>`).join('') || '<tr><td colspan="3">Wala pang bayad</td></tr>';
+        const month = (c.payments || []).filter(p => p.ym === ym).reduce((a, p) => a + p.amount, 0);
+        document.getElementById('rep
