@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Whisk Broom">
+<meta name="apple-mobile-web-app-title" content="Doctor's Whisk Broom">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232e7d32' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%232e7d32' width='32' height='32'/><text x='50%' y='50%' font-size='24' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -231,6 +231,12 @@ button:hover{opacity:.9}
       <div id="pendingDeliveryContainer"></div>
     </div>
 
+    <!-- Restock Request Status -->
+    <div class="card" id="restockStatusCard" style="display:none;background:#fff8e1;border-left:4px solid #f57f17;">
+      <h2 style="color:#f57f17;">📋 Status ng mga Restock Request</h2>
+      <div id="restockStatusContainer"></div>
+    </div>
+
     <!-- Notifications -->
     <div class="card">
       <div class="row" style="margin-bottom:8px;">
@@ -355,6 +361,7 @@ button:hover{opacity:.9}
             <label>Dami ng Restock (Fixed: 5 pcs):</label>
             <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
           </div>
+          <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ngayong buwan. Maaari kang mag-request muli sa susunod na buwan.</p>
           <button type="button" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
         </div>
       </div>
@@ -415,6 +422,13 @@ button:hover{opacity:.9}
     <a href="admin.html" style="font-size:.8rem;color:#666;text-decoration:none;">🔐 Pumunta sa Admin Panel</a>
   </div>
 
+</div>
+
+<!-- Update Banner (client ang magdedesisyon) -->
+<div id="updateBanner" style="display:none;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:10000;background:#0d47a1;color:white;padding:12px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.3);align-items:center;gap:10px;">
+  <div style="flex:1;font-size:.85rem;">🆕 May bagong bersyon ng app. I-update na?</div>
+  <button type="button" onclick="applyUpdate()" style="width:auto;margin:0;padding:8px 12px;font-size:.8rem;background:#4caf50;">I-update Ngayon</button>
+  <button type="button" onclick="dismissUpdate()" style="width:auto;margin:0;padding:8px 12px;font-size:.8rem;background:#607d8b;">Mamaya</button>
 </div>
 
 <!-- Image Viewer Modal -->
@@ -514,10 +528,19 @@ var D={
 'Matagumpay na naipadala ang pending receipt sa Admin!':'The pending receipt was sent to Admin!',
 'Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!':'Your Digital Consignment application, with the order quantity and password, was submitted successfully!',
 'Mag-request ng restock na eksaktong 5 piraso?':'Request a restock of exactly 5 pieces?',
-'Matagumpay na naipadala ang iyong kahilingan sa Admin!':'Your request was sent to Admin!'
+'Matagumpay na naipadala ang iyong kahilingan sa Admin!':'Your request was sent to Admin!',
+'🆕 May bagong bersyon ng app. I-update na?':'🆕 A new version of the app is available. Update now?',
+'I-update Ngayon':'Update Now','Mamaya':'Later',
+'📋 Status ng mga Restock Request':'📋 Restock Request Status',
+'⏳ Naghihintay ng aprubal':'⏳ Waiting for approval',
+'✅ Na-approve — hintayin ang delivery':'✅ Approved — wait for delivery',
+'❌ Tinanggihan':'❌ Rejected',
+'📦 Natanggap na':'📦 Received',
+'Nakapag-request ka na ngayong buwan. Maaari kang mag-request muli sa susunod na buwan.':'You already made a request this month. You can request again next month.'
 };
 var R=[
 [/^Hal\. /,'e.g. '],
+[/^Dahilan: (.*)$/,'Reason: $1'],
 [/^Presyo: ₱(.*)$/,'Price: ₱$1'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
 ];
@@ -549,10 +572,45 @@ function apply(){
   });
 }
 
-var A=window.alert,C=window.confirm,P=window.prompt;
-window.alert=function(m){return A.call(window,lang==='en'?tr(String(m)):m);};
-window.confirm=function(m){return C.call(window,lang==='en'?tr(String(m)):m);};
-window.prompt=function(m,d){return P.call(window,lang==='en'?tr(String(m)):m,d);};
+// Custom in-app dialogs (pamalit sa browser alert/confirm/prompt na may "xxx.vercel.app says")
+function dlg(msg,o){
+  return new Promise(function(res){
+    var t=lang==='en'?tr(String(msg)):String(msg);
+    var ov=document.createElement('div');ov.setAttribute('data-no-i18n','');
+    ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:20000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    var box=document.createElement('div');
+    box.style.cssText='background:#fff;border-radius:12px;max-width:380px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;';
+    var hd=document.createElement('div');
+    hd.style.cssText='background:#2e7d32;color:#fff;padding:12px 16px;font-weight:bold;font-size:1rem;';
+    hd.textContent="🧹 Doctor's Whisk Broom";
+    var bd=document.createElement('div');
+    bd.style.cssText='padding:16px;font-size:.95rem;color:#333;white-space:pre-line;line-height:1.4;';
+    bd.textContent=t;
+    box.appendChild(hd);box.appendChild(bd);
+    var inp=null;
+    if(o.input){
+      inp=document.createElement('input');inp.type='text';inp.value=o.def||'';
+      if(/nabili|sold/i.test(t))inp.setAttribute('inputmode','numeric');
+      inp.style.cssText='display:block;width:calc(100% - 32px);margin:0 16px 8px;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:1rem;';
+      box.appendChild(inp);
+    }
+    var ft=document.createElement('div');
+    ft.style.cssText='display:flex;gap:8px;padding:8px 16px 16px;justify-content:flex-end;';
+    function done(v){document.body.removeChild(ov);res(v);}
+    function mk(label,bg,fn){
+      var b=document.createElement('button');b.type='button';b.textContent=label;
+      b.style.cssText='width:auto;margin:0;padding:10px 18px;font-size:.9rem;background:'+bg+';';
+      b.onclick=fn;return b;
+    }
+    if(o.cancel)ft.appendChild(mk(lang==='en'?'Cancel':'Kanselahin','#78909c',function(){done(o.input?null:false);}));
+    ft.appendChild(mk('OK','#2e7d32',function(){done(o.input?inp.value:true);}));
+    box.appendChild(ft);ov.appendChild(box);document.body.appendChild(ov);
+    if(inp){inp.focus();inp.addEventListener('keydown',function(e){if(e.key==='Enter')done(inp.value);});}
+  });
+}
+window.alert=function(m){return dlg(m,{});};
+window.confirm=function(m){return dlg(m,{cancel:true});};
+window.prompt=function(m,d){return dlg(m,{input:true,cancel:true,def:d});};
 
 new MutationObserver(function(){if(lang==='en')apply();})
   .observe(document.body,{childList:true,subtree:true});
@@ -570,10 +628,33 @@ apply();
 })();
 </script>
 
+<!-- App Update (client-controlled) -->
+<script>
+(function(){
+  if(!('serviceWorker' in navigator))return;
+  var banner=document.getElementById('updateBanner');
+  var ctl=function(){return navigator.serviceWorker.controller;};
+  var check=function(){if(ctl())ctl().postMessage('CHECK');};
+  window.applyUpdate=function(){if(ctl())ctl().postMessage('APPLY');};
+  window.dismissUpdate=function(){banner.style.display='none';};
+  navigator.serviceWorker.addEventListener('message',function(e){
+    if(e.data.type==='STATUS'&&e.data.update)banner.style.display='flex';
+    if(e.data.type==='APPLIED')location.reload();
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',check);
+  navigator.serviceWorker.register('sw.js').then(function(reg){
+    check();reg.update();
+    document.addEventListener('visibilitychange',function(){
+      if(document.visibilityState==='visible'){reg.update();check();}
+    });
+  }).catch(function(){});
+})();
+</script>
+
 <!-- Firebase SDKs -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const authConfig = {
@@ -737,7 +818,7 @@ $('unifiedLoginBtn').addEventListener('click', async () => {
 
 // Logout
 window.requestLogout = async function() {
-  const storeInput = prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
+  const storeInput = await prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
   if (storeInput === null) return;
   const store = getStore();
   if (store && storeInput.toLowerCase().trim() === store.ownerName.toLowerCase().trim()) {
@@ -760,7 +841,7 @@ window.clearAllNotifications = async function() {
 
 // Stop Agreement
 window.promptStopAgreement = async function() {
-  if (!confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?")) return;
+  if (!(await confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?"))) return;
   const store = getStore();
   if (!store) return;
 
@@ -813,6 +894,8 @@ window.confirmReceiveRestock = async function(index) {
   }
 
   store.approvedRestocks.splice(index, 1);
+  const lg = (store.restockLog || []).find(r => r.id === itemToReceive.reqId);
+  if (lg) { lg.status = 'Received'; lg.updatedAt = now(); }
 
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: `Nakumpirma ang pagtanggap ng restock: ${itemToReceive.qty} pcs (${itemToReceive.styleType})`, date: now() });
@@ -836,7 +919,7 @@ window.promptRecordSale = async function(styleType) {
     return;
   }
 
-  const inputVal = prompt(`Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`);
+  const inputVal = await prompt(`Ilang piraso ng ${styleType} ang nabili?\n(Kasalukuyang Aktibong Stock: ${sub.currentStock} pcs)`);
   if (inputVal === null) return;
 
   const qtySold = parseInt(inputVal);
@@ -868,23 +951,23 @@ window.promptRecordSale = async function(styleType) {
   renderClientDashboard(store);
 };
 
-// Load Data
-async function loadData() {
+// Load Data (live sync: nag-a-update kapag may nag-save na iba)
+function loadData() {
   syncStatus.textContent = "Kumukuha ng data sa Cloud...";
-  try {
-    const docSnap = await getDoc(doc(db, "app_data", "main_inventory"));
-    if (docSnap.exists()) {
-      appData = docSnap.data();
+  onSnapshot(doc(db, "app_data", "main_inventory"), (snap) => {
+    if (snap.metadata.hasPendingWrites) return;
+    if (snap.exists()) {
+      appData = snap.data();
       if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
       if (!appData.consignments) appData.consignments = [];
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
     }
     syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
     initPortalView();
-  } catch (err) {
+  }, (err) => {
     console.error(err);
     syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-  }
+  });
 }
 
 // Save Data
@@ -957,6 +1040,27 @@ if (inquiryForm) {
   });
 }
 
+// Restock request status
+function renderRestockStatus(store) {
+  const card = $('restockStatusCard'), box = $('restockStatusContainer'), note = $('restockNotice');
+  const log = (store.restockLog || []).slice(0, 5);
+  box.innerHTML = '';
+  card.style.display = log.length ? 'block' : 'none';
+  const labels = { Pending: '⏳ Naghihintay ng aprubal', Approved: '✅ Na-approve — hintayin ang delivery', Rejected: '❌ Tinanggihan', Received: '📦 Natanggap na' };
+  const colors = { Pending: '#f57c00', Approved: '#0288d1', Rejected: '#c62828', Received: '#2e7d32' };
+  log.forEach(r => {
+    const div = document.createElement('div');
+    div.style.cssText = "background: white; border: 1px solid #ffe082; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
+    div.innerHTML =
+      `<div><strong>${r.styleType}</strong> · ${r.qty} pcs</div>
+       <div style="color:${colors[r.status] || '#555'}; font-weight:bold;">${labels[r.status] || r.status}</div>
+       ${r.status === 'Rejected' && r.reason ? `<div style="font-size:0.8rem; color:#666;">Dahilan: ${r.reason}</div>` : ''}
+       <div style="font-size:0.7rem; color:#778; text-align:right;">${r.date}</div>`;
+    box.appendChild(div);
+  });
+  note.style.display = restockBlocked(store) ? 'block' : 'none';
+}
+
 // Render Dashboard
 function renderClientDashboard(store) {
 
@@ -978,6 +1082,8 @@ function renderClientDashboard(store) {
   if (agreementStatusDisplay) {
     agreementStatusDisplay.textContent = `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
   }
+
+  renderRestockStatus(store);
 
   // QR Code
   const smallQrContainer = $('smallQrcode');
@@ -1117,15 +1223,32 @@ function renderClientDashboard(store) {
 }
 
 // Submit Restock Request
-window.submitRestockRequest = async function() {
-  if (!confirm("Mag-request ng restock na eksaktong 5 piraso?")) return;
+const monthKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 
-  const styleType = $('restockStyleType').value;
+// Isang request lang bawat buwan (ang Tinanggihan ay hindi binibilang). Bawal din kung may nakabinbin pa.
+function restockBlocked(store) {
+  if ((store.activeRequests && store.activeRequests.length) || (store.approvedRestocks && store.approvedRestocks.length)) return true;
+  return (store.restockLog || []).some(r => r.monthKey === monthKey() && r.status !== 'Rejected');
+}
+
+window.submitRestockRequest = async function() {
   const store = getStore();
   if (!store) return;
 
+  if (restockBlocked(store)) {
+    alert("Nakapag-request ka na ngayong buwan. Maaari kang mag-request muli sa susunod na buwan.");
+    return;
+  }
+  if (!(await confirm("Mag-request ng restock na eksaktong 5 piraso?"))) return;
+
+  const styleType = $('restockStyleType').value;
+  const reqId = Date.now();
+
   if (!store.activeRequests) store.activeRequests = [];
-  store.activeRequests.push({ styleType: styleType, qty: 5, date: now() });
+  store.activeRequests.push({ id: reqId, styleType: styleType, qty: 5, date: now() });
+
+  if (!store.restockLog) store.restockLog = [];
+  store.restockLog.unshift({ id: reqId, styleType: styleType, qty: 5, date: now(), monthKey: monthKey(), status: 'Pending', reason: '', updatedAt: now() });
 
   if (!store.messages) store.messages = [];
   store.messages.unshift({ sender: currentStoreName, text: `Humiling ng restock: 5 pcs (${styleType})`, date: now() });
