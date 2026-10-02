@@ -265,7 +265,7 @@ button:hover { background-color: #1b5e20; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -281,7 +281,7 @@ const db = getFirestore(app);
 const auth = getAuth();
 
 // ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
-const ADMIN_EMAILS = ['ILAGAY-DITO-ANG-ADMIN-EMAIL@gmail.com'];
+const ADMIN_EMAILS = ['admin@admin.com'];
 const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
 
 // Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
@@ -841,23 +841,18 @@ function renderApp() {
             const div = document.createElement('div');
             div.className = 'inquiry-card-box';
 
-            const passwordDisplay = inq.password ? `
-                <div class="password-display-box">
-                    <strong>🔑 PASSWORD:</strong>
-                    <span class="password-value">${inq.password}</span>
-                    <button type="button" onclick="copyToClipboard('${inq.password}')" class="password-copy-btn">📋 Copy</button>
-                </div>
-            ` : '';
-
             div.innerHTML = `
                 <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>
                 📞 Contact: ${inq.contact} | 📧 Email: <strong style="color:#2e7d32;">${inq.email || 'Wala'}</strong><br>
                 📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>
                 📦 Hiniling na Qty: <strong>${inq.initialQty || inq.qty || 5} pcs</strong><br>
                 💬 <strong>Mensahe/Inquiry:</strong> <span style="color:#333; font-style:italic;">"${inq.message || inq.notes || 'Walang mensahe'}"</span><br>
-                ${passwordDisplay}
+                <div class="password-display-box" style="background:#e3f2fd;border-color:#90caf9;">
+                    <strong style="color:#1565c0;">🔐 FIREBASE AUTH:</strong>
+                    Account will be created automatically after approval. A password-reset link will be sent to the client's email.
+                </div>
                 <div class="btn-group" style="margin-top: 6px;">
-                    <button type="button" class="btn-approve" onclick="approveInquiryWithPassword(${inqIdx})">✅ Aprubahan (Auto-Bawas)</button>
+                    <button type="button" class="btn-approve" onclick="approveInquiryWithPassword(${inqIdx})">✅ Aprubahan + Create Firebase Account</button>
                     <button type="button" class="btn-decline" onclick="declineInquiry(${inqIdx})">❌ Tanggihan</button>
                 </div>
             `;
@@ -1189,6 +1184,23 @@ function renderApp() {
 
 window.approveInquiryWithPassword = async function(inqIdx) {
     const inq = appData.pendingInquiries[inqIdx];
+    if (!inq) return;
+
+    const email = (inq.email || '').trim().toLowerCase();
+    if (!email) {
+        alert('Hindi ma-aaprubahan: walang valid email address ang inquiry.');
+        return;
+    }
+
+    // Huwag payagang ma-link ang isang email na may existing active store.
+    const existingStore = (appData.consignments || []).find(c =>
+        (c.email || '').trim().toLowerCase() === email
+    );
+    if (existingStore) {
+        alert(`May existing store record na naka-link sa email ${email}. Hindi muna gagawa ng bagong Firebase account.`);
+        return;
+    }
+
     const defaultQty = inq.initialQty || inq.qty || 10;
     const initialStockStr = prompt(`[Prompt] Simulang stock para sa ${inq.storeName} (${inq.styleType || 'Ordinary'}):`, defaultQty);
     if (initialStockStr === null) return;
@@ -1200,58 +1212,177 @@ window.approveInquiryWithPassword = async function(inqIdx) {
 
     const style = inq.styleType || 'Ordinary';
 
+    if (initialStock <= 0) {
+        alert('Ang initial stock ay dapat higit sa 0.');
+        return;
+    }
+
     if (appData.homeStock[style] < initialStock) {
         alert(`Hindi ma-aprube: Kulang ang Home stock para sa ${style} (${appData.homeStock[style]} pcs lamang ang available)!`);
         return;
     }
 
-    const isSameName = inq.ownerName && inq.storeName && inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();
-    const searchValidationMsg = isSameName ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
+    // ==========================================================
+    // FIREBASE AUTH: account creation happens ONLY after approval.
+    // We never store the client's password in Firestore.
+    // A random temporary password is used only for account creation,
+    // then Firebase sends a password-reset email so the client
+    // chooses their own permanent password.
+    // ==========================================================
+    let firebaseUid = '';
+    let newlyCreatedAuthUser = false;
 
-    appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);
-    const todayStr = new Date().toISOString().slice(0, 10);
-    let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
-    const collDateStr = nextMonth.toISOString().slice(0, 10);
+    const makeTempPassword = () => {
+        const bytes = new Uint8Array(18);
+        crypto.getRandomValues(bytes);
+        const raw = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        return `DWBE-${raw}Aa9!`;
+    };
 
-    let notifications = [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}).`, date: new Date().toLocaleString() }];
-    if (isSameName) {
-        notifications.push({ id: Date.now() + 1, text: searchValidationMsg, date: new Date().toLocaleString() });
+    try {
+        const tempPassword = makeTempPassword();
+
+        try {
+            const cred = await createUserWithEmailAndPassword(secondaryAuth, email, tempPassword);
+            firebaseUid = cred.user.uid;
+            newlyCreatedAuthUser = true;
+        } catch (authErr) {
+            if (authErr.code === 'auth/email-already-in-use') {
+                // There is already a Firebase Auth account. Do not overwrite it.
+                // The reset email below lets the applicant establish/restore access.
+                alert(`May Firebase Authentication account na ang ${email}. Iuugnay ito sa bagong store record at magpapadala ng password-reset email.`);
+            } else if (authErr.code === 'auth/invalid-email') {
+                alert('Hindi wastong email address.');
+                return;
+            } else if (authErr.code === 'auth/operation-not-allowed') {
+                alert('Hindi naka-enable ang Email/Password provider sa Firebase Authentication. I-enable muna ito sa Firebase Console.');
+                return;
+            } else {
+                alert('⚠️ Hindi nagawa ang Firebase account: ' + authErr.message);
+                return;
+            }
+        }
+
+        if (secondaryAuth.currentUser) {
+            firebaseUid = secondaryAuth.currentUser.uid;
+        }
+
+        // Send reset link for both newly-created and pre-existing Auth accounts.
+        try {
+            await sendPasswordResetEmail(secondaryAuth, email);
+        } catch (resetErr) {
+            // If we created the account ourselves and reset email failed,
+            // remove the newly-created account to avoid an orphan Auth account.
+            if (newlyCreatedAuthUser && secondaryAuth.currentUser) {
+                try { await deleteUser(secondaryAuth.currentUser); } catch (_) {}
+            }
+            if (resetErr.code === 'auth/invalid-email') {
+                alert('Hindi wastong email address.');
+            } else {
+                alert('⚠️ Nagawa sana ang Firebase account pero hindi naipadala ang password-reset email. Walang ginawang approval para maiwasan ang incomplete account setup.');
+            }
+            return;
+        }
+
+        if (secondaryAuth.currentUser) {
+            try { await signOut(secondaryAuth); } catch (_) {}
+        }
+
+        const isSameName = inq.ownerName && inq.storeName &&
+            inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();
+        const searchValidationMsg = isSameName
+            ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan."
+            : "";
+
+        appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);
+        const todayStr = new Date().toISOString().slice(0, 10);
+        let nextMonth = new Date();
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        const collDateStr = nextMonth.toISOString().slice(0, 10);
+
+        let notifications = [{
+            id: Date.now(),
+            text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}). Tingnan ang email para gumawa/reset ng iyong Firebase password.`,
+            date: new Date().toLocaleString()
+        }];
+        if (isSameName) {
+            notifications.push({
+                id: Date.now() + 1,
+                text: searchValidationMsg,
+                date: new Date().toLocaleString()
+            });
+        }
+
+        deduplicateConsignments();
+        cleanSourceData();
+
+        appData.consignments.push({
+            id: Date.now(),
+            storeName: inq.storeName,
+            ownerName: inq.ownerName || '',
+            // IMPORTANT: no plaintext client password is stored here.
+            email: email,
+            firebaseUid: firebaseUid || '',
+            authStatus: 'active',
+            emailResetSent: true,
+            address: inq.address || '',
+            styleType: style,
+            initialQty: initialStock,
+            currentStock: initialStock,
+            returnedQty: 0,
+            rejectedQty: 0,
+            price: price,
+            dateDelivered: todayStr,
+            collectionDate: collDateStr,
+            storeItems: [{
+                id: Date.now(),
+                styleType: style,
+                initialQty: initialStock,
+                currentStock: initialStock,
+                returnedQty: 0,
+                rejectedQty: 0,
+                price: price,
+                dateDelivered: todayStr,
+                collectionDate: collDateStr
+            }],
+            activeRequests: [],
+            pendingSales: [],
+            approvedRestocks: [],
+            clientNotifications: notifications,
+            messages: [{
+                sender: 'Admin',
+                text: `Welcome sa aming network! Aplikasyon na-aprube at na-register na sa Firebase Authentication.`
+            , date: new Date().toLocaleString() }],
+            lastClientAccess: null,
+            searchValidation: searchValidationMsg,
+            isCollected: false,
+            history: [{
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory; Firebase Auth account created/linked.`
+            }]
+        });
+
+        appData.pendingInquiries.splice(inqIdx, 1);
+        await saveToCloud();
+
+        alert(`✅ Matagumpay na na-aprube ang inquiry!
+
+📧 ${email}
+🔐 Firebase Authentication: REGISTERED
+📩 Password-reset email: NAIPADALA
+
+Sabihin sa client na buksan ang email at gumawa ng sariling password bago mag-login.
+
+Kasama na ang store sa active consignment list.`);
+    } catch (err) {
+        if (secondaryAuth.currentUser) {
+            try { await signOut(secondaryAuth); } catch (_) {}
+        }
+        alert('⚠️ Hindi natuloy ang approval: ' + (err.message || err));
     }
-
-    deduplicateConsignments();
-    cleanSourceData();
-
-    appData.consignments.push({
-        id: Date.now(),
-        storeName: inq.storeName,
-        ownerName: inq.ownerName || '',
-        password: inq.password || '',
-        email: inq.email || '',
-        address: inq.address || '',
-        styleType: style,
-        initialQty: initialStock,
-        currentStock: initialStock,
-        returnedQty: 0,
-        rejectedQty: 0,
-        price: price,
-        dateDelivered: todayStr,
-        collectionDate: collDateStr,
-        storeItems: [{ id: Date.now(), styleType: style, initialQty: initialStock, currentStock: initialStock, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr }],
-        activeRequests: [],
-        pendingSales: [],
-        approvedRestocks: [],
-        clientNotifications: notifications,
-        messages: [{ sender: 'Admin', text: `Welcome sa aming network! Aplikasyon na-aprube.`, date: new Date().toLocaleString() }],
-        lastClientAccess: null,
-        searchValidation: searchValidationMsg,
-        isCollected: false,
-        history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory` }]
-    });
-
-    appData.pendingInquiries.splice(inqIdx, 1);
-    await saveToCloud();
-    alert(`Matagumpay na na-aprube ang inquiry!${inq.password ? '\n\n🔑 Password: ' + inq.password : ''}\n\nKasama na sa consignment list.`);
 };
+
 
 window.declineInquiry = async function(inqIdx) {
     if (confirm('Tanggihan ang aplikasyong ito?')) {
@@ -1468,22 +1599,58 @@ window.editStoreAddress = function(index) {
 window.createClientLogin = async function(index) {
     const item = appData.consignments[index];
     const email = (item.email || '').trim().toLowerCase();
-    if (!email) { alert('Maglagay muna ng email ng tindahan (button na Email).'); return; }
-    const pw = prompt(`Gumawa ng password para kay ${item.storeName} (${email}).\nHindi bababa sa 6 na karakter:`);
-    if (pw === null) return;
-    if (pw.trim().length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
+    if (!email) {
+        alert('Maglagay muna ng email ng tindahan.');
+        return;
+    }
+
+    if (!confirm(`Gagawa/iuugnay ang Firebase Authentication account para sa ${item.storeName} (${email}) at magpapadala ng password-reset email. Ituloy?`)) {
+        return;
+    }
+
+    const makeTempPassword = () => {
+        const bytes = new Uint8Array(18);
+        crypto.getRandomValues(bytes);
+        const raw = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        return `DWBE-${raw}Aa9!`;
+    };
+
     try {
-        await createUserWithEmailAndPassword(secondaryAuth, email, pw.trim());
-        await signOut(secondaryAuth);
-        alert(`✅ Nagawa na ang login account.\n\n📧 ${email}\n🔑 ${pw.trim()}\n\nIbigay ito sa client. Maaari niyang palitan ang password sa kanyang dashboard.`);
-    } catch (err) {
-        if (err.code === 'auth/email-already-in-use') {
-            alert('May login account na ang email na ito. Kung nakalimutan ng client ang password, gamitin niya ang "Nakalimutan ang password?" sa login.');
-        } else {
-            alert('⚠️ Hindi nagawa ang account: ' + err.message);
+        let uid = item.firebaseUid || '';
+        let created = false;
+
+        try {
+            const cred = await createUserWithEmailAndPassword(secondaryAuth, email, makeTempPassword());
+            uid = cred.user.uid;
+            created = true;
+        } catch (err) {
+            if (err.code !== 'auth/email-already-in-use') throw err;
         }
+
+        if (secondaryAuth.currentUser) uid = secondaryAuth.currentUser.uid;
+
+        await sendPasswordResetEmail(secondaryAuth, email);
+        if (secondaryAuth.currentUser) await signOut(secondaryAuth);
+
+        item.firebaseUid = uid;
+        item.authStatus = 'active';
+        item.emailResetSent = true;
+        await saveToCloud();
+
+        alert(`✅ Firebase Authentication account ready.
+
+📧 ${email}
+📩 Password-reset email naipadala.
+
+Buksan ng client ang email at gumawa ng sariling password bago mag-login.`);
+    } catch (err) {
+        if (secondaryAuth.currentUser) {
+            try { await signOut(secondaryAuth); } catch (_) {}
+        }
+        alert('⚠️ Hindi nagawa/na-link ang Firebase account: ' + err.message);
     }
 };
+
 
 window.deleteEntireStore = function(index) {
     if (confirm('Burahin nang buo ang tindahang ito?')) {
