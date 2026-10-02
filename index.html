@@ -78,6 +78,25 @@ button:hover{opacity:.9}
     </select>
   </div>
 
+  <!-- Gumawa ng Password (galing sa reset email link) -->
+  <div id="resetScreen" class="card" style="display:none;">
+    <h2>🔑 Gumawa ng Password</h2>
+    <p id="resetEmailInfo" style="font-size:.85rem;margin-bottom:10px;"></p>
+    <div id="resetForm">
+      <div class="form-group">
+        <label for="resetNewPass">Bagong Password:</label>
+        <input type="password" id="resetNewPass" autocomplete="new-password" placeholder="Hindi bababa sa 6 na karakter">
+      </div>
+      <div class="form-group">
+        <label for="resetNewPass2">Ulitin ang Password:</label>
+        <input type="password" id="resetNewPass2" autocomplete="new-password" placeholder="Ilagay ulit ang password">
+      </div>
+      <button type="button" id="resetSubmitBtn" style="background-color:var(--primary-color);">I-save at Mag-login</button>
+    </div>
+    <p id="resetError" style="display:none;color:#c62828;font-size:.85rem;margin-top:8px;"></p>
+    <button type="button" id="resetBackBtn" style="display:none;background-color:#0288d1;">Bumalik sa Login (Humingi ng Bagong Link)</button>
+  </div>
+
   <!-- Secure Login Screen -->
   <div id="loginScreen" class="card">
 
@@ -561,12 +580,24 @@ var D={
 '⚠️ Mali ang kasalukuyang password.':'⚠️ Wrong current password.',
 'Ang password ay dapat hindi bababa sa 6 na karakter.':'The password must be at least 6 characters.',
 '⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password o i-click ang Nakalimutan ang password? sa login.':'⚠️ This email already has an account but the password is different. Use the correct password or click Forgot your password? on the login screen.',
-'⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.'
+'⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.',
+'🔑 Gumawa ng Password':'🔑 Create Your Password',
+'Ulitin ang Password:':'Repeat Password:',
+'Ilagay ulit ang password':'Enter the password again',
+'Hindi bababa sa 6 na karakter':'At least 6 characters',
+'I-save at Mag-login':'Save and Log in',
+'Bumalik sa Login (Humingi ng Bagong Link)':'Back to Login (Request a New Link)',
+'Hindi bababa sa 6 na karakter ang password.':'The password must be at least 6 characters.',
+'Hindi magkapareho ang dalawang password.':'The two passwords do not match.',
+'Masyadong mahina ang password.':'The password is too weak.',
+'⚠️ Expired o nagamit na ang link na ito. Bumalik sa login at pindutin ang "Nakalimutan ang password?" para sa bagong link.':'⚠️ This link is expired or already used. Go back to login and press "Forgot your password?" for a new link.'
 };
 var R=[
 [/^Hal\. /,'e.g. '],
 [/^Dahilan: (.*)$/,'Reason: $1'],
 [/^Presyo: ₱(.*)$/,'Price: ₱$1'],
+[/^Para sa: (.*)$/,'For: $1'],
+[/^⚠️ Hindi na-save: (.*)$/,'⚠️ Not saved: $1'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
 ];
 var lang=localStorage.getItem('dwbe_lang')||'tl',orig=new WeakMap();
@@ -680,7 +711,7 @@ apply();
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyPasswordResetCode, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const dataConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -703,6 +734,12 @@ let applying = false;
 const syncStatus = document.getElementById('syncStatus');
 const $ = id => document.getElementById(id);
 const now = () => new Date().toLocaleString();
+
+// Reset-password link galing sa email (?mode=resetPassword&oobCode=...)
+const _qs = new URLSearchParams(window.location.search);
+const resetCode = _qs.get('mode') === 'resetPassword' ? _qs.get('oobCode') : null;
+let resetMode = !!resetCode;
+
 // Ang tindahan ay nakikilala sa pamamagitan ng email ng naka-login na Firebase Auth account
 const getStore = () => {
   const em = authUser && authUser.email ? authUser.email.toLowerCase() : '';
@@ -1016,6 +1053,13 @@ function initPortalView() {
     $('loginScreen').style.display = on ? 'none' : 'flex';
     $('portalContent').style.display = on ? 'block' : 'none';
   };
+
+  // Habang nasa "Gumawa ng Password" page, huwag galawin ang ibang screen
+  if (resetMode) {
+    $('loginScreen').style.display = 'none';
+    $('portalContent').style.display = 'none';
+    return;
+  }
 
   if (applying) return;
 
@@ -1337,12 +1381,73 @@ window.sendClientMessage = async function() {
   renderClientDashboard(store);
 };
 
+// ===== Gumawa ng Password page (custom reset handler) =====
+// Ang code ay mauubos lang kapag pinindot ang "I-save at Mag-login",
+// hindi kapag binuksan lang ang link.
+async function initReset() {
+  $('loginScreen').style.display = 'none';
+  $('portalContent').style.display = 'none';
+  $('resetScreen').style.display = 'block';
+
+  const err = $('resetError');
+  const fail = (m) => { err.textContent = m; err.style.display = 'block'; };
+
+  let email = '';
+  try {
+    email = await verifyPasswordResetCode(authData, resetCode); // hindi nito inuubos ang code
+    $('resetEmailInfo').textContent = 'Para sa: ' + email;
+  } catch (e) {
+    $('resetForm').style.display = 'none';
+    fail('⚠️ Expired o nagamit na ang link na ito. Bumalik sa login at pindutin ang "Nakalimutan ang password?" para sa bagong link.');
+    $('resetBackBtn').style.display = 'block';
+    return;
+  }
+
+  $('resetSubmitBtn').onclick = async () => {
+    const p1 = $('resetNewPass').value;
+    const p2 = $('resetNewPass2').value;
+    err.style.display = 'none';
+    if (p1.length < 6) return fail('Hindi bababa sa 6 na karakter ang password.');
+    if (p1 !== p2) return fail('Hindi magkapareho ang dalawang password.');
+
+    $('resetSubmitBtn').disabled = true;
+    try {
+      await confirmPasswordReset(authData, resetCode, p1);
+    } catch (e) {
+      $('resetSubmitBtn').disabled = false;
+      if (e.code === 'auth/weak-password') return fail('Masyadong mahina ang password.');
+      if (e.code === 'auth/expired-action-code' || e.code === 'auth/invalid-action-code') {
+        $('resetForm').style.display = 'none';
+        $('resetBackBtn').style.display = 'block';
+        return fail('⚠️ Expired o nagamit na ang link na ito. Bumalik sa login at pindutin ang "Nakalimutan ang password?" para sa bagong link.');
+      }
+      return fail('⚠️ Hindi na-save: ' + e.message);
+    }
+
+    // Na-save na ang bagong password: lumabas sa reset mode at mag-login
+    resetMode = false;
+    history.replaceState(null, '', window.location.pathname);
+    $('resetScreen').style.display = 'none';
+    try {
+      await signInWithEmailAndPassword(authData, email, p1);
+    } catch (e2) {
+      $('loginScreen').style.display = 'flex';
+      $('unifiedEmailInput').value = email;
+      alert('✅ Na-save na ang bagong password. Mag-login na gamit ang email at password mo.');
+    }
+    initPortalView();
+  };
+}
+$('resetBackBtn').onclick = () => { window.location.href = window.location.pathname; };
+
 // Start
 onAuthStateChanged(authData, (user) => {
   authUser = user;
   if (!unsubData || listenFailed) listenData();
   initPortalView();
 });
+
+if (resetMode) initReset();
 </script>
 
 </body>
