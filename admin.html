@@ -265,7 +265,7 @@ button:hover { background-color: #1b5e20; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -279,6 +279,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
+
+// ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
+const ADMIN_EMAILS = ['ILAGAY-DITO-ANG-ADMIN-EMAIL@gmail.com'];
+const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
+
+// Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
+const secondaryAuth = getAuth(initializeApp(firebaseConfig, 'secondary'));
 
 const authScreen = document.getElementById('authScreen');
 const mainAppContent = document.getElementById('mainAppContent');
@@ -332,6 +339,11 @@ passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { log
 emailInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { loginBtn.click(); } });
 
 onAuthStateChanged(auth, (user) => {
+    if (user && !isAdminUser(user)) {
+        alert(`⚠️ Hindi awtorisado ang account na ito (${user.email}).\nKung ikaw ang admin, ilagay ang email na ito sa ADMIN_EMAILS sa admin.html.`);
+        signOut(auth);
+        return;
+    }
     if (user) {
         authScreen.style.display = 'none';
         mainAppContent.style.display = 'block';
@@ -1105,6 +1117,7 @@ function renderApp() {
                     <button type="button" onclick="editStoreOwner(${index})" style="background-color: #006064; font-size: 0.75rem; padding: 6px; flex: 1;">May-ari</button>
                     <button type="button" onclick="editStoreEmail(${index})" style="background-color: #1565c0; font-size: 0.75rem; padding: 6px; flex: 1;">Email</button>
                     <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">Address</button>
+                    <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Login</button>
                 </div>
                 <div style="margin-top: 6px; display: flex; gap: 4px;">
                     <button type="button" onclick="toggleStoreCollectionStatus(${index})" style="background-color: ${item.isCollected ? '#78909c' : '#2e7d32'}; font-size: 0.75rem; padding: 6px; flex: 1;">${item.isCollected ? '↩️ Ibalik sa Aktibo' : '✅ Markahan bilang Nakolektahan'}</button>
@@ -1237,7 +1250,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
 
     appData.pendingInquiries.splice(inqIdx, 1);
     await saveToCloud();
-    alert(`Matagumpay na na-aprube ang inquiry!\n\n🔑 Password: ${inq.password}\n\nKasama na sa consignment list.`);
+    alert(`Matagumpay na na-aprube ang inquiry!${inq.password ? '\n\n🔑 Password: ' + inq.password : ''}\n\nKasama na sa consignment list.`);
 };
 
 window.declineInquiry = async function(inqIdx) {
@@ -1449,6 +1462,26 @@ window.editStoreAddress = function(index) {
         item.address = newAddress.trim();
         cleanSourceData();
         saveToCloud();
+    }
+};
+
+window.createClientLogin = async function(index) {
+    const item = appData.consignments[index];
+    const email = (item.email || '').trim().toLowerCase();
+    if (!email) { alert('Maglagay muna ng email ng tindahan (button na Email).'); return; }
+    const pw = prompt(`Gumawa ng password para kay ${item.storeName} (${email}).\nHindi bababa sa 6 na karakter:`);
+    if (pw === null) return;
+    if (pw.trim().length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
+    try {
+        await createUserWithEmailAndPassword(secondaryAuth, email, pw.trim());
+        await signOut(secondaryAuth);
+        alert(`✅ Nagawa na ang login account.\n\n📧 ${email}\n🔑 ${pw.trim()}\n\nIbigay ito sa client. Maaari niyang palitan ang password sa kanyang dashboard.`);
+    } catch (err) {
+        if (err.code === 'auth/email-already-in-use') {
+            alert('May login account na ang email na ito. Kung nakalimutan ng client ang password, gamitin niya ang "Nakalimutan ang password?" sa login.');
+        } else {
+            alert('⚠️ Hindi nagawa ang account: ' + err.message);
+        }
     }
 };
 
