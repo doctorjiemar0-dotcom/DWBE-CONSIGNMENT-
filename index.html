@@ -82,31 +82,29 @@ button:hover{opacity:.9}
   <div id="loginScreen" class="card">
 
     <div id="directAccessNotice" style="display:none;margin-bottom:15px;padding:10px;background:#e8f5e9;border-radius:4px;font-size:.85rem;color:#2e7d32;">
-      🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. Ilagay ang iyong password upang buksan ang portal.
+      🔒 Na-detect ang iyong tindahan mula sa link. Ilagay ang iyong email at password upang buksan ang portal.
     </div>
 
     <div id="manualLoginSection" style="width:100%;">
       <h2 style="color:var(--primary-color);font-size:1.1rem;margin-bottom:5px;">Pribadong Portal ng Tindahan (Login)</h2>
-      <p style="font-size:.80rem;color:#666;margin-bottom:8px;">I-type ang unang titik o pangalan ng tindahan upang lumitaw ang naka-mask na pagpipilian.</p>
+      <p style="font-size:.80rem;color:#666;margin-bottom:8px;">Mag-login gamit ang email at password ng iyong tindahan.</p>
 
-      <div style="background-color:#e3f2fd;border-left:4px solid #0288d1;padding:8px;margin-bottom:12px;font-size:.75rem;color:#0d47a1;border-radius:4px;">
-        🔒 <strong>Privacy Notice:</strong>
-        Ang mga pangalan ng tindahan ay naka-mask para sa iyong seguridad at privacy. Ang nakikita mo dito ay hindi ang buong pangalan ng tindahan.
+      <div id="noStoreNotice" style="display:none;background:#fff3e0;border-left:4px solid #f57c00;padding:8px;margin-bottom:12px;font-size:.8rem;color:#e65100;border-radius:4px;">
+        ⚠️ Walang aprubadong tindahan na naka-link sa email na ito. Hintayin ang pag-apruba ng admin.
       </div>
 
-      <div class="form-group" style="width:100%;position:relative;">
-        <label for="unifiedStoreInput">Pangalan ng Tindahan:</label>
-        <input type="text" id="unifiedStoreInput" placeholder="I-type ang unang titik..." autocomplete="off">
-        <input type="hidden" id="unifiedStoreActual">
-        <div id="storeSuggestions" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ccc;border-radius:4px;max-height:150px;overflow-y:auto;z-index:1000;display:none;box-shadow:0 4px 6px rgba(0,0,0,.1);"></div>
+      <div class="form-group" style="width:100%;">
+        <label for="unifiedEmailInput">Email:</label>
+        <input type="email" id="unifiedEmailInput" placeholder="Ilagay ang email ng tindahan" autocomplete="username">
       </div>
 
       <div class="form-group" style="width:100%;">
         <label for="unifiedPasswordInput">Password:</label>
-        <input type="password" id="unifiedPasswordInput" placeholder="Ilagay ang password ng tindahan" required>
+        <input type="password" id="unifiedPasswordInput" placeholder="Ilagay ang password" autocomplete="current-password">
       </div>
 
-      <button type="button" id="unifiedLoginBtn" style="background-color:var(--primary-color);margin-bottom:15px;">Buksan ang Aking Portal</button>
+      <button type="button" id="unifiedLoginBtn" style="background-color:var(--primary-color);margin-bottom:5px;">Buksan ang Aking Portal</button>
+      <button type="button" onclick="forgotPassword()" style="background:none;color:#0288d1;font-size:.85rem;text-decoration:underline;margin:0 0 15px;box-shadow:none;">Nakalimutan ang password?</button>
     </div>
 
     <button type="button" id="proceedLoginBtn" style="display:none;background-color:var(--secondary-color);margin-bottom:15px;">Ituloy sa Aking Portal</button>
@@ -127,7 +125,7 @@ button:hover{opacity:.9}
       <form id="inquiryForm" style="width:100%;margin-top:8px;">
         <div class="form-group"><label>Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
         <div class="form-group"><label>Pangalan ng May-ari:</label><input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required></div>
-        <div class="form-group"><label>Sariling Password (Para sa Portal Login):</label><input type="password" id="inqPassword" placeholder="Gumawa ng iyong sariling password" required></div>
+        <div class="form-group"><label>Sariling Password (Para sa Portal Login):</label><input type="password" id="inqPassword" placeholder="Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)" minlength="6" required></div>
         <div class="form-group"><label>Numero ng Telepono / GCash:</label><input type="text" id="inqContact" placeholder="Hal. 09123456789" required></div>
         <div class="form-group"><label>Gmail / Active Email Address:</label><input type="email" id="inqEmail" placeholder="Hal. alingenastore@gmail.com" required></div>
         <div class="form-group"><label>Lokasyon / Address:</label><input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required></div>
@@ -402,8 +400,12 @@ button:hover{opacity:.9}
       <div id="passwordContentWrapper" style="display:none;margin-top:10px;">
         <p style="font-size:.80rem;color:#333;margin-bottom:8px;">Maaari mong baguhin ang iyong password anumang oras.</p>
         <div class="form-group">
+          <label>Kasalukuyang Password:</label>
+          <input type="password" id="currentClientPassword" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password">
+        </div>
+        <div class="form-group">
           <label>Bagong Password:</label>
-          <input type="password" id="newClientPassword" placeholder="Ilagay ang bagong password">
+          <input type="password" id="newClientPassword" placeholder="Ilagay ang bagong password" autocomplete="new-password">
         </div>
         <button type="button" onclick="updateClientPassword()" style="background-color:#2e7d32;">I-save ang Bagong Password</button>
       </div>
@@ -536,7 +538,30 @@ var D={
 '✅ Na-approve — hintayin ang delivery':'✅ Approved — wait for delivery',
 '❌ Tinanggihan':'❌ Rejected',
 '📦 Natanggap na':'📦 Received',
-'Nakapag-request ka na ngayong buwan. Maaari kang mag-request muli sa susunod na buwan.':'You already made a request this month. You can request again next month.'
+'Nakapag-request ka na ngayong buwan. Maaari kang mag-request muli sa susunod na buwan.':'You already made a request this month. You can request again next month.',
+'Mag-login gamit ang email at password ng iyong tindahan.':'Log in using your store email and password.',
+'Ilagay ang email ng tindahan':'Enter the store email',
+'Ilagay ang password':'Enter your password',
+'Nakalimutan ang password?':'Forgot your password?',
+'⚠️ Walang aprubadong tindahan na naka-link sa email na ito. Hintayin ang pag-apruba ng admin.':'⚠️ No approved store is linked to this email. Please wait for the admin to approve it.',
+'🔒 Na-detect ang iyong tindahan mula sa link. Ilagay ang iyong email at password upang buksan ang portal.':'🔒 Your store was detected from the link. Enter your email and password to open the portal.',
+'Kasalukuyang Password:':'Current Password:',
+'Ilagay ang kasalukuyang password':'Enter your current password',
+'Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)':'Create your own password (at least 6 characters)',
+'Mangyaring ilagay ang email at password.':'Please enter your email and password.',
+'⚠️ Mali ang email o password.':'⚠️ Wrong email or password.',
+'⚠️ Maraming maling pagsubok. Subukan muli mamaya o i-reset ang password.':'⚠️ Too many failed attempts. Try again later or reset your password.',
+'⚠️ Walang koneksyon sa internet.':'⚠️ No internet connection.',
+'Para sa mas ligtas na account, gumawa ng bagong password (hindi bababa sa 6 na karakter):':'For a safer account, create a new password (at least 6 characters):',
+'Kailangan ng hindi bababa sa 6 na karakter.':'At least 6 characters are required.',
+'Ilagay muna ang iyong email sa itaas, pagkatapos pindutin ulit ito.':'Enter your email above first, then press this again.',
+'Kung may account ang email na ito, may ipinadala kaming link para sa pag-reset ng password. Tingnan ang inbox o spam. Kung hindi ka pa nakaka-login sa bagong sistema, gamitin muna ang dati mong password.':'If this email has an account, we sent a password reset link. Check your inbox or spam. If you have not logged in to the new system yet, use your old password first.',
+'Mangyaring ilagay ang kasalukuyan at bagong password.':'Please enter your current and new password.',
+'Ang bagong password ay dapat hindi bababa sa 6 na karakter.':'The new password must be at least 6 characters.',
+'⚠️ Mali ang kasalukuyang password.':'⚠️ Wrong current password.',
+'Ang password ay dapat hindi bababa sa 6 na karakter.':'The password must be at least 6 characters.',
+'⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password o i-click ang Nakalimutan ang password? sa login.':'⚠️ This email already has an account but the password is different. Use the correct password or click Forgot your password? on the login screen.',
+'⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.'
 };
 var R=[
 [/^Hal\. /,'e.g. '],
@@ -655,16 +680,7 @@ apply();
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-const authConfig = {
-  apiKey: "AIzaSyCUqdkM0tA6bxu6n0nIO5MGLey9J16n4ao",
-  authDomain: "consider-501b6.firebaseapp.com",
-  projectId: "consider-501b6",
-  storageBucket: "consider-501b6.firebasestorage.app",
-  messagingSenderId: "540286886994",
-  appId: "1:540286886994:web:e6872faeed78516c372b8b"
-};
+import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const dataConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -675,17 +691,23 @@ const dataConfig = {
   appId: "1:205759197252:web:b04400821f81791d10cc11"
 };
 
-const authApp = initializeApp(authConfig);
-const auth = getAuth(authApp);
 const dataApp = initializeApp(dataConfig, "data");
+const authData = getAuth(dataApp);
 const db = getFirestore(dataApp);
 
 let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
-let currentStoreName = localStorage.getItem('client_logged_store') || '';
+let currentStoreName = '';
+let authUser = null;
+let dataLoaded = false;
+let applying = false;
 const syncStatus = document.getElementById('syncStatus');
 const $ = id => document.getElementById(id);
 const now = () => new Date().toLocaleString();
-const getStore = () => appData.consignments.find(c => c.storeName.toLowerCase() === currentStoreName.toLowerCase());
+// Ang tindahan ay nakikilala sa pamamagitan ng email ng naka-login na Firebase Auth account
+const getStore = () => {
+  const em = authUser && authUser.email ? authUser.email.toLowerCase() : '';
+  return em ? appData.consignments.find(c => (c.email || '').trim().toLowerCase() === em) : undefined;
+};
 
 window.openImageViewer = function(src, title) {
   $('modalImage').src = src;
@@ -720,101 +742,101 @@ window.toggleTransactionVisibility = makeToggle('transactionContentWrapper', 'to
 window.toggleRestockVisibility = makeToggle('restockContentWrapper', 'toggleRestockBtn');
 window.toggleChatVisibility = makeToggle('chatContentWrapper', 'toggleChatBtn');
 
-// Masking helper
-function maskStoreName(name) {
-  return name.split(' ').map(word => word.length <= 1 ? word : word[0] + '*'.repeat(word.length - 1)).join(' ');
-}
-
-// Search & Masked Suggestion Logic
-const unifiedStoreInput = $('unifiedStoreInput');
-const unifiedStoreActual = $('unifiedStoreActual');
-const storeSuggestions = $('storeSuggestions');
-
-if (unifiedStoreInput) {
-  unifiedStoreInput.addEventListener('input', () => {
-    const query = unifiedStoreInput.value.trim().toLowerCase();
-    storeSuggestions.innerHTML = '';
-    if (!query) {
-      storeSuggestions.style.display = 'none';
-      unifiedStoreActual.value = '';
-      return;
-    }
-    const matches = appData.consignments.filter(c => c.storeName.toLowerCase().includes(query));
-    if (matches.length > 0) {
-      storeSuggestions.style.display = 'block';
-      matches.forEach(c => {
-        const div = document.createElement('div');
-        div.style.cssText = "padding: 8px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #eee; background: white;";
-        div.textContent = maskStoreName(c.storeName);
-        div.addEventListener('click', () => {
-          unifiedStoreInput.value = maskStoreName(c.storeName);
-          unifiedStoreActual.value = c.storeName;
-          storeSuggestions.style.display = 'none';
-        });
-        div.addEventListener('mouseenter', () => { div.style.background = '#f1f8e9'; });
-        div.addEventListener('mouseleave', () => { div.style.background = 'white'; });
-        storeSuggestions.appendChild(div);
-      });
-    } else {
-      storeSuggestions.style.display = 'none';
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#unifiedStoreInput') && !e.target.closest('#storeSuggestions')) {
-      storeSuggestions.style.display = 'none';
-    }
-  });
-}
-
-// Update Client Password
+// Update Client Password (Firebase Auth)
 window.updateClientPassword = async function() {
+  const cur = $('currentClientPassword').value;
   const newPass = $('newClientPassword').value.trim();
-  if (!newPass) { alert("Mangyaring ilagay ang bagong password."); return; }
+  if (!cur || !newPass) { alert("Mangyaring ilagay ang kasalukuyan at bagong password."); return; }
+  if (newPass.length < 6) { alert("Ang bagong password ay dapat hindi bababa sa 6 na karakter."); return; }
+  const user = authData.currentUser;
   const store = getStore();
-  if (!store) return;
-  store.password = newPass;
+  if (!user || !store) return;
+  try {
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, cur));
+    await updatePassword(user, newPass);
+  } catch (err) {
+    if (['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err.code)) {
+      alert("⚠️ Mali ang kasalukuyang password.");
+    } else if (err.code === 'auth/weak-password') {
+      alert("Ang bagong password ay dapat hindi bababa sa 6 na karakter.");
+    } else if (err.code === 'auth/too-many-requests') {
+      alert("⚠️ Maraming maling pagsubok. Subukan muli mamaya o i-reset ang password.");
+    } else {
+      alert("⚠️ Hindi na-update ang password: " + err.message);
+    }
+    return;
+  }
   if (!store.transactionHistory) store.transactionHistory = [];
   store.transactionHistory.unshift({ type: 'Security', text: 'Binago ang password ng tindahan.', date: now() });
   await saveData();
   alert("✅ Matagumpay na na-update ang password ng iyong tindahan!");
+  $('currentClientPassword').value = '';
   $('newClientPassword').value = '';
   renderClientDashboard(store);
 };
 
-// Login
+const AUTH_BAD = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'];
+
+// Para sa mga lumang client na wala pang Firebase account: ang dati nilang password ay magagamit nang isang beses
+// para gumawa ng account, at buburahin na ang nakasulat na password sa database.
+async function tryLegacyMigration(email, pass) {
+  const legacy = appData.consignments.find(c =>
+    (c.email || '').trim().toLowerCase() === email && (c.password || c.contact) && (c.password || c.contact) === pass);
+  if (!legacy) return false;
+  let newPass = pass;
+  if (pass.length < 6) {
+    const p = await prompt("Para sa mas ligtas na account, gumawa ng bagong password (hindi bababa sa 6 na karakter):");
+    if (!p || p.trim().length < 6) { alert("Kailangan ng hindi bababa sa 6 na karakter."); return true; }
+    newPass = p.trim();
+  }
+  try {
+    await createUserWithEmailAndPassword(authData, email, newPass);
+  } catch (err) {
+    alert("⚠️ Mali ang email o password.");
+    return true;
+  }
+  const s2 = appData.consignments.find(c => (c.email || '').trim().toLowerCase() === email);
+  if (s2) { delete s2.password; await saveData(); }
+  return true;
+}
+
+// Login (Firebase Auth)
 $('unifiedLoginBtn').addEventListener('click', async () => {
-  const storeNameVal = $('unifiedStoreActual').value.trim();
-  const passwordVal = $('unifiedPasswordInput').value.trim();
+  const email = $('unifiedEmailInput').value.trim().toLowerCase();
+  const pass = $('unifiedPasswordInput').value;
+  $('noStoreNotice').style.display = 'none';
 
-  if (!storeNameVal || !passwordVal) {
-    alert('Mangyaring pumili ng tindahan at ilagay ang password.');
-    return;
+  if (!email || !pass) { alert('Mangyaring ilagay ang email at password.'); return; }
+
+  try {
+    await signInWithEmailAndPassword(authData, email, pass);
+    $('unifiedPasswordInput').value = '';
+  } catch (err) {
+    if (AUTH_BAD.includes(err.code)) {
+      if (await tryLegacyMigration(email, pass)) return;
+      alert('⚠️ Mali ang email o password.');
+    } else if (err.code === 'auth/too-many-requests') {
+      alert('⚠️ Maraming maling pagsubok. Subukan muli mamaya o i-reset ang password.');
+    } else if (err.code === 'auth/network-request-failed') {
+      alert('⚠️ Walang koneksyon sa internet.');
+    } else if (err.code === 'auth/invalid-email') {
+      alert('⚠️ Hindi wasto ang email.');
+    } else {
+      alert('⚠️ Hindi makapag-login: ' + err.message);
+    }
   }
-
-  const found = appData.consignments.find(c => c.storeName.toLowerCase() === storeNameVal.toLowerCase());
-  if (!found) {
-    alert('⚠️ Hindi natagpuan ang rehistradong tindahan na ito.');
-    return;
-  }
-
-  const expectedPassword = found.password || found.contact || "";
-
-  if (found.password && passwordVal !== found.password) {
-    alert('⚠️ Mali ang password para sa tindahang ito.');
-    return;
-  } else if (!found.password && passwordVal !== expectedPassword) {
-    found.password = passwordVal;
-    await saveData();
-  }
-
-  currentStoreName = found.storeName;
-  localStorage.setItem('client_logged_store', currentStoreName);
-  found.clientStatus = "Online";
-  await saveData();
-  alert('✅ Matagumpay na nag-log in!');
-  initPortalView();
 });
+$('unifiedPasswordInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') $('unifiedLoginBtn').click(); });
+
+// Nakalimutan ang password
+window.forgotPassword = async function() {
+  const email = $('unifiedEmailInput').value.trim().toLowerCase();
+  if (!email) { alert('Ilagay muna ang iyong email sa itaas, pagkatapos pindutin ulit ito.'); return; }
+  try { await sendPasswordResetEmail(authData, email); } catch (err) {
+    if (err.code === 'auth/invalid-email') { alert('⚠️ Hindi wasto ang email.'); return; }
+  }
+  alert('Kung may account ang email na ito, may ipinadala kaming link para sa pag-reset ng password. Tingnan ang inbox o spam. Kung hindi ka pa nakaka-login sa bagong sistema, gamitin muna ang dati mong password.');
+};
 
 // Logout
 window.requestLogout = async function() {
@@ -822,8 +844,7 @@ window.requestLogout = async function() {
   if (storeInput === null) return;
   const store = getStore();
   if (store && storeInput.toLowerCase().trim() === store.ownerName.toLowerCase().trim()) {
-    try { await signOut(auth); } catch(e) {}
-    localStorage.removeItem('client_logged_store');
+    try { await signOut(authData); } catch(e) {}
     currentStoreName = '';
     window.location.href = window.location.pathname.split('?')[0];
   } else {
@@ -952,9 +973,13 @@ window.promptRecordSale = async function(styleType) {
 };
 
 // Load Data (live sync: nag-a-update kapag may nag-save na iba)
-function loadData() {
+let unsubData = null;
+let listenFailed = false;
+function listenData() {
+  if (unsubData) unsubData();
+  listenFailed = false;
   syncStatus.textContent = "Kumukuha ng data sa Cloud...";
-  onSnapshot(doc(db, "app_data", "main_inventory"), (snap) => {
+  unsubData = onSnapshot(doc(db, "app_data", "main_inventory"), (snap) => {
     if (snap.metadata.hasPendingWrites) return;
     if (snap.exists()) {
       appData = snap.data();
@@ -962,10 +987,12 @@ function loadData() {
       if (!appData.consignments) appData.consignments = [];
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
     }
+    dataLoaded = true;
     syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
     initPortalView();
   }, (err) => {
     console.error(err);
+    listenFailed = true;
     syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
   });
 }
@@ -985,32 +1012,34 @@ async function saveData() {
 // Initialize Portal
 function initPortalView() {
   const paramStore = new URLSearchParams(window.location.search).get('store');
+  const showPortal = (on) => {
+    $('loginScreen').style.display = on ? 'none' : 'flex';
+    $('portalContent').style.display = on ? 'block' : 'none';
+  };
 
-  if (paramStore) {
-    currentStoreName = paramStore;
-    localStorage.setItem('client_logged_store', currentStoreName);
-  }
+  if (applying) return;
 
-  if (currentStoreName) {
+  if (authUser) {
+    if (!dataLoaded) return;
     const found = getStore();
     if (found) {
-      $('loginScreen').style.display = 'none';
-      $('portalContent').style.display = 'block';
-      if (paramStore) $('directAccessNotice').style.display = 'block';
+      currentStoreName = found.storeName;
+      $('noStoreNotice').style.display = 'none';
+      showPortal(true);
       renderClientDashboard(found);
-    } else {
-      localStorage.removeItem('client_logged_store');
-      currentStoreName = '';
-      $('loginScreen').style.display = 'flex';
-      $('portalContent').style.display = 'none';
+      return;
     }
-  } else {
-    $('loginScreen').style.display = 'flex';
-    $('portalContent').style.display = 'none';
+    // may account pero wala pang aprubadong tindahan
+    $('noStoreNotice').style.display = 'block';
+    signOut(authData).catch(() => {});
   }
+
+  currentStoreName = '';
+  showPortal(false);
+  if (paramStore) $('directAccessNotice').style.display = 'block';
 }
 
-// Inquiry Form Submission
+// Inquiry Form Submission (gumagawa ng Firebase account; hindi na sine-save ang password sa database)
 const inquiryForm = $('inquiryForm');
 if (inquiryForm) {
   inquiryForm.addEventListener('submit', async (e) => {
@@ -1018,25 +1047,55 @@ if (inquiryForm) {
 
     const storeName = $('inqStoreName').value.trim();
     const ownerName = $('inqOwnerName').value.trim();
-    const password = $('inqPassword').value.trim();
+    const password = $('inqPassword').value;
     const contact = $('inqContact').value.trim();
-    const email = $('inqEmail').value.trim();
+    const email = $('inqEmail').value.trim().toLowerCase();
     const address = $('inqAddress').value.trim();
     const styleType = $('inqStyleType').value;
     const initialQty = parseInt($('inqInitialQty').value) || 5;
     const message = $('inqMessage').value.trim();
 
-    if (!appData.pendingInquiries) appData.pendingInquiries = [];
+    if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
 
-    appData.pendingInquiries.push({
-      storeName, ownerName, password, contact, email, address,
-      styleType, initialQty, message,
-      date: now()
-    });
+    applying = true;
+    try {
+      try {
+        await createUserWithEmailAndPassword(authData, email, password);
+      } catch (err) {
+        if (err.code === 'auth/email-already-in-use') {
+          try {
+            await signInWithEmailAndPassword(authData, email, password);
+          } catch (err2) {
+            alert('⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password o i-click ang Nakalimutan ang password? sa login.');
+            return;
+          }
+        } else if (err.code === 'auth/invalid-email') {
+          alert('⚠️ Hindi wasto ang email.');
+          return;
+        } else if (err.code === 'auth/weak-password') {
+          alert('Ang password ay dapat hindi bababa sa 6 na karakter.');
+          return;
+        } else {
+          alert('⚠️ Hindi nagawa ang account: ' + err.message);
+          return;
+        }
+      }
 
-    await saveData();
-    alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!');
-    inquiryForm.reset();
+      if (!appData.pendingInquiries) appData.pendingInquiries = [];
+      appData.pendingInquiries.push({
+        storeName, ownerName, contact, email, address,
+        styleType, initialQty, message, accountCreated: true,
+        date: now()
+      });
+
+      await saveData();
+      try { await signOut(authData); } catch (err3) {}
+      alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!');
+      inquiryForm.reset();
+    } finally {
+      applying = false;
+      initPortalView();
+    }
   });
 }
 
@@ -1279,7 +1338,11 @@ window.sendClientMessage = async function() {
 };
 
 // Start
-loadData();
+onAuthStateChanged(authData, (user) => {
+  authUser = user;
+  if (!unsubData || listenFailed) listenData();
+  initPortalView();
+});
 </script>
 
 </body>
