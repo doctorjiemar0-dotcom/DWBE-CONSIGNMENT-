@@ -1011,7 +1011,8 @@ window.confirmReceiveRestock = async function(index) {
   }
 
   store.approvedRestocks.splice(index, 1);
-  const lg = (store.restockLog || []).find(r => r.id === itemToReceive.reqId);
+  const lg = (store.restockLog || []).find(r => r.id === itemToReceive.reqId)
+    || (store.restockLog || []).find(r => r.status === 'Pending' || r.status === 'Approved');
   if (lg) { lg.status = 'Received'; lg.updatedAt = now(); }
 
   if (!store.messages) store.messages = [];
@@ -1198,6 +1199,16 @@ if (inquiryForm) {
   });
 }
 
+// Ang status ay hinahango sa tunay na estado ng request, kaya hindi ito nagkakaiba sa aktuwal
+function restockStatusOf(store, r) {
+  if ((store.activeRequests || []).some(a => a.id === r.id)) return 'Pending';
+  if ((store.approvedRestocks || []).some(a => a.reqId === r.id)) return 'Approved';
+  if (r.status === 'Rejected') return 'Rejected';
+  if (r.status === 'Received') return 'Received';
+  // wala na sa pila ng request at hindi tinanggihan: natapos na
+  return (store.approvedRestocks || []).length || (store.activeRequests || []).length ? r.status : 'Received';
+}
+
 // Restock request status
 function renderRestockStatus(store) {
   const card = $('restockStatusCard'), box = $('restockStatusContainer'), note = $('restockNotice');
@@ -1207,6 +1218,7 @@ function renderRestockStatus(store) {
   const labels = { Pending: '⏳ Naghihintay ng aprubal', Approved: '✅ Na-approve — hintayin ang delivery', Rejected: '❌ Tinanggihan', Received: '📦 Natanggap na' };
   const colors = { Pending: '#f57c00', Approved: '#0288d1', Rejected: '#c62828', Received: '#2e7d32' };
   log.forEach(r => {
+    r = Object.assign({}, r, { status: restockStatusOf(store, r) });
     const div = document.createElement('div');
     div.style.cssText = "background: white; border: 1px solid #ffe082; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
     div.innerHTML =
