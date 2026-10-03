@@ -94,10 +94,10 @@ button:hover{opacity:.9}
       </div>
 
       <div class="form-group" style="width:100%;">
-        <label for="unifiedStoreInput">Pangalan ng Tindahan:</label>
-        <select id="unifiedStoreInput">
-          <option value="">-- Piliin ang tindahan --</option>
-        </select>
+        <label for="storeSearchInput">Pangalan ng Tindahan:</label>
+        <input type="text" id="storeSearchInput" placeholder="I-type ang unang titik o pangalan ng tindahan..." autocomplete="off" autocapitalize="words">
+        <input type="hidden" id="unifiedStoreInput" value="">
+        <div id="storeSuggestions" style="display:none;border:1px solid #c5e1a5;border-radius:4px;background:#fff;margin-top:4px;max-height:220px;overflow-y:auto;"></div>
         <p style="font-size:.72rem;color:#666;margin-top:4px;">Naka-mask ang mga pangalan ng tindahan para sa iyong seguridad at privacy.</p>
       </div>
 
@@ -555,8 +555,9 @@ var D={
 'Kasalukuyang Password:':'Current Password:',
 'Ilagay ang kasalukuyang password':'Enter your current password',
 'Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)':'Create your own password (at least 6 characters)',
-'Mangyaring piliin ang tindahan at ilagay ang password.':'Please choose the store and enter the password.',
-'-- Piliin ang tindahan --':'-- Choose the store --',
+'Mangyaring hanapin at piliin ang tindahan, at ilagay ang password.':'Please search and choose the store, and enter the password.',
+'I-type ang unang titik o pangalan ng tindahan...':'Type the first letter or the store name...',
+'Walang nakitang tindahan.':'No store found.',
 'Naka-mask ang mga pangalan ng tindahan para sa iyong seguridad at privacy.':'Store names are masked for your security and privacy.',
 'Kumukuha pa ng data. Subukan muli sa ilang segundo.':'Still fetching data. Try again in a few seconds.',
 '⚠️ Mali ang pangalan ng tindahan o password.':'⚠️ Wrong store name or password.',
@@ -827,17 +828,50 @@ async function tryLegacyMigration(email, pass) {
   return true;
 }
 
-// Listahan ng tindahan sa login (naka-mask ang pangalan: unang titik lang ng bawat salita ang kita)
+// Paghahanap ng tindahan sa login (naka-mask ang pangalan: unang titik lang ng bawat salita ang kita)
 let loginStores = [];
+let loginLabels = [];
 let paramApplied = false;
 function maskName(n) {
   return n.trim().split(/\s+/).map(w => w.charAt(0) + '*'.repeat(Math.max(1, w.length - 1))).join(' ');
 }
+function hideSuggestions() {
+  const box = $('storeSuggestions');
+  box.innerHTML = '';
+  box.style.display = 'none';
+}
+function selectLoginStore(i) {
+  $('unifiedStoreInput').value = String(i);
+  $('storeSearchInput').value = loginLabels[i];
+  hideSuggestions();
+}
+function renderSuggestions() {
+  const box = $('storeSuggestions');
+  const q = $('storeSearchInput').value.trim().toLowerCase();
+  box.innerHTML = '';
+  if (!q) { box.style.display = 'none'; return; }
+  const hits = [];
+  loginStores.forEach((c, i) => { if (c.storeName.toLowerCase().includes(q)) hits.push(i); });
+  hits.slice(0, 6).forEach(i => {
+    const row = document.createElement('div');
+    row.textContent = loginLabels[i];
+    row.style.cssText = 'padding:10px;border-bottom:1px solid #eee;cursor:pointer;font-size:.95rem;letter-spacing:1px;';
+    row.onclick = () => selectLoginStore(i);
+    box.appendChild(row);
+  });
+  if (!hits.length) {
+    const none = document.createElement('div');
+    none.textContent = 'Walang nakitang tindahan.';
+    none.style.cssText = 'padding:10px;font-size:.85rem;color:#666;';
+    box.appendChild(none);
+  }
+  box.style.display = 'block';
+}
 function populateStoreList() {
-  const sel = $('unifiedStoreInput');
-  if (!sel) return;
+  const hid = $('unifiedStoreInput');
+  if (!hid) return;
   let prev = '';
-  if (sel.value !== '' && loginStores[parseInt(sel.value)]) prev = loginStores[parseInt(sel.value)].storeName;
+  if (hid.value !== '' && loginStores[parseInt(hid.value)]) prev = loginStores[parseInt(hid.value)].storeName;
   else if (!paramApplied) prev = new URLSearchParams(window.location.search).get('store') || '';
   paramApplied = true;
 
@@ -846,17 +880,25 @@ function populateStoreList() {
     .slice()
     .sort((a, b) => a.storeName.localeCompare(b.storeName));
 
-  while (sel.options.length > 1) sel.remove(1);
   const seen = {};
-  loginStores.forEach((c, i) => {
-    let label = maskName(c.storeName);
-    seen[label] = (seen[label] || 0) + 1;
-    if (seen[label] > 1) label += ' (' + seen[label] + ')';
-    sel.add(new Option(label, String(i)));
+  loginLabels = loginStores.map(c => {
+    let l = maskName(c.storeName);
+    seen[l] = (seen[l] || 0) + 1;
+    return seen[l] > 1 ? l + ' (' + seen[l] + ')' : l;
   });
-  const idx = loginStores.findIndex(c => c.storeName.trim().toLowerCase() === prev.trim().toLowerCase());
-  sel.value = idx >= 0 ? String(idx) : '';
+
+  const idx = prev ? loginStores.findIndex(c => c.storeName.trim().toLowerCase() === prev.trim().toLowerCase()) : -1;
+  if (idx >= 0) {
+    selectLoginStore(idx);
+  } else {
+    hid.value = '';
+    renderSuggestions();
+  }
 }
+$('storeSearchInput').addEventListener('input', () => {
+  $('unifiedStoreInput').value = '';
+  renderSuggestions();
+});
 
 // Login (Firebase Auth)
 $('unifiedLoginBtn').addEventListener('click', async () => {
@@ -864,7 +906,7 @@ $('unifiedLoginBtn').addEventListener('click', async () => {
   const pass = $('unifiedPasswordInput').value;
   $('noStoreNotice').style.display = 'none';
 
-  if (idxVal === '' || !pass) { alert('Mangyaring piliin ang tindahan at ilagay ang password.'); return; }
+  if (idxVal === '' || !pass) { alert('Mangyaring hanapin at piliin ang tindahan, at ilagay ang password.'); return; }
   if (!dataLoaded) { alert('Kumukuha pa ng data. Subukan muli sa ilang segundo.'); return; }
 
   // Ang email ng napiling tindahan ang gagamitin sa Firebase Authentication
