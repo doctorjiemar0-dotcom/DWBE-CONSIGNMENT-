@@ -353,6 +353,12 @@ button:hover{opacity:.9}
           </li>
         </ol>
 
+        <div id="agreementPayTermBox" style="margin-bottom:10px;padding:8px;border-radius:4px;background:#fff8e1;border-left:4px solid #f57f17;">
+          💳 <strong>TERMS NG BAYAD:</strong> <strong id="agreementPayTermLabel" style="color:#e65100;">Buwanan (End of Month)</strong><br>
+          <span id="agreementPayTermText"></span><br>
+          <em style="font-size:.75rem;color:#555;">Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.</em>
+        </div>
+
         <div id="agreementStatusDisplay" style="font-weight:bold;color:white;background-color:#2e7d32;margin-top:12px;border-radius:4px;padding:8px;text-align:center;font-size:1.05em;">✅ Status: Aktibo ang Consignment</div>
       </div>
     </div>
@@ -590,7 +596,17 @@ var D={
 'Hindi bababa sa 6 na karakter ang password.':'The password must be at least 6 characters.',
 'Hindi magkapareho ang dalawang password.':'The two passwords do not match.',
 'Masyadong mahina ang password.':'The password is too weak.',
-'⚠️ Expired o nagamit na ang link na ito. Bumalik sa login at pindutin ang "Nakalimutan ang password?" para sa bagong link.':'⚠️ This link is expired or already used. Go back to login and press "Forgot your password?" for a new link.'
+'⚠️ Expired o nagamit na ang link na ito. Bumalik sa login at pindutin ang "Nakalimutan ang password?" para sa bagong link.':'⚠️ This link is expired or already used. Go back to login and press "Forgot your password?" for a new link.',
+'TERMS NG BAYAD:':'PAYMENT TERMS:',
+'Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.':'These terms apply instead of the cut-off written in Section 3.',
+'Buwanan (End of Month)':'Monthly (End of Month)',
+'Kada 15 Araw':'Every 15 Days',
+'Lingguhan':'Weekly',
+'Pagkaubos ng Stock':'Upon Sell-out',
+'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off at the end of every month. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
+'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 15 days. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
+'Cut-off kada 7 araw (lingguhan). Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 7 days (weekly). The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
+'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)':'Payment once the delivered stock is sold out, or after 30 days, whichever comes first. (Sold × Supplier Price)'
 };
 var R=[
 [/^Hal\. /,'e.g. '],
@@ -734,6 +750,14 @@ let applying = false;
 const syncStatus = document.getElementById('syncStatus');
 const $ = id => document.getElementById(id);
 const now = () => new Date().toLocaleString();
+
+// Terms ng bayad (dapat pareho sa admin.html)
+const PAY_TERMS = {
+  monthly:     { label: 'Buwanan (End of Month)', text: 'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
+  semimonthly: { label: 'Kada 15 Araw',           text: 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
+  weekly:      { label: 'Lingguhan',              text: 'Cut-off kada 7 araw (lingguhan). Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
+  sellout:     { label: 'Pagkaubos ng Stock',     text: 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)' }
+};
 
 // Reset-password link galing sa email (?mode=resetPassword&oobCode=...)
 const _qs = new URLSearchParams(window.location.search);
@@ -1185,6 +1209,10 @@ function renderClientDashboard(store) {
   if (agreementStatusDisplay) {
     agreementStatusDisplay.textContent = `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
   }
+
+  const term = PAY_TERMS[store.paymentTerms] || PAY_TERMS.monthly;
+  $('agreementPayTermLabel').textContent = term.label;
+  $('agreementPayTermText').textContent = term.text;
 
   renderRestockStatus(store);
 
