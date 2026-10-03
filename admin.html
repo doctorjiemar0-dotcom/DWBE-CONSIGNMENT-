@@ -300,6 +300,10 @@ const PAY_TERMS = {
   weekly:      { label: 'Lingguhan', days: 7 },
   sellout:     { label: 'Pagkaubos ng Stock', days: 30 }
 };
+// Default password na ibibigay ng admin (hindi bababa sa 6 na karakter ang kailangan ng Firebase)
+const DEFAULT_CLIENT_PASSWORD = 'admin123';
+// Server function sa Vercel na may kapangyarihang mag-reset ng password
+const RESET_API = 'https://dwbe-consignment.vercel.app/api/reset-password';
 const termOf = (item) => PAY_TERMS[item.paymentTerms] ? item.paymentTerms : 'monthly';
 function nextCollectionDate(item) {
   const d = new Date();
@@ -1149,7 +1153,7 @@ function renderApp() {
                     <button type="button" onclick="editStoreEmail(${index})" style="background-color: #1565c0; font-size: 0.75rem; padding: 6px; flex: 1;">Email</button>
                     <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">Address</button>
                     <button type="button" onclick="editPayTerm(${index})" style="background-color: #f57f17; font-size: 0.75rem; padding: 6px; flex: 1;">💳 Terms</button>
-                    <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Password</button>
+                    <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Reset Password</button>
                 </div>
                 <div style="margin-top: 6px; display: flex; gap: 4px;">
                     <button type="button" onclick="toggleStoreCollectionStatus(${index})" style="background-color: ${item.isCollected ? '#78909c' : '#2e7d32'}; font-size: 0.75rem; padding: 6px; flex: 1;">${item.isCollected ? '↩️ Ibalik sa Aktibo' : '✅ Markahan bilang Nakolektahan'}</button>
@@ -1629,15 +1633,29 @@ window.createClientLogin = async function(index) {
         alert('Maglagay muna ng email ng tindahan.');
         return;
     }
-    const pw = prompt(`Magtakda ng password para sa ${item.storeName} (${email}), hindi bababa sa 6 na karakter.\nIbigay ito sa client. Puwede niya itong palitan sa portal pagkatapos mag-login:`);
-    if (pw === null) return;
-    if (pw.trim().length < 6) { alert('Hindi bababa sa 6 na karakter.'); return; }
-    const res = await createAccountForClient(email, pw.trim());
-    if (!res.ok) return;
-    item.firebaseUid = res.uid;
-    item.authStatus = 'active';
-    await saveToCloud();
-    alert(`✅ Handa na ang account.\n\n📧 ${email}\n🔑 Password: ${pw.trim()}\n\nIbigay ito sa client.`);
+    if (!confirm(`I-reset ang password ng ${item.storeName} (${email}) sa default na "${DEFAULT_CLIENT_PASSWORD}"?\n\nMapapalitan ang password na ginawa ng client. Kailangan nila itong palitan pagkatapos mag-login.`)) return;
+    try {
+        const idToken = await auth.currentUser.getIdToken();
+        const resp = await fetch(RESET_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken, email, password: DEFAULT_CLIENT_PASSWORD })
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok || !data.ok) {
+            alert('⚠️ Hindi na-reset ang password: ' + (data.error || resp.status));
+            return;
+        }
+        item.firebaseUid = data.uid;
+        item.authStatus = 'active';
+        item.mustChangePassword = true;
+        if (!item.history) item.history = [];
+        item.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: 'Na-reset ng admin ang password sa default.' });
+        await saveToCloud();
+        alert(`✅ Na-reset na ang password.\n\n🏪 ${item.storeName}\n🔑 Default password: ${DEFAULT_CLIENT_PASSWORD}\n\nIbigay ito sa client. Hihilingin sa kanila na palitan ito pagkatapos mag-login.`);
+    } catch (err) {
+        alert('⚠️ Hindi makakonekta sa server: ' + err.message);
+    }
 };
 
 
