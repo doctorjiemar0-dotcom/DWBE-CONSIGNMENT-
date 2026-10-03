@@ -1,16 +1,27 @@
 // Vercel Serverless Function: ang admin lang ang puwedeng mag-reset ng password ng client.
 // Kailangan ng env var na FIREBASE_SERVICE_ACCOUNT (laman ng service account JSON).
-const admin = require('firebase-admin');
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
-  });
-}
-
-// Mga email na pinapayagang mag-reset (dapat kapareho ng ADMIN_EMAILS sa admin.html)
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'admin@admin.com')
   .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+
+function initAdmin() {
+  const admin = require('firebase-admin');
+  if (!admin.apps.length) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) {
+      throw new Error('Walang FIREBASE_SERVICE_ACCOUNT sa Vercel Environment Variables (o hindi pa nare-redeploy pagkatapos idagdag).');
+    }
+    let cred;
+    try {
+      cred = JSON.parse(raw);
+    } catch (e) {
+      throw new Error('Hindi wastong JSON ang FIREBASE_SERVICE_ACCOUNT. I-paste ang BUONG laman ng downloaded JSON file.');
+    }
+    if (cred.private_key) cred.private_key = cred.private_key.replace(/\\n/g, '\n');
+    admin.initializeApp({ credential: admin.credential.cert(cred) });
+  }
+  return admin;
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,6 +31,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST lang ang tinatanggap.' });
 
   try {
+    const admin = initAdmin();
     const { idToken, email, password } = req.body || {};
     if (!idToken) return res.status(401).json({ ok: false, error: 'Walang login token.' });
 
