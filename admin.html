@@ -192,6 +192,15 @@ button:hover { background-color: #1b5e20; }
                         <div class="form-group"><label for="quantity">Bilang ng Item (Simulang Stock):</label><input type="number" id="quantity" placeholder="Hal. 10" required></div>
                         <div class="form-group"><label for="price">Presyo bawat Isa (₱):</label><input type="number" id="price" placeholder="Hal. 150" required></div>
                         <div class="form-group"><label for="dateDelivered">Petsa ng Simula (Start):</label><input type="date" id="dateDelivered"></div>
+                        <div class="form-group">
+                            <label for="payTerm">Terms ng Bayad:</label>
+                            <select id="payTerm" onchange="applyTermDate()">
+                                <option value="monthly">Buwanan (End of Month)</option>
+                                <option value="semimonthly">Kada 15 Araw</option>
+                                <option value="weekly">Lingguhan</option>
+                                <option value="sellout">Pagkaubos ng Stock</option>
+                            </select>
+                        </div>
                         <div class="form-group"><label for="collectionDate">Target na Petsa ng Koleksyon:</label><input type="date" id="collectionDate"></div>
                         <button type="submit">I-save ang Consignment</button>
                     </form>
@@ -283,6 +292,25 @@ const auth = getAuth();
 // ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
 const ADMIN_EMAILS = ['admin@admin.com'];
 const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
+
+// ===== TERMS NG BAYAD (dapat pareho sa index.html) =====
+const PAY_TERMS = {
+  monthly:     { label: 'Buwanan (End of Month)', days: 30 },
+  semimonthly: { label: 'Kada 15 Araw', days: 15 },
+  weekly:      { label: 'Lingguhan', days: 7 },
+  sellout:     { label: 'Pagkaubos ng Stock', days: 30 }
+};
+const termOf = (item) => PAY_TERMS[item.paymentTerms] ? item.paymentTerms : 'monthly';
+function nextCollectionDate(item) {
+  const d = new Date();
+  if (termOf(item) === 'monthly') d.setMonth(d.getMonth() + 1);
+  else d.setDate(d.getDate() + PAY_TERMS[termOf(item)].days);
+  return d.toISOString().slice(0, 10);
+}
+window.applyTermDate = function() {
+  const k = document.getElementById('payTerm').value;
+  document.getElementById('collectionDate').valueAsDate = new Date(nextCollectionDate({ paymentTerms: k }));
+};
 
 // Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
 const secondaryAuth = getAuth(initializeApp(firebaseConfig, 'secondary'));
@@ -521,8 +549,7 @@ function processClientAcceptedRestocks() {
                         basePrice = item.storeItems[0].price;
                     }
                     const todayStr = new Date().toISOString().slice(0, 10);
-                    let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
-                    const collDateStr = nextMonth.toISOString().slice(0, 10);
+                    const collDateStr = nextCollectionDate(item);
 
                     if (!item.storeItems) item.storeItems = [];
                     let existingSub = item.storeItems.find(sub => sub.styleType === style);
@@ -657,6 +684,7 @@ if (form) {
         const price = parseFloat(document.getElementById('price').value);
         const startD = document.getElementById('dateDelivered').value;
         const collD = document.getElementById('collectionDate').value;
+        const payTerm = document.getElementById('payTerm').value;
 
         if (appData.homeStock[styleType] < qty) {
             if (!confirm(`Babala: Ang Home stock para sa ${styleType} ay kulang (${appData.homeStock[styleType]} pcs). Ituloy pa rin?`)) return;
@@ -671,6 +699,7 @@ if (form) {
             if (sAddress) existingStore.address = sAddress;
             if (sOwner) existingStore.ownerName = sOwner;
             if (sEmail) existingStore.email = sEmail;
+            existingStore.paymentTerms = payTerm;
             if (!existingStore.storeItems) {
                 existingStore.storeItems = [{
                     id: existingStore.id || Date.now(),
@@ -702,6 +731,7 @@ if (form) {
         } else {
             appData.consignments.push({
                 id: Date.now(), storeName: sName, ownerName: sOwner, email: sEmail, address: sAddress, styleType: styleType, initialQty: qty,
+                paymentTerms: payTerm,
                 currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
                 storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
                 activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
@@ -877,6 +907,7 @@ function renderApp() {
 
     let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
     const currentYM = new Date().toISOString().slice(0, 7);
+    const todayStr = new Date().toISOString().slice(0, 10);
 
     let dashboardEarningsHtml = '';
 
@@ -925,7 +956,9 @@ function renderApp() {
             tSold += subSold;
             tSales += subSales;
 
-            const subIsDue = subItem.collectionDate && subItem.collectionDate.startsWith(currentYM);
+            const subIsDue = subItem.collectionDate && (termOf(item) === 'monthly'
+                ? subItem.collectionDate.startsWith(currentYM)
+                : subItem.collectionDate <= todayStr);
             if (subIsDue) storeIsDue = true;
 
             const totalOrderAmount = subItem.initialQty * subItem.price;
@@ -1099,7 +1132,7 @@ function renderApp() {
                 </div>
             </div>
             <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong></span>
+                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong><br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong></span>
             </div>
             <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                 <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
@@ -1112,6 +1145,7 @@ function renderApp() {
                     <button type="button" onclick="editStoreOwner(${index})" style="background-color: #006064; font-size: 0.75rem; padding: 6px; flex: 1;">May-ari</button>
                     <button type="button" onclick="editStoreEmail(${index})" style="background-color: #1565c0; font-size: 0.75rem; padding: 6px; flex: 1;">Email</button>
                     <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">Address</button>
+                    <button type="button" onclick="editPayTerm(${index})" style="background-color: #f57f17; font-size: 0.75rem; padding: 6px; flex: 1;">💳 Terms</button>
                     <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Login</button>
                 </div>
                 <div style="margin-top: 6px; display: flex; gap: 4px;">
@@ -1212,6 +1246,10 @@ window.approveInquiryWithPassword = async function(inqIdx) {
 
     const style = inq.styleType || 'Ordinary';
 
+    const termStr = prompt('Terms ng bayad:\n1 = Buwanan\n2 = Kada 15 Araw\n3 = Lingguhan\n4 = Pagkaubos ng Stock', '1');
+    if (termStr === null) return;
+    const payTerm = ['monthly', 'semimonthly', 'weekly', 'sellout'][(parseInt(termStr) || 1) - 1] || 'monthly';
+
     if (initialStock <= 0) {
         alert('Ang initial stock ay dapat higit sa 0.');
         return;
@@ -1296,9 +1334,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
 
         appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);
         const todayStr = new Date().toISOString().slice(0, 10);
-        let nextMonth = new Date();
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-        const collDateStr = nextMonth.toISOString().slice(0, 10);
+        const collDateStr = nextCollectionDate({ paymentTerms: payTerm });
 
         let notifications = [{
             id: Date.now(),
@@ -1325,6 +1361,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             firebaseUid: firebaseUid || '',
             authStatus: 'active',
             emailResetSent: true,
+            paymentTerms: payTerm,
             address: inq.address || '',
             styleType: style,
             initialQty: initialStock,
@@ -1359,7 +1396,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             history: [{
                 id: Date.now(),
                 date: new Date().toLocaleString(),
-                text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory; Firebase Auth account created/linked.`
+                text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory; Firebase Auth account created/linked. Terms: ${PAY_TERMS[payTerm].label}.`
             }]
         });
 
@@ -1497,8 +1534,7 @@ window.confirmClientRestock = async function(storeIdx, restockIdx) {
         basePrice = item.storeItems[0].price;
     }
     const todayStr = new Date().toISOString().slice(0, 10);
-    let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
-    const collDateStr = nextMonth.toISOString().slice(0, 10);
+    const collDateStr = nextCollectionDate(item);
 
     if (!item.storeItems) item.storeItems = [];
     let existingSub = item.storeItems.find(sub => sub.styleType === style);
@@ -1594,6 +1630,24 @@ window.editStoreAddress = function(index) {
         cleanSourceData();
         saveToCloud();
     }
+};
+
+// Palitan ang terms ng bayad ng tindahan
+window.editPayTerm = async function(index) {
+    const item = appData.consignments[index];
+    const v = prompt(`Terms ng bayad para sa ${item.storeName}\nKasalukuyan: ${PAY_TERMS[termOf(item)].label}\n\n1 = Buwanan\n2 = Kada 15 Araw\n3 = Lingguhan\n4 = Pagkaubos ng Stock`, '1');
+    if (v === null) return;
+    const key = ['monthly', 'semimonthly', 'weekly', 'sellout'][(parseInt(v) || 0) - 1];
+    if (!key) { alert('Pumili ng 1 hanggang 4.'); return; }
+    item.paymentTerms = key;
+    const coll = nextCollectionDate(item);
+    (item.storeItems || []).forEach(s => { s.collectionDate = coll; });
+    const ts = new Date().toLocaleString();
+    if (!item.history) item.history = [];
+    item.history.unshift({ id: Date.now(), date: ts, text: `Terms ng bayad: ${PAY_TERMS[key].label}` });
+    if (!item.clientNotifications) item.clientNotifications = [];
+    item.clientNotifications.push({ id: Date.now(), text: `💳 Binago ang terms ng bayad: ${PAY_TERMS[key].label}. Tingnan sa Kasunduan.`, date: ts });
+    await saveToCloud();
 };
 
 window.createClientLogin = async function(index) {
