@@ -572,6 +572,8 @@ var D={
 '⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password.':'⚠️ This email already has an account but the password is different. Use the correct password.',
 '⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.',
 'TERMS NG BAYAD:':'PAYMENT TERMS:',
+'Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.':'You are still using the default password from the admin. Change it now in the "Change Password" section to keep your account secure.',
+'Ang bagong password ay dapat iba sa kasalukuyan.':'The new password must be different from the current one.',
 'Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.':'These terms apply instead of the cut-off written in Section 3.',
 'Buwanan (End of Month)':'Monthly (End of Month)',
 'Kada 15 Araw':'Every 15 Days',
@@ -776,6 +778,7 @@ window.updateClientPassword = async function() {
   const newPass = $('newClientPassword').value.trim();
   if (!cur || !newPass) { alert("Mangyaring ilagay ang kasalukuyan at bagong password."); return; }
   if (newPass.length < 6) { alert("Ang bagong password ay dapat hindi bababa sa 6 na karakter."); return; }
+  if (newPass === cur) { alert("Ang bagong password ay dapat iba sa kasalukuyan."); return; }
   const user = authData.currentUser;
   const store = getStore();
   if (!user || !store) return;
@@ -795,6 +798,7 @@ window.updateClientPassword = async function() {
     return;
   }
   if (!store.transactionHistory) store.transactionHistory = [];
+  store.mustChangePassword = false;
   store.transactionHistory.unshift({ type: 'Security', text: 'Binago ang password ng tindahan.', date: now() });
   await saveData();
   alert("✅ Matagumpay na na-update ang password ng iyong tindahan!");
@@ -1256,6 +1260,14 @@ function renderClientDashboard(store) {
   const term = PAY_TERMS[store.paymentTerms] || PAY_TERMS.monthly;
   $('agreementPayTermLabel').textContent = term.label;
   $('agreementPayTermText').textContent = term.text;
+
+  // Default password mula sa admin: hilingin na palitan agad
+  if (store.mustChangePassword && !window._pwNagShown) {
+    window._pwNagShown = true;
+    $('passwordContentWrapper').style.display = 'block';
+    $('togglePasswordBtn').textContent = 'Itago';
+    alert('Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.');
+  }
 
   renderRestockStatus(store);
 
