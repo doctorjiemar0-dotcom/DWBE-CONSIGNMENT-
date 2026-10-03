@@ -274,7 +274,7 @@ button:hover { background-color: #1b5e20; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -484,7 +484,10 @@ function cleanSourceData() {
 
 // Update ng status ng restock request sa restockLog (nakikita ng client)
 function setRestockStatus(store, reqId, status, reason) {
-    const e = (store.restockLog || []).find(r => r.id === reqId);
+    const log = store.restockLog || [];
+    // Hanapin sa id; kung hindi tumugma, kunin ang pinakamatandang request na hindi pa tapos
+    const e = log.find(r => r.id === reqId)
+        || log.slice().reverse().find(r => r.status === 'Pending' || r.status === 'Approved');
     if (e) {
         e.status = status;
         e.updatedAt = new Date().toLocaleString();
@@ -879,7 +882,7 @@ function renderApp() {
                 💬 <strong>Mensahe/Inquiry:</strong> <span style="color:#333; font-style:italic;">"${inq.message || inq.notes || 'Walang mensahe'}"</span><br>
                 <div class="password-display-box" style="background:#e3f2fd;border-color:#90caf9;">
                     <strong style="color:#1565c0;">🔐 FIREBASE AUTH:</strong>
-                    Account will be created automatically after approval. A password-reset link will be sent to the client's email.
+                    Ang client ay gumawa na ng sarili niyang Firebase account nang isumite ang aplikasyon. Walang email na ipapadala.
                 </div>
                 <div class="btn-group" style="margin-top: 6px;">
                     <button type="button" class="btn-approve" onclick="approveInquiryWithPassword(${inqIdx})">✅ Aprubahan + Create Firebase Account</button>
@@ -1146,7 +1149,7 @@ function renderApp() {
                     <button type="button" onclick="editStoreEmail(${index})" style="background-color: #1565c0; font-size: 0.75rem; padding: 6px; flex: 1;">Email</button>
                     <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">Address</button>
                     <button type="button" onclick="editPayTerm(${index})" style="background-color: #f57f17; font-size: 0.75rem; padding: 6px; flex: 1;">💳 Terms</button>
-                    <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Login</button>
+                    <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Password</button>
                 </div>
                 <div style="margin-top: 6px; display: flex; gap: 4px;">
                     <button type="button" onclick="toggleStoreCollectionStatus(${index})" style="background-color: ${item.isCollected ? '#78909c' : '#2e7d32'}; font-size: 0.75rem; padding: 6px; flex: 1;">${item.isCollected ? '↩️ Ibalik sa Aktibo' : '✅ Markahan bilang Nakolektahan'}</button>
@@ -1216,6 +1219,28 @@ function renderApp() {
     document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
 }
 
+// Gumagawa ng Firebase account nang walang ipinapadalang email. Ang admin ang magbibigay ng password sa client.
+async function createAccountForClient(email, password) {
+    try {
+        const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+        const uid = cred.user.uid;
+        try { await signOut(secondaryAuth); } catch (_) {}
+        return { ok: true, uid };
+    } catch (err) {
+        if (secondaryAuth.currentUser) { try { await signOut(secondaryAuth); } catch (_) {} }
+        if (err.code === 'auth/email-already-in-use') {
+            alert(`May Firebase account na ang ${email}. Hindi mapapalitan ng admin ang password nito.\nKung nakalimutan ng client ang password, burahin ang user sa Firebase Console (Authentication → Users) at ulitin ito.`);
+        } else if (err.code === 'auth/invalid-email') {
+            alert('Hindi wastong email address.');
+        } else if (err.code === 'auth/operation-not-allowed') {
+            alert('Hindi naka-enable ang Email/Password provider sa Firebase Authentication.');
+        } else {
+            alert('⚠️ Hindi nagawa ang Firebase account: ' + err.message);
+        }
+        return { ok: false, uid: '' };
+    }
+}
+
 window.approveInquiryWithPassword = async function(inqIdx) {
     const inq = appData.pendingInquiries[inqIdx];
     if (!inq) return;
@@ -1260,70 +1285,20 @@ window.approveInquiryWithPassword = async function(inqIdx) {
         return;
     }
 
-    // ==========================================================
-    // FIREBASE AUTH: account creation happens ONLY after approval.
-    // We never store the client's password in Firestore.
-    // A random temporary password is used only for account creation,
-    // then Firebase sends a password-reset email so the client
-    // chooses their own permanent password.
-    // ==========================================================
     let firebaseUid = '';
-    let newlyCreatedAuthUser = false;
-
-    const makeTempPassword = () => {
-        const bytes = new Uint8Array(18);
-        crypto.getRandomValues(bytes);
-        const raw = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-        return `DWBE-${raw}Aa9!`;
-    };
 
     try {
-        const tempPassword = makeTempPassword();
-
-        try {
-            const cred = await createUserWithEmailAndPassword(secondaryAuth, email, tempPassword);
-            firebaseUid = cred.user.uid;
-            newlyCreatedAuthUser = true;
-        } catch (authErr) {
-            if (authErr.code === 'auth/email-already-in-use') {
-                // There is already a Firebase Auth account. Do not overwrite it.
-                // The reset email below lets the applicant establish/restore access.
-                alert(`May Firebase Authentication account na ang ${email}. Iuugnay ito sa bagong store record at magpapadala ng password-reset email.`);
-            } else if (authErr.code === 'auth/invalid-email') {
-                alert('Hindi wastong email address.');
-                return;
-            } else if (authErr.code === 'auth/operation-not-allowed') {
-                alert('Hindi naka-enable ang Email/Password provider sa Firebase Authentication. I-enable muna ito sa Firebase Console.');
-                return;
-            } else {
-                alert('⚠️ Hindi nagawa ang Firebase account: ' + authErr.message);
-                return;
-            }
-        }
-
-        if (secondaryAuth.currentUser) {
-            firebaseUid = secondaryAuth.currentUser.uid;
-        }
-
-        // Send reset link for both newly-created and pre-existing Auth accounts.
-        try {
-            await sendPasswordResetEmail(secondaryAuth, email);
-        } catch (resetErr) {
-            // If we created the account ourselves and reset email failed,
-            // remove the newly-created account to avoid an orphan Auth account.
-            if (newlyCreatedAuthUser && secondaryAuth.currentUser) {
-                try { await deleteUser(secondaryAuth.currentUser); } catch (_) {}
-            }
-            if (resetErr.code === 'auth/invalid-email') {
-                alert('Hindi wastong email address.');
-            } else {
-                alert('⚠️ Nagawa sana ang Firebase account pero hindi naipadala ang password-reset email. Walang ginawang approval para maiwasan ang incomplete account setup.');
-            }
-            return;
-        }
-
-        if (secondaryAuth.currentUser) {
-            try { await signOut(secondaryAuth); } catch (_) {}
+        // Gumawa na ng sariling Firebase account ang client nang isumite ang aplikasyon.
+        // Kung lumang aplikasyon na walang account, ang admin ang magtatakda ng password.
+        let adminSetPassword = '';
+        if (!inq.accountCreated) {
+            const pw = prompt(`Walang Firebase account ang aplikasyong ito. Magtakda ng password para kay ${email} (hindi bababa sa 6 na karakter). Ibigay ito sa client:`);
+            if (pw === null) return;
+            if (pw.trim().length < 6) { alert('Hindi bababa sa 6 na karakter.'); return; }
+            const res = await createAccountForClient(email, pw.trim());
+            if (!res.ok) return;
+            firebaseUid = res.uid;
+            adminSetPassword = pw.trim();
         }
 
         const isSameName = inq.ownerName && inq.storeName &&
@@ -1338,7 +1313,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
 
         let notifications = [{
             id: Date.now(),
-            text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}). Tingnan ang email para gumawa/reset ng iyong Firebase password.`,
+            text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}). Mag-login gamit ang email at password na iyong ginawa.`,
             date: new Date().toLocaleString()
         }];
         if (isSameName) {
@@ -1360,7 +1335,6 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             email: email,
             firebaseUid: firebaseUid || '',
             authStatus: 'active',
-            emailResetSent: true,
             paymentTerms: payTerm,
             address: inq.address || '',
             styleType: style,
@@ -1396,7 +1370,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             history: [{
                 id: Date.now(),
                 date: new Date().toLocaleString(),
-                text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory; Firebase Auth account created/linked. Terms: ${PAY_TERMS[payTerm].label}.`
+                text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory; Firebase Auth account handa na. Terms: ${PAY_TERMS[payTerm].label}.`
             }]
         });
 
@@ -1406,10 +1380,8 @@ window.approveInquiryWithPassword = async function(inqIdx) {
         alert(`✅ Matagumpay na na-aprube ang inquiry!
 
 📧 ${email}
-🔐 Firebase Authentication: REGISTERED
-📩 Password-reset email: NAIPADALA
-
-Sabihin sa client na buksan ang email at gumawa ng sariling password bago mag-login.
+🔐 Firebase Authentication: HANDA NA
+${adminSetPassword ? `🔑 Password na itinakda mo: ${adminSetPassword}\nIbigay ito sa client.` : 'Mag-login ang client gamit ang password na ginawa niya sa application form.'}
 
 Kasama na ang store sa active consignment list.`);
     } catch (err) {
@@ -1657,52 +1629,15 @@ window.createClientLogin = async function(index) {
         alert('Maglagay muna ng email ng tindahan.');
         return;
     }
-
-    if (!confirm(`Gagawa/iuugnay ang Firebase Authentication account para sa ${item.storeName} (${email}) at magpapadala ng password-reset email. Ituloy?`)) {
-        return;
-    }
-
-    const makeTempPassword = () => {
-        const bytes = new Uint8Array(18);
-        crypto.getRandomValues(bytes);
-        const raw = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-        return `DWBE-${raw}Aa9!`;
-    };
-
-    try {
-        let uid = item.firebaseUid || '';
-        let created = false;
-
-        try {
-            const cred = await createUserWithEmailAndPassword(secondaryAuth, email, makeTempPassword());
-            uid = cred.user.uid;
-            created = true;
-        } catch (err) {
-            if (err.code !== 'auth/email-already-in-use') throw err;
-        }
-
-        if (secondaryAuth.currentUser) uid = secondaryAuth.currentUser.uid;
-
-        await sendPasswordResetEmail(secondaryAuth, email);
-        if (secondaryAuth.currentUser) await signOut(secondaryAuth);
-
-        item.firebaseUid = uid;
-        item.authStatus = 'active';
-        item.emailResetSent = true;
-        await saveToCloud();
-
-        alert(`✅ Firebase Authentication account ready.
-
-📧 ${email}
-📩 Password-reset email naipadala.
-
-Buksan ng client ang email at gumawa ng sariling password bago mag-login.`);
-    } catch (err) {
-        if (secondaryAuth.currentUser) {
-            try { await signOut(secondaryAuth); } catch (_) {}
-        }
-        alert('⚠️ Hindi nagawa/na-link ang Firebase account: ' + err.message);
-    }
+    const pw = prompt(`Magtakda ng password para sa ${item.storeName} (${email}), hindi bababa sa 6 na karakter.\nIbigay ito sa client. Puwede niya itong palitan sa portal pagkatapos mag-login:`);
+    if (pw === null) return;
+    if (pw.trim().length < 6) { alert('Hindi bababa sa 6 na karakter.'); return; }
+    const res = await createAccountForClient(email, pw.trim());
+    if (!res.ok) return;
+    item.firebaseUid = res.uid;
+    item.authStatus = 'active';
+    await saveToCloud();
+    alert(`✅ Handa na ang account.\n\n📧 ${email}\n🔑 Password: ${pw.trim()}\n\nIbigay ito sa client.`);
 };
 
 
