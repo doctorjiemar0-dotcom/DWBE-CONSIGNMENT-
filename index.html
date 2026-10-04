@@ -46,6 +46,12 @@ button:hover{opacity:.9}
 .style-option-card img{width:100%;height:100px;object-fit:cover;border-radius:4px;margin-bottom:5px;cursor:pointer}
 .style-option-card h4{font-size:.85rem;color:var(--primary-color);margin-bottom:3px}
 .style-option-card p{font-size:.75rem;color:#666}
+.style-gallery{margin-bottom:5px}
+.style-option-card .gal-main{margin-bottom:4px}
+.gal-thumbs{display:flex;gap:4px;justify-content:center}
+.style-option-card .gal-thumb{width:calc(33.33% - 3px);height:34px;margin:0;border:2px solid transparent;opacity:.65;border-radius:3px}
+.style-option-card .gal-thumb.on{border-color:var(--primary-color);opacity:1}
+.gal-nav{background:#fff;color:#333;width:auto;padding:8px 18px;font-size:1.2rem;border-radius:4px;margin-top:15px;border:none;font-weight:bold;cursor:pointer}
 .view-img-btn{background:#0288d1;color:white;border:none;padding:3px 6px;font-size:.7rem;border-radius:3px;cursor:pointer;margin-top:4px;display:inline-block;width:100%}
 .tag-feat{margin-top:4px;font-size:.7rem;background:#fff9c4;color:#f57f17;padding:2px 4px;border-radius:3px;font-weight:bold;border:1px dashed #fbc02d}
 .y{background-color:#fff59d;font-weight:bold}
@@ -139,18 +145,18 @@ button:hover{opacity:.9}
           <div class="style-grid">
 
             <div class="style-option-card selected" onclick="selectInqStyle('Ordinary', this)">
-              <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
+              <div class="style-gallery" data-style="Ordinary"></div>
               <h4>Ordinary Style</h4>
               <p>Standard Quality</p>
-              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
+              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Ordinary')">🔍 View Images</button>
             </div>
 
             <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
-              <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
+              <div class="style-gallery" data-style="Premium"></div>
               <h4>Premium Style</h4>
               <p>Thick & Durable</p>
               <div class="tag-feat">✨ Gitna ng Hibla (Tampok)</div>
-              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
+              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Premium')">🔍 View Images</button>
             </div>
 
           </div>
@@ -196,18 +202,18 @@ button:hover{opacity:.9}
       <div class="style-grid">
 
         <div class="style-option-card" style="cursor:default;">
-          <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
+          <div class="style-gallery" data-style="Ordinary"></div>
           <h4>Ordinary Style</h4>
           <p>Standard Quality</p>
-          <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
+          <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Ordinary')">🔍 View Images</button>
         </div>
 
         <div class="style-option-card" style="cursor:default;">
-          <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
+          <div class="style-gallery" data-style="Premium"></div>
           <h4>Premium Style</h4>
           <p>Thick & Durable</p>
           <div class="tag-feat">✨ Gitna ng Hibla (Tampok)</div>
-          <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
+          <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Premium')">🔍 View Images</button>
         </div>
 
       </div>
@@ -445,7 +451,11 @@ button:hover{opacity:.9}
 <div id="imageModal" onclick="closeImageViewer()">
   <img id="modalImage" src="" alt="Malaking Larawan">
   <h3 id="modalTitle" style="color:white;margin-top:10px;font-size:1rem;"></h3>
-  <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
+  <div style="display:flex;gap:10px;align-items:flex-start;">
+    <button type="button" id="galPrev" class="gal-nav" onclick="galStep(-1, event)">‹</button>
+    <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
+    <button type="button" id="galNext" class="gal-nav" onclick="galStep(1, event)">›</button>
+  </div>
 </div>
 
 <!-- Language / i18n (Tagalog default, English optional) -->
@@ -742,12 +752,117 @@ const getStore = () => {
   return em ? appData.consignments.find(c => (c.email || '').trim().toLowerCase() === em) : undefined;
 };
 
-window.openImageViewer = function(src, title) {
-  $('modalImage').src = src;
-  $('modalTitle').textContent = title;
+// ===== Mga larawan ng bawat uri ng walis (3 bawat isa) =====
+// I-upload ang mga file na ito sa DWBE-AGREEMENTS repo. Kung wala pa ang ibang larawan, ang meron lang ang ipapakita.
+const IMG_BASE = 'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/';
+// Mga pangalan ng file (walang extension). Tinatanggap ang .jpg, .jpeg, .png, .JPG at .webp
+const STYLE_IMAGES = {
+  Ordinary: ['Ordinary', 'Ordinary-2', 'Ordinary-3'],
+  Premium:  ['Premium',  'Premium-2',  'Premium-3']
+};
+const IMG_EXTS = ['jpg', 'jpeg', 'png', 'JPG', 'webp'];
+
+function probeImage(url) {
+  return new Promise(r => {
+    const im = new Image();
+    im.onload = () => r(true);
+    im.onerror = () => r(false);
+    im.src = url;
+  });
+}
+async function findImage(base) {
+  const key = 'dwbe_img_' + base;
+  try { const c = sessionStorage.getItem(key); if (c) return c; } catch (e) {}
+  for (const ext of IMG_EXTS) {
+    const url = IMG_BASE + base + '.' + ext;
+    if (await probeImage(url)) {
+      try { sessionStorage.setItem(key, url); } catch (e) {}
+      return url;
+    }
+  }
+  return null;
+}
+const _validCache = {};
+function getValidImages(style) {
+  if (!_validCache[style]) {
+    const bases = STYLE_IMAGES[style] || [];
+    _validCache[style] = Promise.all(bases.map(findImage)).then(a => {
+      const ok = a.filter(Boolean);
+      return ok.length ? ok : [IMG_BASE + bases[0] + '.jpg'];
+    });
+  }
+  return _validCache[style];
+}
+
+let galList = [], galIdx = 0, galTitle = '';
+function showGallery() {
+  $('modalImage').src = galList[galIdx];
+  $('modalTitle').textContent = galTitle + (galList.length > 1 ? ' (' + (galIdx + 1) + '/' + galList.length + ')' : '');
+  const multi = galList.length > 1;
+  $('galPrev').style.display = multi ? 'inline-block' : 'none';
+  $('galNext').style.display = multi ? 'inline-block' : 'none';
+}
+window.openGallery = async function(style, idx) {
+  galList = await getValidImages(style);
+  galIdx = Math.min(idx || 0, galList.length - 1);
+  galTitle = style + ' Style Walis Tambo';
+  showGallery();
   $('imageModal').style.display = 'flex';
 };
+window.galStep = function(d, e) {
+  if (e) e.stopPropagation();
+  if (galList.length < 2) return;
+  galIdx = (galIdx + d + galList.length) % galList.length;
+  showGallery();
+};
 window.closeImageViewer = function() { $('imageModal').style.display = 'none'; };
+// Pag-swipe sa larawan; ang pag-tap sa larawan mismo ay hindi nagsasara
+(function() {
+  const img = $('modalImage');
+  let x0 = null;
+  img.addEventListener('click', e => e.stopPropagation());
+  img.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  img.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 50) window.galStep(dx < 0 ? 1 : -1);
+  });
+})();
+
+// Ipakita ang main na larawan at 3 maliit na larawan sa bawat card
+function initGalleries() {
+  document.querySelectorAll('.style-gallery').forEach(async el => {
+    const style = el.dataset.style;
+    const list = await getValidImages(style);
+    let cur = 0;
+    el.innerHTML = '';
+    const main = document.createElement('img');
+    main.src = list[0];
+    main.alt = style + ' Style Walis Tambo';
+    main.onclick = e => { e.stopPropagation(); window.openGallery(style, cur); };
+    el.appendChild(main);
+    if (list.length > 1) {
+      const row = document.createElement('div');
+      row.className = 'gal-thumbs';
+      list.forEach((u, i) => {
+        const t = document.createElement('img');
+        t.src = u;
+        t.alt = style + ' ' + (i + 1);
+        t.className = 'gal-thumb' + (i === 0 ? ' on' : '');
+        t.onclick = e => {
+          e.stopPropagation();
+          cur = i;
+          main.src = u;
+          row.querySelectorAll('.gal-thumb').forEach((x, j) => x.classList.toggle('on', j === i));
+        };
+        row.appendChild(t);
+      });
+      el.appendChild(row);
+    }
+  });
+}
+initGalleries();
 
 window.selectInqStyle = function(style, el) {
   $('inqStyleType').value = style;
