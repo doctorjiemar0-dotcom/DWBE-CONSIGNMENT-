@@ -755,20 +755,41 @@ const getStore = () => {
 // ===== Mga larawan ng bawat uri ng walis (3 bawat isa) =====
 // I-upload ang mga file na ito sa DWBE-AGREEMENTS repo. Kung wala pa ang ibang larawan, ang meron lang ang ipapakita.
 const IMG_BASE = 'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/';
+// Mga pangalan ng file (walang extension). Tinatanggap ang .jpg, .jpeg, .png, .JPG at .webp
 const STYLE_IMAGES = {
-  Ordinary: [IMG_BASE + 'Ordinary.jpg', IMG_BASE + 'Ordinary-2.jpg', IMG_BASE + 'Ordinary-3.jpg'],
-  Premium:  [IMG_BASE + 'Premium.jpg',  IMG_BASE + 'Premium-2.jpg',  IMG_BASE + 'Premium-3.jpg']
+  Ordinary: ['Ordinary', 'Ordinary-2', 'Ordinary-3'],
+  Premium:  ['Premium',  'Premium-2',  'Premium-3']
 };
+const IMG_EXTS = ['jpg', 'jpeg', 'png', 'JPG', 'webp'];
+
+function probeImage(url) {
+  return new Promise(r => {
+    const im = new Image();
+    im.onload = () => r(true);
+    im.onerror = () => r(false);
+    im.src = url;
+  });
+}
+async function findImage(base) {
+  const key = 'dwbe_img_' + base;
+  try { const c = sessionStorage.getItem(key); if (c) return c; } catch (e) {}
+  for (const ext of IMG_EXTS) {
+    const url = IMG_BASE + base + '.' + ext;
+    if (await probeImage(url)) {
+      try { sessionStorage.setItem(key, url); } catch (e) {}
+      return url;
+    }
+  }
+  return null;
+}
 const _validCache = {};
 function getValidImages(style) {
   if (!_validCache[style]) {
-    const urls = STYLE_IMAGES[style] || [];
-    _validCache[style] = Promise.all(urls.map(u => new Promise(r => {
-      const im = new Image();
-      im.onload = () => r(u);
-      im.onerror = () => r(null);
-      im.src = u;
-    }))).then(a => { const ok = a.filter(Boolean); return ok.length ? ok : urls.slice(0, 1); });
+    const bases = STYLE_IMAGES[style] || [];
+    _validCache[style] = Promise.all(bases.map(findImage)).then(a => {
+      const ok = a.filter(Boolean);
+      return ok.length ? ok : [IMG_BASE + bases[0] + '.jpg'];
+    });
   }
   return _validCache[style];
 }
