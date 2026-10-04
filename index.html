@@ -572,6 +572,8 @@ var D={
 '⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password.':'⚠️ This email already has an account but the password is different. Use the correct password.',
 '⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.',
 'TERMS NG BAYAD:':'PAYMENT TERMS:',
+'Presyo:':'Price:',
+'bawat piraso':'per piece',
 'Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.':'You are still using the default password from the admin. Change it now in the "Change Password" section to keep your account secure.',
 'Ang bagong password ay dapat iba sa kasalukuyan.':'The new password must be different from the current one.',
 'Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.':'These terms apply instead of the cut-off written in Section 3.',
@@ -587,6 +589,7 @@ var D={
 var R=[
 [/^Hal\. /,'e.g. '],
 [/^Dahilan: (.*)$/,'Reason: $1'],
+[/^Natanggap mo ba ang (\d+) pcs ng (.+) sa presyong ₱(.*) bawat piraso\?$/,'Did you receive $1 pcs of $2 at ₱$3 per piece?'],
 [/^Presyo: ₱(.*)$/,'Price: ₱$1'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
 ];
@@ -995,6 +998,9 @@ window.confirmReceiveRestock = async function(index) {
 
   const itemToReceive = store.approvedRestocks[index];
 
+  // Beripikasyon ng presyo bago tanggapin
+  if (itemToReceive.price && !(await confirm(`Natanggap mo ba ang ${itemToReceive.qty} pcs ng ${itemToReceive.styleType} sa presyong ₱${itemToReceive.price} bawat piraso?`))) return;
+
   if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
   appData.homeStock[itemToReceive.styleType] = Math.max(0, (appData.homeStock[itemToReceive.styleType] || 0) - itemToReceive.qty);
 
@@ -1002,6 +1008,7 @@ window.confirmReceiveRestock = async function(index) {
   if (existingItem) {
     existingItem.currentStock += itemToReceive.qty;
     existingItem.initialQty += itemToReceive.qty;
+    if (itemToReceive.price) existingItem.price = itemToReceive.price;
   } else {
     store.storeItems.push({
       styleType: itemToReceive.styleType,
@@ -1009,7 +1016,7 @@ window.confirmReceiveRestock = async function(index) {
       currentStock: itemToReceive.qty,
       returnedQty: 0,
       rejectedQty: 0,
-      price: store.price || 0,
+      price: itemToReceive.price || store.price || 0,
       collectionDate: store.collectionDate || 'N/A'
     });
   }
@@ -1293,6 +1300,7 @@ function renderClientDashboard(store) {
       div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
       div.innerHTML =
         `<div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong></div>
+         ${req.price ? `<div>Presyo: <strong>₱${req.price}</strong> bawat piraso</div>` : ''}
          <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 5px;">✅ Natanggap Ko Na</button>`;
       pendingDeliveryContainer.appendChild(div);
     });
