@@ -565,10 +565,11 @@ function processClientAcceptedRestocks() {
                         existingSub.initialQty += qty;
                         existingSub.currentStock += qty;
                         existingSub.collectionDate = collDateStr;
+                        if (restock.price) existingSub.price = restock.price;
                     } else {
                         item.storeItems.push({
                             id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
-                            returnedQty: 0, rejectedQty: 0, price: basePrice, dateDelivered: todayStr, collectionDate: collDateStr
+                            returnedQty: 0, rejectedQty: 0, price: restock.price || basePrice, dateDelivered: todayStr, collectionDate: collDateStr
                         });
                     }
 
@@ -1050,7 +1051,7 @@ function renderApp() {
                 if (!ar.clientAccepted) {
                     approvedRestocksHtml += `
                         <div style="background: #fff8e1; border: 1px dashed #ffa000; padding: 6px; border-radius: 4px; margin-bottom: 6px; font-size: 0.8rem;">
-                            ⏳ Na-approve na ang restock na <strong>${ar.qty} pcs (${ar.styleType})</strong>. Naghihintay ng pagtanggap ng client.<br>
+                            ⏳ Na-approve na ang restock na <strong>${ar.qty} pcs (${ar.styleType})</strong>${ar.price ? ' sa ₱' + ar.price + '/pc' : ''}. Naghihintay ng pagtanggap ng client.<br>
                             <button type="button" class="btn-approve" style="margin-top: 4px;" onclick="confirmClientRestock(${index}, ${arIdx})">✅ Tanggap na ni Client (I-deduct)</button>
                         </div>
                     `;
@@ -1428,6 +1429,20 @@ window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApprov
             return;
         }
 
+        // BERIPIKASYON NG PRESYO bago i-approve
+        const priceSub = (item.storeItems || []).find(s => s.styleType === style);
+        const curPrice = priceSub ? priceSub.price : ((item.storeItems && item.storeItems[0]) ? item.storeItems[0].price : 150);
+        const pStr = prompt(`Beripikahin ang presyo bawat piraso (₱)\n\n🏪 ${item.storeName}\n📦 ${qty} pcs ${style}\nKasalukuyang presyo: ₱${curPrice}\n\nIlagay ang napag-usapang presyo:`, String(curPrice));
+        if (pStr === null) return;
+        const agreedPrice = parseFloat(pStr);
+        if (isNaN(agreedPrice) || agreedPrice <= 0) {
+            alert('Maglagay ng wastong presyo na higit sa zero. Hindi na-approve ang request.');
+            return;
+        }
+        if (priceSub && agreedPrice !== Number(priceSub.price)) {
+            if (!confirm(`Magbabago ang presyo ng ${style} mula ₱${priceSub.price} patungong ₱${agreedPrice}.\nMag-aapply ito sa lahat ng ${style} ng tindahan (kasama ang natitira at nabenta).\n\nItuloy?`)) return;
+        }
+
         item.activeRequests.splice(reqIdx, 1);
         if (!item.approvedRestocks) item.approvedRestocks = [];
         item.approvedRestocks.push({
@@ -1435,15 +1450,16 @@ window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApprov
             reqId: req.id,
             styleType: style,
             qty: qty,
+            price: agreedPrice,
             date: timestamp,
             clientAccepted: false
         });
         setRestockStatus(item, req.id, 'Approved');
 
         if (!item.clientNotifications) item.clientNotifications = [];
-        item.clientNotifications.push({ id: Date.now(), text: `📦 Na-approve ang restock request (${qty} pcs ${style}). Mangyaring tanggapin ito.`, date: timestamp });
+        item.clientNotifications.push({ id: Date.now(), text: `📦 Na-approve ang restock request (${qty} pcs ${style}) sa presyong ₱${agreedPrice} bawat piraso. Mangyaring tanggapin ito.`, date: timestamp });
         if (!item.history) item.history = [];
-        item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock (${qty} pcs ${style}) - Naghihintay ng pagtanggap ng client` });
+        item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock (${qty} pcs ${style}) sa ₱${agreedPrice}/pc - Naghihintay ng pagtanggap ng client` });
     } else {
         const reason = prompt('Dahilan ng pagtanggi (makikita ng client):', 'Kulang ang stock sa ngayon');
         if (reason === null) return;
@@ -1519,10 +1535,11 @@ window.confirmClientRestock = async function(storeIdx, restockIdx) {
         existingSub.initialQty += qty;
         existingSub.currentStock += qty;
         existingSub.collectionDate = collDateStr;
+                        if (restock.price) existingSub.price = restock.price;
     } else {
         item.storeItems.push({
             id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
-            returnedQty: 0, rejectedQty: 0, price: basePrice, dateDelivered: todayStr, collectionDate: collDateStr
+            returnedQty: 0, rejectedQty: 0, price: restock.price || basePrice, dateDelivered: todayStr, collectionDate: collDateStr
         });
     }
 
@@ -1635,6 +1652,8 @@ window.createClientLogin = async function(index) {
         return;
     }
     if (!confirm(`I-reset ang password ng ${item.storeName} (${email}) sa default na "${DEFAULT_CLIENT_PASSWORD}"?\n\nMapapalitan ang password na ginawa ng client. Kailangan nila itong palitan pagkatapos mag-login.`)) return;
+
+    let uid = '', ok = false, apiErr = '';
     try {
         const idToken = await auth.currentUser.getIdToken();
         const resp = await fetch(RESET_API, {
@@ -1645,20 +1664,27 @@ window.createClientLogin = async function(index) {
         const raw = await resp.text();
         let data = {};
         try { data = JSON.parse(raw); } catch (_) {}
-        if (!resp.ok || !data.ok) {
-            alert('⚠️ Hindi na-reset ang password: ' + (data.error || (resp.status + ' ' + raw.slice(0, 200))));
-            return;
-        }
-        item.firebaseUid = data.uid;
-        item.authStatus = 'active';
-        item.mustChangePassword = true;
-        if (!item.history) item.history = [];
-        item.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: 'Na-reset ng admin ang password sa default.' });
-        await saveToCloud();
-        alert(`✅ Na-reset na ang password.\n\n🏪 ${item.storeName}\n🔑 Default password: ${DEFAULT_CLIENT_PASSWORD}\n\nIbigay ito sa client. Hihilingin sa kanila na palitan ito pagkatapos mag-login.`);
+        if (resp.ok && data.ok) { ok = true; uid = data.uid; }
+        else apiErr = data.error || (resp.status + ' ' + raw.slice(0, 120));
     } catch (err) {
-        alert('⚠️ Hindi makakonekta sa server: ' + err.message);
+        apiErr = err.message;
     }
+
+    // Alternatibo kung hindi gumagana ang server (walang service account key)
+    if (!ok) {
+        if (!confirm(`⚠️ Hindi gumana ang server reset (${apiErr}).\n\nAlternatibo: gagawa ng bagong account na may default password na "${DEFAULT_CLIENT_PASSWORD}".\n\nKung may account na ang email na ito, burahin muna ito sa Firebase Console (Authentication → Users → ⋮ → Delete account), tapos ulitin ito.\n\nItuloy?`)) return;
+        const res = await createAccountForClient(email, DEFAULT_CLIENT_PASSWORD);
+        if (!res.ok) return;
+        uid = res.uid;
+    }
+
+    item.firebaseUid = uid;
+    item.authStatus = 'active';
+    item.mustChangePassword = true;
+    if (!item.history) item.history = [];
+    item.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: 'Na-reset ng admin ang password sa default.' });
+    await saveToCloud();
+    alert(`✅ Handa na ang default password.\n\n🏪 ${item.storeName}\n🔑 Default password: ${DEFAULT_CLIENT_PASSWORD}\n\nIbigay ito sa client. Hihilingin sa kanila na palitan ito pagkatapos mag-login.`);
 };
 
 
