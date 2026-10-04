@@ -46,6 +46,12 @@ button:hover{opacity:.9}
 .style-option-card img{width:100%;height:100px;object-fit:cover;border-radius:4px;margin-bottom:5px;cursor:pointer}
 .style-option-card h4{font-size:.85rem;color:var(--primary-color);margin-bottom:3px}
 .style-option-card p{font-size:.75rem;color:#666}
+.style-gallery{margin-bottom:5px}
+.style-option-card .gal-main{margin-bottom:4px}
+.gal-thumbs{display:flex;gap:4px;justify-content:center}
+.style-option-card .gal-thumb{width:calc(33.33% - 3px);height:34px;margin:0;border:2px solid transparent;opacity:.65;border-radius:3px}
+.style-option-card .gal-thumb.on{border-color:var(--primary-color);opacity:1}
+.gal-nav{background:#fff;color:#333;width:auto;padding:8px 18px;font-size:1.2rem;border-radius:4px;margin-top:15px;border:none;font-weight:bold;cursor:pointer}
 .view-img-btn{background:#0288d1;color:white;border:none;padding:3px 6px;font-size:.7rem;border-radius:3px;cursor:pointer;margin-top:4px;display:inline-block;width:100%}
 .tag-feat{margin-top:4px;font-size:.7rem;background:#fff9c4;color:#f57f17;padding:2px 4px;border-radius:3px;font-weight:bold;border:1px dashed #fbc02d}
 .y{background-color:#fff59d;font-weight:bold}
@@ -139,18 +145,18 @@ button:hover{opacity:.9}
           <div class="style-grid">
 
             <div class="style-option-card selected" onclick="selectInqStyle('Ordinary', this)">
-              <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
+              <div class="style-gallery" data-style="Ordinary"></div>
               <h4>Ordinary Style</h4>
               <p>Standard Quality</p>
-              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
+              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Ordinary')">🔍 View Images</button>
             </div>
 
             <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
-              <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
+              <div class="style-gallery" data-style="Premium"></div>
               <h4>Premium Style</h4>
               <p>Thick & Durable</p>
               <div class="tag-feat">✨ Gitna ng Hibla (Tampok)</div>
-              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
+              <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Premium')">🔍 View Images</button>
             </div>
 
           </div>
@@ -196,18 +202,18 @@ button:hover{opacity:.9}
       <div class="style-grid">
 
         <div class="style-option-card" style="cursor:default;">
-          <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg" alt="Ordinary Style Walis Tambo" onclick="openImageViewer(this.src, 'Ordinary Style Walis Tambo')">
+          <div class="style-gallery" data-style="Ordinary"></div>
           <h4>Ordinary Style</h4>
           <p>Standard Quality</p>
-          <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Ordinary.jpg', 'Ordinary Style Walis Tambo')">🔍 View Image</button>
+          <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Ordinary')">🔍 View Images</button>
         </div>
 
         <div class="style-option-card" style="cursor:default;">
-          <img src="https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg" alt="Premium Style Walis Tambo" onclick="openImageViewer(this.src, 'Premium Style Walis Tambo')">
+          <div class="style-gallery" data-style="Premium"></div>
           <h4>Premium Style</h4>
           <p>Thick & Durable</p>
           <div class="tag-feat">✨ Gitna ng Hibla (Tampok)</div>
-          <button type="button" class="view-img-btn" onclick="openImageViewer('https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/Premium.jpg', 'Premium Style Walis Tambo')">🔍 View Image</button>
+          <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Premium')">🔍 View Images</button>
         </div>
 
       </div>
@@ -312,7 +318,7 @@ button:hover{opacity:.9}
           <li style="margin-bottom:6px;">
             <strong>MONTHLY RESTOCK REQUESTS:</strong>
             Ang Store Partner ay makakapag-submit ng
-            <span class="y">ONE (1) restock request bawat buwan</span>.
+            <span class="y">ISANG (1) restock request bawat uri ng walis (Ordinary at Premium) bawat buwan</span>. Ibig sabihin, puwedeng mag-request ng 5 pcs ng Ordinary at 5 pcs ng Premium sa iisang buwan.
             Ang minimum at maximum na dami ng restock per request ay
             <span class="r">FIXED AT EXACTLY 5 PIECES (pcs) lamang</span>.
             Kung kailangan ng mas maraming restock, maaaring isubmit ang bagong request sa susunod na buwan.
@@ -367,7 +373,7 @@ button:hover{opacity:.9}
             <label>Dami ng Restock (Fixed: 5 pcs):</label>
             <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
           </div>
-          <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ngayong buwan. Maaari kang mag-request muli sa susunod na buwan.</p>
+          <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.</p>
           <button type="button" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
         </div>
       </div>
@@ -445,7 +451,11 @@ button:hover{opacity:.9}
 <div id="imageModal" onclick="closeImageViewer()">
   <img id="modalImage" src="" alt="Malaking Larawan">
   <h3 id="modalTitle" style="color:white;margin-top:10px;font-size:1rem;"></h3>
-  <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
+  <div style="display:flex;gap:10px;align-items:flex-start;">
+    <button type="button" id="galPrev" class="gal-nav" onclick="galStep(-1, event)">‹</button>
+    <button id="imageModalClose" onclick="closeImageViewer()">Isara</button>
+    <button type="button" id="galNext" class="gal-nav" onclick="galStep(1, event)">›</button>
+  </div>
 </div>
 
 <!-- Language / i18n (Tagalog default, English optional) -->
@@ -546,7 +556,7 @@ var D={
 '✅ Na-approve — hintayin ang delivery':'✅ Approved — wait for delivery',
 '❌ Tinanggihan':'❌ Rejected',
 '📦 Natanggap na':'📦 Received',
-'Nakapag-request ka na ngayong buwan. Maaari kang mag-request muli sa susunod na buwan.':'You already made a request this month. You can request again next month.',
+'Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.':'You already requested this style this month. You can request again next month, or choose the other style.',
 'Mag-login gamit ang pangalan ng tindahan at password.':'Log in using your store name and password.',
 'Ilagay ang pangalan ng tindahan':'Enter the store name',
 'Ilagay ang password':'Enter your password',
@@ -572,6 +582,8 @@ var D={
 '⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password.':'⚠️ This email already has an account but the password is different. Use the correct password.',
 '⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.',
 'TERMS NG BAYAD:':'PAYMENT TERMS:',
+'Presyo:':'Price:',
+'bawat piraso':'per piece',
 'Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.':'You are still using the default password from the admin. Change it now in the "Change Password" section to keep your account secure.',
 'Ang bagong password ay dapat iba sa kasalukuyan.':'The new password must be different from the current one.',
 'Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.':'These terms apply instead of the cut-off written in Section 3.',
@@ -587,6 +599,7 @@ var D={
 var R=[
 [/^Hal\. /,'e.g. '],
 [/^Dahilan: (.*)$/,'Reason: $1'],
+[/^Natanggap mo ba ang (\d+) pcs ng (.+) sa presyong ₱(.*) bawat piraso\?$/,'Did you receive $1 pcs of $2 at ₱$3 per piece?'],
 [/^Presyo: ₱(.*)$/,'Price: ₱$1'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
 ];
@@ -739,12 +752,96 @@ const getStore = () => {
   return em ? appData.consignments.find(c => (c.email || '').trim().toLowerCase() === em) : undefined;
 };
 
-window.openImageViewer = function(src, title) {
-  $('modalImage').src = src;
-  $('modalTitle').textContent = title;
+// ===== Mga larawan ng bawat uri ng walis (3 bawat isa) =====
+// I-upload ang mga file na ito sa DWBE-AGREEMENTS repo. Kung wala pa ang ibang larawan, ang meron lang ang ipapakita.
+const IMG_BASE = 'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/';
+const STYLE_IMAGES = {
+  Ordinary: [IMG_BASE + 'Ordinary.jpg', IMG_BASE + 'Ordinary-2.jpg', IMG_BASE + 'Ordinary-3.jpg'],
+  Premium:  [IMG_BASE + 'Premium.jpg',  IMG_BASE + 'Premium-2.jpg',  IMG_BASE + 'Premium-3.jpg']
+};
+const _validCache = {};
+function getValidImages(style) {
+  if (!_validCache[style]) {
+    const urls = STYLE_IMAGES[style] || [];
+    _validCache[style] = Promise.all(urls.map(u => new Promise(r => {
+      const im = new Image();
+      im.onload = () => r(u);
+      im.onerror = () => r(null);
+      im.src = u;
+    }))).then(a => { const ok = a.filter(Boolean); return ok.length ? ok : urls.slice(0, 1); });
+  }
+  return _validCache[style];
+}
+
+let galList = [], galIdx = 0, galTitle = '';
+function showGallery() {
+  $('modalImage').src = galList[galIdx];
+  $('modalTitle').textContent = galTitle + (galList.length > 1 ? ' (' + (galIdx + 1) + '/' + galList.length + ')' : '');
+  const multi = galList.length > 1;
+  $('galPrev').style.display = multi ? 'inline-block' : 'none';
+  $('galNext').style.display = multi ? 'inline-block' : 'none';
+}
+window.openGallery = async function(style, idx) {
+  galList = await getValidImages(style);
+  galIdx = Math.min(idx || 0, galList.length - 1);
+  galTitle = style + ' Style Walis Tambo';
+  showGallery();
   $('imageModal').style.display = 'flex';
 };
+window.galStep = function(d, e) {
+  if (e) e.stopPropagation();
+  if (galList.length < 2) return;
+  galIdx = (galIdx + d + galList.length) % galList.length;
+  showGallery();
+};
 window.closeImageViewer = function() { $('imageModal').style.display = 'none'; };
+// Pag-swipe sa larawan; ang pag-tap sa larawan mismo ay hindi nagsasara
+(function() {
+  const img = $('modalImage');
+  let x0 = null;
+  img.addEventListener('click', e => e.stopPropagation());
+  img.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  img.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 50) window.galStep(dx < 0 ? 1 : -1);
+  });
+})();
+
+// Ipakita ang main na larawan at 3 maliit na larawan sa bawat card
+function initGalleries() {
+  document.querySelectorAll('.style-gallery').forEach(async el => {
+    const style = el.dataset.style;
+    const list = await getValidImages(style);
+    let cur = 0;
+    el.innerHTML = '';
+    const main = document.createElement('img');
+    main.src = list[0];
+    main.alt = style + ' Style Walis Tambo';
+    main.onclick = e => { e.stopPropagation(); window.openGallery(style, cur); };
+    el.appendChild(main);
+    if (list.length > 1) {
+      const row = document.createElement('div');
+      row.className = 'gal-thumbs';
+      list.forEach((u, i) => {
+        const t = document.createElement('img');
+        t.src = u;
+        t.alt = style + ' ' + (i + 1);
+        t.className = 'gal-thumb' + (i === 0 ? ' on' : '');
+        t.onclick = e => {
+          e.stopPropagation();
+          cur = i;
+          main.src = u;
+          row.querySelectorAll('.gal-thumb').forEach((x, j) => x.classList.toggle('on', j === i));
+        };
+        row.appendChild(t);
+      });
+      el.appendChild(row);
+    }
+  });
+}
+initGalleries();
 
 window.selectInqStyle = function(style, el) {
   $('inqStyleType').value = style;
@@ -995,6 +1092,9 @@ window.confirmReceiveRestock = async function(index) {
 
   const itemToReceive = store.approvedRestocks[index];
 
+  // Beripikasyon ng presyo bago tanggapin
+  if (itemToReceive.price && !(await confirm(`Natanggap mo ba ang ${itemToReceive.qty} pcs ng ${itemToReceive.styleType} sa presyong ₱${itemToReceive.price} bawat piraso?`))) return;
+
   if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
   appData.homeStock[itemToReceive.styleType] = Math.max(0, (appData.homeStock[itemToReceive.styleType] || 0) - itemToReceive.qty);
 
@@ -1002,6 +1102,7 @@ window.confirmReceiveRestock = async function(index) {
   if (existingItem) {
     existingItem.currentStock += itemToReceive.qty;
     existingItem.initialQty += itemToReceive.qty;
+    if (itemToReceive.price) existingItem.price = itemToReceive.price;
   } else {
     store.storeItems.push({
       styleType: itemToReceive.styleType,
@@ -1009,7 +1110,7 @@ window.confirmReceiveRestock = async function(index) {
       currentStock: itemToReceive.qty,
       returnedQty: 0,
       rejectedQty: 0,
-      price: store.price || 0,
+      price: itemToReceive.price || store.price || 0,
       collectionDate: store.collectionDate || 'N/A'
     });
   }
@@ -1232,7 +1333,7 @@ function renderRestockStatus(store) {
        <div style="font-size:0.7rem; color:#778; text-align:right;">${r.date}</div>`;
     box.appendChild(div);
   });
-  note.style.display = restockBlocked(store) ? 'block' : 'none';
+  note.style.display = restockBlocked(store, $('restockStyleType').value) ? 'block' : 'none';
 }
 
 // Render Dashboard
@@ -1293,6 +1394,7 @@ function renderClientDashboard(store) {
       div.style.cssText = "background: white; border: 1px solid #90caf9; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
       div.innerHTML =
         `<div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong></div>
+         ${req.price ? `<div>Presyo: <strong>₱${req.price}</strong> bawat piraso</div>` : ''}
          <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 5px;">✅ Natanggap Ko Na</button>`;
       pendingDeliveryContainer.appendChild(div);
     });
@@ -1412,22 +1514,24 @@ function renderClientDashboard(store) {
 const monthKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 
 // Isang request lang bawat buwan (ang Tinanggihan ay hindi binibilang). Bawal din kung may nakabinbin pa.
-function restockBlocked(store) {
-  if ((store.activeRequests && store.activeRequests.length) || (store.approvedRestocks && store.approvedRestocks.length)) return true;
-  return (store.restockLog || []).some(r => r.monthKey === monthKey() && r.status !== 'Rejected');
+function restockBlocked(store, style) {
+  // May nakabinbin pa para sa parehong uri
+  if ((store.activeRequests || []).some(r => r.styleType === style)) return true;
+  if ((store.approvedRestocks || []).some(r => r.styleType === style)) return true;
+  // O nakapag-request na ng parehong uri ngayong buwan (ang Tinanggihan ay hindi binibilang)
+  return (store.restockLog || []).some(r => r.styleType === style && r.monthKey === monthKey() && r.status !== 'Rejected');
 }
 
 window.submitRestockRequest = async function() {
   const store = getStore();
   if (!store) return;
 
-  if (restockBlocked(store)) {
-    alert("Nakapag-request ka na ngayong buwan. Maaari kang mag-request muli sa susunod na buwan.");
+  const styleType = $('restockStyleType').value;
+  if (restockBlocked(store, styleType)) {
+    alert("Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.");
     return;
   }
   if (!(await confirm("Mag-request ng restock na eksaktong 5 piraso?"))) return;
-
-  const styleType = $('restockStyleType').value;
   const reqId = Date.now();
 
   if (!store.activeRequests) store.activeRequests = [];
@@ -1463,6 +1567,9 @@ window.sendClientMessage = async function() {
   await saveData();
   renderClientDashboard(store);
 };
+
+// Palitan ang abiso kapag ibang uri ang pinili sa restock
+$('restockStyleType').addEventListener('change', () => { const st = getStore(); if (st) renderRestockStatus(st); });
 
 // Start
 onAuthStateChanged(authData, (user) => {
