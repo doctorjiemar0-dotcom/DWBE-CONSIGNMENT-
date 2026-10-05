@@ -40,8 +40,18 @@ button:hover{opacity:.9}
 .chat-msg{background:#f1f8e9;padding:8px;border-radius:6px;margin-bottom:6px;font-size:.85rem;border:1px solid #c5e1a5}
 .chat-msg.admin{background:#e3f2fd;border-color:#90caf9}
 #syncStatus{text-align:center;font-size:.8rem;color:#666;margin-bottom:10px;font-style:italic}
+.application-drawer-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:10px;padding:11px 13px;margin:8px 0 10px;cursor:pointer;font-weight:800;font-size:.92rem;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.application-drawer-toggle:active{transform:scale(.99)}
+.application-drawer-toggle .drawer-arrow{font-size:1.05rem;transition:transform .2s ease}
+.application-drawer-toggle.open .drawer-arrow{transform:rotate(180deg)}
+.application-drawer{display:none;overflow:hidden;width:100%}
+.application-drawer.open{display:block;animation:applicationDrawerIn .2s ease}
+@keyframes applicationDrawerIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.style-option-card{border:2px solid #ddd;border-radius:6px;padding:8px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative}
+.style-option-card{border:2px solid #ddd;border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;min-height:170px;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.style-option-card:active{transform:scale(.99)}
+.style-option-card:focus{outline:3px solid rgba(46,125,50,.25);outline-offset:2px}
+.style-option-card.selected{box-shadow:0 0 0 2px rgba(46,125,50,.12)}
 .style-option-card.selected{border-color:var(--primary-color);background:#e8f5e9}
 .style-option-card img{width:100%;height:100px;object-fit:cover;border-radius:4px;margin-bottom:5px;cursor:pointer}
 .style-option-card h4{font-size:.85rem;color:var(--primary-color);margin-bottom:3px}
@@ -70,6 +80,11 @@ button:hover{opacity:.9}
 #imageModal img{max-width:90%;max-height:80%;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,.3)}
 #imageModalClose{margin-top:15px;background:white;color:#333;padding:8px 20px;border:none;border-radius:4px;font-weight:bold;cursor:pointer;width:auto}
 @media print{body *{visibility:hidden}#printableInquirySection,#printableInquirySection *{visibility:visible}#printableInquirySection{position:absolute;left:0;top:0;width:100%;padding:20px;background:white}.no-print{display:none!important}}
+
+.broom-style-toggle{display:flex;gap:6px;width:100%;margin:8px 0 12px;background:#e8f5e9;padding:5px;border-radius:12px;border:1px solid #c5e1a5;box-sizing:border-box}
+.broom-toggle-btn{flex:1!important;width:auto!important;margin:0!important;padding:11px 8px!important;border:2px solid transparent!important;border-radius:9px!important;background:#fff!important;color:#2e7d32!important;font-weight:800!important;font-size:.9rem!important;cursor:pointer!important;box-shadow:none!important;touch-action:manipulation}
+.broom-toggle-btn.active{background:#2e7d32!important;color:#fff!important;border-color:#1b5e20!important;box-shadow:0 2px 5px rgba(0,0,0,.15)!important}
+.broom-toggle-btn:active{transform:scale(.98)}
 </style>
 </head>
 <body>
@@ -131,12 +146,18 @@ button:hover{opacity:.9}
     <div id="printableInquirySection" style="width:100%;">
       <h2 style="margin-top:10px;color:#0288d1;font-size:1rem;">Digital Consignment / Bagong Aplikasyon</h2>
 
-      <div class="no-print" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
-        <strong>💡 Impormasyon:</strong>
-        Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.
-        <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong>
-        dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
-      </div>
+      <button type="button" id="applicationDrawerToggle" class="application-drawer-toggle" aria-expanded="false" aria-controls="applicationDrawer" onclick="toggleApplicationDrawer()">
+        <span>📋 Buksan ang Bagong Application</span>
+        <span class="drawer-arrow">▼</span>
+      </button>
+
+      <div id="applicationDrawer" class="application-drawer" aria-hidden="true">
+        <div class="no-print" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
+          <strong>💡 Impormasyon:</strong>
+          Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.
+          <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong>
+          dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
+        </div>
 
       <form id="inquiryForm" style="width:100%;margin-top:8px;">
         <div class="form-group"><label>Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
@@ -150,16 +171,20 @@ button:hover{opacity:.9}
         <div class="form-group">
           <label>Piliin ang Gusto mong Uri ng Walis (Style):</label>
           <input type="hidden" id="inqStyleType" value="Ordinary">
+          <div id="broomStyleToggle" class="broom-style-toggle" role="group" aria-label="Choose Your Preferred Broom Style">
+            <button type="button" class="broom-toggle-btn active" data-style="Ordinary" aria-pressed="true" onclick="selectInqStyleToggle('Ordinary')">🧹 Ordinary</button>
+            <button type="button" class="broom-toggle-btn" data-style="Premium" aria-pressed="false" onclick="selectInqStyleToggle('Premium')">⭐ Premium</button>
+          </div>
           <div class="style-grid">
 
-            <div class="style-option-card selected" onclick="selectInqStyle('Ordinary', this)">
+            <div class="style-option-card selected" data-style="Ordinary" role="button" tabindex="0" aria-pressed="true" onclick="selectInqStyle('Ordinary', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectInqStyle('Ordinary',this)}">
               <div class="style-gallery" data-style="Ordinary"></div>
               <h4>Ordinary Style</h4>
               <p>Standard Quality</p>
               <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Ordinary')">🔍 View Images</button>
             </div>
 
-            <div class="style-option-card" onclick="selectInqStyle('Premium', this)">
+            <div class="style-option-card" data-style="Premium" role="button" tabindex="0" aria-pressed="false" onclick="selectInqStyle('Premium', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectInqStyle('Premium',this)}">
               <div class="style-gallery" data-style="Premium"></div>
               <h4>Premium Style</h4>
               <p>Thick & Durable</p>
@@ -174,6 +199,7 @@ button:hover{opacity:.9}
 
         <button type="submit" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
+      </div>
     </div>
   </div>
 
@@ -821,38 +847,15 @@ function priceWithDiscount(store, sub) {
   const off = best ? Math.round(best.off * 100) / 100 : 0;
   return { base, off, price: Math.round((base - off) * 100) / 100, pct: base ? +(off / base * 100).toFixed(1) : 0, until: best ? best.until : null };
 }
-// Sa catalog ng naka-login na client: ipakita ang kasalukuyang presyo at promo
-// KAHIT walang active stock ang isang style. Kapag ang discount ay "All",
-// dapat makita pa rin ang promo sa Ordinary at Premium para malinaw kung pareho silang kasama.
+// Sa catalog ng naka-login na client: ipakita ang presyo niya at ang discount (kung aktibo)
 function updateCatalogPrices(store) {
-  const items = store.storeItems || [];
-  const findItem = style => items.find(s => s && s.styleType === style);
-
-  ['Ordinary', 'Premium'].forEach(style => {
-    const gallery = document.querySelector('#portalContent .style-gallery[data-style="' + style + '"]');
-    const badge = gallery ? gallery.querySelector('.gal-price') : null;
-    if (!badge) return;
-
-    const item = findItem(style);
-    // Kapag walang stock record para sa style, gamitin ang catalog/supplier price
-    // para ma-compute pa rin ang discount na "All".
-    const basePrice = item && item.price !== undefined && item.price !== null
-      ? Number(item.price)
-      : Number(STANDARD_PRICES[style] || 0);
-    if (!basePrice) return;
-
-    const sub = item || { styleType: style, price: basePrice };
+  (store.storeItems || []).forEach(sub => {
+    const badge = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"] .gal-price');
+    if (!badge || !sub.price) return;
     const e = priceWithDiscount(store, sub);
-
-    badge.innerHTML = '<span>Presyo mo</span>' +
-      (e.off > 0
-        ? '<s style="color:#999;margin-right:5px;">₱' + Number(e.base).toLocaleString() + '</s> '
-        : '') +
-      '<b style="color:#2e7d32;">₱' + Number(e.price).toLocaleString() + '</b> <small>/ piraso</small>' +
-      (e.off > 0
-        ? '<span class="gal-disc">🏷️ Diskwento −₱' + Number(e.off).toLocaleString() +
-          ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>'
-        : '');
+    badge.innerHTML = '<span>Presyo mo</span>' + (e.off > 0 ? '<s>₱' + e.base + '</s> ' : '') +
+      '<b>₱' + e.price + '</b> <small>/ piraso</small>' +
+      (e.off > 0 ? '<span class="gal-disc">Diskwento −₱' + e.off + ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>' : '');
   });
 }
 const _validCache = {};
@@ -948,10 +951,47 @@ function initGalleries() {
 }
 initGalleries();
 
+window.selectInqStyleToggle = function(style) {
+  const hidden = $('inqStyleType');
+  if (hidden) hidden.value = style;
+  document.querySelectorAll('#broomStyleToggle .broom-toggle-btn').forEach(btn => {
+    const active = btn.dataset.style === style;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  const card = document.querySelector('.style-option-card[data-style="' + style + '"]') ||
+               Array.from(document.querySelectorAll('.style-option-card')).find(c => c.querySelector('.style-gallery[data-style="' + style + '"]'));
+  selectInqStyle(style, card);
+};
+
 window.selectInqStyle = function(style, el) {
-  $('inqStyleType').value = style;
-  el.parentElement.querySelectorAll('.style-option-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+  const hidden = $('inqStyleType');
+  if (hidden) hidden.value = style;
+  document.querySelectorAll('#broomStyleToggle .broom-toggle-btn').forEach(btn => {
+    const active = btn.dataset.style === style;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  const grid = el && el.closest ? el.closest('.style-grid') : document.querySelector('.style-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.style-option-card').forEach(card => {
+    const selected = card === el || card.dataset.style === style;
+    card.classList.toggle('selected', selected);
+    card.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  });
+};
+
+window.toggleApplicationDrawer = function() {
+  const drawer = $('applicationDrawer');
+  const btn = $('applicationDrawerToggle');
+  if (!drawer || !btn) return;
+  const willOpen = !drawer.classList.contains('open');
+  drawer.classList.toggle('open', willOpen);
+  btn.classList.toggle('open', willOpen);
+  btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  drawer.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+  const label = btn.querySelector('span:first-child');
+  if (label) label.textContent = willOpen ? '📋 Isara ang Application' : '📋 Buksan ang Bagong Application';
 };
 
 window.toggleQrVisibility = function() {
@@ -1323,6 +1363,24 @@ async function saveData() {
   }
 }
 
+// ===== Lightweight client presence =====
+// Hindi tayo nagha-heartbeat kada segundo. Isang Cloud write lang kapag bagong login
+// o lumagpas na ng 5 minuto ang huling presence update. Ang Admin ay ituturing na
+// Online ang client kung may presence sa loob ng huling 10 minuto.
+let lastPresenceWrite = 0;
+async function markClientPresence(force = false) {
+  const user = authData.currentUser;
+  if (!user || !dataLoaded) return;
+  const store = getStore();
+  if (!store) return;
+  const nowMs = Date.now();
+  const existing = typeof store.lastClientAccess === 'number' ? store.lastClientAccess : Date.parse(store.lastClientAccess || '');
+  if (!force && existing && !isNaN(existing) && nowMs - existing < 5 * 60 * 1000) return;
+  store.lastClientAccess = nowMs;
+  lastPresenceWrite = nowMs;
+  try { await saveData(); } catch (_) {}
+}
+
 // Initialize Portal
 function initPortalView() {
   const paramStore = new URLSearchParams(window.location.search).get('store');
@@ -1692,12 +1750,19 @@ window.sendClientMessage = async function() {
 
 // Palitan ang abiso kapag ibang uri ang pinili sa restock
 $('restockStyleType').addEventListener('change', () => { const st = getStore(); if (st) renderRestockStatus(st); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && authData.currentUser) markClientPresence(false);
+});
 
 // Start
 onAuthStateChanged(authData, (user) => {
   authUser = user;
   if (!unsubData || listenFailed) listenData();
   initPortalView();
+  if (user) {
+    // Presence is deliberately throttled: no continuous Firebase writes.
+    setTimeout(() => markClientPresence(true), 250);
+  }
 });
 
 </script>
