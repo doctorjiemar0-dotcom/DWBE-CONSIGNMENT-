@@ -608,8 +608,10 @@ var D={
 var R=[
 [/^Hal\. /,'e.g. '],
 [/^Dahilan: (.*)$/,'Reason: $1'],
-[/^🏷️ Standard ₱(.+) → ₱(.+) · Diskwento ₱(.+) \((.+)%\)$/,'🏷️ Standard ₱$1 → ₱$2 · Discount ₱$3 ($4%)'],
-[/^Diskwento ₱(.+) \((.+)%\)$/,'Discount ₱$1 ($2%)'],
+[/^Kabuuang nakabinbin: ₱(.+)$/,'Total pending: ₱$1'],
+[/^🏷️ May discount \(−₱(.+)\/pc\) — naka-lock ang presyo kahit matapos ang discount$/,'🏷️ Discount applied (−₱$1/pc) — price stays locked even after the discount ends'],
+[/^🏷️ Diskwento −₱(.+) \((.+)%\) hanggang (.+)$/,'🏷️ Discount −₱$1 ($2%) until $3'],
+[/^Diskwento −₱(.+) \((.+)%\) hanggang (.+)$/,'Discount −₱$1 ($2%) until $3'],
 [/^Natanggap mo ba ang (\d+) pcs ng (.+) sa presyong ₱(.*) bawat piraso\?$/,'Did you receive $1 pcs of $2 at ₱$3 per piece?'],
 [/^Presyo: ₱(.*)$/,'Price: ₱$1'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
@@ -795,23 +797,39 @@ async function findImage(base) {
 }
 // Presyo ng Supplier na ipinapakita sa unang larawan (display lang; hindi nito binabago ang presyo ng mga kasalukuyang client)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
-// Diskwento = Standard na Presyo ng Supplier minus ang napagkasunduang presyo ng tindahan
-function discountInfo(style, price) {
-  const std = STANDARD_PRICES[style];
-  price = Number(price);
-  if (!std || !price || price >= std) return null;
-  const off = std - price;
-  return { std, off, pct: +(off / std * 100).toFixed(1) };
+// ===== DISCOUNT NA MAY PERIOD =====
+// store.discounts = [{ styleType: 'Ordinary'|'Premium'|'All', type: 'amount'|'percent', value, startDate, endDate }]
+function ymd(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
-// Sa catalog ng naka-login na client: ipakita ang presyo niya at ang diskwento
+function localToday() { return ymd(new Date()); }
+function fmtDate(s) {
+  return s ? new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+}
+// Presyo ng isang uri ng walis matapos ang discount (kung may aktibo ngayon)
+function priceWithDiscount(store, sub) {
+  const base = Number(sub.price) || 0;
+  const t = localToday();
+  let best = null;
+  (store.discounts || []).forEach(d => {
+    if (d.startDate && d.startDate > t) return;
+    if (d.endDate && d.endDate < t) return;
+    if (d.styleType !== 'All' && d.styleType !== sub.styleType) return;
+    const off = d.type === 'percent' ? base * Number(d.value) / 100 : Number(d.value);
+    if (!best || off > best.off) best = { off: Math.min(off, base), until: d.endDate };
+  });
+  const off = best ? Math.round(best.off * 100) / 100 : 0;
+  return { base, off, price: Math.round((base - off) * 100) / 100, pct: base ? +(off / base * 100).toFixed(1) : 0, until: best ? best.until : null };
+}
+// Sa catalog ng naka-login na client: ipakita ang presyo niya at ang discount (kung aktibo)
 function updateCatalogPrices(store) {
   (store.storeItems || []).forEach(sub => {
     const badge = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"] .gal-price');
     if (!badge || !sub.price) return;
-    const d = discountInfo(sub.styleType, sub.price);
-    badge.innerHTML = '<span>Presyo mo</span>' + (d ? '<s>₱' + d.std + '</s> ' : '') +
-      '<b>₱' + sub.price + '</b> <small>/ piraso</small>' +
-      (d ? '<span class="gal-disc">Diskwento ₱' + d.off + ' (' + d.pct + '%)</span>' : '');
+    const e = priceWithDiscount(store, sub);
+    badge.innerHTML = '<span>Presyo mo</span>' + (e.off > 0 ? '<s>₱' + e.base + '</s> ' : '') +
+      '<b>₱' + e.price + '</b> <small>/ piraso</small>' +
+      (e.off > 0 ? '<span class="gal-disc">Diskwento −₱' + e.off + ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>' : '');
   });
 }
 const _validCache = {};
@@ -1216,22 +1234,28 @@ window.promptRecordSale = async function(styleType) {
   }
 
   sub.currentStock -= qtySold;
+  const eff = priceWithDiscount(store, sub);
+  // Itala ang halaga ng benta sa presyong may discount (hindi nababago kahit matapos ang discount)
+  sub.soldValue = Math.round(((Number(sub.soldValue) || 0) + qtySold * eff.price) * 100) / 100;
+  sub.soldValueQty = (Number(sub.soldValueQty) || 0) + qtySold;
 
   if (!store.pendingSales) store.pendingSales = [];
   store.pendingSales.unshift({
     styleType: styleType,
     qty: qtySold,
-    price: sub.price || 0,
-    totalAmount: qtySold * (sub.price || 0),
+    price: eff.price,
+    listPrice: eff.base,
+    discountOff: eff.off,
+    totalAmount: qtySold * eff.price,
     date: now(),
     status: "Pending"
   });
 
   if (!store.messages) store.messages = [];
-  store.messages.unshift({ sender: currentStoreName, text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType})`, date: now() });
+  store.messages.unshift({ sender: currentStoreName, text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType}) = ₱${Math.round(qtySold * eff.price * 100) / 100}`, date: now() });
 
   if (!store.transactionHistory) store.transactionHistory = [];
-  store.transactionHistory.unshift({ type: 'Benta', text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType})`, date: now() });
+  store.transactionHistory.unshift({ type: 'Benta', text: `Nag-ulat ng benta: ${qtySold} pcs (${styleType}) = ₱${Math.round(qtySold * eff.price * 100) / 100}`, date: now() });
 
   await saveData();
   alert("Matagumpay na naipadala ang pending receipt sa Admin!");
@@ -1475,11 +1499,18 @@ function renderClientDashboard(store) {
 
   if (store.pendingSales && store.pendingSales.length > 0) {
     pendingSalesCard.style.display = 'block';
+    const pendTotal = store.pendingSales.reduce((t, x) => t + (Number(x.totalAmount) || 0), 0);
+    const totDiv = document.createElement('div');
+    totDiv.style.cssText = "font-size: 0.9rem; font-weight: bold; color: #e65100; margin-bottom: 8px;";
+    totDiv.textContent = 'Kabuuang nakabinbin: ₱' + (Math.round(pendTotal * 100) / 100);
+    pendingSalesContainer.appendChild(totDiv);
     store.pendingSales.forEach((sale) => {
       const div = document.createElement('div');
       div.style.cssText = "background: white; border: 1px solid #ffb74d; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem;";
       div.innerHTML =
         `<div>Uri: <strong>${sale.styleType}</strong> | Dami: <strong>${sale.qty} pcs</strong></div>
+         ${sale.price ? `<div style="font-size:0.8rem;">Presyo: ${sale.discountOff > 0 ? `<s style="color:#999">₱${sale.listPrice}</s> ` : ''}<strong>₱${sale.price}</strong> × ${sale.qty} = <strong>₱${sale.totalAmount}</strong></div>` : ''}
+         ${sale.discountOff > 0 ? `<div style="font-size:0.75rem;color:#2e7d32;">🏷️ May discount (−₱${sale.discountOff}/pc) — naka-lock ang presyo kahit matapos ang discount</div>` : ''}
          <span style="color: #f57c00; font-weight: bold;">Nakabinbin sa Admin</span>`;
       pendingSalesContainer.appendChild(div);
     });
@@ -1543,18 +1574,18 @@ function renderClientDashboard(store) {
 
   store.storeItems.forEach(sub => {
     const subSold = Math.max(0, sub.initialQty - sub.currentStock - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
-    const dsc = discountInfo(sub.styleType, sub.price);
+    const dsc = priceWithDiscount(store, sub);
     const div = document.createElement('div');
     div.className = 'store-item-box' + (sub.styleType === 'Premium' ? ' premium-stock' : '');
     div.innerHTML =
       `<div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between;">
          <span>${sub.styleType}</span>
-         <span>Presyo: ₱${sub.price || 0}</span>
+         <span>Presyo: ${dsc.off > 0 ? `<s style="color:#999">₱${dsc.base}</s> <strong>₱${dsc.price}</strong>` : '₱' + (sub.price || 0)}</span>
        </div>
        <div style="font-size: 0.85rem; color: #444; margin: 5px 0;">
          Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Nabenta: <strong>${subSold} pcs</strong>
        </div>
-       ${dsc ? `<div style="font-size:.78rem;color:#2e7d32;margin-bottom:5px;">🏷️ Standard ₱${dsc.std} → ₱${sub.price} · Diskwento ₱${dsc.off} (${dsc.pct}%)</div>` : ''}
+       ${dsc.off > 0 ? `<div style="font-size:.78rem;color:#2e7d32;margin-bottom:5px;">🏷️ Diskwento −₱${dsc.off} (${dsc.pct}%) hanggang ${fmtDate(dsc.until)}</div>` : ''}
        <button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px;">🛒 MAY BUMILI (I-record ang Benta)</button>`;
     itemsContainer.appendChild(div);
   });
