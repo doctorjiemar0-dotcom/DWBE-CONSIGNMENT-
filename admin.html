@@ -1071,7 +1071,7 @@ function renderApp() {
                 <div class="store-item-row">
                     <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
                         <span>${subItem.styleType || 'Ordinary'}</span>
-                        <span style="color: #333; font-weight: normal;">Presyo: ₱${subItem.price} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
+                        <span style="color: #333; font-weight: normal;">Presyo: ${eff.off > 0 ? `<s style="color:#999;">₱${Number(eff.base).toLocaleString()}</s> <strong style="color:#2e7d32;">₱${Number(eff.price).toLocaleString()}</strong>` : `₱${Number(eff.base).toLocaleString()}`} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
                     </div>
                     <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">
                         Initial Qty: ${subItem.initialQty} pcs | Nabenta: <strong>${subSold} pcs</strong> | Total: ₱${totalOrderAmount.toLocaleString()}${discTxt ? '<br>' + discTxt : ''}
@@ -1765,6 +1765,7 @@ window.editDiscount = async function(index) {
             item.history.unshift({ id: Date.now(), date: ts0, text: 'Binura ang lahat ng discount.' });
             item.clientNotifications.push({ id: Date.now(), text: '🏷️ Inalis na ang discount ng tindahan mo.', date: ts0 });
             await saveToCloud();
+            renderApp();
             return;
         }
         if (String(act).trim() !== '1') { alert('Pumili ng 1 o 2.'); return; }
@@ -1807,6 +1808,7 @@ window.editDiscount = async function(index) {
     item.history.unshift({ id: Date.now(), date: ts, text: `Discount: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}` });
     item.clientNotifications.push({ id: Date.now(), text: `🏷️ May discount ang tindahan mo: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}.`, date: ts });
     await saveToCloud();
+    renderApp();
     const preview = targets.map(s => { const e = priceWithDiscount(item, s); return `${s.styleType}: ₱${e.base} → ₱${e.price}`; }).join('\n');
     alert(`✅ Naitala ang discount.\n\n${what} sa ${styleName(styleType)}\nHanggang ${fmtDate(endDate)}\n\n${preview}\n\nBabalik sa regular na presyo pagkatapos ng petsang iyon.`);
 };
