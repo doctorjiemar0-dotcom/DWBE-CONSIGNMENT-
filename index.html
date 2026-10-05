@@ -824,11 +824,15 @@ function priceWithDiscount(store, sub) {
 // Sa catalog ng naka-login na client: ipakita ang presyo niya at ang discount (kung aktibo)
 function updateCatalogPrices(store) {
   (store.storeItems || []).forEach(sub => {
-    const badge = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"] .gal-price');
-    if (!badge || !sub.price) return;
+    const gallery = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"]');
+    const badge = gallery ? gallery.querySelector('.gal-price') : null;
+    if (!badge || sub.price === undefined || sub.price === null) return;
     const e = priceWithDiscount(store, sub);
-    badge.innerHTML = '<span>Presyo mo</span>' + (e.off > 0 ? '<s style="color:#999;">₱' + Number(e.base).toLocaleString() + '</s> ' : '') +
-      '<b>₱' + Number(e.price).toLocaleString() + '</b> <small>/ piraso</small>' +
+    const baseText = Number(e.base).toLocaleString();
+    const priceText = Number(e.price).toLocaleString();
+    badge.innerHTML = '<span>Presyo mo</span>' +
+      (e.off > 0 ? '<s style="color:#999;margin-right:5px;">₱' + baseText + '</s>' : '') +
+      '<b style="color:#2e7d32;">₱' + priceText + '</b> <small>/ piraso</small>' +
       (e.off > 0 ? '<span class="gal-disc">🏷️ Diskwento −₱' + Number(e.off).toLocaleString() + ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>' : '');
   });
 }
@@ -1680,4 +1684,4 @@ onAuthStateChanged(authData, (user) => {
 </script>
 
 </body>
-</html
+</html>
