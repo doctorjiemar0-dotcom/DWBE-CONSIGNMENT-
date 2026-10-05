@@ -296,7 +296,7 @@ button:hover { background-color: #1b5e20; }
         inp = document.createElement('input');
         inp.type = 'text';
         inp.value = (o.def === undefined || o.def === null) ? '' : String(o.def);
-        if (/ilang piraso|presyo|stock|terms ng bayad|babawasan|idadagdag/i.test(text)) inp.setAttribute('inputmode', 'decimal');
+        if (/ilang piraso|ilang piso|ilang porsyento|presyo|stock|terms ng bayad|babawasan|idadagdag/i.test(text)) inp.setAttribute('inputmode', 'decimal');
         inp.style.cssText = 'display:block;width:calc(100% - 36px);margin:0 18px 6px;padding:11px;border:2px solid #c5e1a5;border-radius:8px;font-size:1rem;background:#fafafa;';
         box.appendChild(inp);
       }
@@ -363,6 +363,37 @@ const PAY_TERMS = {
 const DEFAULT_CLIENT_PASSWORD = 'admin123';
 // Standard na Presyo ng Supplier (default lang sa bagong approval; hindi nito binabago ang presyo ng mga kasalukuyang tindahan)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
+// Halaga ng benta ng isang uri: ang mga naitalang benta ay nasa presyong may discount noong benta; ang luma ay sa kasalukuyang presyo
+function subSalesValue(sub, sold) {
+  const lq = Number(sub.soldValueQty) || 0;
+  const lv = Number(sub.soldValue) || 0;
+  if (sold <= lq) return lq ? lv * (sold / lq) : 0;
+  return lv + (sold - lq) * (Number(sub.price) || 0);
+}
+// ===== DISCOUNT NA MAY PERIOD =====
+// store.discounts = [{ styleType: 'Ordinary'|'Premium'|'All', type: 'amount'|'percent', value, startDate, endDate }]
+function ymd(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function localToday() { return ymd(new Date()); }
+function fmtDate(s) {
+  return s ? new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+}
+// Presyo ng isang uri ng walis matapos ang discount (kung may aktibo ngayon)
+function priceWithDiscount(store, sub) {
+  const base = Number(sub.price) || 0;
+  const t = localToday();
+  let best = null;
+  (store.discounts || []).forEach(d => {
+    if (d.startDate && d.startDate > t) return;
+    if (d.endDate && d.endDate < t) return;
+    if (d.styleType !== 'All' && d.styleType !== sub.styleType) return;
+    const off = d.type === 'percent' ? base * Number(d.value) / 100 : Number(d.value);
+    if (!best || off > best.off) best = { off: Math.min(off, base), until: d.endDate };
+  });
+  const off = best ? Math.round(best.off * 100) / 100 : 0;
+  return { base, off, price: Math.round((base - off) * 100) / 100, pct: base ? +(off / base * 100).toFixed(1) : 0, until: best ? best.until : null };
+}
 // Server function sa Vercel na may kapangyarihang mag-reset ng password
 // Sa Vercel, gamitin ang function ng mismong deployment na ito (production man o preview)
 const RESET_API = location.hostname.endsWith('vercel.app') ? '/api/reset-password' : 'https://dwbe-consignment.vercel.app/api/reset-password';
@@ -890,7 +921,7 @@ function calculatePotentialIncome() {
             if (item.storeItems) {
                 item.storeItems.forEach(sub => {
                     const subSold = Math.max(0, sub.initialQty - sub.currentStock - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
-                    totalSalesSoFar += subSold * sub.price;
+                    totalSalesSoFar += subSalesValue(sub, subSold);
                 });
             }
         });
@@ -1017,7 +1048,7 @@ function renderApp() {
             if (subItem.returnedQty === undefined) subItem.returnedQty = 0;
 
             const subSold = Math.max(0, subItem.initialQty - subItem.currentStock - subItem.returnedQty - subItem.rejectedQty);
-            const subSales = subSold * subItem.price;
+            const subSales = subSalesValue(subItem, subSold);
 
             storeTotalStock += subItem.currentStock;
             storeTotalSold += subSold;
@@ -1032,9 +1063,9 @@ function renderApp() {
             if (subIsDue) storeIsDue = true;
 
             const totalOrderAmount = subItem.initialQty * subItem.price;
-            const stdP = STANDARD_PRICES[subItem.styleType || 'Ordinary'];
-            const discTxt = (stdP && Number(subItem.price) > 0 && Number(subItem.price) < stdP)
-                ? `<span style="color:#2e7d32;font-weight:bold;">🏷️ Diskwento ₱${stdP - subItem.price} (${+((stdP - subItem.price) / stdP * 100).toFixed(1)}%) mula sa standard na ₱${stdP}</span>` : '';
+            const eff = priceWithDiscount(item, subItem);
+            const discTxt = eff.off > 0
+                ? `<span style="color:#2e7d32;font-weight:bold;">🏷️ Diskwento −₱${eff.off} (${eff.pct}%) hanggang ${fmtDate(eff.until)} → presyo ₱${eff.price}</span>` : '';
 
             storeItemsHtml += `
                 <div class="store-item-row">
@@ -1099,7 +1130,7 @@ function renderApp() {
                 saleRow.style.background = '#e8f5e9';
                 saleRow.style.borderColor = '#a5d6a7';
                 saleRow.innerHTML = `
-                    <span>🏢 <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong></span>
+                    <span>🏢 <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}</span>
                     <div>
                         <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>
                         <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Tanggihan</button>
@@ -1187,6 +1218,7 @@ function renderApp() {
             }
         }
 
+        const pendingTotal = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0), 0) * 100) / 100;
         let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
         const div = document.createElement('div');
@@ -1205,7 +1237,7 @@ function renderApp() {
                 </div>
             </div>
             <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong><br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong></span>
+                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong><br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong>${pendingTotal > 0 ? `<br>⏳ Nakabinbing benta: <strong>₱${pendingTotal.toLocaleString()}</strong>` : ''}</span>
             </div>
             <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                 <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
@@ -1219,6 +1251,7 @@ function renderApp() {
                     <button type="button" onclick="editStoreEmail(${index})" style="background-color: #1565c0; font-size: 0.75rem; padding: 6px; flex: 1;">Email</button>
                     <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">Address</button>
                     <button type="button" onclick="editPayTerm(${index})" style="background-color: #f57f17; font-size: 0.75rem; padding: 6px; flex: 1;">💳 Terms</button>
+                    <button type="button" onclick="editDiscount(${index})" style="background-color: #ad1457; font-size: 0.75rem; padding: 6px; flex: 1;">🏷️ Discount</button>
                     <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Reset Password</button>
                 </div>
                 <div style="margin-top: 6px; display: flex; gap: 4px;">
@@ -1544,11 +1577,12 @@ window.processPendingSales = async function(storeIdx, saleIdx, qty, styleType, i
     const item = appData.consignments[storeIdx];
     const timestamp = new Date().toLocaleString();
     const style = styleType || 'Ordinary';
+    const sale = item.pendingSales[saleIdx] || {};
 
     if (isApproved) {
         item.pendingSales.splice(saleIdx, 1);
         if (!item.history) item.history = [];
-        item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-aprube ang benta mula sa client: ${qty} pcs (${style})` });
+        item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-aprube ang benta mula sa client: ${qty} pcs (${style})${sale.totalAmount ? ' = ₱' + sale.totalAmount : ''}` });
         if (!item.clientNotifications) item.clientNotifications = [];
         item.clientNotifications.push({ id: Date.now(), text: `🎉 Na-aprube na ng admin ang iyong na-report na benta (${qty} pcs ${style}).`, date: timestamp });
     } else {
@@ -1559,6 +1593,9 @@ window.processPendingSales = async function(storeIdx, saleIdx, qty, styleType, i
         }
         if (subItem) {
             subItem.currentStock += qty;
+            // Ibalik din ang naitalang halaga ng benta
+            subItem.soldValue = Math.max(0, (Number(subItem.soldValue) || 0) - (Number(sale.totalAmount) || 0));
+            subItem.soldValueQty = Math.max(0, (Number(subItem.soldValueQty) || 0) - qty);
         }
 
         item.pendingSales.splice(saleIdx, 1);
@@ -1708,104 +1745,67 @@ window.editPayTerm = async function(index) {
     await saveToCloud();
 };
 
-window.createClientLogin = async function(index) {
+// Magdagdag o magbura ng discount na may period
+window.editDiscount = async function(index) {
     const item = appData.consignments[index];
-    const email = (item.email || '').trim().toLowerCase();
-    if (!email) {
-        alert('Maglagay muna ng email ng tindahan.');
+    const today = localToday();
+    if (!item.discounts) item.discounts = [];
+    if (!item.history) item.history = [];
+    if (!item.clientNotifications) item.clientNotifications = [];
+    const styleName = (k) => k === 'All' ? 'Lahat ng uri' : k;
+    const label = (d) => `${styleName(d.styleType)}: ${d.type === 'percent' ? d.value + '%' : '₱' + d.value} bawas (${fmtDate(d.startDate)} – ${fmtDate(d.endDate)})${d.endDate < today ? ' [TAPOS NA]' : ''}`;
+
+    if (item.discounts.length) {
+        const act = await prompt(`Mga discount ng ${item.storeName}:\n${item.discounts.map(d => '• ' + label(d)).join('\n')}\n\n1 = Magdagdag ng bagong discount\n2 = Burahin ang lahat ng discount`, '1');
+        if (act === null) return;
+        if (String(act).trim() === '2') {
+            if (!(await confirm(`Burahin ang lahat ng discount ng ${item.storeName}?`))) return;
+            item.discounts = [];
+            const ts0 = new Date().toLocaleString();
+            item.history.unshift({ id: Date.now(), date: ts0, text: 'Binura ang lahat ng discount.' });
+            item.clientNotifications.push({ id: Date.now(), text: '🏷️ Inalis na ang discount ng tindahan mo.', date: ts0 });
+            await saveToCloud();
+            return;
+        }
+        if (String(act).trim() !== '1') { alert('Pumili ng 1 o 2.'); return; }
+    }
+
+    const sv = await prompt('Anong uri ang may discount?\n1 = Ordinary\n2 = Premium\n3 = Lahat ng uri', '3');
+    if (sv === null) return;
+    const styleType = ['Ordinary', 'Premium', 'All'][(parseInt(sv) || 0) - 1];
+    if (!styleType) { alert('Pumili ng 1 hanggang 3.'); return; }
+    const targets = (item.storeItems || []).filter(s => styleType === 'All' || s.styleType === styleType);
+    if (!targets.length) { alert(`Walang ${styleType} na stock ang tindahang ito.`); return; }
+
+    const tv = await prompt('Paano ang discount?\n1 = Bawas na piso (₱) bawat piraso\n2 = Porsyento (%)', '1');
+    if (tv === null) return;
+    const type = String(tv).trim() === '2' ? 'percent' : (String(tv).trim() === '1' ? 'amount' : '');
+    if (!type) { alert('Pumili ng 1 o 2.'); return; }
+
+    const minBase = Math.min(...targets.map(s => Number(s.price) || 0));
+    const valStr = await prompt(type === 'percent' ? 'Ilang porsyento (%) ang discount?' : `Ilang piso (₱) ang bawas bawat piraso?\n(Dapat mas mababa sa ₱${minBase})`, '');
+    if (valStr === null) return;
+    const value = parseFloat(valStr);
+    if (isNaN(value) || value <= 0 || (type === 'percent' && value >= 100) || (type === 'amount' && value >= minBase)) {
+        alert('Hindi wasto ang halaga ng discount.');
         return;
     }
-    if (!await confirm(`I-reset ang password ng ${item.storeName} (${email}) sa default na "${DEFAULT_CLIENT_PASSWORD}"?\n\nMapapalitan ang password na ginawa ng client. Kailangan nila itong palitan pagkatapos mag-login.`)) return;
 
-    let uid = '', ok = false, apiErr = '';
-    try {
-        const idToken = await auth.currentUser.getIdToken();
-        const resp = await fetch(RESET_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken, email, password: DEFAULT_CLIENT_PASSWORD })
-        });
-        const raw = await resp.text();
-        let data = {};
-        try { data = JSON.parse(raw); } catch (_) {}
-        if (resp.ok && data.ok) { ok = true; uid = data.uid; }
-        else apiErr = data.error || (resp.status + ' ' + raw.slice(0, 120));
-    } catch (err) {
-        apiErr = err.message;
+    const d30 = new Date(); d30.setDate(d30.getDate() + 30);
+    const defEnd = ymd(d30);
+    const endStr = await prompt(`Hanggang kailan ang discount?\nFormat: YYYY-MM-DD (hal. ${defEnd})`, defEnd);
+    if (endStr === null) return;
+    const endDate = String(endStr).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate) || isNaN(new Date(endDate + 'T00:00:00').getTime()) || endDate < today) {
+        alert('Hindi wasto ang petsa. Gamitin ang format na YYYY-MM-DD at hindi puwedeng nakaraan na.');
+        return;
     }
 
-    // Alternatibo kung hindi gumagana ang server (walang service account key)
-    if (!ok) {
-        if (!await confirm(`⚠️ Hindi gumana ang server reset (${apiErr}).\n\nAlternatibo: gagawa ng bagong account na may default password na "${DEFAULT_CLIENT_PASSWORD}".\n\nKung may account na ang email na ito, burahin muna ito sa Firebase Console (Authentication → Users → ⋮ → Delete account), tapos ulitin ito.\n\nItuloy?`)) return;
-        const res = await createAccountForClient(email, DEFAULT_CLIENT_PASSWORD);
-        if (!res.ok) return;
-        uid = res.uid;
-    }
-
-    item.firebaseUid = uid;
-    item.authStatus = 'active';
-    item.mustChangePassword = true;
-    if (!item.history) item.history = [];
-    item.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: 'Na-reset ng admin ang password sa default.' });
+    item.discounts.push({ id: Date.now(), styleType, type, value, startDate: today, endDate });
+    const ts = new Date().toLocaleString();
+    const what = type === 'percent' ? `${value}%` : `₱${value} bawas bawat piraso`;
+    item.history.unshift({ id: Date.now(), date: ts, text: `Discount: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}` });
+    item.clientNotifications.push({ id: Date.now(), text: `🏷️ May discount ang tindahan mo: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}.`, date: ts });
     await saveToCloud();
-    alert(`✅ Handa na ang default password.\n\n🏪 ${item.storeName}\n🔑 Default password: ${DEFAULT_CLIENT_PASSWORD}\n\nIbigay ito sa client. Hihilingin sa kanila na palitan ito pagkatapos mag-login.`);
-};
-
-
-window.deleteEntireStore = async function(index) {
-    if (await confirm('Burahin nang buo ang tindahang ito?')) {
-        const item = appData.consignments[index];
-        if (item.storeItems) {
-            item.storeItems.forEach(sub => {
-                if (sub.currentStock > 0) appData.homeStock[sub.styleType || 'Ordinary'] += sub.currentStock;
-            });
-        }
-        appData.consignments.splice(index, 1);
-        saveToCloud();
-    }
-};
-
-window.editHistory = async function(storeIdx, histIdx) {
-    const currentText = appData.consignments[storeIdx].history[histIdx].text;
-    const newText = await prompt('I-edit ang note:', currentText);
-    if (newText) { appData.consignments[storeIdx].history[histIdx].text = newText.trim(); saveToCloud(); }
-};
-
-window.deleteHistory = async function(storeIdx, histIdx) {
-    if (await confirm('Burahin ang history log na ito?')) {
-        appData.consignments[storeIdx].history.splice(histIdx, 1);
-        saveToCloud();
-    }
-};
-
-document.getElementById('exportBtn').addEventListener('click', () => {
-    document.getElementById('backupTextarea').value = JSON.stringify(appData, null, 2);
-    alert('Kopyahin ang text.');
-});
-
-document.getElementById('importTextBtn').addEventListener('click', () => {
-    try {
-        appData = JSON.parse(document.getElementById('backupTextarea').value.trim());
-        deduplicateConsignments();
-        cleanSourceData();
-        saveToCloud();
-        alert('Na-load na!');
-    } catch (err) { alert('Mali ang format.'); }
-});
-
-let deferredPrompt;
-const installCard = document.getElementById('installCard');
-const installBtn = document.getElementById('installBtn');
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); deferredPrompt = e; installCard.style.display = 'block';
-});
-installBtn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt = null;
-        installCard.style.display = 'none';
-    }
-});
-</script>
-</body>
-</html>
+    const preview = targets.map(s => { const e = priceWithDiscount(item, s); return `${s.styleType}: ₱${e.base} → ₱${e.price}`; }).join('\n');
+    alert(`✅ Naitala ang discount.\n\n${wha
