@@ -1808,4 +1808,107 @@ window.editDiscount = async function(index) {
     item.clientNotifications.push({ id: Date.now(), text: `🏷️ May discount ang tindahan mo: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}.`, date: ts });
     await saveToCloud();
     const preview = targets.map(s => { const e = priceWithDiscount(item, s); return `${s.styleType}: ₱${e.base} → ₱${e.price}`; }).join('\n');
-    alert(`✅ Naitala ang discount.\n\n${wha
+    alert(`✅ Naitala ang discount.\n\n${what} sa ${styleName(styleType)}\nHanggang ${fmtDate(endDate)}\n\n${preview}\n\nBabalik sa regular na presyo pagkatapos ng petsang iyon.`);
+};
+
+window.createClientLogin = async function(index) {
+    const item = appData.consignments[index];
+    const email = (item.email || '').trim().toLowerCase();
+    if (!email) {
+        alert('Maglagay muna ng email ng tindahan.');
+        return;
+    }
+    if (!await confirm(`I-reset ang password ng ${item.storeName} (${email}) sa default na "${DEFAULT_CLIENT_PASSWORD}"?\n\nMapapalitan ang password na ginawa ng client. Kailangan nila itong palitan pagkatapos mag-login.`)) return;
+
+    let uid = '', ok = false, apiErr = '';
+    try {
+        const idToken = await auth.currentUser.getIdToken();
+        const resp = await fetch(RESET_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken, email, password: DEFAULT_CLIENT_PASSWORD })
+        });
+        const raw = await resp.text();
+        let data = {};
+        try { data = JSON.parse(raw); } catch (_) {}
+        if (resp.ok && data.ok) { ok = true; uid = data.uid; }
+        else apiErr = data.error || (resp.status + ' ' + raw.slice(0, 120));
+    } catch (err) {
+        apiErr = err.message;
+    }
+
+    // Alternatibo kung hindi gumagana ang server (walang service account key)
+    if (!ok) {
+        if (!await confirm(`⚠️ Hindi gumana ang server reset (${apiErr}).\n\nAlternatibo: gagawa ng bagong account na may default password na "${DEFAULT_CLIENT_PASSWORD}".\n\nKung may account na ang email na ito, burahin muna ito sa Firebase Console (Authentication → Users → ⋮ → Delete account), tapos ulitin ito.\n\nItuloy?`)) return;
+        const res = await createAccountForClient(email, DEFAULT_CLIENT_PASSWORD);
+        if (!res.ok) return;
+        uid = res.uid;
+    }
+
+    item.firebaseUid = uid;
+    item.authStatus = 'active';
+    item.mustChangePassword = true;
+    if (!item.history) item.history = [];
+    item.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: 'Na-reset ng admin ang password sa default.' });
+    await saveToCloud();
+    alert(`✅ Handa na ang default password.\n\n🏪 ${item.storeName}\n🔑 Default password: ${DEFAULT_CLIENT_PASSWORD}\n\nIbigay ito sa client. Hihilingin sa kanila na palitan ito pagkatapos mag-login.`);
+};
+
+
+window.deleteEntireStore = async function(index) {
+    if (await confirm('Burahin nang buo ang tindahang ito?')) {
+        const item = appData.consignments[index];
+        if (item.storeItems) {
+            item.storeItems.forEach(sub => {
+                if (sub.currentStock > 0) appData.homeStock[sub.styleType || 'Ordinary'] += sub.currentStock;
+            });
+        }
+        appData.consignments.splice(index, 1);
+        saveToCloud();
+    }
+};
+
+window.editHistory = async function(storeIdx, histIdx) {
+    const currentText = appData.consignments[storeIdx].history[histIdx].text;
+    const newText = await prompt('I-edit ang note:', currentText);
+    if (newText) { appData.consignments[storeIdx].history[histIdx].text = newText.trim(); saveToCloud(); }
+};
+
+window.deleteHistory = async function(storeIdx, histIdx) {
+    if (await confirm('Burahin ang history log na ito?')) {
+        appData.consignments[storeIdx].history.splice(histIdx, 1);
+        saveToCloud();
+    }
+};
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+    document.getElementById('backupTextarea').value = JSON.stringify(appData, null, 2);
+    alert('Kopyahin ang text.');
+});
+
+document.getElementById('importTextBtn').addEventListener('click', () => {
+    try {
+        appData = JSON.parse(document.getElementById('backupTextarea').value.trim());
+        deduplicateConsignments();
+        cleanSourceData();
+        saveToCloud();
+        alert('Na-load na!');
+    } catch (err) { alert('Mali ang format.'); }
+});
+
+let deferredPrompt;
+const installCard = document.getElementById('installCard');
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); deferredPrompt = e; installCard.style.display = 'block';
+});
+installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt = null;
+        installCard.style.display = 'none';
+    }
+});
+</script>
+</body>
+</html>
