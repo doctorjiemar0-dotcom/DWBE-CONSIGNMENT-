@@ -827,9 +827,9 @@ function updateCatalogPrices(store) {
     const badge = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"] .gal-price');
     if (!badge || !sub.price) return;
     const e = priceWithDiscount(store, sub);
-    badge.innerHTML = '<span>Presyo mo</span>' + (e.off > 0 ? '<s>₱' + e.base + '</s> ' : '') +
-      '<b>₱' + e.price + '</b> <small>/ piraso</small>' +
-      (e.off > 0 ? '<span class="gal-disc">Diskwento −₱' + e.off + ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>' : '');
+    badge.innerHTML = '<span>Presyo mo</span>' + (e.off > 0 ? '<s style="color:#999;">₱' + Number(e.base).toLocaleString() + '</s> ' : '') +
+      '<b>₱' + Number(e.price).toLocaleString() + '</b> <small>/ piraso</small>' +
+      (e.off > 0 ? '<span class="gal-disc">🏷️ Diskwento −₱' + Number(e.off).toLocaleString() + ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>' : '');
   });
 }
 const _validCache = {};
@@ -1680,4 +1680,4 @@ onAuthStateChanged(authData, (user) => {
 </script>
 
 </body>
-</html>
+</html
