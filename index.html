@@ -821,19 +821,38 @@ function priceWithDiscount(store, sub) {
   const off = best ? Math.round(best.off * 100) / 100 : 0;
   return { base, off, price: Math.round((base - off) * 100) / 100, pct: base ? +(off / base * 100).toFixed(1) : 0, until: best ? best.until : null };
 }
-// Sa catalog ng naka-login na client: ipakita ang presyo niya at ang discount (kung aktibo)
+// Sa catalog ng naka-login na client: ipakita ang kasalukuyang presyo at promo
+// KAHIT walang active stock ang isang style. Kapag ang discount ay "All",
+// dapat makita pa rin ang promo sa Ordinary at Premium para malinaw kung pareho silang kasama.
 function updateCatalogPrices(store) {
-  (store.storeItems || []).forEach(sub => {
-    const gallery = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"]');
+  const items = store.storeItems || [];
+  const findItem = style => items.find(s => s && s.styleType === style);
+
+  ['Ordinary', 'Premium'].forEach(style => {
+    const gallery = document.querySelector('#portalContent .style-gallery[data-style="' + style + '"]');
     const badge = gallery ? gallery.querySelector('.gal-price') : null;
-    if (!badge || sub.price === undefined || sub.price === null) return;
+    if (!badge) return;
+
+    const item = findItem(style);
+    // Kapag walang stock record para sa style, gamitin ang catalog/supplier price
+    // para ma-compute pa rin ang discount na "All".
+    const basePrice = item && item.price !== undefined && item.price !== null
+      ? Number(item.price)
+      : Number(STANDARD_PRICES[style] || 0);
+    if (!basePrice) return;
+
+    const sub = item || { styleType: style, price: basePrice };
     const e = priceWithDiscount(store, sub);
-    const baseText = Number(e.base).toLocaleString();
-    const priceText = Number(e.price).toLocaleString();
+
     badge.innerHTML = '<span>Presyo mo</span>' +
-      (e.off > 0 ? '<s style="color:#999;margin-right:5px;">₱' + baseText + '</s>' : '') +
-      '<b style="color:#2e7d32;">₱' + priceText + '</b> <small>/ piraso</small>' +
-      (e.off > 0 ? '<span class="gal-disc">🏷️ Diskwento −₱' + Number(e.off).toLocaleString() + ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>' : '');
+      (e.off > 0
+        ? '<s style="color:#999;margin-right:5px;">₱' + Number(e.base).toLocaleString() + '</s> '
+        : '') +
+      '<b style="color:#2e7d32;">₱' + Number(e.price).toLocaleString() + '</b> <small>/ piraso</small>' +
+      (e.off > 0
+        ? '<span class="gal-disc">🏷️ Diskwento −₱' + Number(e.off).toLocaleString() +
+          ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>'
+        : '');
   });
 }
 const _validCache = {};
