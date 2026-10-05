@@ -361,6 +361,8 @@ const PAY_TERMS = {
 };
 // Default password na ibibigay ng admin (hindi bababa sa 6 na karakter ang kailangan ng Firebase)
 const DEFAULT_CLIENT_PASSWORD = 'admin123';
+// Standard na Presyo ng Supplier (default lang sa bagong approval; hindi nito binabago ang presyo ng mga kasalukuyang tindahan)
+const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
 // Server function sa Vercel na may kapangyarihang mag-reset ng password
 // Sa Vercel, gamitin ang function ng mismong deployment na ito (production man o preview)
 const RESET_API = location.hostname.endsWith('vercel.app') ? '/api/reset-password' : 'https://dwbe-consignment.vercel.app/api/reset-password';
@@ -1330,7 +1332,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
     if (initialStockStr === null) return;
     const initialStock = parseInt(initialStockStr) || 0;
 
-    const priceStr = await prompt(`[Prompt] Presyo bawat piraso (₱):`, '150');
+    const priceStr = await prompt(`[Prompt] Presyo bawat piraso (₱):`, String(STANDARD_PRICES[inq.styleType || 'Ordinary'] || 150));
     if (priceStr === null) return;
     const price = parseFloat(priceStr) || 150;
 
