@@ -47,6 +47,12 @@ button:hover{opacity:.9}
 .style-option-card h4{font-size:.85rem;color:var(--primary-color);margin-bottom:3px}
 .style-option-card p{font-size:.75rem;color:#666}
 .style-gallery{margin-bottom:5px}
+.gal-frame{position:relative;margin-bottom:4px}
+.style-option-card .gal-frame .gal-main{display:block;margin-bottom:0}
+.gal-price{position:absolute;left:5px;bottom:5px;background:rgba(27,94,32,.92);color:#fff;border-radius:8px;padding:3px 8px;text-align:left;line-height:1.15;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.gal-price span{display:block;font-size:.58rem;opacity:.9;letter-spacing:.2px}
+.gal-price b{font-size:.95rem}
+.gal-price small{font-size:.6rem;font-weight:normal;opacity:.9}
 .style-option-card .gal-main{margin-bottom:4px}
 .gal-thumbs{display:flex;gap:4px;justify-content:center}
 .style-option-card .gal-thumb{width:calc(33.33% - 3px);height:34px;margin:0;border:2px solid transparent;opacity:.65;border-radius:3px}
@@ -155,7 +161,6 @@ button:hover{opacity:.9}
               <div class="style-gallery" data-style="Premium"></div>
               <h4>Premium Style</h4>
               <p>Thick & Durable</p>
-              <div class="tag-feat">✨ Gitna ng Hibla (Tampok)</div>
               <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Premium')">🔍 View Images</button>
             </div>
 
@@ -212,7 +217,6 @@ button:hover{opacity:.9}
           <div class="style-gallery" data-style="Premium"></div>
           <h4>Premium Style</h4>
           <p>Thick & Durable</p>
-          <div class="tag-feat">✨ Gitna ng Hibla (Tampok)</div>
           <button type="button" class="view-img-btn" onclick="event.stopPropagation(); openGallery('Premium')">🔍 View Images</button>
         </div>
 
@@ -582,6 +586,8 @@ var D={
 '⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password.':'⚠️ This email already has an account but the password is different. Use the correct password.',
 '⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.',
 'TERMS NG BAYAD:':'PAYMENT TERMS:',
+'Presyo ng Supplier':'Supplier Price',
+'/ piraso':'/ piece',
 'Presyo:':'Price:',
 'bawat piraso':'per piece',
 'Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.':'You are still using the default password from the admin. Change it now in the "Change Password" section to keep your account secure.',
@@ -782,6 +788,8 @@ async function findImage(base) {
   }
   return null;
 }
+// Presyo ng Supplier na ipinapakita sa unang larawan (display lang; hindi nito binabago ang presyo ng mga kasalukuyang client)
+const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
 const _validCache = {};
 function getValidImages(style) {
   if (!_validCache[style]) {
@@ -805,7 +813,7 @@ function showGallery() {
 window.openGallery = async function(style, idx) {
   galList = await getValidImages(style);
   galIdx = Math.min(idx || 0, galList.length - 1);
-  galTitle = style + ' Style Walis Tambo';
+  galTitle = style + ' Style Walis Tambo' + (STANDARD_PRICES[style] ? ' · ₱' + STANDARD_PRICES[style] : '');
   showGallery();
   $('imageModal').style.display = 'flex';
 };
@@ -837,11 +845,21 @@ function initGalleries() {
     const list = await getValidImages(style);
     let cur = 0;
     el.innerHTML = '';
+    const frame = document.createElement('div');
+    frame.className = 'gal-frame';
     const main = document.createElement('img');
+    main.className = 'gal-main';
     main.src = list[0];
     main.alt = style + ' Style Walis Tambo';
     main.onclick = e => { e.stopPropagation(); window.openGallery(style, cur); };
-    el.appendChild(main);
+    frame.appendChild(main);
+    if (STANDARD_PRICES[style]) {
+      const badge = document.createElement('div');
+      badge.className = 'gal-price';
+      badge.innerHTML = '<span>Presyo ng Supplier</span><b>₱' + STANDARD_PRICES[style] + '</b> <small>/ piraso</small>';
+      frame.appendChild(badge);
+    }
+    el.appendChild(frame);
     if (list.length > 1) {
       const row = document.createElement('div');
       row.className = 'gal-thumbs';
