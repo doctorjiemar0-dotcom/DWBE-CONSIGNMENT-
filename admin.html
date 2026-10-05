@@ -1066,15 +1066,12 @@ function renderApp() {
             const eff = priceWithDiscount(item, subItem);
             const discTxt = eff.off > 0
                 ? `<span style="color:#2e7d32;font-weight:bold;">🏷️ Diskwento −₱${eff.off} (${eff.pct}%) hanggang ${fmtDate(eff.until)} → presyo ₱${eff.price}</span>` : '';
-            const displayPrice = eff.off > 0
-                ? `<s style="color:#999;margin-right:5px;">₱${Number(eff.base).toLocaleString()}</s><strong style="color:#2e7d32;font-size:1rem;">₱${Number(eff.price).toLocaleString()}</strong>`
-                : `₱${Number(eff.base).toLocaleString()}`;
 
             storeItemsHtml += `
                 <div class="store-item-row">
                     <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
                         <span>${subItem.styleType || 'Ordinary'}</span>
-                        <span style="color: #333; font-weight: normal;">Presyo: ${displayPrice} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
+                        <span style="color: #333; font-weight: normal;">Presyo: ₱${subItem.price} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
                     </div>
                     <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">
                         Initial Qty: ${subItem.initialQty} pcs | Nabenta: <strong>${subSold} pcs</strong> | Total: ₱${totalOrderAmount.toLocaleString()}${discTxt ? '<br>' + discTxt : ''}
@@ -1778,14 +1775,29 @@ window.editDiscount = async function(index) {
     const styleType = ['Ordinary', 'Premium', 'All'][(parseInt(sv) || 0) - 1];
     if (!styleType) { alert('Pumili ng 1 hanggang 3.'); return; }
     const targets = (item.storeItems || []).filter(s => styleType === 'All' || s.styleType === styleType);
-    if (!targets.length) { alert(`Walang ${styleType} na stock ang tindahang ito.`); return; }
+    // Kapag "All", puwedeng mag-set ng promo kahit isang style ay wala pang active stock.
+    // Ang discount ay pricing rule at hindi dapat nakadepende sa stock.
+    if (!targets.length && styleType !== 'All') { alert(`Walang ${styleType} na stock ang tindahang ito.`); return; }
+    if (!targets.length && styleType === 'All') {
+        // Gumawa ng temporary pricing targets mula sa available client prices.
+        // Ito ay para ma-validate ang discount; hindi nito binabago ang stock.
+        const fallbackItems = ['Ordinary', 'Premium'].map(style => ({
+            styleType: style,
+            price: Number((item.storeItems || []).find(s => s.styleType === style)?.price || item.price || 0)
+        })).filter(s => s.price > 0);
+        if (!fallbackItems.length) { alert('Walang presyo na maaaring pagbasehan ng discount.'); return; }
+    }
 
     const tv = await prompt('Paano ang discount?\n1 = Bawas na piso (₱) bawat piraso\n2 = Porsyento (%)', '1');
     if (tv === null) return;
     const type = String(tv).trim() === '2' ? 'percent' : (String(tv).trim() === '1' ? 'amount' : '');
     if (!type) { alert('Pumili ng 1 o 2.'); return; }
 
-    const minBase = Math.min(...targets.map(s => Number(s.price) || 0));
+    const validationTargets = targets.length ? targets : ['Ordinary', 'Premium'].map(style => ({
+        styleType: style,
+        price: Number((item.storeItems || []).find(s => s.styleType === style)?.price || item.price || 0)
+    })).filter(s => s.price > 0);
+    const minBase = Math.min(...validationTargets.map(s => Number(s.price) || 0));
     const valStr = await prompt(type === 'percent' ? 'Ilang porsyento (%) ang discount?' : `Ilang piso (₱) ang bawas bawat piraso?\n(Dapat mas mababa sa ₱${minBase})`, '');
     if (valStr === null) return;
     const value = parseFloat(valStr);
@@ -1810,7 +1822,7 @@ window.editDiscount = async function(index) {
     item.history.unshift({ id: Date.now(), date: ts, text: `Discount: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}` });
     item.clientNotifications.push({ id: Date.now(), text: `🏷️ May discount ang tindahan mo: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}.`, date: ts });
     await saveToCloud();
-    const preview = targets.map(s => { const e = priceWithDiscount(item, s); return `${s.styleType}: ₱${e.base} → ₱${e.price}`; }).join('\n');
+    const preview = validationTargets.map(s => { const e = priceWithDiscount(item, s); return `${s.styleType}: ₱${e.base} → ₱${e.price}`; }).join('\n');
     alert(`✅ Naitala ang discount.\n\n${what} sa ${styleName(styleType)}\nHanggang ${fmtDate(endDate)}\n\n${preview}\n\nBabalik sa regular na presyo pagkatapos ng petsang iyon.`);
 };
 
