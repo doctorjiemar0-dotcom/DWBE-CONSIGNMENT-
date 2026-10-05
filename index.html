@@ -52,6 +52,8 @@ button:hover{opacity:.9}
 .gal-price{position:absolute;left:5px;bottom:5px;background:rgba(27,94,32,.92);color:#fff;border-radius:8px;padding:3px 8px;text-align:left;line-height:1.15;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .gal-price span{display:block;font-size:.58rem;opacity:.9;letter-spacing:.2px}
 .gal-price b{font-size:.95rem}
+.gal-price s{opacity:.7;font-size:.7rem}
+.gal-price .gal-disc{color:#fff59d;font-weight:bold;font-size:.62rem;margin-top:1px}
 .gal-price small{font-size:.6rem;font-weight:normal;opacity:.9}
 .style-option-card .gal-main{margin-bottom:4px}
 .gal-thumbs{display:flex;gap:4px;justify-content:center}
@@ -587,6 +589,7 @@ var D={
 '⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.',
 'TERMS NG BAYAD:':'PAYMENT TERMS:',
 'Presyo ng Supplier':'Supplier Price',
+'Presyo mo':'Your Price',
 '/ piraso':'/ piece',
 'Presyo:':'Price:',
 'bawat piraso':'per piece',
@@ -605,6 +608,8 @@ var D={
 var R=[
 [/^Hal\. /,'e.g. '],
 [/^Dahilan: (.*)$/,'Reason: $1'],
+[/^🏷️ Standard ₱(.+) → ₱(.+) · Diskwento ₱(.+) \((.+)%\)$/,'🏷️ Standard ₱$1 → ₱$2 · Discount ₱$3 ($4%)'],
+[/^Diskwento ₱(.+) \((.+)%\)$/,'Discount ₱$1 ($2%)'],
 [/^Natanggap mo ba ang (\d+) pcs ng (.+) sa presyong ₱(.*) bawat piraso\?$/,'Did you receive $1 pcs of $2 at ₱$3 per piece?'],
 [/^Presyo: ₱(.*)$/,'Price: ₱$1'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
@@ -790,6 +795,25 @@ async function findImage(base) {
 }
 // Presyo ng Supplier na ipinapakita sa unang larawan (display lang; hindi nito binabago ang presyo ng mga kasalukuyang client)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
+// Diskwento = Standard na Presyo ng Supplier minus ang napagkasunduang presyo ng tindahan
+function discountInfo(style, price) {
+  const std = STANDARD_PRICES[style];
+  price = Number(price);
+  if (!std || !price || price >= std) return null;
+  const off = std - price;
+  return { std, off, pct: +(off / std * 100).toFixed(1) };
+}
+// Sa catalog ng naka-login na client: ipakita ang presyo niya at ang diskwento
+function updateCatalogPrices(store) {
+  (store.storeItems || []).forEach(sub => {
+    const badge = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"] .gal-price');
+    if (!badge || !sub.price) return;
+    const d = discountInfo(sub.styleType, sub.price);
+    badge.innerHTML = '<span>Presyo mo</span>' + (d ? '<s>₱' + d.std + '</s> ' : '') +
+      '<b>₱' + sub.price + '</b> <small>/ piraso</small>' +
+      (d ? '<span class="gal-disc">Diskwento ₱' + d.off + ' (' + d.pct + '%)</span>' : '');
+  });
+}
 const _validCache = {};
 function getValidImages(style) {
   if (!_validCache[style]) {
@@ -860,6 +884,7 @@ function initGalleries() {
       frame.appendChild(badge);
     }
     el.appendChild(frame);
+    if (window._catalogStore) updateCatalogPrices(window._catalogStore);
     if (list.length > 1) {
       const row = document.createElement('div');
       row.className = 'gal-thumbs';
@@ -1410,6 +1435,8 @@ function renderClientDashboard(store) {
   }
 
   renderRestockStatus(store);
+  window._catalogStore = store;
+  updateCatalogPrices(store);
 
   // QR Code
   const smallQrContainer = $('smallQrcode');
@@ -1516,6 +1543,7 @@ function renderClientDashboard(store) {
 
   store.storeItems.forEach(sub => {
     const subSold = Math.max(0, sub.initialQty - sub.currentStock - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
+    const dsc = discountInfo(sub.styleType, sub.price);
     const div = document.createElement('div');
     div.className = 'store-item-box' + (sub.styleType === 'Premium' ? ' premium-stock' : '');
     div.innerHTML =
@@ -1526,6 +1554,7 @@ function renderClientDashboard(store) {
        <div style="font-size: 0.85rem; color: #444; margin: 5px 0;">
          Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Nabenta: <strong>${subSold} pcs</strong>
        </div>
+       ${dsc ? `<div style="font-size:.78rem;color:#2e7d32;margin-bottom:5px;">🏷️ Standard ₱${dsc.std} → ₱${sub.price} · Diskwento ₱${dsc.off} (${dsc.pct}%)</div>` : ''}
        <button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px;">🛒 MAY BUMILI (I-record ang Benta)</button>`;
     itemsContainer.appendChild(div);
   });
