@@ -32,6 +32,7 @@ label{display:block;font-size:.85rem;margin-bottom:3px;font-weight:bold}
 input,select,textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:.9rem}
 button{background-color:var(--secondary-color);color:white;border:none;padding:10px;width:100%;border-radius:4px;font-size:1rem;font-weight:bold;cursor:pointer;margin-top:5px}
 button:hover{opacity:.9}
+button:disabled{opacity:.5;cursor:not-allowed}
 #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:40vh;text-align:left}
 #portalContent{display:none}
 .store-item-box{background:#f9f9f9;border:1px solid #ddd;padding:10px;border-radius:6px;margin-bottom:8px}
@@ -384,6 +385,16 @@ button:hover{opacity:.9}
       </div>
     </div>
 
+    <!-- Email ng Tindahan (kailangan para magamit ang Restock) -->
+    <div class="card" id="emailCard" style="background:#e3f2fd;border-left:4px solid #0288d1;">
+      <h2 style="color:#0288d1;font-size:.95rem;">📧 Email ng Tindahan</h2>
+      <p id="emailStatusText" style="font-size:.8rem;margin-bottom:8px;"></p>
+      <div class="form-group">
+        <input type="email" id="clientEmailInput" placeholder="Hal. alingnena@gmail.com" autocomplete="email">
+      </div>
+      <button type="button" onclick="saveClientEmail()" style="background-color:#0288d1;">I-save ang Email</button>
+    </div>
+
     <!-- Action Buttons -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
 
@@ -405,8 +416,9 @@ button:hover{opacity:.9}
             <label>Dami ng Restock (Fixed: 5 pcs):</label>
             <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
           </div>
+          <p id="restockEmailLock" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".</p>
           <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.</p>
-          <button type="button" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
+          <button type="button" id="restockSubmitBtn" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
         </div>
       </div>
 
@@ -629,7 +641,13 @@ var D={
 'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off at the end of every month. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 15 days. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
 'Cut-off kada 7 araw (lingguhan). Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 7 days (weekly). The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
-'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)':'Payment once the delivered stock is sold out, or after 30 days, whichever comes first. (Sold × Supplier Price)'
+'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)':'Payment once the delivered stock is sold out, or after 30 days, whichever comes first. (Sold × Supplier Price)',
+'📧 Email ng Tindahan':'📧 Store Email',
+'I-save ang Email':'Save Email',
+'⚠️ Kailangan ang email para magamit ang Restock.':'⚠️ An email is required to use Restock.',
+'🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".':'🔒 Restock is locked. Please enter your email in the "Store Email" section first.',
+'✅ Matagumpay na na-save ang iyong email!':'✅ Your email was saved successfully!',
+'Ilagay muna ang iyong email sa seksyong "Email ng Tindahan" bago mag-request ng restock.':'Please enter your email in the "Store Email" section before requesting a restock.'
 };
 var R=[
 [/^Hal\. /,'e.g. '],
@@ -640,6 +658,7 @@ var R=[
 [/^Diskwento −₱(.+) \((.+)%\) hanggang (.+)$/,'Discount −₱$1 ($2%) until $3'],
 [/^Natanggap mo ba ang (\d+) pcs ng (.+) sa presyong ₱(.*) bawat piraso\?$/,'Did you receive $1 pcs of $2 at ₱$3 per piece?'],
 [/^Presyo: ₱(.*)$/,'Price: ₱$1'],
+[/^✅ Naka-save: (.+) \(maaari mo itong palitan anumang oras\)$/,'✅ Saved: $1 (you can change it anytime)'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
 ];
 var lang=localStorage.getItem('dwbe_lang')||'tl',orig=new WeakMap();
@@ -1505,6 +1524,37 @@ function renderRestockStatus(store) {
   note.style.display = restockBlocked(store, $('restockStyleType').value) ? 'block' : 'none';
 }
 
+// ===== Email ng Tindahan (walang verification; kailangan para magamit ang Restock) =====
+// Hiwalay ito sa login email ng Firebase Auth (store.email), kaya hindi apektado ang login.
+const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const hasEmail = s => validEmail((s.contactEmail || '').trim());
+
+function renderEmailLock(store) {
+  const ok = hasEmail(store);
+  $('emailStatusText').textContent = ok
+    ? '✅ Naka-save: ' + store.contactEmail + ' (maaari mo itong palitan anumang oras)'
+    : '⚠️ Kailangan ang email para magamit ang Restock.';
+  $('emailStatusText').style.color = ok ? '#2e7d32' : '#c62828';
+  if (document.activeElement !== $('clientEmailInput')) $('clientEmailInput').value = store.contactEmail || '';
+  $('restockEmailLock').style.display = ok ? 'none' : 'block';
+  const b = $('restockSubmitBtn');
+  b.disabled = !ok;
+  b.style.opacity = ok ? '' : '.5';
+}
+
+window.saveClientEmail = async function() {
+  const store = getStore();
+  if (!store) return;
+  const em = $('clientEmailInput').value.trim().toLowerCase();
+  if (!validEmail(em)) { alert('⚠️ Hindi wasto ang email.'); return; }
+  store.contactEmail = em;
+  if (!store.transactionHistory) store.transactionHistory = [];
+  store.transactionHistory.unshift({ type: 'Email', text: 'Na-save ang email ng tindahan: ' + em, date: now() });
+  await saveData();
+  alert('✅ Matagumpay na na-save ang iyong email!');
+  renderClientDashboard(store);
+};
+
 // Render Dashboard
 function renderClientDashboard(store) {
 
@@ -1540,6 +1590,7 @@ function renderClientDashboard(store) {
   }
 
   renderRestockStatus(store);
+  renderEmailLock(store);
   window._catalogStore = store;
   updateCatalogPrices(store);
 
@@ -1705,6 +1756,12 @@ function restockBlocked(store, style) {
 window.submitRestockRequest = async function() {
   const store = getStore();
   if (!store) return;
+
+  // Naka-lock ang restock hangga't walang email
+  if (!hasEmail(store)) {
+    alert('Ilagay muna ang iyong email sa seksyong "Email ng Tindahan" bago mag-request ng restock.');
+    return;
+  }
 
   const styleType = $('restockStyleType').value;
   if (restockBlocked(store, styleType)) {
