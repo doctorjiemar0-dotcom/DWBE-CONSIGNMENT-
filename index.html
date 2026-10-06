@@ -1123,6 +1123,7 @@ async function finalizeVerifiedEmailChange(user, store) {
   store.authEmailUpdatedAt = now();
   delete store.pendingEmail;
   delete store.pendingEmailRequestedAt;
+  localStorage.removeItem('dwbe_pending_email_' + user.uid);
   if (!store.transactionHistory) store.transactionHistory = [];
   store.transactionHistory.unshift({
     type: 'Security',
@@ -1151,18 +1152,27 @@ window.submitRequiredEmailChange = async function() {
   try {
     await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, curPass));
 
-    // Huwag agad palitan ang Firestore email. Firebase ang magpapalit pagkatapos ma-click ang verification link.
+    // Huwag muna baguhin ang Firestore email. Firebase ang magko-confirm ng bagong email.
+    // Gumamit ng bagong ActionCodeSettings/continue URL para bawat request ay malinaw na bumabalik sa portal.
+    const returnUrl = new URL(window.location.href);
+    returnUrl.searchParams.set('emailChange', 'complete');
+    const actionCodeSettings = {
+      url: returnUrl.toString(),
+      handleCodeInApp: false
+    };
+
+    await verifyBeforeUpdateEmail(user, newEmail, actionCodeSettings);
+
     store.firebaseUid = user.uid;
     store.pendingEmail = newEmail;
     store.pendingEmailRequestedAt = now();
-    await saveData();
-
-    await verifyBeforeUpdateEmail(user, newEmail);
+    try { await saveData(); } catch (_) {}
+    localStorage.setItem('dwbe_pending_email_' + user.uid, newEmail);
 
     if (input) input.value = '';
     if (passInput) passInput.value = '';
     showEmailVerificationGate(store);
-    alert(`📩 Naipadala na ang verification link sa:\n\n${newEmail}\n\nBuksan ang email at i-confirm ang pagbabago. Pagkatapos ay bumalik dito at pindutin ang “Na-verify Ko Na”.`);
+    alert(`📩 Bagong verification link ang ipinadala sa:\n\n${newEmail}\n\n1. Buksan ang bagong email.\n2. I-click ang verification link.\n3. Hintaying lumabas ang successful confirmation.\n4. Bumalik dito. Awtomatikong susuriin ng portal ang account.`);
   } catch (err) {
     // Pending email is safe to clear only when Firebase rejected the request.
     if (err && err.code !== 'auth/too-many-requests') {
@@ -1220,15 +1230,22 @@ window.updateClientEmail = async function() {
   if (newEmail === (user.email || '').trim().toLowerCase()) { alert('Ang bagong email ay kapareho ng kasalukuyang email.'); return; }
   try {
     await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, curPass));
+    const returnUrl = new URL(window.location.href);
+    returnUrl.searchParams.set('emailChange', 'complete');
+    const actionCodeSettings = {
+      url: returnUrl.toString(),
+      handleCodeInApp: false
+    };
+    await verifyBeforeUpdateEmail(user, newEmail, actionCodeSettings);
     store.firebaseUid = user.uid;
     store.pendingEmail = newEmail;
     store.pendingEmailRequestedAt = now();
-    await saveData();
-    await verifyBeforeUpdateEmail(user, newEmail);
+    try { await saveData(); } catch (_) {}
+    localStorage.setItem('dwbe_pending_email_' + user.uid, newEmail);
     input.value = '';
     passInput.value = '';
     showEmailVerificationGate(store);
-    alert(`📩 Naipadala na ang verification link sa ${newEmail}. Kumpirmahin ito bago magpatuloy.`);
+    alert(`📩 Bagong verification link ang ipinadala sa ${newEmail}. Kumpirmahin ito bago magpatuloy.`);
   } catch (err) {
     console.error(err);
     alert('⚠️ Hindi naipadala ang verification email: ' + (err.message || err));
@@ -1363,7 +1380,7 @@ $('unifiedLoginBtn').addEventListener('click', async () => {
 
   // Ang email ng napiling tindahan ang gagamitin sa Firebase Authentication
   const found = loginStores[parseInt(idxVal)];
-  const email = found ? (found.email || found.pendingEmail || '').trim().toLowerCase() : '';
+  const email = found ? ((found.emailChangedByClient === true ? found.email : (found.pendingEmail || found.email)) || '').trim().toLowerCase() : '';
   if (!found || !email) { $('noStoreNotice').style.display = 'block'; return; }
 
   try {
@@ -1589,7 +1606,13 @@ async function markClientPresence(force = false) {
 
 // Initialize Portal
 function initPortalView() {
-  const paramStore = new URLSearchParams(window.location.search).get('store');
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramStore = urlParams.get('store');
+  const emailChangeReturn = urlParams.get('emailChange') === 'complete';
+  if (emailChangeReturn) {
+    // Huwag i-erase ang query hanggang matapos ang Auth state check.
+    // Ang Firebase default action handler ang unang nagco-complete ng email change.
+  }
   const showPortal = (on) => {
     $('loginScreen').style.display = on ? 'none' : 'flex';
     $('portalContent').style.display = on ? 'block' : 'none';
@@ -1609,11 +1632,14 @@ function initPortalView() {
       // Kung hindi pa nakumpleto ang required email replacement, HUWAG buksan ang dashboard.
       if (found.emailChangedByClient !== true) {
         const currentEmail = (authUser.email || '').trim().toLowerCase();
-        const pendingEmail = (found.pendingEmail || '').trim().toLowerCase();
+        const localPending = (localStorage.getItem('dwbe_pending_email_' + authUser.uid) || '').trim().toLowerCase();
+        const pendingEmail = ((found.pendingEmail || localPending || '')).trim().toLowerCase();
         if (pendingEmail && currentEmail === pendingEmail) {
+          found.pendingEmail = pendingEmail;
           finalizeVerifiedEmailChange(authUser, found).then(() => initPortalView()).catch(() => showEmailVerificationGate(found));
           return;
         }
+        if (localPending && !found.pendingEmail) found.pendingEmail = localPending;
         showEmailVerificationGate(found);
         return;
       }
