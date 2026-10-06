@@ -496,6 +496,43 @@ button:hover{opacity:.9}
 
 </div>
 
+<!-- FORCE EMAIL CHANGE BEFORE CLIENT DASHBOARD -->
+<div id="forcedEmailScreen" style="display:none;position:fixed;inset:0;z-index:20000;background:rgba(0,0,0,.72);padding:18px;overflow-y:auto;align-items:center;justify-content:center;">
+  <div style="width:100%;max-width:520px;background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden;">
+    <div style="background:#1976d2;color:#fff;padding:18px 16px;text-align:center;">
+      <div style="font-size:2rem;line-height:1;margin-bottom:7px;">📧</div>
+      <h2 style="margin:0;font-size:1.15rem;">Kailangan Mong Palitan ang Email</h2>
+      <p style="margin:7px 0 0;font-size:.82rem;opacity:.95;">Bago mo ma-access ang Client Dashboard</p>
+    </div>
+    <div style="padding:18px;">
+      <div style="background:#fff8e1;border-left:4px solid #f9a825;padding:11px;border-radius:5px;margin-bottom:14px;font-size:.82rem;color:#5d4037;line-height:1.45;">
+        <strong>⚠️ Required Security Update</strong><br>
+        Ang email na kasalukuyang nakakonekta sa account mo ay maaaring temporary email na inilagay ng Admin. Palitan ito ngayon ng sarili mong <strong>active/personal email</strong>.
+        <br><br>
+        <strong>Hindi ka pa makakapasok sa Dashboard hangga't hindi matagumpay ang email update.</strong>
+      </div>
+
+      <div style="background:#e3f2fd;border:1px solid #bbdefb;padding:10px;border-radius:6px;margin-bottom:12px;font-size:.82rem;">
+        <strong>Current Email:</strong><br>
+        <span id="forcedCurrentClientEmail" style="word-break:break-all;color:#1565c0;">Hindi available</span>
+      </div>
+
+      <div class="form-group">
+        <label for="forcedNewClientEmail">Bagong Personal / Active Email Address:</label>
+        <input type="email" id="forcedNewClientEmail" placeholder="Hal. iyongpangalan@gmail.com" autocomplete="email" style="font-size:1rem;">
+      </div>
+
+      <div class="form-group">
+        <label for="forcedEmailPassword">Kasalukuyang Password:</label>
+        <input type="password" id="forcedEmailPassword" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password" style="font-size:1rem;">
+      </div>
+
+      <button type="button" id="forcedEmailSaveBtn" onclick="submitForcedEmailChange()" style="background-color:#1976d2;width:100%;font-size:.95rem;padding:11px;">📧 I-save ang Email at Buksan ang Dashboard</button>
+      <p style="font-size:.72rem;color:#666;text-align:center;margin:10px 0 0;line-height:1.4;">Mananatili ang account mo sa parehong tindahan. Ang mga promo at abiso ng Admin ay mananatiling konektado sa iyong account.</p>
+    </div>
+  </div>
+</div>
+
 <!-- Update Banner (client ang magdedesisyon) -->
 <div id="updateBanner" style="display:none;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:10000;background:#0d47a1;color:white;padding:12px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.3);align-items:center;gap:10px;">
   <div style="flex:1;font-size:.85rem;">🆕 May bagong bersyon ng app. I-update na?</div>
@@ -1079,6 +1116,86 @@ window.updateClientPassword = async function() {
   renderClientDashboard(store);
 };
 
+// ===== Forced email change bago payagang buksan ang Client Dashboard =====
+function showForcedEmailScreen(store) {
+  const screen = $('forcedEmailScreen');
+  const current = $('forcedCurrentClientEmail');
+  const input = $('forcedNewClientEmail');
+  const pass = $('forcedEmailPassword');
+  const btn = $('forcedEmailSaveBtn');
+  if (!screen) return;
+
+  const currentEmail = (store && store.email) || (authData.currentUser && authData.currentUser.email) || 'Hindi available';
+  if (current) current.textContent = currentEmail;
+  if (input) input.value = '';
+  if (pass) pass.value = '';
+  if (btn) { btn.disabled = false; btn.textContent = '📧 I-save ang Email at Buksan ang Dashboard'; }
+
+  screen.style.display = 'flex';
+  setTimeout(() => { if (input) input.focus(); }, 100);
+}
+
+function hideForcedEmailScreen() {
+  const screen = $('forcedEmailScreen');
+  if (screen) screen.style.display = 'none';
+}
+
+window.submitForcedEmailChange = async function() {
+  const input = $('forcedNewClientEmail');
+  const passInput = $('forcedEmailPassword');
+  const btn = $('forcedEmailSaveBtn');
+  const user = authData.currentUser;
+  const store = getStore();
+  const newEmail = input ? input.value.trim().toLowerCase() : '';
+  const curPass = passInput ? passInput.value : '';
+
+  if (!user || !store) { alert('⚠️ Hindi makita ang iyong active client account.'); return; }
+  if (!newEmail) { alert('Mangyaring ilagay ang iyong personal/active email address.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { alert('⚠️ Hindi wasto ang bagong email address.'); return; }
+  if (newEmail === (user.email || '').trim().toLowerCase()) { alert('⚠️ Dapat ibang email ang ilagay. Palitan ang temporary email ng iyong personal/active email.'); return; }
+  if (!curPass) { alert('Mangyaring ilagay ang kasalukuyang password para sa security verification.'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Ina-update ang Email...'; }
+
+  try {
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, curPass));
+    await updateEmail(user, newEmail);
+
+    // UID ang permanenteng identity ng store; email lang ang pinapalitan.
+    store.email = newEmail;
+    store.emailChangedByClient = true;
+    store.authEmailUpdatedAt = now();
+    if (!store.transactionHistory) store.transactionHistory = [];
+    store.transactionHistory.unshift({ type: 'Security', text: `Pinalitan ng client ang temporary email at nagtakda ng personal email: ${newEmail}.`, date: now() });
+    await saveData();
+
+    hideForcedEmailScreen();
+    if ($('currentClientEmail')) $('currentClientEmail').textContent = newEmail;
+    if ($('newClientEmail')) $('newClientEmail').value = '';
+    if ($('emailChangePassword')) $('emailChangePassword').value = '';
+    if ($('passwordContentWrapper')) $('passwordContentWrapper').style.display = 'none';
+
+    alert('✅ Matagumpay na napalitan ang email!\n\nNgayon ay bubuksan na ang iyong Client Dashboard.');
+    renderClientDashboard(store);
+  } catch (err) {
+    console.error(err);
+    if (btn) { btn.disabled = false; btn.textContent = '📧 I-save ang Email at Buksan ang Dashboard'; }
+    if (['auth/wrong-password','auth/invalid-credential','auth/invalid-login-credentials'].includes(err.code)) {
+      alert('⚠️ Mali ang kasalukuyang password.');
+    } else if (err.code === 'auth/email-already-in-use') {
+      alert('⚠️ Ginagamit na ng ibang Firebase account ang email na iyan. Gumamit ng ibang active email.');
+    } else if (err.code === 'auth/invalid-email') {
+      alert('⚠️ Hindi wasto ang email address.');
+    } else if (err.code === 'auth/requires-recent-login') {
+      alert('⚠️ Kailangan ng bagong security login. Mag-login muli at subukan ulit.');
+    } else if (err.code === 'auth/too-many-requests') {
+      alert('⚠️ Maraming maling pagtatangka. Subukan muli mamaya.');
+    } else {
+      alert('⚠️ Hindi napalitan ang email: ' + (err.message || err));
+    }
+  }
+};
+
 // ===== Palitan ang temporary email ng customer =====
 window.updateClientEmail = async function() {
   const user = authData.currentUser;
@@ -1102,6 +1219,7 @@ window.updateClientEmail = async function() {
 
     // UID ang identity ng store; email lang ang login contact na pinapalitan.
     store.email = newEmail;
+    store.emailChangedByClient = true;
     store.authEmailUpdatedAt = now();
     if (!store.transactionHistory) store.transactionHistory = [];
     store.transactionHistory.unshift({ type: 'Security', text: `Pinalitan ng client ang login email mula ${oldEmail} papuntang ${newEmail}.`, date: now() });
@@ -1484,6 +1602,15 @@ function initPortalView() {
     if (found) {
       currentStoreName = found.storeName;
       $('noStoreNotice').style.display = 'none';
+
+      // HUWAG buksan ang Dashboard hangga't hindi napapalitan ng client ang temporary email.
+      if (found.emailChangedByClient !== true) {
+        showPortal(false);
+        showForcedEmailScreen(found);
+        return;
+      }
+
+      hideForcedEmailScreen();
       showPortal(true);
       renderClientDashboard(found);
       return;
@@ -1494,6 +1621,7 @@ function initPortalView() {
   }
 
   currentStoreName = '';
+  hideForcedEmailScreen();
   showPortal(false);
   if (paramStore) {
     $('directAccessNotice').style.display = 'block';
