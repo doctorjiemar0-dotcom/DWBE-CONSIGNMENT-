@@ -73,6 +73,14 @@ button:hover{opacity:.9}
 .view-img-btn{background:#0288d1;color:white;border:none;padding:3px 6px;font-size:.7rem;border-radius:3px;cursor:pointer;margin-top:4px;display:inline-block;width:100%}
 .tag-feat{margin-top:4px;font-size:.7rem;background:#fff9c4;color:#f57f17;padding:2px 4px;border-radius:3px;font-weight:bold;border:1px dashed #fbc02d}
 .y{background-color:#fff59d;font-weight:bold}
+/* Personal Email Feature Lock */
+.personal-email-lock-card{background:#fff8e1;border-left:5px solid #f57f17!important;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.personal-email-lock-card input{background:#fff!important}
+.personal-email-lock-card .personal-email-status{font-size:.78rem;color:#6d4c41;line-height:1.45;margin:6px 0 10px}
+.personal-email-locked .client-feature-locked{position:relative;opacity:.58;pointer-events:none;filter:grayscale(.35)}
+.personal-email-locked .client-feature-locked::after{content:"🔒 Naka-lock — ilagay muna ang Personal Email";position:absolute;left:8px;right:8px;top:8px;background:rgba(255,255,255,.94);border:1px solid #f57c00;border-radius:6px;padding:7px;text-align:center;color:#bf360c;font-size:.76rem;font-weight:800;z-index:20;pointer-events:none}
+.personal-email-unlocked .client-feature-locked{opacity:1;pointer-events:auto;filter:none}
+
 .r{background-color:#ffcdd2;font-weight:bold}
 .tgl{width:auto;padding:4px 10px;font-size:.75rem;margin-top:0}
 .row{display:flex;justify-content:space-between;align-items:center}
@@ -200,35 +208,6 @@ button:hover{opacity:.9}
         <button type="submit" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
       </div>
-    </div>
-  </div>
-
-  <!-- Required Email Verification Screen -->
-  <div id="emailVerificationGate" style="display:none;max-width:600px;margin:20px auto;">
-    <div class="card" style="background:#e3f2fd;border-left:5px solid #1976d2;text-align:left;">
-      <h2 style="color:#1565c0;font-size:1.2rem;margin-bottom:8px;">📧 Palitan ang Iyong Email Address</h2>
-      <p style="font-size:.9rem;color:#333;margin-bottom:12px;">Para sa seguridad at para matanggap mo ang mga susunod na abiso ng iyong account, kailangan mong palitan ang temporary email ng sarili mong active email address.</p>
-      <div style="background:#fff;padding:10px;border-radius:6px;border:1px solid #bbdefb;margin-bottom:12px;font-size:.82rem;">
-        <strong>Temporary Email:</strong> <span id="gateCurrentEmail">Hindi available</span>
-      </div>
-      <div id="gatePendingBox" style="display:none;background:#fff8e1;border-left:4px solid #f9a825;padding:10px;margin-bottom:12px;font-size:.84rem;">
-        📩 <strong>Naghihintay ng verification.</strong><br>
-        Naipadala ang verification link sa: <strong id="gatePendingEmail"></strong><br>
-        Buksan ang email at kumpirmahin ang pagbabago. Pagkatapos, bumalik dito at pindutin ang <strong>“Na-verify Ko Na”</strong>.
-      </div>
-      <div id="gateForm">
-        <div class="form-group">
-          <label>Bagong Personal / Active Email Address:</label>
-          <input type="email" id="gateNewEmail" placeholder="Hal. iyongpangalan@gmail.com" autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label>Kasalukuyang Password:</label>
-          <input type="password" id="gateEmailPassword" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password">
-        </div>
-        <button type="button" id="gateSendBtn" onclick="submitRequiredEmailChange()" style="background-color:#1976d2;">📧 Ipadala ang Verification Link</button>
-      </div>
-      <button type="button" id="gateCheckBtn" onclick="checkRequiredEmailVerification()" style="display:none;background-color:#2e7d32;margin-top:8px;">✅ Na-verify Ko Na — Suriin ang Account</button>
-      <p style="font-size:.76rem;color:#666;margin-top:12px;text-align:center;">Walang Skip. Mananatiling naka-lock ang Client Dashboard hanggang makumpleto ang email verification.</p>
     </div>
   </div>
 
@@ -487,26 +466,51 @@ button:hover{opacity:.9}
     </div>
 
 
-    <!-- Change Email -->
-    <div class="card" style="background:#e3f2fd;border-left:4px solid #1976d2;">
+    <!-- First-Time Personal Account Setup -->
+    <div id="personalEmailGateCard" class="card personal-email-lock-card" style="display:none;">
       <div class="row">
-        <h2 style="color:#1976d2;font-size:.95rem;margin-bottom:0;">📧 Palitan ang Email Address</h2>
-        <button type="button" id="toggleEmailBtn" onclick="toggleEmailVisibility()" class="tgl" style="background-color:#1976d2;">Buksan</button>
+        <h2 style="color:#e65100;font-size:.98rem;margin-bottom:0;">🔐 Kumpletuhin ang Iyong Personal Account</h2>
+        <span id="personalEmailGateBadge" style="background:#f57c00;color:#fff;padding:3px 7px;border-radius:10px;font-size:.68rem;font-weight:bold;">REQUIRED</span>
       </div>
-      <div id="emailContentWrapper" style="display:none;margin-top:10px;">
-        <p style="font-size:.80rem;color:#333;margin-bottom:8px;">Kung temporary email ang inilagay ng Admin, maaari mo itong palitan ng sarili mong active email. Mananatiling nakakonekta ang account sa parehong tindahan, kaya patuloy na lalabas ang mga bagong promo at abiso.</p>
-        <div style="background:#fff;padding:8px;border-radius:6px;border:1px solid #bbdefb;margin-bottom:8px;font-size:.78rem;">
-          <strong>Current Email:</strong> <span id="currentClientEmail">Hindi available</span>
-        </div>
-        <div class="form-group">
-          <label>Bagong Active Email Address:</label>
-          <input type="email" id="newClientEmail" placeholder="Hal. iyongpangalan@gmail.com" autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label>Kasalukuyang Password:</label>
-          <input type="password" id="emailChangePassword" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password">
-        </div>
-        <button type="button" onclick="updateClientEmail()" style="background-color:#1976d2;">📧 I-save ang Bagong Email</button>
+      <p class="personal-email-status">
+        Naka-login ka na sa iyong Client Dashboard. Bago ma-unlock ang mga account features, ilagay ang iyong <strong>Personal Email</strong> at gumawa ng iyong sariling <strong>Personal Password</strong>. Ang password na ito ang papalit sa temporary/default password na ibinigay ng Admin.
+      </p>
+
+      <div class="form-group" style="margin-bottom:8px;">
+        <label for="personalEmailInput">📧 Personal Email Address:</label>
+        <input type="email" id="personalEmailInput" placeholder="Hal. iyongpangalan@gmail.com" autocomplete="email">
+      </div>
+
+      <div class="form-group" style="margin-bottom:8px;">
+        <label for="personalPasswordInput">🔐 Personal Password:</label>
+        <input type="password" id="personalPasswordInput" placeholder="Gumawa ng sariling password (minimum 6 characters)" minlength="6" autocomplete="new-password">
+      </div>
+
+      <div class="form-group" style="margin-bottom:8px;">
+        <label for="personalPasswordConfirm">🔐 Ulitin ang Personal Password:</label>
+        <input type="password" id="personalPasswordConfirm" placeholder="Ilagay muli ang iyong password" minlength="6" autocomplete="new-password">
+      </div>
+
+      <label style="display:flex;align-items:center;gap:7px;font-size:.78rem;color:#555;margin:5px 0 10px;cursor:pointer;">
+        <input type="checkbox" id="showPersonalSetupPassword" style="width:auto;margin:0;">
+        Ipakita ang password
+      </label>
+
+      <button type="button" id="savePersonalEmailBtn" onclick="savePersonalEmail()" style="background-color:#f57c00;">🔐 I-SAVE AT I-ACTIVATE ANG ACCOUNT</button>
+      <div id="personalEmailSavedNotice" style="display:none;margin-top:8px;padding:7px;border-radius:5px;background:#e8f5e9;color:#2e7d32;font-size:.78rem;font-weight:bold;">
+        ✅ Na-save ang Personal Email at napalitan na ang password. Na-unlock na ang iyong Client Portal features.
+      </div>
+    </div>
+
+    <!-- Personal Email / Account Information -->
+    <div id="personalEmailInfoCard" class="card" style="display:none;background:#e3f2fd;border-left:4px solid #1976d2;">
+      <div class="row">
+        <h2 style="color:#1976d2;font-size:.95rem;margin-bottom:0;">📧 Personal Email</h2>
+        <span style="background:#2e7d32;color:#fff;padding:3px 7px;border-radius:10px;font-size:.68rem;font-weight:bold;">ACTIVE</span>
+      </div>
+      <p style="font-size:.80rem;color:#333;margin:7px 0 5px;">Ito ang personal email na gagamitin bilang contact email para sa mga future promo, abiso at communication. <strong>Hindi nito pinapalitan ang Firebase login email.</strong></p>
+      <div style="background:#fff;padding:8px;border-radius:6px;border:1px solid #bbdefb;font-size:.78rem;">
+        <strong>Personal Email:</strong> <span id="currentPersonalEmail">Hindi pa nailalagay</span>
       </div>
     </div>
 
@@ -806,7 +810,7 @@ apply();
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, reauthenticateWithCredential, EmailAuthProvider, reload } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const dataConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -1108,325 +1112,9 @@ window.updateClientPassword = async function() {
   renderClientDashboard(store);
 };
 
-// ===== Email change: verification-first Firebase flow =====
-async function finalizeVerifiedEmailChange(user, store) {
-  if (!user || !store) return false;
-  await reload(user);
-  const currentEmail = (user.email || '').trim().toLowerCase();
-  const pending = (store.pendingEmail || '').trim().toLowerCase();
-  if (!pending || !currentEmail || currentEmail !== pending) return false;
-
-  const oldEmail = (store.email || '').trim().toLowerCase();
-  store.firebaseUid = user.uid;
-  store.email = currentEmail;
-  store.emailChangedByClient = true;
-  store.authEmailUpdatedAt = now();
-  delete store.pendingEmail;
-  delete store.pendingEmailRequestedAt;
-  localStorage.removeItem('dwbe_pending_email_' + user.uid);
-  if (!store.transactionHistory) store.transactionHistory = [];
-  store.transactionHistory.unshift({
-    type: 'Security',
-    text: `Nakumpirma ang pagpapalit ng login email mula ${oldEmail} papuntang ${currentEmail}.`,
-    date: now()
-  });
-  await saveData();
-  return true;
-}
-
-window.submitRequiredEmailChange = async function() {
-  const user = authData.currentUser;
-  const store = getStore();
-  const input = $('gateNewEmail');
-  const passInput = $('gateEmailPassword');
-  const newEmail = input ? input.value.trim().toLowerCase() : '';
-  const curPass = passInput ? passInput.value : '';
-
-  if (!user || !store) { alert('⚠️ Hindi makita ang iyong active client account.'); return; }
-  if (store.emailChangedByClient === true) { initPortalView(); return; }
-  if (!newEmail) { alert('Mangyaring ilagay ang iyong personal/active email address.'); return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { alert('⚠️ Hindi wasto ang bagong email address.'); return; }
-  if (newEmail === (user.email || '').trim().toLowerCase()) { alert('Ang bagong email ay kapareho ng temporary email.'); return; }
-  if (!curPass) { alert('Mangyaring ilagay ang kasalukuyang password para sa security verification.'); return; }
-
-  try {
-    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, curPass));
-
-    // Huwag muna baguhin ang Firestore email. Firebase ang magko-confirm ng bagong email.
-    // Gumamit ng bagong ActionCodeSettings/continue URL para bawat request ay malinaw na bumabalik sa portal.
-    const returnUrl = new URL(window.location.href);
-    returnUrl.searchParams.set('emailChange', 'complete');
-    const actionCodeSettings = {
-      url: returnUrl.toString(),
-      handleCodeInApp: false
-    };
-
-    await verifyBeforeUpdateEmail(user, newEmail, actionCodeSettings);
-
-    store.firebaseUid = user.uid;
-    store.pendingEmail = newEmail;
-    store.pendingEmailRequestedAt = now();
-    try { await saveData(); } catch (_) {}
-    localStorage.setItem('dwbe_pending_email_' + user.uid, newEmail);
-
-    if (input) input.value = '';
-    if (passInput) passInput.value = '';
-    showEmailVerificationGate(store);
-    alert(`📩 Bagong verification link ang ipinadala sa:\n\n${newEmail}\n\n1. Buksan ang bagong email.\n2. I-click ang verification link.\n3. Hintaying lumabas ang successful confirmation.\n4. Bumalik dito. Awtomatikong susuriin ng portal ang account.`);
-  } catch (err) {
-    // Pending email is safe to clear only when Firebase rejected the request.
-    if (err && err.code !== 'auth/too-many-requests') {
-      delete store.pendingEmail;
-      delete store.pendingEmailRequestedAt;
-      await saveData();
-    }
-    console.error(err);
-    if (['auth/wrong-password','auth/invalid-credential','auth/invalid-login-credentials'].includes(err.code)) {
-      alert('⚠️ Mali ang kasalukuyang password.');
-    } else if (err.code === 'auth/email-already-in-use') {
-      alert('⚠️ Ginagamit na ng ibang Firebase account ang email na iyan. Gumamit ng ibang active email.');
-    } else if (err.code === 'auth/invalid-email') {
-      alert('⚠️ Hindi wasto ang email address.');
-    } else if (err.code === 'auth/requires-recent-login') {
-      alert('⚠️ Kailangan ng bagong security login. Subukan muli.');
-    } else if (err.code === 'auth/too-many-requests') {
-      alert('⚠️ Maraming request. Subukan muli mamaya.');
-    } else {
-      alert('⚠️ Hindi naipadala ang verification email: ' + (err.message || err));
-    }
-  }
-};
-
-window.checkRequiredEmailVerification = async function() {
-  const user = authData.currentUser;
-  const store = getStore();
-  if (!user || !store) return;
-  try {
-    const done = await finalizeVerifiedEmailChange(user, store);
-    if (!done) {
-      showEmailVerificationGate(store);
-      alert('⏳ Hindi pa nakumpirma ang bagong email. Buksan muna ang verification link na ipinadala sa iyong bagong email, pagkatapos ay subukan muli.');
-      return;
-    }
-    alert('✅ Verified na ang iyong bagong email address. Maaari mo nang gamitin ang Client Dashboard.');
-    initPortalView();
-  } catch (err) {
-    console.error(err);
-    alert('⚠️ Hindi ma-check ang verification status. Subukan muli kapag may internet connection.');
-  }
-};
-
-window.updateClientEmail = async function() {
-  // Ang normal na email-change drawer ay gumagamit din ng parehong verification-first flow.
-  const user = authData.currentUser;
-  const store = getStore();
-  const input = $('newClientEmail');
-  const passInput = $('emailChangePassword');
-  if (!user || !store || !input || !passInput) return;
-  const newEmail = input.value.trim().toLowerCase();
-  const curPass = passInput.value;
-  if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { alert('⚠️ Hindi wasto ang bagong email address.'); return; }
-  if (!curPass) { alert('Mangyaring ilagay ang kasalukuyang password.'); return; }
-  if (newEmail === (user.email || '').trim().toLowerCase()) { alert('Ang bagong email ay kapareho ng kasalukuyang email.'); return; }
-  try {
-    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, curPass));
-    const returnUrl = new URL(window.location.href);
-    returnUrl.searchParams.set('emailChange', 'complete');
-    const actionCodeSettings = {
-      url: returnUrl.toString(),
-      handleCodeInApp: false
-    };
-    await verifyBeforeUpdateEmail(user, newEmail, actionCodeSettings);
-    store.firebaseUid = user.uid;
-    store.pendingEmail = newEmail;
-    store.pendingEmailRequestedAt = now();
-    try { await saveData(); } catch (_) {}
-    localStorage.setItem('dwbe_pending_email_' + user.uid, newEmail);
-    input.value = '';
-    passInput.value = '';
-    showEmailVerificationGate(store);
-    alert(`📩 Bagong verification link ang ipinadala sa ${newEmail}. Kumpirmahin ito bago magpatuloy.`);
-  } catch (err) {
-    console.error(err);
-    alert('⚠️ Hindi naipadala ang verification email: ' + (err.message || err));
-  }
-};
-
-function showEmailVerificationGate(store) {
-  const login = $('loginScreen'), portal = $('portalContent'), gate = $('emailVerificationGate');
-  if (login) login.style.display = 'none';
-  if (portal) portal.style.display = 'none';
-  if (gate) gate.style.display = 'block';
-  const user = authData.currentUser;
-  if ($('gateCurrentEmail')) $('gateCurrentEmail').textContent = user?.email || store?.email || 'Hindi available';
-  const pending = (store?.pendingEmail || '').trim();
-  const hasPending = !!pending;
-  if ($('gatePendingBox')) $('gatePendingBox').style.display = hasPending ? 'block' : 'none';
-  if ($('gatePendingEmail')) $('gatePendingEmail').textContent = pending;
-  if ($('gateForm')) $('gateForm').style.display = hasPending ? 'none' : 'block';
-  if ($('gateCheckBtn')) $('gateCheckBtn').style.display = hasPending ? 'block' : 'none';
-}
-
-function refreshClientEmailDisplay(store) {
-  const el = $('currentClientEmail');
-  if (el) el.textContent = (store && store.email) ? store.email : (authData.currentUser && authData.currentUser.email ? authData.currentUser.email : 'Hindi available');
-}
-
-const AUTH_BAD = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'];
-
-// Para sa mga lumang client na wala pang Firebase account: ang dati nilang password ay magagamit nang isang beses
-// para gumawa ng account, at buburahin na ang nakasulat na password sa database.
-async function tryLegacyMigration(email, pass) {
-  const legacy = appData.consignments.find(c =>
-    (c.email || '').trim().toLowerCase() === email && (c.password || c.contact) && (c.password || c.contact) === pass);
-  if (!legacy) return false;
-  let newPass = pass;
-  if (pass.length < 6) {
-    const p = await prompt("Para sa mas ligtas na account, gumawa ng bagong password (hindi bababa sa 6 na karakter):");
-    if (!p || p.trim().length < 6) { alert("Kailangan ng hindi bababa sa 6 na karakter."); return true; }
-    newPass = p.trim();
-  }
-  try {
-    await createUserWithEmailAndPassword(authData, email, newPass);
-  } catch (err) {
-    alert("⚠️ Mali ang pangalan ng tindahan o password.");
-    return true;
-  }
-  const s2 = appData.consignments.find(c => (c.email || '').trim().toLowerCase() === email);
-  if (s2) { delete s2.password; await saveData(); }
-  return true;
-}
-
-// Paghahanap ng tindahan sa login (naka-mask ang pangalan: unang titik lang ng bawat salita ang kita)
-let loginStores = [];
-let loginLabels = [];
-let paramApplied = false;
-function maskName(n) {
-  return n.trim().split(/\s+/).map(w => w.charAt(0) + '*'.repeat(Math.max(1, w.length - 1))).join(' ');
-}
-function hideSuggestions() {
-  const box = $('storeSuggestions');
-  box.innerHTML = '';
-  box.style.display = 'none';
-}
-function selectLoginStore(i) {
-  $('unifiedStoreInput').value = String(i);
-  $('storeSearchInput').value = loginLabels[i];
-  hideSuggestions();
-}
-function renderSuggestions() {
-  const box = $('storeSuggestions');
-  const q = $('storeSearchInput').value.trim().toLowerCase();
-  box.innerHTML = '';
-  if (!q) { box.style.display = 'none'; return; }
-  const hits = [];
-  loginStores.forEach((c, i) => { if (c.storeName.toLowerCase().includes(q)) hits.push(i); });
-  hits.slice(0, 6).forEach(i => {
-    const row = document.createElement('div');
-    row.textContent = loginLabels[i];
-    row.style.cssText = 'padding:10px;border-bottom:1px solid #eee;cursor:pointer;font-size:.95rem;letter-spacing:1px;';
-    row.onclick = () => selectLoginStore(i);
-    box.appendChild(row);
-  });
-  if (!hits.length) {
-    const none = document.createElement('div');
-    none.textContent = 'Walang nakitang tindahan.';
-    none.style.cssText = 'padding:10px;font-size:.85rem;color:#666;';
-    box.appendChild(none);
-  }
-  box.style.display = 'block';
-}
-function populateStoreList() {
-  const hid = $('unifiedStoreInput');
-  if (!hid) return;
-  let prev = '';
-  if (hid.value !== '' && loginStores[parseInt(hid.value)]) prev = loginStores[parseInt(hid.value)].storeName;
-  else if (!paramApplied) prev = new URLSearchParams(window.location.search).get('store') || '';
-  paramApplied = true;
-
-  loginStores = (appData.consignments || [])
-    .filter(c => c.storeName && ((c.email || '').trim() || (c.pendingEmail || '').trim()))
-    .slice()
-    .sort((a, b) => a.storeName.localeCompare(b.storeName));
-
-  const seen = {};
-  loginLabels = loginStores.map(c => {
-    let l = maskName(c.storeName);
-    seen[l] = (seen[l] || 0) + 1;
-    return seen[l] > 1 ? l + ' (' + seen[l] + ')' : l;
-  });
-
-  const idx = prev ? loginStores.findIndex(c => c.storeName.trim().toLowerCase() === prev.trim().toLowerCase()) : -1;
-  if (idx >= 0) {
-    selectLoginStore(idx);
-  } else {
-    hid.value = '';
-    renderSuggestions();
-  }
-}
-$('storeSearchInput').addEventListener('input', () => {
-  $('unifiedStoreInput').value = '';
-  renderSuggestions();
-});
-
-// Login (Firebase Auth)
-$('unifiedLoginBtn').addEventListener('click', async () => {
-  const idxVal = $('unifiedStoreInput').value;
-  const pass = $('unifiedPasswordInput').value;
-  $('noStoreNotice').style.display = 'none';
-
-  if (idxVal === '' || !pass) { alert('Mangyaring hanapin at piliin ang tindahan, at ilagay ang password.'); return; }
-  if (!dataLoaded) { alert('Kumukuha pa ng data. Subukan muli sa ilang segundo.'); return; }
-
-  // Ang email ng napiling tindahan ang gagamitin sa Firebase Authentication
-  const found = loginStores[parseInt(idxVal)];
-  const email = found ? ((found.emailChangedByClient === true ? found.email : (found.pendingEmail || found.email)) || '').trim().toLowerCase() : '';
-  if (!found || !email) { $('noStoreNotice').style.display = 'block'; return; }
-
-  try {
-    await signInWithEmailAndPassword(authData, email, pass);
-    $('unifiedPasswordInput').value = '';
-  } catch (err) {
-    if (AUTH_BAD.includes(err.code)) {
-      if (await tryLegacyMigration(email, pass)) return;
-      alert('⚠️ Mali ang pangalan ng tindahan o password.');
-    } else if (err.code === 'auth/too-many-requests') {
-      alert('⚠️ Maraming maling pagsubok. Subukan muli mamaya.');
-    } else if (err.code === 'auth/network-request-failed') {
-      alert('⚠️ Walang koneksyon sa internet.');
-    } else if (err.code === 'auth/invalid-email') {
-      alert('⚠️ Hindi wasto ang email.');
-    } else {
-      alert('⚠️ Hindi makapag-login: ' + err.message);
-    }
-  }
-});
-$('unifiedPasswordInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') $('unifiedLoginBtn').click(); });
-
-// Logout
-window.requestLogout = async function() {
-  const storeInput = await prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
-  if (storeInput === null) return;
-  const store = getStore();
-  if (store && storeInput.toLowerCase().trim() === store.ownerName.toLowerCase().trim()) {
-    try { await signOut(authData); } catch(e) {}
-    currentStoreName = '';
-    window.location.href = window.location.pathname.split('?')[0];
-  } else {
-    alert("Mali ang pangalan ng may-ari.");
-  }
-};
-
-// Clear Notifications
-window.clearAllNotifications = async function() {
-  const store = getStore();
-  if (!store) return;
-  store.clientNotifications = [];
-  await saveData();
-};
-
 // Stop Agreement
 window.promptStopAgreement = async function() {
+  if (!requirePersonalEmail('pagtigil ng Consignment Agreement')) return;
   if (!(await confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?"))) return;
   const store = getStore();
   if (!store) return;
@@ -1455,6 +1143,7 @@ window.dismissNotification = async function(index) {
 
 // Confirm Restock
 window.confirmReceiveRestock = async function(index) {
+  if (!requirePersonalEmail('pagtanggap ng Restock')) return;
   const store = getStore();
   if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
 
@@ -1501,6 +1190,7 @@ window.confirmReceiveRestock = async function(index) {
 
 // Record Sale
 window.promptRecordSale = async function(styleType) {
+  if (!requirePersonalEmail('pag-report ng Benta')) return;
   const store = getStore();
   if (!store) return;
 
@@ -1606,17 +1296,10 @@ async function markClientPresence(force = false) {
 
 // Initialize Portal
 function initPortalView() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const paramStore = urlParams.get('store');
-  const emailChangeReturn = urlParams.get('emailChange') === 'complete';
-  if (emailChangeReturn) {
-    // Huwag i-erase ang query hanggang matapos ang Auth state check.
-    // Ang Firebase default action handler ang unang nagco-complete ng email change.
-  }
+  const paramStore = new URLSearchParams(window.location.search).get('store');
   const showPortal = (on) => {
     $('loginScreen').style.display = on ? 'none' : 'flex';
     $('portalContent').style.display = on ? 'block' : 'none';
-    if (!on && $('emailVerificationGate')) $('emailVerificationGate').style.display = 'none';
   };
 
   if (applying) return;
@@ -1627,34 +1310,20 @@ function initPortalView() {
     if (found) {
       currentStoreName = found.storeName;
       $('noStoreNotice').style.display = 'none';
-      found.firebaseUid = authUser.uid;
-
-      // Kung hindi pa nakumpleto ang required email replacement, HUWAG buksan ang dashboard.
-      if (found.emailChangedByClient !== true) {
-        const currentEmail = (authUser.email || '').trim().toLowerCase();
-        const localPending = (localStorage.getItem('dwbe_pending_email_' + authUser.uid) || '').trim().toLowerCase();
-        const pendingEmail = ((found.pendingEmail || localPending || '')).trim().toLowerCase();
-        if (pendingEmail && currentEmail === pendingEmail) {
-          found.pendingEmail = pendingEmail;
-          finalizeVerifiedEmailChange(authUser, found).then(() => initPortalView()).catch(() => showEmailVerificationGate(found));
-          return;
-        }
-        if (localPending && !found.pendingEmail) found.pendingEmail = localPending;
-        showEmailVerificationGate(found);
-        return;
-      }
-
       showPortal(true);
       renderClientDashboard(found);
       return;
     }
+    // may account pero wala pang aprubadong tindahan
     $('noStoreNotice').style.display = 'block';
     signOut(authData).catch(() => {});
   }
 
   currentStoreName = '';
   showPortal(false);
-  if (paramStore) $('directAccessNotice').style.display = 'block';
+  if (paramStore) {
+    $('directAccessNotice').style.display = 'block';
+  }
 }
 
 // Inquiry Form Submission (gumagawa ng Firebase account; hindi na sine-save ang password sa database)
@@ -1752,6 +1421,168 @@ function renderRestockStatus(store) {
 // Render Dashboard
 function renderClientDashboard(store) {
 
+  updatePersonalEmailLockUI(store);
+
+function updatePersonalEmailLockUI(store) {
+  const portal = $('portalContent');
+  const gate = $('personalEmailGateCard');
+  const info = $('personalEmailInfoCard');
+  const input = $('personalEmailInput');
+  const current = $('currentPersonalEmail');
+  const valid = hasPersonalAccountSetup(store);
+
+  if (portal) {
+    portal.classList.toggle('personal-email-locked', !valid);
+    portal.classList.toggle('personal-email-unlocked', valid);
+  }
+
+  // Mark only actionable/dashboard feature sections. Read-only profile, catalog, notifications and logout stay available.
+  const lockSelectors = [
+    '#clientItemsContainer',
+    '#pendingSalesCard',
+    '#pendingDeliveryCard',
+    '#restockStatusCard',
+    '#restockContentWrapper',
+    '#chatContentWrapper',
+    '#passwordContentWrapper',
+    '#agreementContentWrapper',
+    '#transactionContentWrapper'
+  ];
+  lockSelectors.forEach(sel => {
+    const el = document.querySelector(sel);
+    const card = el && el.closest('.card');
+    if (card) card.classList.add('client-feature-locked');
+  });
+  const danger = document.querySelector('#portalContent .card[style*="background:#ffebee"]');
+  if (danger) danger.classList.add('client-feature-locked');
+
+  if (gate) gate.style.display = valid ? 'none' : 'block';
+  if (info) info.style.display = valid ? 'block' : 'none';
+  if (current) current.textContent = valid ? String(store.personalEmail).trim() : 'Hindi pa nailalagay';
+  if (input && valid) input.value = String(store.personalEmail).trim();
+}
+
+window.showPersonalEmailPrompt = function() {
+  const gate = $('personalEmailGateCard');
+  if (gate) {
+    gate.style.display = 'block';
+    gate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  setTimeout(() => { if ($('personalEmailInput')) $('personalEmailInput').focus(); }, 350);
+};
+
+function hasPersonalEmail(store) {
+  return !!(store && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(store.personalEmail || '').trim()));
+}
+
+function hasPersonalAccountSetup(store) {
+  return !!(hasPersonalEmail(store) && store.personalEmailCompleted === true);
+}
+
+function requirePersonalEmail(actionLabel) {
+  const store = getStore();
+  if (hasPersonalAccountSetup(store)) return true;
+  alert(`🔒 Kailangan munang kumpletuhin ang Personal Account Setup bago gamitin ang ${actionLabel || 'feature na ito'}.`);
+  window.showPersonalEmailPrompt();
+  return false;
+}
+
+// Ipakita/itago ang first-time password fields.
+(function setupPersonalPasswordVisibility() {
+  document.addEventListener('DOMContentLoaded', () => {
+    const cb = $('showPersonalSetupPassword');
+    if (!cb) return;
+    cb.addEventListener('change', () => {
+      const type = cb.checked ? 'text' : 'password';
+      if ($('personalPasswordInput')) $('personalPasswordInput').type = type;
+      if ($('personalPasswordConfirm')) $('personalPasswordConfirm').type = type;
+    });
+  });
+})();
+
+window.savePersonalEmail = async function() {
+  const user = authData.currentUser;
+  const store = getStore();
+  const emailInput = $('personalEmailInput');
+  const passwordInput = $('personalPasswordInput');
+  const confirmInput = $('personalPasswordConfirm');
+  const btn = $('savePersonalEmailBtn');
+  const newEmail = emailInput ? emailInput.value.trim().toLowerCase() : '';
+  const newPassword = passwordInput ? passwordInput.value : '';
+  const confirmPassword = confirmInput ? confirmInput.value : '';
+
+  if (!user || !store) { alert('⚠️ Hindi makita ang iyong active client account.'); return; }
+  if (!newEmail) { alert('Mangyaring ilagay ang iyong Personal Email.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { alert('⚠️ Hindi wasto ang Personal Email address.'); return; }
+  if (newEmail === String(user.email || '').trim().toLowerCase()) {
+    alert('⚠️ Huwag gamitin ang temporary/Firebase login email. Ilagay ang iyong tunay na Personal Email.');
+    return;
+  }
+  if (!newPassword) { alert('Mangyaring gumawa ng iyong Personal Password.'); return; }
+  if (newPassword.length < 6) { alert('⚠️ Ang Personal Password ay dapat hindi bababa sa 6 na karakter.'); return; }
+  if (newPassword !== confirmPassword) { alert('⚠️ Hindi magkapareho ang dalawang password.'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Ina-activate ang Account...'; }
+
+  const oldPersonalEmail = store.personalEmail || '';
+  const oldCompleted = store.personalEmailCompleted === true;
+  const oldMustChange = store.mustChangePassword;
+
+  try {
+    // Bagong password lang ang ipinapasa sa Firebase Auth.
+    // HINDI ini-store ang password sa Firestore.
+    await updatePassword(user, newPassword);
+
+    store.personalEmail = newEmail;
+    store.personalEmailCompleted = true;
+    store.mustChangePassword = false;
+
+    if (!store.transactionHistory) store.transactionHistory = [];
+    store.transactionHistory.unshift({
+      type: 'Security',
+      text: oldPersonalEmail !== newEmail
+        ? 'Nakumpleto ng client ang Personal Account Setup at naglagay ng Personal Email.'
+        : 'Nakumpleto ng client ang Personal Account Setup.',
+      date: now()
+    });
+
+    syncStatus.textContent = 'Nagse-save sa Cloud...';
+    await setDoc(doc(db, 'app_data', 'main_inventory'), appData);
+    syncStatus.textContent = '✅ Na-save sa Cloud';
+
+    if ($('personalEmailSavedNotice')) $('personalEmailSavedNotice').style.display = 'block';
+    if (emailInput) emailInput.disabled = true;
+    if (passwordInput) { passwordInput.value = ''; passwordInput.disabled = true; }
+    if (confirmInput) { confirmInput.value = ''; confirmInput.disabled = true; }
+
+    alert('✅ Matagumpay!
+
+Na-save ang iyong Personal Email at napalitan na ang temporary/default password mo. Na-unlock na ang iyong Client Portal.');
+    updatePersonalEmailLockUI(store);
+    renderClientDashboard(store);
+  } catch (err) {
+    // Kung nag-fail ang Firestore save pagkatapos mapalitan ang password,
+    // huwag markahang completed ang local record. Ang password ay hindi kailanman sine-save dito.
+    store.personalEmail = oldPersonalEmail;
+    store.personalEmailCompleted = oldCompleted;
+    store.mustChangePassword = oldMustChange;
+    console.error(err);
+
+    if (err.code === 'auth/requires-recent-login') {
+      alert('⚠️ Kailangan ng bagong sign-in bago mapalitan ang password. Mag-logout at mag-login muli gamit ang kasalukuyang temporary password, pagkatapos ay ulitin ang Personal Account Setup.');
+    } else if (err.code === 'auth/weak-password') {
+      alert('⚠️ Mahina ang Personal Password. Gumamit ng hindi bababa sa 6 na karakter.');
+    } else if (err.code === 'auth/too-many-requests') {
+      alert('⚠️ Maraming maling pagtatangka. Subukan muli mamaya.');
+    } else {
+      alert('⚠️ Hindi nakumpleto ang Account Setup: ' + (err.message || 'Unknown error'));
+    }
+    syncStatus.textContent = '⚠️ Hindi nakumpleto ang Account Setup';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔐 I-SAVE AT I-ACTIVATE ANG ACCOUNT'; }
+  }
+};
+
   $('displayStoreName').innerHTML =
     store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${store.ownerName})</span>` : '');
 
@@ -1775,12 +1606,10 @@ function renderClientDashboard(store) {
   $('agreementPayTermLabel').textContent = term.label;
   $('agreementPayTermText').textContent = term.text;
 
-  // Default password mula sa admin: hilingin na palitan agad
-  if (store.mustChangePassword && !window._pwNagShown) {
-    window._pwNagShown = true;
-    $('passwordContentWrapper').style.display = 'block';
-    $('togglePasswordBtn').textContent = 'Itago';
-    alert('Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.');
+  // First-time account setup: dashboard is accessible, pero naka-lock ang actionable features.
+  if (!hasPersonalAccountSetup(store) && !window._personalSetupShown) {
+    window._personalSetupShown = true;
+    setTimeout(() => window.showPersonalEmailPrompt(), 250);
   }
 
   renderRestockStatus(store);
@@ -1949,6 +1778,7 @@ function restockBlocked(store, style) {
 }
 
 window.submitRestockRequest = async function() {
+  if (!requirePersonalEmail('Restock Request')) return;
   const store = getStore();
   if (!store) return;
 
@@ -1979,6 +1809,7 @@ window.submitRestockRequest = async function() {
 
 // Send Client Message
 window.sendClientMessage = async function() {
+  if (!requirePersonalEmail('Support/Chat')) return;
   const input = $('clientChatInput');
   const text = input.value.trim();
   if (!text) return;
