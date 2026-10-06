@@ -40,6 +40,13 @@ button:hover{opacity:.9}
 .chat-msg{background:#f1f8e9;padding:8px;border-radius:6px;margin-bottom:6px;font-size:.85rem;border:1px solid #c5e1a5}
 .chat-msg.admin{background:#e3f2fd;border-color:#90caf9}
 #syncStatus{text-align:center;font-size:.8rem;color:#666;margin-bottom:10px;font-style:italic}
+.application-drawer-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:10px;padding:11px 13px;margin:8px 0 10px;cursor:pointer;font-weight:800;font-size:.92rem;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.application-drawer-toggle:active{transform:scale(.99)}
+.application-drawer-toggle .drawer-arrow{font-size:1.05rem;transition:transform .2s ease}
+.application-drawer-toggle.open .drawer-arrow{transform:rotate(180deg)}
+.application-drawer{display:none;overflow:hidden;width:100%}
+.application-drawer.open{display:block;animation:applicationDrawerIn .2s ease}
+@keyframes applicationDrawerIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .style-option-card{border:2px solid #ddd;border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;min-height:170px;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .style-option-card:active{transform:scale(.99)}
@@ -139,12 +146,18 @@ button:hover{opacity:.9}
     <div id="printableInquirySection" style="width:100%;">
       <h2 style="margin-top:10px;color:#0288d1;font-size:1rem;">Digital Consignment / Bagong Aplikasyon</h2>
 
-      <div class="no-print" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
-        <strong>💡 Impormasyon:</strong>
-        Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.
-        <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong>
-        dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
-      </div>
+      <button type="button" id="applicationDrawerToggle" class="application-drawer-toggle" aria-expanded="false" aria-controls="applicationDrawer" onclick="toggleApplicationDrawer()">
+        <span>📋 Buksan ang Bagong Application</span>
+        <span class="drawer-arrow">▼</span>
+      </button>
+
+      <div id="applicationDrawer" class="application-drawer" aria-hidden="true">
+        <div class="no-print" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
+          <strong>💡 Impormasyon:</strong>
+          Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.
+          <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong>
+          dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
+        </div>
 
       <form id="inquiryForm" style="width:100%;margin-top:8px;">
         <div class="form-group"><label>Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
@@ -186,6 +199,7 @@ button:hover{opacity:.9}
 
         <button type="submit" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
+      </div>
     </div>
   </div>
 
@@ -965,6 +979,19 @@ window.selectInqStyle = function(style, el) {
     card.classList.toggle('selected', selected);
     card.setAttribute('aria-pressed', selected ? 'true' : 'false');
   });
+};
+
+window.toggleApplicationDrawer = function() {
+  const drawer = $('applicationDrawer');
+  const btn = $('applicationDrawerToggle');
+  if (!drawer || !btn) return;
+  const willOpen = !drawer.classList.contains('open');
+  drawer.classList.toggle('open', willOpen);
+  btn.classList.toggle('open', willOpen);
+  btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  drawer.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+  const label = btn.querySelector('span:first-child');
+  if (label) label.textContent = willOpen ? '📋 Isara ang Application' : '📋 Buksan ang Bagong Application';
 };
 
 window.toggleQrVisibility = function() {
