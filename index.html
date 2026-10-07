@@ -32,7 +32,6 @@ label{display:block;font-size:.85rem;margin-bottom:3px;font-weight:bold}
 input,select,textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:.9rem}
 button{background-color:var(--secondary-color);color:white;border:none;padding:10px;width:100%;border-radius:4px;font-size:1rem;font-weight:bold;cursor:pointer;margin-top:5px}
 button:hover{opacity:.9}
-button:disabled{opacity:.5;cursor:not-allowed}
 #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:40vh;text-align:left}
 #portalContent{display:none}
 .store-item-box{background:#f9f9f9;border:1px solid #ddd;padding:10px;border-radius:6px;margin-bottom:8px}
@@ -74,6 +73,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .view-img-btn{background:#0288d1;color:white;border:none;padding:3px 6px;font-size:.7rem;border-radius:3px;cursor:pointer;margin-top:4px;display:inline-block;width:100%}
 .tag-feat{margin-top:4px;font-size:.7rem;background:#fff9c4;color:#f57f17;padding:2px 4px;border-radius:3px;font-weight:bold;border:1px dashed #fbc02d}
 .y{background-color:#fff59d;font-weight:bold}
+/* Personal Email Feature Lock */
+.personal-email-lock-card{background:#fff8e1;border-left:5px solid #f57f17!important;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.personal-email-lock-card input{background:#fff!important}
+.personal-email-lock-card .personal-email-status{font-size:.78rem;color:#6d4c41;line-height:1.45;margin:6px 0 10px}
+.personal-email-locked .client-feature-locked{position:relative;opacity:.58;pointer-events:none;filter:grayscale(.35)}
+.personal-email-locked .client-feature-locked::after{content:"🔒 Naka-lock — ilagay muna ang Personal Email";position:absolute;left:8px;right:8px;top:8px;background:rgba(255,255,255,.94);border:1px solid #f57c00;border-radius:6px;padding:7px;text-align:center;color:#bf360c;font-size:.76rem;font-weight:800;z-index:20;pointer-events:none}
+.personal-email-unlocked .client-feature-locked{opacity:1;pointer-events:auto;filter:none}
+
 .r{background-color:#ffcdd2;font-weight:bold}
 .tgl{width:auto;padding:4px 10px;font-size:.75rem;margin-top:0}
 .row{display:flex;justify-content:space-between;align-items:center}
@@ -97,7 +104,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 <div class="container">
 
-  <div id="syncStatus">Kumokonekta sa Cloud Database...[span_2](start_span)[span_2](end_span)</div>
+  <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
   <!-- Language Selector -->
   <div class="card no-print" data-no-i18n style="text-align:center;">
@@ -112,15 +119,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <div id="loginScreen" class="card">
 
     <div id="directAccessNotice" style="display:none;margin-bottom:15px;padding:10px;background:#e8f5e9;border-radius:4px;font-size:.85rem;color:#2e7d32;">
-      🔒 Na-detect ang iyong tindahan mula sa link. Ilagay ang iyong password upang buksan ang portal.[span_3](start_span)[span_3](end_span)
+      🔒 Na-detect ang iyong tindahan mula sa link. Ilagay ang iyong password upang buksan ang portal.
     </div>
 
     <div id="manualLoginSection" style="width:100%;">
       <h2 style="color:var(--primary-color);font-size:1.1rem;margin-bottom:5px;">Pribadong Portal ng Tindahan (Login)</h2>
-      <p style="font-size:.80rem;color:#666;margin-bottom:8px;">Mag-login gamit ang pangalan ng tindahan at password.[span_4](start_span)[span_4](end_span)</p>
+      <p style="font-size:.80rem;color:#666;margin-bottom:8px;">Mag-login gamit ang pangalan ng tindahan at password.</p>
 
       <div id="noStoreNotice" style="display:none;background:#fff3e0;border-left:4px solid #f57c00;padding:8px;margin-bottom:12px;font-size:.8rem;color:#e65100;border-radius:4px;">
-        ⚠️ Walang aprubadong tindahan na may ganitong pangalan. Hintayin ang pag-apruba ng admin o tingnan kung tama ang pagkaka-type.[span_5](start_span)[span_5](end_span)
+        ⚠️ Walang aprubadong tindahan na may ganitong pangalan. Hintayin ang pag-apruba ng admin o tingnan kung tama ang pagkaka-type.
       </div>
 
       <div class="form-group" style="width:100%;">
@@ -128,7 +135,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <input type="text" id="storeSearchInput" placeholder="I-type ang unang titik o pangalan ng tindahan..." autocomplete="off" autocapitalize="words">
         <input type="hidden" id="unifiedStoreInput" value="">
         <div id="storeSuggestions" style="display:none;border:1px solid #c5e1a5;border-radius:4px;background:#fff;margin-top:4px;max-height:220px;overflow-y:auto;"></div>
-        <p style="font-size:.72rem;color:#666;margin-top:4px;">Naka-mask ang mga pangalan ng tindahan para sa iyong seguridad at privacy.[span_6](start_span)[span_6](end_span)</p>
+        <p style="font-size:.72rem;color:#666;margin-top:4px;">Naka-mask ang mga pangalan ng tindahan para sa iyong seguridad at privacy.</p>
       </div>
 
       <div class="form-group" style="width:100%;">
@@ -155,9 +162,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <div id="applicationDrawer" class="application-drawer" aria-hidden="true">
         <div class="no-print" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
           <strong>💡 Impormasyon:</strong>
-          Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.[span_7](start_span)[span_7](end_span)
-          <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong>[span_8](start_span)[span_8](end_span)
-          dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.[span_9](start_span)[span_9](end_span)
+          Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.
+          <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong>
+          dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.
         </div>
 
       <form id="inquiryForm" style="width:100%;margin-top:8px;">
@@ -252,11 +259,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </div>
 
-    <!-- Active Stock -->
-    <div class="card">
-      <h2>📦 Aktibong Stock at mga Paninda</h2>
-      <div id="clientItemsContainer"><p style="font-size:.85rem;color:#666;">Kinukuha ang data...</p></div>
-    </div>
+    <!-- Active Stock + Quick Restock -->
+<div class="card" id="activeStockCard">
+  <div class="row" style="align-items:center;margin-bottom:8px;">
+    <h2 style="margin-bottom:0;">📦 Aktibong Stock at mga Paninda</h2>
+    <button type="button" id="toggleRestockBtn" onclick="toggleRestockVisibility()" style="background-color:#f57f17;width:auto;padding:7px 12px;font-size:.78rem;margin-top:0;white-space:nowrap;">🔄 Restock</button>
+  </div>
+  <div id="clientItemsContainer"><p style="font-size:.85rem;color:#666;">Kinukuha ang data...</p></div>
+  <div id="restockContentWrapper" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #ffe082;">
+    <div class="row" style="margin-bottom:8px;"><strong style="color:#e65100;font-size:.9rem;">🔄 Restock Request</strong><span style="font-size:.72rem;color:#777;">Fixed: 5 pcs</span></div>
+    <div class="form-group"><label for="restockStyleType">Piliin ang Uri ng Istilo:</label><select id="restockStyleType"><option value="Ordinary">Ordinary Style</option><option value="Premium">Premium Style</option></select></div>
+    <div class="form-group"><label>Dami ng Restock (Fixed: 5 pcs):</label><input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;"></div>
+    <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.</p>
+    <button type="button" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
+  </div>
+</div>
 
     <!-- Pending Sales -->
     <div class="card" id="pendingSalesCard" style="display:none;background:#fff3e0;border-left:4px solid #f57c00;">
@@ -302,7 +319,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
         </div>
 
         <p style="margin-bottom:8px;background-color:#e8f5e9;padding:8px;border-left:4px solid #2e7d32;border-radius:4px;">
-          <strong>SA Mga KINAUUKULAN:</strong>
+          <strong>SA MGA KINAUUKULAN:</strong>
           Ang kasunduang ito ay pinagbisa sa pagitan ng Owner
           (<strong style="color:#c62828;">JIEMAR GARAIS DOCTOR</strong>)
           at ng Store Partner / Consignee
@@ -385,42 +402,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </div>
 
-    <!-- Email ng Tindahan (kailangan para magamit ang Restock) -->
-    <div class="card" id="emailCard" style="background:#e3f2fd;border-left:4px solid #0288d1;">
-      <h2 style="color:#0288d1;font-size:.95rem;">📧 Email ng Tindahan</h2>
-      <p id="emailStatusText" style="font-size:.8rem;margin-bottom:8px;"></p>
-      <div class="form-group">
-        <input type="email" id="clientEmailInput" placeholder="Hal. alingnena@gmail.com" autocomplete="email">
-      </div>
-      <button type="button" onclick="saveClientEmail()" style="background-color:#0288d1;">I-save ang Email</button>
-    </div>
-
     <!-- Action Buttons -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
-
-      <!-- Restock -->
-      <div class="card" style="background:#fff8e1;border-left:4px solid #f57f17;margin-bottom:0;">
-        <div class="row">
-          <h2 style="margin-bottom:0;font-size:.9rem;">🔄 Restock</h2>
-          <button type="button" id="toggleRestockBtn" onclick="toggleRestockVisibility()" style="background-color:#f57f17;width:auto;padding:4px 10px;font-size:.7rem;margin-top:0;">Buksan</button>
-        </div>
-        <div id="restockContentWrapper" style="display:none;margin-top:10px;">
-          <div class="form-group">
-            <label for="restockStyleType">Piliin ang Uri ng Istilo:</label>
-            <select id="restockStyleType">
-              <option value="Ordinary">Ordinary Style</option>
-              <option value="Premium">Premium Style</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Dami ng Restock (Fixed: 5 pcs):</label>
-            <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
-          </div>
-          <p id="restockEmailLock" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".</p>
-          <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.</p>
-          <button type="button" id="restockSubmitBtn" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
-        </div>
-      </div>
 
       <!-- Chat -->
       <div class="card" style="margin-bottom:0;">
@@ -449,23 +432,55 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </div>
 
-    <!-- Password -->
-    <div class="card" style="background:#f1f8e9;border-left:4px solid #2e7d32;">
-      <div class="row">
-        <h2 style="color:#2e7d32;font-size:.95rem;margin-bottom:0;">🔒 Palitan ang Password</h2>
-        <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" class="tgl" style="background-color:#2e7d32;">Buksan</button>
+    <!-- Store Email + Password -->
+    <div id="personalEmailInfoCard" class="card" style="display:none;background:#e3f2fd;border-left:4px solid #1976d2;">
+      <div class="row"><h2 style="color:#1976d2;font-size:.95rem;margin-bottom:0;">📧 Store Email &amp; 🔒 Password</h2><span style="background:#2e7d32;color:#fff;padding:3px 7px;border-radius:10px;font-size:.68rem;font-weight:bold;">ACTIVE</span></div>
+      <p style="font-size:.80rem;color:#333;margin:7px 0 6px;">Ang Personal Email ang gagamitin para sa future promo, abiso at communication. <strong>Hindi nito pinapalitan ang Firebase login email.</strong></p>
+      <div class="form-group" style="margin-bottom:7px;"><label for="accountPersonalEmail">📧 Personal Email:</label><input type="email" id="accountPersonalEmail" placeholder="Hal. iyongpangalan@gmail.com" autocomplete="email"></div>
+      <button type="button" onclick="updatePersonalEmail()" style="background-color:#1976d2;font-size:.84rem;">📧 I-save ang Email</button>
+      <div style="border-top:1px solid #bbdefb;margin:12px 0 8px;padding-top:10px;">
+        <div class="row"><strong style="color:#2e7d32;font-size:.9rem;">🔒 Palitan ang Password</strong><button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" class="tgl" style="background-color:#2e7d32;width:auto;padding:4px 10px;font-size:.7rem;margin-top:0;">Buksan</button></div>
+        <div id="passwordContentWrapper" style="display:none;margin-top:10px;"><p style="font-size:.78rem;color:#333;margin-bottom:8px;">Maaari mong baguhin ang iyong personal password anumang oras.</p>
+          <div class="form-group"><label>Kasalukuyang Password:</label><input type="password" id="currentClientPassword" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password"></div>
+          <div class="form-group"><label>Bagong Password:</label><input type="password" id="newClientPassword" placeholder="Ilagay ang bagong password" autocomplete="new-password"></div>
+          <button type="button" onclick="updateClientPassword()" style="background-color:#2e7d32;">🔐 I-save ang Bagong Password</button>
+        </div>
       </div>
-      <div id="passwordContentWrapper" style="display:none;margin-top:10px;">
-        <p style="font-size:.80rem;color:#333;margin-bottom:8px;">Maaari mong baguhin ang iyong password anumang oras.</p>
-        <div class="form-group">
-          <label>Kasalukuyang Password:</label>
-          <input type="password" id="currentClientPassword" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password">
-        </div>
-        <div class="form-group">
-          <label>Bagong Password:</label>
-          <input type="password" id="newClientPassword" placeholder="Ilagay ang bagong password" autocomplete="new-password">
-        </div>
-        <button type="button" onclick="updateClientPassword()" style="background-color:#2e7d32;">I-save ang Bagong Password</button>
+    </div>
+
+    <!-- First-Time Personal Account Setup -->
+    <div id="personalEmailGateCard" class="card personal-email-lock-card" style="display:none;">
+      <div class="row">
+        <h2 style="color:#e65100;font-size:.98rem;margin-bottom:0;">🔐 Kumpletuhin ang Iyong Personal Account</h2>
+        <span id="personalEmailGateBadge" style="background:#f57c00;color:#fff;padding:3px 7px;border-radius:10px;font-size:.68rem;font-weight:bold;">REQUIRED</span>
+      </div>
+      <p class="personal-email-status">
+        Naka-login ka na sa iyong Client Dashboard. Bago ma-unlock ang mga account features, ilagay ang iyong <strong>Personal Email</strong> at gumawa ng iyong sariling <strong>Personal Password</strong>. Ang password na ito ang papalit sa temporary/default password na ibinigay ng Admin.
+      </p>
+
+      <div class="form-group" style="margin-bottom:8px;">
+        <label for="personalEmailInput">📧 Personal Email Address:</label>
+        <input type="email" id="personalEmailInput" placeholder="Hal. iyongpangalan@gmail.com" autocomplete="email">
+      </div>
+
+      <div class="form-group" style="margin-bottom:8px;">
+        <label for="personalPasswordInput">🔐 Personal Password:</label>
+        <input type="password" id="personalPasswordInput" placeholder="Gumawa ng sariling password (minimum 6 characters)" minlength="6" autocomplete="new-password">
+      </div>
+
+      <div class="form-group" style="margin-bottom:8px;">
+        <label for="personalPasswordConfirm">🔐 Ulitin ang Personal Password:</label>
+        <input type="password" id="personalPasswordConfirm" placeholder="Ilagay muli ang iyong password" minlength="6" autocomplete="new-password">
+      </div>
+
+      <label style="display:flex;align-items:center;gap:7px;font-size:.78rem;color:#555;margin:5px 0 10px;cursor:pointer;">
+        <input type="checkbox" id="showPersonalSetupPassword" style="width:auto;margin:0;">
+        Ipakita ang password
+      </label>
+
+      <button type="button" id="savePersonalEmailBtn" onclick="savePersonalEmail()" style="background-color:#f57c00;">🔐 I-SAVE AT I-ACTIVATE ANG ACCOUNT</button>
+      <div id="personalEmailSavedNotice" style="display:none;margin-top:8px;padding:7px;border-radius:5px;background:#e8f5e9;color:#2e7d32;font-size:.78rem;font-weight:bold;">
+        ✅ Na-save ang Personal Email at napalitan na ang password. Na-unlock na ang iyong Client Portal features.
       </div>
     </div>
 
@@ -641,24 +656,17 @@ var D={
 'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off at the end of every month. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 15 days. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
 'Cut-off kada 7 araw (lingguhan). Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 7 days (weekly). The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
-'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)':'Payment once the delivered stock is sold out, or after 30 days, whichever comes first. (Sold × Supplier Price)',
-'📧 Email ng Tindahan':'📧 Store Email',
-'I-save ang Email':'Save Email',
-'⚠️ Kailangan ang email para magamit ang Restock.':'⚠️ An email is required to use Restock.',
-'🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".':'🔒 Restock is locked. Please enter your email in the "Store Email" section first.',
-'✅ Matagumpay na na-save ang iyong email!':'✅ Your email was saved successfully!',
-'Ilagay muna ang iyong email sa seksyong "Email ng Tindahan" bago mag-request ng restock.':'Please enter your email in the "Store Email" section before requesting a restock.'
+'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)':'Payment once the delivered stock is sold out, or after 30 days, whichever comes first. (Sold × Supplier Price)'
 };
 var R=[
 [/^Hal\. /,'e.g. '],
 [/^Dahilan: (.*)$/,'Reason: $1'],
 [/^Kabuuang nakabinbin: ₱(.+)$/,'Total pending: ₱$1'],
 [/^🏷️ May discount \(−₱(.+)\/pc\) — naka-lock ang presyo kahit matapos ang discount$/,'🏷️ Discount applied (−₱$1/pc) — price stays locked even after the discount ends'],
-[/^🏷️ Diskwento −₱(.+) \((.+)%\) hanggang (.+)$/,'🏷️️ Discount −₱$1 ($2%) until $3'],
+[/^🏷️ Diskwento −₱(.+) \((.+)%\) hanggang (.+)$/,'🏷️ Discount −₱$1 ($2%) until $3'],
 [/^Diskwento −₱(.+) \((.+)%\) hanggang (.+)$/,'Discount −₱$1 ($2%) until $3'],
 [/^Natanggap mo ba ang (\d+) pcs ng (.+) sa presyong ₱(.*) bawat piraso\?$/,'Did you receive $1 pcs of $2 at ₱$3 per piece?'],
 [/^Presyo: ₱(.*)$/,'Price: ₱$1'],
-[/^✅ Naka-save: (.+) \(maaari mo itong palitan anumang oras\)$/,'✅ Saved: $1 (you can change it anytime)'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
 ];
 var lang=localStorage.getItem('dwbe_lang')||'tl',orig=new WeakMap();
@@ -689,6 +697,7 @@ function apply(){
   });
 }
 
+// Custom in-app dialogs (pamalit sa browser alert/confirm/prompt na may "xxx.vercel.app says")
 function dlg(msg,o){
   return new Promise(function(res){
     var t=lang==='en'?tr(String(msg)):String(msg);
@@ -744,6 +753,7 @@ apply();
 })();
 </script>
 
+<!-- App Update (client-controlled) -->
 <script>
 (function(){
   if(!('serviceWorker' in navigator))return;
@@ -766,6 +776,7 @@ apply();
 })();
 </script>
 
+<!-- Firebase SDKs -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -793,6 +804,7 @@ const syncStatus = document.getElementById('syncStatus');
 const $ = id => document.getElementById(id);
 const now = () => new Date().toLocaleString();
 
+// Terms ng bayad (dapat pareho sa admin.html)
 const PAY_TERMS = {
   monthly:     { label: 'Buwanan (End of Month)', text: 'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
   semimonthly: { label: 'Kada 15 Araw',           text: 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
@@ -800,12 +812,21 @@ const PAY_TERMS = {
   sellout:     { label: 'Pagkaubos ng Stock',     text: 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)' }
 };
 
+// Ang tindahan ay nakikilala sa pamamagitan ng email ng naka-login na Firebase Auth account
 const getStore = () => {
+  const uid = authUser && authUser.uid ? authUser.uid : '';
+  if (uid) {
+    const byUid = appData.consignments.find(c => c.firebaseUid && c.firebaseUid === uid);
+    if (byUid) return byUid;
+  }
   const em = authUser && authUser.email ? authUser.email.toLowerCase() : '';
   return em ? appData.consignments.find(c => (c.email || '').trim().toLowerCase() === em) : undefined;
 };
 
+// ===== Mga larawan ng bawat uri ng walis (3 bawat isa) =====
+// I-upload ang mga file na ito sa DWBE-AGREEMENTS repo. Kung wala pa ang ibang larawan, ang meron lang ang ipapakita.
 const IMG_BASE = 'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/';
+// Mga pangalan ng file (walang extension). Tinatanggap ang .jpg, .jpeg, .png, .JPG at .webp
 const STYLE_IMAGES = {
   Ordinary: ['Ordinary', 'Ordinary-2', 'Ordinary-3'],
   Premium:  ['Premium',  'Premium-2',  'Premium-3']
@@ -832,8 +853,10 @@ async function findImage(base) {
   }
   return null;
 }
+// Presyo ng Supplier na ipinapakita sa unang larawan (display lang; hindi nito binabago ang presyo ng mga kasalukuyang client)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
-
+// ===== DISCOUNT NA MAY PERIOD =====
+// store.discounts = [{ styleType: 'Ordinary'|'Premium'|'All', type: 'amount'|'percent', value, startDate, endDate }]
 function ymd(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
@@ -841,7 +864,7 @@ function localToday() { return ymd(new Date()); }
 function fmtDate(s) {
   return s ? new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
-
+// Presyo ng isang uri ng walis matapos ang discount (kung may aktibo ngayon)
 function priceWithDiscount(store, sub) {
   const base = Number(sub.price) || 0;
   const t = localToday();
@@ -856,7 +879,7 @@ function priceWithDiscount(store, sub) {
   const off = best ? Math.round(best.off * 100) / 100 : 0;
   return { base, off, price: Math.round((base - off) * 100) / 100, pct: base ? +(off / base * 100).toFixed(1) : 0, until: best ? best.until : null };
 }
-
+// Sa catalog ng naka-login na client: ipakita ang presyo niya at ang discount (kung aktibo)
 function updateCatalogPrices(store) {
   (store.storeItems || []).forEach(sub => {
     const badge = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"] .gal-price');
@@ -901,7 +924,7 @@ window.galStep = function(d, e) {
   showGallery();
 };
 window.closeImageViewer = function() { $('imageModal').style.display = 'none'; };
-
+// Pag-swipe sa larawan; ang pag-tap sa larawan mismo ay hindi nagsasara
 (function() {
   const img = $('modalImage');
   let x0 = null;
@@ -915,6 +938,7 @@ window.closeImageViewer = function() { $('imageModal').style.display = 'none'; }
   });
 })();
 
+// Ipakita ang main na larawan at 3 maliit na larawan sa bawat card
 function initGalleries() {
   document.querySelectorAll('.style-gallery').forEach(async el => {
     const style = el.dataset.style;
@@ -1022,6 +1046,29 @@ window.toggleTransactionVisibility = makeToggle('transactionContentWrapper', 'to
 window.toggleRestockVisibility = makeToggle('restockContentWrapper', 'toggleRestockBtn');
 window.toggleChatVisibility = makeToggle('chatContentWrapper', 'toggleChatBtn');
 
+// Update Personal Email (Firestore only; does NOT change Firebase Auth email)
+window.updatePersonalEmail = async function() {
+  if (!requirePersonalEmail('pagpalit ng Personal Email')) return;
+  const input = $('accountPersonalEmail');
+  const newEmail = (input && input.value || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { alert('⚠️ Mangyaring maglagay ng valid na Personal Email.'); return; }
+  const user = authData.currentUser, store = getStore();
+  if (!user || !store) return;
+  if (newEmail === (user.email || '').trim().toLowerCase()) { alert('⚠️ Gamitin ang iyong Personal Email, hindi ang temporary Firebase login email.'); return; }
+  const oldEmail = store.personalEmail || '';
+  store.personalEmail = newEmail; store.personalEmailCompleted = true;
+  try {
+    await setDoc(doc(db, 'app_data', 'main_inventory'), appData);
+    alert(oldEmail === newEmail ? '✅ Nananatili ang iyong Personal Email.' : '✅ Matagumpay na na-update ang iyong Personal Email.');
+    renderClientDashboard(store);
+  } catch (err) {
+    store.personalEmail = oldEmail;
+    console.error(err);
+    alert('⚠️ Hindi na-save ang Personal Email: ' + (err.message || 'Unknown error'));
+  }
+};
+
+// Update Client Password (Firebase Auth)
 window.updateClientPassword = async function() {
   const cur = $('currentClientPassword').value;
   const newPass = $('newClientPassword').value.trim();
@@ -1056,153 +1103,9 @@ window.updateClientPassword = async function() {
   renderClientDashboard(store);
 };
 
-const AUTH_BAD = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'];
-
-async function tryLegacyMigration(email, pass) {
-  const legacy = appData.consignments.find(c =>
-    (c.email || '').trim().toLowerCase() === email && (c.password || c.contact) && (c.password || c.contact) === pass);
-  if (!legacy) return false;
-  let newPass = pass;
-  if (pass.length < 6) {
-    const p = await prompt("Para sa mas ligtas na account, gumawa ng bagong password (hindi bababa sa 6 na karakter):");
-    if (!p || p.trim().length < 6) { alert("Kailangan ng hindi bababa sa 6 na karakter."); return true; }
-    newPass = p.trim();
-  }
-  try {
-    await createUserWithEmailAndPassword(authData, email, newPass);
-  } catch (err) {
-    alert("⚠️ Mali ang pangalan ng tindahan o password.");
-    return true;
-  }
-  const s2 = appData.consignments.find(c => (c.email || '').trim().toLowerCase() === email);
-  if (s2) { delete s2.password; await saveData(); }
-  return true;
-}
-
-let loginStores = [];
-let loginLabels = [];
-let paramApplied = false;
-function maskName(n) {
-  return n.trim().split(/\s+/).map(w => w.charAt(0) + '*'.repeat(Math.max(1, w.length - 1))).join(' ');
-}
-function hideSuggestions() {
-  const box = $('storeSuggestions');
-  box.innerHTML = '';
-  box.style.display = 'none';
-}
-function selectLoginStore(i) {
-  $('unifiedStoreInput').value = String(i);
-  $('storeSearchInput').value = loginLabels[i];
-  hideSuggestions();
-}
-function renderSuggestions() {
-  const box = $('storeSuggestions');
-  const q = $('storeSearchInput').value.trim().toLowerCase();
-  box.innerHTML = '';
-  if (!q) { box.style.display = 'none'; return; }
-  const hits = [];
-  loginStores.forEach((c, i) => { if (c.storeName.toLowerCase().includes(q)) hits.push(i); });
-  hits.slice(0, 6).forEach(i => {
-    const row = document.createElement('div');
-    row.textContent = loginLabels[i];
-    row.style.cssText = 'padding:10px;border-bottom:1px solid #eee;cursor:pointer;font-size:.95rem;letter-spacing:1px;';
-    row.onclick = () => selectLoginStore(i);
-    box.appendChild(row);
-  });
-  if (!hits.length) {
-    const none = document.createElement('div');
-    none.textContent = 'Walang nakitang tindahan.';
-    none.style.cssText = 'padding:10px;font-size:.85rem;color:#666;';
-    box.appendChild(none);
-  }
-  box.style.display = 'block';
-}
-function populateStoreList() {
-  const hid = $('unifiedStoreInput');
-  if (!hid) return;
-  let prev = '';
-  if (hid.value !== '' && loginStores[parseInt(hid.value)]) prev = loginStores[parseInt(hid.value)].storeName;
-  else if (!paramApplied) prev = new URLSearchParams(window.location.search).get('store') || '';
-  paramApplied = true;
-
-  loginStores = (appData.consignments || [])
-    .filter(c => c.storeName && (c.email || '').trim())
-    .slice()
-    .sort((a, b) => a.storeName.localeCompare(b.storeName));
-
-  const seen = {};
-  loginLabels = loginStores.map(c => {
-    let l = maskName(c.storeName);
-    seen[l] = (seen[l] || 0) + 1;
-    return seen[l] > 1 ? l + ' (' + seen[l] + ')' : l;
-  });
-
-  const idx = prev ? loginStores.findIndex(c => c.storeName.trim().toLowerCase() === prev.trim().toLowerCase()) : -1;
-  if (idx >= 0) {
-    selectLoginStore(idx);
-  } else {
-    hid.value = '';
-    renderSuggestions();
-  }
-}
-$('storeSearchInput').addEventListener('input', () => {
-  $('unifiedStoreInput').value = '';
-  renderSuggestions();
-});
-
-$('unifiedLoginBtn').addEventListener('click', async () => {
-  const idxVal = $('unifiedStoreInput').value;
-  const pass = $('unifiedPasswordInput').value;
-  $('noStoreNotice').style.display = 'none';
-
-  if (idxVal === '' || !pass) { alert('Mangyaring hanapin at piliin ang tindahan, at ilagay ang password.'); return; }
-  if (!dataLoaded) { alert('Kumukuha pa ng data. Subukan muli sa ilang segundo.'); return; }
-
-  const found = loginStores[parseInt(idxVal)];
-  const email = found ? (found.email || '').trim().toLowerCase() : '';
-  if (!found || !email) { $('noStoreNotice').style.display = 'block'; return; }
-
-  try {
-    await signInWithEmailAndPassword(authData, email, pass);
-    $('unifiedPasswordInput').value = '';
-  } catch (err) {
-    if (AUTH_BAD.includes(err.code)) {
-      if (await tryLegacyMigration(email, pass)) return;
-      alert('⚠️ Mali ang pangalan ng tindahan o password.');
-    } else if (err.code === 'auth/too-many-requests') {
-      alert('⚠️ Maraming maling pagsubok. Subukan muli mamaya.');
-    } else if (err.code === 'auth/network-request-failed') {
-      alert('⚠️ Walang koneksyon sa internet.');
-    } else if (err.code === 'auth/invalid-email') {
-      alert('⚠️ Hindi wasto ang email.');
-    } else {
-      alert('⚠️ Hindi makapag-login: ' + err.message);
-    }
-  }
-});
-$('unifiedPasswordInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') $('unifiedLoginBtn').click(); });
-
-window.requestLogout = async function() {
-  const storeInput = await prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
-  if (storeInput === null) return;
-  const store = getStore();
-  if (store && storeInput.toLowerCase().trim() === store.ownerName.toLowerCase().trim()) {
-    try { await signOut(authData); } catch(e) {}
-    currentStoreName = '';
-    window.location.href = window.location.pathname.split('?')[0];
-  } else {
-    alert("Mali ang pangalan ng may-ari.");
-  }
-};
-
-window.clearAllNotifications = async function() {
-  const store = getStore();
-  if (!store) return;
-  store.clientNotifications = [];
-  await saveData();
-};
-
+// Stop Agreement
 window.promptStopAgreement = async function() {
+  if (!requirePersonalEmail('pagtigil ng Consignment Agreement')) return;
   if (!(await confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?"))) return;
   const store = getStore();
   if (!store) return;
@@ -1221,6 +1124,7 @@ window.promptStopAgreement = async function() {
   renderClientDashboard(store);
 };
 
+// Dismiss Notification
 window.dismissNotification = async function(index) {
   const store = getStore();
   if (!store || !store.clientNotifications) return;
@@ -1228,12 +1132,15 @@ window.dismissNotification = async function(index) {
   await saveData();
 };
 
+// Confirm Restock
 window.confirmReceiveRestock = async function(index) {
+  if (!requirePersonalEmail('pagtanggap ng Restock')) return;
   const store = getStore();
   if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
 
   const itemToReceive = store.approvedRestocks[index];
 
+  // Beripikasyon ng presyo bago tanggapin
   if (itemToReceive.price && !(await confirm(`Natanggap mo ba ang ${itemToReceive.qty} pcs ng ${itemToReceive.styleType} sa presyong ₱${itemToReceive.price} bawat piraso?`))) return;
 
   if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
@@ -1272,7 +1179,9 @@ window.confirmReceiveRestock = async function(index) {
   renderClientDashboard(store);
 };
 
+// Record Sale
 window.promptRecordSale = async function(styleType) {
+  if (!requirePersonalEmail('pag-report ng Benta')) return;
   const store = getStore();
   if (!store) return;
 
@@ -1293,6 +1202,7 @@ window.promptRecordSale = async function(styleType) {
 
   sub.currentStock -= qtySold;
   const eff = priceWithDiscount(store, sub);
+  // Itala ang halaga ng benta sa presyong may discount (hindi nababago kahit matapos ang discount)
   sub.soldValue = Math.round(((Number(sub.soldValue) || 0) + qtySold * eff.price) * 100) / 100;
   sub.soldValueQty = (Number(sub.soldValueQty) || 0) + qtySold;
 
@@ -1319,6 +1229,7 @@ window.promptRecordSale = async function(styleType) {
   renderClientDashboard(store);
 };
 
+// Load Data (live sync: nag-a-update kapag may nag-save na iba)
 let unsubData = null;
 let listenFailed = false;
 function listenData() {
@@ -1344,6 +1255,7 @@ function listenData() {
   });
 }
 
+// Save Data
 async function saveData() {
   syncStatus.textContent = "Nagse-save sa Cloud...";
   try {
@@ -1355,6 +1267,10 @@ async function saveData() {
   }
 }
 
+// ===== Lightweight client presence =====
+// Hindi tayo nagha-heartbeat kada segundo. Isang Cloud write lang kapag bagong login
+// o lumagpas na ng 5 minuto ang huling presence update. Ang Admin ay ituturing na
+// Online ang client kung may presence sa loob ng huling 10 minuto.
 let lastPresenceWrite = 0;
 async function markClientPresence(force = false) {
   const user = authData.currentUser;
@@ -1369,6 +1285,7 @@ async function markClientPresence(force = false) {
   try { await saveData(); } catch (_) {}
 }
 
+// Initialize Portal
 function initPortalView() {
   const paramStore = new URLSearchParams(window.location.search).get('store');
   const showPortal = (on) => {
@@ -1388,6 +1305,7 @@ function initPortalView() {
       renderClientDashboard(found);
       return;
     }
+    // may account pero wala pang aprubadong tindahan
     $('noStoreNotice').style.display = 'block';
     signOut(authData).catch(() => {});
   }
@@ -1399,6 +1317,7 @@ function initPortalView() {
   }
 }
 
+// Inquiry Form Submission (gumagawa ng Firebase account; hindi na sine-save ang password sa database)
 const inquiryForm = $('inquiryForm');
 if (inquiryForm) {
   inquiryForm.addEventListener('submit', async (e) => {
@@ -1458,16 +1377,19 @@ if (inquiryForm) {
   });
 }
 
+// Ang status ay hinahango sa tunay na estado ng request, kaya hindi ito nagkakaiba sa aktuwal
 function restockStatusOf(store, r) {
   if ((store.activeRequests || []).some(a => a.id === r.id)) return 'Pending';
   if ((store.approvedRestocks || []).some(a => a.reqId === r.id)) return 'Approved';
   if (r.status === 'Rejected') return 'Rejected';
   if (r.status === 'Received') return 'Received';
+  // wala na sa pila ng request at hindi tinanggihan: natapos na
   return (store.approvedRestocks || []).length || (store.activeRequests || []).length ? r.status : 'Received';
 }
 
+// Restock request status
 function renderRestockStatus(store) {
-  const card = $('restockStatusCard'), box = $('restockStatusContainer'), note =$('restockNotice');
+  const card = $('restockStatusCard'), box = $('restockStatusContainer'), note = $('restockNotice');
   const log = (store.restockLog || []).slice(0, 5);
   box.innerHTML = '';
   card.style.display = log.length ? 'block' : 'none';
@@ -1487,35 +1409,170 @@ function renderRestockStatus(store) {
   note.style.display = restockBlocked(store, $('restockStyleType').value) ? 'block' : 'none';
 }
 
-const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-const hasEmail = s => validEmail((s.contactEmail || '').trim());
+// Render Dashboard
+function renderClientDashboard(store) {
 
-function renderEmailLock(store) {
-  const ok = hasEmail(store);
-  $('emailStatusText').textContent = ok
-    ? '✅ Naka-save: ' + store.contactEmail + ' (maaari mo itong palitan anumang oras)'
-    : '⚠️ Kailangan ang email para magamit ang Restock.';
-  $('emailStatusText').style.color = ok ? '#2e7d32' : '#c62828';
-  if (document.activeElement !== $('clientEmailInput')) $('clientEmailInput').value = store.contactEmail \vert{}\vert{} '';$('restockEmailLock').style.display = ok ? 'none' : 'block';
-  const b = $('restockSubmitBtn');
-  b.disabled = !ok;
-  b.style.opacity = ok ? '' : '.5';
+  updatePersonalEmailLockUI(store);
+
+function updatePersonalEmailLockUI(store) {
+  const portal = $('portalContent');
+  const gate = $('personalEmailGateCard');
+  const info = $('personalEmailInfoCard');
+  const input = $('personalEmailInput');
+  const current = $('currentPersonalEmail');
+  const valid = hasPersonalAccountSetup(store);
+
+  if (portal) {
+    portal.classList.toggle('personal-email-locked', !valid);
+    portal.classList.toggle('personal-email-unlocked', valid);
+  }
+
+  // Mark only actionable/dashboard feature sections. Read-only profile, catalog, notifications and logout stay available.
+  const lockSelectors = [
+    '#clientItemsContainer',
+    '#pendingSalesCard',
+    '#pendingDeliveryCard',
+    '#restockStatusCard',
+    '#restockContentWrapper',
+    '#chatContentWrapper',
+    '#passwordContentWrapper',
+    '#agreementContentWrapper',
+    '#transactionContentWrapper'
+  ];
+  lockSelectors.forEach(sel => {
+    const el = document.querySelector(sel);
+    const card = el && el.closest('.card');
+    if (card) card.classList.add('client-feature-locked');
+  });
+  const danger = document.querySelector('#portalContent .card[style*="background:#ffebee"]');
+  if (danger) danger.classList.add('client-feature-locked');
+
+  if (gate) gate.style.display = valid ? 'none' : 'block';
+  if (info) info.style.display = valid ? 'block' : 'none';
+  if (current) current.textContent = valid ? String(store.personalEmail).trim() : 'Hindi pa nailalagay';
+  if (input && valid) input.value = String(store.personalEmail).trim();
 }
 
-window.saveClientEmail = async function() {
-  const store = getStore();
-  if (!store) return;
-  const em = $('clientEmailInput').value.trim().toLowerCase();
-  if (!validEmail(em)) { alert('⚠️ Hindi wasto ang email.'); return; }
-  store.contactEmail = em;
-  if (!store.transactionHistory) store.transactionHistory = [];
-  store.transactionHistory.unshift({ type: 'Email', text: 'Na-save ang email ng tindahan: ' + em, date: now() });
-  await saveData();
-  alert('✅ Matagumpay na na-save ang iyong email!');
-  renderClientDashboard(store);
+window.showPersonalEmailPrompt = function() {
+  const gate = $('personalEmailGateCard');
+  if (gate) {
+    gate.style.display = 'block';
+    gate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  setTimeout(() => { if ($('personalEmailInput')) $('personalEmailInput').focus(); }, 350);
 };
 
-function renderClientDashboard(store) {
+function hasPersonalEmail(store) {
+  return !!(store && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(store.personalEmail || '').trim()));
+}
+
+function hasPersonalAccountSetup(store) {
+  return !!(hasPersonalEmail(store) && store.personalEmailCompleted === true);
+}
+
+function requirePersonalEmail(actionLabel) {
+  const store = getStore();
+  if (hasPersonalAccountSetup(store)) return true;
+  alert(`🔒 Kailangan munang kumpletuhin ang Personal Account Setup bago gamitin ang ${actionLabel || 'feature na ito'}.`);
+  window.showPersonalEmailPrompt();
+  return false;
+}
+
+// Ipakita/itago ang first-time password fields.
+(function setupPersonalPasswordVisibility() {
+  document.addEventListener('DOMContentLoaded', () => {
+    const cb = $('showPersonalSetupPassword');
+    if (!cb) return;
+    cb.addEventListener('change', () => {
+      const type = cb.checked ? 'text' : 'password';
+      if ($('personalPasswordInput')) $('personalPasswordInput').type = type;
+      if ($('personalPasswordConfirm')) $('personalPasswordConfirm').type = type;
+    });
+  });
+})();
+
+window.savePersonalEmail = async function() {
+  const user = authData.currentUser;
+  const store = getStore();
+  const emailInput = $('personalEmailInput');
+  const passwordInput = $('personalPasswordInput');
+  const confirmInput = $('personalPasswordConfirm');
+  const btn = $('savePersonalEmailBtn');
+  const newEmail = emailInput ? emailInput.value.trim().toLowerCase() : '';
+  const newPassword = passwordInput ? passwordInput.value : '';
+  const confirmPassword = confirmInput ? confirmInput.value : '';
+
+  if (!user || !store) { alert('⚠️ Hindi makita ang iyong active client account.'); return; }
+  if (!newEmail) { alert('Mangyaring ilagay ang iyong Personal Email.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { alert('⚠️ Hindi wasto ang Personal Email address.'); return; }
+  if (newEmail === String(user.email || '').trim().toLowerCase()) {
+    alert('⚠️ Huwag gamitin ang temporary/Firebase login email. Ilagay ang iyong tunay na Personal Email.');
+    return;
+  }
+  if (!newPassword) { alert('Mangyaring gumawa ng iyong Personal Password.'); return; }
+  if (newPassword.length < 6) { alert('⚠️ Ang Personal Password ay dapat hindi bababa sa 6 na karakter.'); return; }
+  if (newPassword !== confirmPassword) { alert('⚠️ Hindi magkapareho ang dalawang password.'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Ina-activate ang Account...'; }
+
+  const oldPersonalEmail = store.personalEmail || '';
+  const oldCompleted = store.personalEmailCompleted === true;
+  const oldMustChange = store.mustChangePassword;
+
+  try {
+    // Bagong password lang ang ipinapasa sa Firebase Auth.
+    // HINDI ini-store ang password sa Firestore.
+    await updatePassword(user, newPassword);
+
+    store.personalEmail = newEmail;
+    store.personalEmailCompleted = true;
+    store.mustChangePassword = false;
+
+    if (!store.transactionHistory) store.transactionHistory = [];
+    store.transactionHistory.unshift({
+      type: 'Security',
+      text: oldPersonalEmail !== newEmail
+        ? 'Nakumpleto ng client ang Personal Account Setup at naglagay ng Personal Email.'
+        : 'Nakumpleto ng client ang Personal Account Setup.',
+      date: now()
+    });
+
+    syncStatus.textContent = 'Nagse-save sa Cloud...';
+    await setDoc(doc(db, 'app_data', 'main_inventory'), appData);
+    syncStatus.textContent = '✅ Na-save sa Cloud';
+
+    if ($('personalEmailSavedNotice')) $('personalEmailSavedNotice').style.display = 'block';
+    if (emailInput) emailInput.disabled = true;
+    if (passwordInput) { passwordInput.value = ''; passwordInput.disabled = true; }
+    if (confirmInput) { confirmInput.value = ''; confirmInput.disabled = true; }
+
+    alert('✅ Matagumpay!
+
+Na-save ang iyong Personal Email at napalitan na ang temporary/default password mo. Na-unlock na ang iyong Client Portal.');
+    updatePersonalEmailLockUI(store);
+    renderClientDashboard(store);
+  } catch (err) {
+    // Kung nag-fail ang Firestore save pagkatapos mapalitan ang password,
+    // huwag markahang completed ang local record. Ang password ay hindi kailanman sine-save dito.
+    store.personalEmail = oldPersonalEmail;
+    store.personalEmailCompleted = oldCompleted;
+    store.mustChangePassword = oldMustChange;
+    console.error(err);
+
+    if (err.code === 'auth/requires-recent-login') {
+      alert('⚠️ Kailangan ng bagong sign-in bago mapalitan ang password. Mag-logout at mag-login muli gamit ang kasalukuyang temporary password, pagkatapos ay ulitin ang Personal Account Setup.');
+    } else if (err.code === 'auth/weak-password') {
+      alert('⚠️ Mahina ang Personal Password. Gumamit ng hindi bababa sa 6 na karakter.');
+    } else if (err.code === 'auth/too-many-requests') {
+      alert('⚠️ Maraming maling pagtatangka. Subukan muli mamaya.');
+    } else {
+      alert('⚠️ Hindi nakumpleto ang Account Setup: ' + (err.message || 'Unknown error'));
+    }
+    syncStatus.textContent = '⚠️ Hindi nakumpleto ang Account Setup';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔐 I-SAVE AT I-ACTIVATE ANG ACCOUNT'; }
+  }
+};
 
   $('displayStoreName').innerHTML =
     store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${store.ownerName})</span>` : '');
@@ -1540,17 +1597,17 @@ function renderClientDashboard(store) {
   $('agreementPayTermLabel').textContent = term.label;
   $('agreementPayTermText').textContent = term.text;
 
-  if (store.mustChangePassword && !window._pwNagShown) {
-    window._pwNagShown = true;
-    $('passwordContentWrapper').style.display = 'block';$('togglePasswordBtn').textContent = 'Itago';
-    alert('Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.');
+  // First-time account setup: dashboard is accessible, pero naka-lock ang actionable features.
+  if (!hasPersonalAccountSetup(store) && !window._personalSetupShown) {
+    window._personalSetupShown = true;
+    setTimeout(() => window.showPersonalEmailPrompt(), 250);
   }
 
   renderRestockStatus(store);
-  renderEmailLock(store);
   window._catalogStore = store;
   updateCatalogPrices(store);
 
+  // QR Code
   const smallQrContainer = $('smallQrcode');
   smallQrContainer.innerHTML = "";
   const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
@@ -1560,6 +1617,7 @@ function renderClientDashboard(store) {
     correctLevel: QRCode.CorrectLevel.H
   });
 
+  // Pending Delivery
   const pendingDeliveryCard = $('pendingDeliveryCard');
   const pendingDeliveryContainer = $('pendingDeliveryContainer');
   pendingDeliveryContainer.innerHTML = '';
@@ -1579,6 +1637,7 @@ function renderClientDashboard(store) {
     pendingDeliveryCard.style.display = 'none';
   }
 
+  // Pending Sales
   const pendingSalesCard = $('pendingSalesCard');
   const pendingSalesContainer = $('pendingSalesContainer');
   pendingSalesContainer.innerHTML = '';
@@ -1596,7 +1655,7 @@ function renderClientDashboard(store) {
       div.innerHTML =
         `<div>Uri: <strong>${sale.styleType}</strong> | Dami: <strong>${sale.qty} pcs</strong></div>
          ${sale.price ? `<div style="font-size:0.8rem;">Presyo: ${sale.discountOff > 0 ? `<s style="color:#999">₱${sale.listPrice}</s> ` : ''}<strong>₱${sale.price}</strong> × ${sale.qty} = <strong>₱${sale.totalAmount}</strong></div>` : ''}
-         ${sale.discountOff > 0 ? `<div style="font-size:0.75rem;color:#2e7d32;">🏷️️ May discount (−₱${sale.discountOff}/pc) — naka-lock ang presyo kahit matapos ang discount</div>` : ''}
+         ${sale.discountOff > 0 ? `<div style="font-size:0.75rem;color:#2e7d32;">🏷️ May discount (−₱${sale.discountOff}/pc) — naka-lock ang presyo kahit matapos ang discount</div>` : ''}
          <span style="color: #f57c00; font-weight: bold;">Nakabinbin sa Admin</span>`;
       pendingSalesContainer.appendChild(div);
     });
@@ -1604,6 +1663,9 @@ function renderClientDashboard(store) {
     pendingSalesCard.style.display = 'none';
   }
 
+  refreshClientEmailDisplay(store);
+
+  // Transaction History
   const transContainer = $('clientTransactionContainer');
   transContainer.innerHTML = '';
   if (!store.transactionHistory) store.transactionHistory = [];
@@ -1621,6 +1683,7 @@ function renderClientDashboard(store) {
     transContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang naitalang transaksyon.</p>';
   }
 
+  // Notifications
   const notifContainer = $('clientNotificationsContainer');
   notifContainer.innerHTML = '';
 
@@ -1633,132 +1696,143 @@ function renderClientDashboard(store) {
            <div>${n.text}</div>
            <div style="font-size:0.7rem; color:#778;">${n.date}</div>
          </div>
-         <button type="button" onclick="dismissNotification(${index})" style="background:none; border:none; color:#c62828; font-weight:bold; cursor:pointer; font-size:.9rem; width:auto; margin:0; padding:0 4px;">✕</button>`;
+         <button type="button" onclick="dismissNotification(${index})" style="background:none; border:none; color:#d32f2f; font-weight:bold; cursor:pointer; width:auto;">✕</button>`;
       notifContainer.appendChild(div);
     });
   } else {
     notifContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
   }
 
+  // Store Items
+  if (!store.storeItems || store.storeItems.length === 0) {
+    store.storeItems = [{
+      styleType: store.styleType || 'Ordinary',
+      initialQty: store.initialQty,
+      currentStock: store.currentStock,
+      returnedQty: store.returnedQty || 0,
+      rejectedQty: store.rejectedQty || 0,
+      price: store.price,
+      collectionDate: store.collectionDate
+    }];
+  }
+
   const itemsContainer = $('clientItemsContainer');
   itemsContainer.innerHTML = '';
 
-  if (store.storeItems && store.storeItems.length > 0) {
-    store.storeItems.forEach(item => {
-      const isPrem = item.styleType === 'Premium';
-      const div = document.createElement('div');
-      div.className = 'store-item-box' + (isPrem ? ' premium-stock' : '');
-      const eff = priceWithDiscount(store, item);
-      div.innerHTML =
-        `<div style="font-weight: bold; color: var(--primary-color); margin-bottom: 4px;">${item.styleType} Style</div>
-         <div style="font-size: 0.85rem; margin-bottom: 2px;">Natitirang Stock: <strong>${item.currentStock} pcs</strong> (Mula sa initial na ${item.initialQty} pcs)</div>
-         <div style="font-size: 0.85rem; margin-bottom: 2px;">Presyo mo: ${eff.off > 0 ? `<s style="color:#999">₱${eff.base}</s> ` : ''}<strong>₱${eff.price}</strong> / piraso</div>
-         ${eff.off > 0 ? `<div style="font-size:0.75rem;color:#2e7d32;margin-bottom:4px;">🏷️ Diskwento −₱${eff.off} (${eff.pct}\%) hanggang${fmtDate(eff.until)}</div>` : ''}
-         <button type="button" onclick="promptRecordSale('${item.styleType}')" style="background-color: var(--secondary-color); padding: 8px; font-size: 0.85rem; margin-top: 6px;">🛒 MAY BUMILI (I-record ang Benta)</button>`;
-      itemsContainer.appendChild(div);
-    });
-  } else {
-    itemsContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakatalagang active stock.</p>';
-  }
+  store.storeItems.forEach(sub => {
+    const subSold = Math.max(0, sub.initialQty - sub.currentStock - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
+    const dsc = priceWithDiscount(store, sub);
+    const div = document.createElement('div');
+    div.className = 'store-item-box' + (sub.styleType === 'Premium' ? ' premium-stock' : '');
+    div.innerHTML =
+      `<div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between;">
+         <span>${sub.styleType}</span>
+         <span>Presyo: ${dsc.off > 0 ? `<s style="color:#999">₱${dsc.base}</s> <strong>₱${dsc.price}</strong>` : '₱' + (sub.price || 0)}</span>
+       </div>
+       <div style="font-size: 0.85rem; color: #444; margin: 5px 0;">
+         Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Nabenta: <strong>${subSold} pcs</strong>
+       </div>
+       ${dsc.off > 0 ? `<div style="font-size:.78rem;color:#2e7d32;margin-bottom:5px;">🏷️ Diskwento −₱${dsc.off} (${dsc.pct}%) hanggang ${fmtDate(dsc.until)}</div>` : ''}
+       <button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px;">🛒 MAY BUMILI (I-record ang Benta)</button>`;
+    itemsContainer.appendChild(div);
+  });
 
+  // Chat
   const chatContainer = $('clientChatContainer');
   chatContainer.innerHTML = '';
-  if (!store.messages) store.messages = [];
 
-  if (store.messages.length > 0) {
-    store.messages.slice().reverse().forEach(msg => {
-      const isAdmin = msg.sender !== currentStoreName;
-      const d = document.createElement('div');
-      d.className = 'chat-msg' + (isAdmin ? ' admin' : '');
-      d.innerHTML =
-        `<div style="font-weight:bold; font-size:0.75rem; color:${isAdmin ? '#0288d1' : '#2e7d32'};">${msg.sender}</div>
-         <div>${msg.text}</div>
-         <div style="font-size:0.65rem; color:#778; text-align:right;">${msg.date}</div>`;
-      chatContainer.appendChild(d);
+  if (store.messages && store.messages.length > 0) {
+    store.messages.forEach(m => {
+      const isAdmin = m.sender === 'Admin' || m.sender.includes('Admin');
+      const div = document.createElement('div');
+      div.className = `chat-msg ${isAdmin ? 'admin' : ''}`;
+      div.innerHTML =
+        `<strong>${m.sender}:</strong> ${m.text}
+         <div style="font-size:0.65rem; color:#778; text-align:right;">${m.date}</div>`;
+      chatContainer.appendChild(div);
     });
-    chatContainer.scrollTop = chatContainer.scrollHeight;
   } else {
-    chatContainer.innerHTML = '<p style="font-size: 0.8rem; color: #666;">Wala pang mensahe.</p>';
+    chatContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang mensahe.</p>';
   }
 }
 
-function thisMonthStr() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-}
+// Submit Restock Request
+const monthKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 
-function restockBlocked(store, styleType) {
-  const m = thisMonthStr();
-  return (store.restockLog || []).some(r => r.styleType === styleType && (r.date || '').startsWith(m) && r.status !== 'Rejected');
+// Isang request lang bawat buwan (ang Tinanggihan ay hindi binibilang). Bawal din kung may nakabinbin pa.
+function restockBlocked(store, style) {
+  // May nakabinbin pa para sa parehong uri
+  if ((store.activeRequests || []).some(r => r.styleType === style)) return true;
+  if ((store.approvedRestocks || []).some(r => r.styleType === style)) return true;
+  // O nakapag-request na ng parehong uri ngayong buwan (ang Tinanggihan ay hindi binibilang)
+  return (store.restockLog || []).some(r => r.styleType === style && r.monthKey === monthKey() && r.status !== 'Rejected');
 }
 
 window.submitRestockRequest = async function() {
+  if (!requirePersonalEmail('Restock Request')) return;
   const store = getStore();
   if (!store) return;
-  if (!hasEmail(store)) {
-    alert('Ilagay muna ang iyong email sa seksyong "Email ng Tindahan" bago mag-request ng restock.');
-    return;
-  }
 
   const styleType = $('restockStyleType').value;
-  const qty = parseInt($('restockQtyInput').value) || 5;
-
   if (restockBlocked(store, styleType)) {
     alert("Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.");
     return;
   }
-
-  if (qty !== 5) { alert("Ang dami ng restock ay dapat eksaktong 5 piraso."); return; }
-  if (appData.homeStock && (appData.homeStock[styleType] || 0) < qty) {
-    if (!confirm("Paalala: Ang natitirang stock sa bodega para sa " + styleType + " ay kulang sa 5 pcs. Ipagpatuloy pa rin ang pagpapadala ng request sa Admin?")) return;
-  }
-
   if (!(await confirm("Mag-request ng restock na eksaktong 5 piraso?"))) return;
+  const reqId = Date.now();
 
-  const reqId = 'REQ_' + Date.now();
   if (!store.activeRequests) store.activeRequests = [];
-  store.activeRequests.push({ id: reqId, styleType, qty, date: now() });
+  store.activeRequests.push({ id: reqId, styleType: styleType, qty: 5, date: now() });
 
   if (!store.restockLog) store.restockLog = [];
-  store.restockLog.unshift({ id: reqId, styleType, qty, status: 'Pending', date: now() });
+  store.restockLog.unshift({ id: reqId, styleType: styleType, qty: 5, date: now(), monthKey: monthKey(), status: 'Pending', reason: '', updatedAt: now() });
 
   if (!store.messages) store.messages = [];
-  store.messages.unshift({ sender: currentStoreName, text: `Nag-request ng restock: ${qty} pcs (${styleType})`, date: now() });
+  store.messages.unshift({ sender: currentStoreName, text: `Humiling ng restock: 5 pcs (${styleType})`, date: now() });
 
   if (!store.transactionHistory) store.transactionHistory = [];
-  store.transactionHistory.unshift({ type: 'Restock', text: `Nag-request ng restock: ${qty} pcs (${styleType})`, date: now() });
+  store.transactionHistory.unshift({ type: 'Request', text: `Humiling ng restock: 5 pcs (${styleType})`, date: now() });
 
   await saveData();
-  alert("Matagumpay na naipadala ang iyong kahilingan sa Admin!");
+  alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
   renderClientDashboard(store);
 };
 
+// Send Client Message
 window.sendClientMessage = async function() {
+  if (!requirePersonalEmail('Support/Chat')) return;
+  const input = $('clientChatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
   const store = getStore();
   if (!store) return;
-  const txt = $('clientChatInput').value.trim();
-  if (!txt) return;
 
   if (!store.messages) store.messages = [];
-  store.messages.unshift({ sender: currentStoreName, text: txt, date: now() });
-  $('clientChatInput').value = '';
+  store.messages.unshift({ sender: currentStoreName, text: text, date: now() });
+
+  input.value = '';
   await saveData();
   renderClientDashboard(store);
 };
 
-onAuthStateChanged(authData, (user) => {
-  authUser = user;
-  if (user) {
-    markClientPresence(true);
-  }
-  initPortalView();
+// Palitan ang abiso kapag ibang uri ang pinili sa restock
+$('restockStyleType').addEventListener('change', () => { const st = getStore(); if (st) renderRestockStatus(st); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && authData.currentUser) markClientPresence(false);
 });
 
-listenData();
+// Start
+onAuthStateChanged(authData, (user) => {
+  authUser = user;
+  if (!unsubData || listenFailed) listenData();
+  initPortalView();
+  if (user) {
+    // Presence is deliberately throttled: no continuous Firebase writes.
+    setTimeout(() => markClientPresence(true), 250);
+  }
+});
 
-setInterval(() => {
-  markClientPresence(false);
-}, 3 * 60 * 1000);
 </script>
 
 </body>
