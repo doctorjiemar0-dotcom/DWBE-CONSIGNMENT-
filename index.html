@@ -1230,29 +1230,76 @@ window.promptRecordSale = async function(styleType) {
 };
 
 // Load Data (live sync: nag-a-update kapag may nag-save na iba)
+// IMPORTANT: Hinihintay muna natin ang Firebase Auth bago magbasa sa Firestore.
+// Kung mauunang mag-onSnapshot habang naka-logout, puwedeng ma-deny ng Security Rules
+// ang unang listener at hindi na ito kusang makabalik pagkatapos ng login.
 let unsubData = null;
 let listenFailed = false;
+let firebaseAuthReady = false;
+
+function stopDataListener() {
+  if (unsubData) {
+    try { unsubData(); } catch (_) {}
+    unsubData = null;
+  }
+}
+
 function listenData() {
-  if (unsubData) unsubData();
+  if (!firebaseAuthReady || !authData.currentUser) {
+    listenFailed = false;
+    dataLoaded = false;
+    syncStatus.textContent = "🔐 Hinihintay ang Firebase Login...";
+    return;
+  }
+
+  stopDataListener();
   listenFailed = false;
-  syncStatus.textContent = "Kumukuha ng data sa Cloud...";
-  unsubData = onSnapshot(doc(db, "app_data", "main_inventory"), (snap) => {
-    if (snap.metadata.hasPendingWrites) return;
-    if (snap.exists()) {
-      appData = snap.data();
-      if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-      if (!appData.consignments) appData.consignments = [];
-      if (!appData.pendingInquiries) appData.pendingInquiries = [];
+  dataLoaded = false;
+  syncStatus.textContent = "☁️ Kumokonekta sa Cloud Database...";
+
+  unsubData = onSnapshot(
+    doc(db, "app_data", "main_inventory"),
+    (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
+
+      if (snap.exists()) {
+        appData = snap.data();
+        if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+        if (!appData.consignments) appData.consignments = [];
+        if (!appData.pendingInquiries) appData.pendingInquiries = [];
+      } else {
+        // Huwag gumawa ng bagong document mula sa Client kung wala ito.
+        // Admin ang dapat lumikha ng main_inventory document.
+        console.warn("Firestore document app_data/main_inventory does not exist.");
+        appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
+      }
+
+      dataLoaded = true;
+      listenFailed = false;
+      syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+      populateStoreList();
+      initPortalView();
+    },
+    (err) => {
+      console.error("Firestore onSnapshot error:", err);
+      listenFailed = true;
+      dataLoaded = false;
+      unsubData = null;
+
+      const code = err && err.code ? err.code : "unknown";
+      if (code === "permission-denied") {
+        syncStatus.textContent = "⛔ Cloud blocked: Firestore Security Rules";
+      } else if (code === "unauthenticated") {
+        syncStatus.textContent = "🔐 Hindi pa authenticated sa Firebase";
+      } else if (code === "failed-precondition") {
+        syncStatus.textContent = "⚠️ Hindi available ang Firestore database";
+      } else if (code === "unavailable") {
+        syncStatus.textContent = "📡 Walang stable na koneksyon sa Firebase";
+      } else {
+        syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud (" + code + ")";
+      }
     }
-    dataLoaded = true;
-    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
-    populateStoreList();
-    initPortalView();
-  }, (err) => {
-    console.error(err);
-    listenFailed = true;
-    syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-  });
+  );
 }
 
 // Save Data
@@ -1825,11 +1872,23 @@ document.addEventListener('visibilitychange', () => {
 // Start
 onAuthStateChanged(authData, (user) => {
   authUser = user;
-  if (!unsubData || listenFailed) listenData();
-  initPortalView();
+  firebaseAuthReady = true;
+
+  // Huwag magbukas ng Firestore listener habang naka-logout.
+  // Ito ang nag-aayos ng race condition na nagiging "Nabigo sa Cloud"
+  // kapag nauna ang onSnapshot kaysa sa Firebase login.
+  stopDataListener();
+  dataLoaded = false;
+  listenFailed = false;
+
   if (user) {
+    listenData();
+    initPortalView();
     // Presence is deliberately throttled: no continuous Firebase writes.
     setTimeout(() => markClientPresence(true), 250);
+  } else {
+    syncStatus.textContent = "🔐 Mag-login muna para kumonekta sa Cloud Database.";
+    initPortalView();
   }
 });
 
