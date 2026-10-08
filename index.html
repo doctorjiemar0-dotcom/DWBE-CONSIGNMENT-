@@ -791,9 +791,19 @@ const db = getFirestore(dataApp);
 // Baguhin sa true kung gusto mong mag-test.
 // Baguhin sa false kung tapos na at gusto mo nang mag-live.
 // ==========================================
-const IS_TESTING = true; 
 const COLLECTION_NAME = "app_data";
+const tq = new URLSearchParams(location.search).get('test');
+if (tq === '1') localStorage.setItem('dwbe_test', '1');
+if (tq === '0') localStorage.removeItem('dwbe_test');
+const IS_TESTING = localStorage.getItem('dwbe_test') === '1';
 const DOCUMENT_NAME = IS_TESTING ? "test_inventory" : "main_inventory";
+if (IS_TESTING) {
+  const tb = document.createElement('div');
+  tb.setAttribute('data-no-i18n', '');
+  tb.textContent = '🧪 TEST MODE - hindi live data';
+  tb.style.cssText = 'background:#c62828;color:#fff;text-align:center;padding:6px;font-weight:bold;position:sticky;top:0;z-index:99999';
+  document.body.prepend(tb);
+}
 
 let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
 let currentStoreName = '';
@@ -1507,7 +1517,8 @@ function renderEmailLock(store) {
     ? '✅ Naka-save: ' + store.contactEmail + ' (maaari mo itong palitan anumang oras)'
     : '⚠️ Kailangan ang email para magamit ang Restock.';
   $('emailStatusText').style.color = ok ? '#2e7d32' : '#c62828';
-  if (document.activeElement !== $('clientEmailInput')) $('clientEmailInput').value = store.contactEmail \vert{}\vert{} '';$('restockEmailLock').style.display = ok ? 'none' : 'block';
+  if (document.activeElement !== $('clientEmailInput').value = store.contactEmail || '';
+$('restockEmailLock').style.display = ok ? 'none' : 'block';
   const b = $('restockSubmitBtn');
   b.disabled = !ok;
   b.style.opacity = ok ? '' : '.5';
