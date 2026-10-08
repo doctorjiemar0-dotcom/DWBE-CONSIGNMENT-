@@ -109,7 +109,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <span id="clientModeBadge" class="client-mode-badge live">🟢 LIVE SYSTEM</span>
   </div>
 
-  <!-- HIDDEN CLIENT SWITCHER UI (Nakatago sa mga Client, pwedeng buksan sa pamamagitan ng pag-aayos sa admin o system) -->
+  <!-- HIDDEN CLIENT SWITCHER UI (Nakatago sa mga Client) -->
   <div id="clientModeBox" class="client-mode-switcher-box">
     <label style="font-size: 0.8rem; font-weight: bold; color: #e65100; cursor: pointer;">
       <input type="checkbox" id="clientTestModeToggle" style="width:auto; display:inline-block; vertical-align:middle; margin-right:4px;">
@@ -709,7 +709,7 @@ function apply(){
   });
 }
 
-// Custom in-app dialogs (pamalit sa browser alert/confirm/prompt na may "xxx.vercel.app says")
+// Custom in-app dialogs
 function dlg(msg,o){
   return new Promise(function(res){
     var t=lang==='en'?tr(String(msg)):String(msg);
@@ -836,7 +836,7 @@ function updateClientModeUI() {
   }
 }
 
-// Nakikinig sa pagbabago ng Mode mula sa Admin Panel (Cross-tab Event)
+// Nakikinig sa pagbabago ng Mode mula sa Admin Panel
 window.addEventListener('storage', (e) => {
   if (e.key === 'dwbe_is_test_mode') {
     isTestMode = e.newValue === 'true';
@@ -859,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateClientModeUI();
 });
 
-// Terms ng bayad (dapat pareho sa admin.html)
+// Terms ng bayad
 const PAY_TERMS = {
   monthly:     { label: 'Buwanan (End of Month)', text: 'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
   semimonthly: { label: 'Kada 15 Araw',           text: 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
@@ -867,13 +867,12 @@ const PAY_TERMS = {
   sellout:     { label: 'Pagkaubos ng Stock',     text: 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)' }
 };
 
-// Ang tindahan ay nakikilala sa pamamagitan ng email ng naka-login na Firebase Auth account
 const getStore = () => {
   const em = authUser && authUser.email ? authUser.email.toLowerCase() : '';
   return em ? appData.consignments.find(c => (c.email || '').trim().toLowerCase() === em) : undefined;
 };
 
-// ===== Mga larawan ng bawat uri ng walis (3 bawat isa) =====
+// Mga larawan
 const IMG_BASE = 'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/';
 const STYLE_IMAGES = {
   Ordinary: ['Ordinary', 'Ordinary-2', 'Ordinary-3'],
@@ -1392,24 +1391,15 @@ window.promptRecordSale = async function(styleType) {
 let unsubData = null;
 let listenFailed = false;
 
+// ===== FIXED & GUARANTEED CLOUD SYNC LISTEN DATA =====
 function listenData() {
   updateClientModeUI();
-  
-  if (isTestMode) {
-    const testCache = sessionStorage.getItem('dwbe_test_app_data');
-    if (testCache) {
-      appData = JSON.parse(testCache);
-      dataLoaded = true;
-      syncStatus.textContent = "🧪 Naka-TESTING MODE (Local Sandbox Loaded)";
-      populateStoreList();
-      initPortalView();
-      return;
-    }
-  }
 
   if (unsubData) unsubData();
   listenFailed = false;
   syncStatus.textContent = "Kumukuha ng data sa Cloud...";
+
+  // LAGING nakakonekta sa Firebase Firestore Cloud
   unsubData = onSnapshot(doc(db, "app_data", "main_inventory"), (snap) => {
     if (snap.metadata.hasPendingWrites) return;
     if (snap.exists()) {
@@ -1419,7 +1409,10 @@ function listenData() {
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
     }
     dataLoaded = true;
-    syncStatus.textContent = isTestMode ? "🧪 Naka-TESTING MODE (Sandbox Active)" : "✅ Nakakonekta sa Cloud Database";
+    syncStatus.textContent = isTestMode 
+      ? "🧪 Naka-TESTING MODE (Sandbox Override Active)" 
+      : "✅ Nakakonekta sa Cloud Database";
+
     populateStoreList();
     initPortalView();
   }, (err) => {
@@ -1429,6 +1422,7 @@ function listenData() {
   });
 }
 
+// ===== FIXED DATA SAVE LOGIC =====
 async function saveData() {
   if (isTestMode) {
     sessionStorage.setItem('dwbe_test_app_data', JSON.stringify(appData));
