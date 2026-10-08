@@ -346,8 +346,19 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth();
-
+const auth = getAuth();const tq = new URLSearchParams(location.search).get('test');
+if (tq === '1') localStorage.setItem('dwbe_test', '1');
+if (tq === '0') localStorage.removeItem('dwbe_test');
+const IS_TESTING = localStorage.getItem('dwbe_test') === '1';
+const DOCUMENT_NAME = IS_TESTING ? 'test_inventory' : 'main_inventory';
+const LS_KEY = IS_TESTING ? 'consignments_v3_test' : 'consignments_v3';
+if (IS_TESTING) {
+  const tb = document.createElement('div');
+  tb.textContent = '🧪 TEST MODE - hindi live data';
+  tb.style.cssText = 'background:#c62828;color:#fff;text-align:center;padding:6px;font-weight:bold;position:sticky;top:0;z-index:99999';
+  document.body.prepend(tb);
+}
+    
 // ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
 const ADMIN_EMAILS = ['admin@admin.com'];
 const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
@@ -1817,7 +1828,7 @@ window.editDiscount = async function(index) {
     alert(`✅ Naitala ang discount.\n\n${what} sa ${styleName(styleType)}\nHanggang ${fmtDate(endDate)}\n\n${preview}\n\nBabalik sa regular na presyo pagkatapos ng petsang iyon.`);
 };
 
-window.createClientLogin = async function(index) {
+window.createClientLogin = if (IS_TESTING && !await confirm('🧪 TEST MODE: totoong Firebase account pa rin ang babaguhin nito, hindi test lang. Ituloy?')) return; async function(index) {
     const item = appData.consignments[index];
     const email = (item.email || '').trim().toLowerCase();
     if (!email) {
