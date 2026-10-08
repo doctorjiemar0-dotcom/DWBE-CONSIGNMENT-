@@ -72,6 +72,15 @@ button:hover { background-color: #1b5e20; }
 .password-display-box .password-value { font-family: monospace; background: white; padding: 6px 10px; border-radius: 3px; color: #d32f2f; font-weight: bold; display: inline-block; margin: 0 6px; }
 .password-copy-btn { background: #0288d1 !important; color: white !important; border: none !important; padding: 4px 10px !important; border-radius: 3px !important; font-size: 0.75rem !important; cursor: pointer !important; margin-top: 0 !important; width: auto !important; }
 .password-copy-btn:hover { background: #0277bd !important; }
+
+/* Mode Switcher Banner Style para sa Admin */
+.mode-switcher-box{background:#fff3e0;border:2px dashed #f57c00;border-radius:8px;padding:10px 12px;margin-bottom:15px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mode-switcher-box.active-test{background:#ffe0b2;border-color:#e65100}
+.mode-switch-label{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:bold;cursor:pointer;user-select:none}
+.mode-switch-label input{width:18px;height:18px;cursor:pointer}
+.mode-badge{font-size:.75rem;padding:4px 8px;border-radius:4px;font-weight:bold;white-space:nowrap}
+.mode-badge.live{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.mode-badge.test{background:#e65100;color:#fff}
 </style>
 </head>
 <body>
@@ -81,6 +90,15 @@ button:hover { background-color: #1b5e20; }
 </header>
 
 <div class="container">
+
+    <!-- SAFETY MODE SWITCHER FOR ADMIN (KASABAY NG CLIENT PANEL) -->
+    <div id="adminModeSwitcherBox" class="mode-switcher-box">
+      <label class="mode-switch-label">
+        <input type="checkbox" id="adminTestModeToggle">
+        <span>🛠️ Enable Testing / Sandbox Mode</span>
+      </label>
+      <span id="adminModeBadge" class="mode-badge live">🔴 LIVE DATA MODE</span>
+    </div>
 
     <div id="authScreen" class="card">
         <h2>🔒 Security Login (Firebase Auth)</h2>
@@ -272,7 +290,7 @@ button:hover { background-color: #1b5e20; }
 </div>
 
 <script>
-// Propesyonal na dialog box (kapalit ng "xxx.vercel.app says" ng browser)
+// Dialog Box logic
 (function () {
   function dlg(msg, o) {
     return new Promise(function (res) {
@@ -346,43 +364,77 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth();const tq = new URLSearchParams(location.search).get('test');
-if (tq === '1') localStorage.setItem('dwbe_test', '1');
-if (tq === '0') localStorage.removeItem('dwbe_test');
-const IS_TESTING = localStorage.getItem('dwbe_test') === '1';
-const DOCUMENT_NAME = IS_TESTING ? 'test_inventory' : 'main_inventory';
-const LS_KEY = IS_TESTING ? 'consignments_v3_test' : 'consignments_v3';
-if (IS_TESTING) {
-  const tb = document.createElement('div');
-  tb.textContent = '🧪 TEST MODE - hindi live data';
-  tb.style.cssText = 'background:#c62828;color:#fff;text-align:center;padding:6px;font-weight:bold;position:sticky;top:0;z-index:99999';
-  document.body.prepend(tb);
+const auth = getAuth();
+
+// ===== SAFETY / TESTING MODE SWITCHER LOGIC (KASABAY NG CLIENT PANEL) =====
+let isTestMode = localStorage.getItem('dwbe_is_test_mode') === 'true';
+
+function updateAdminModeUI() {
+  const toggle = document.getElementById('adminTestModeToggle');
+  const badge = document.getElementById('adminModeBadge');
+  const box = document.getElementById('adminModeSwitcherBox');
+  const syncStatus = document.getElementById('syncStatus');
+  
+  if (toggle) toggle.checked = isTestMode;
+  
+  if (isTestMode) {
+    if (badge) {
+      badge.textContent = '🧪 TESTING / SANDBOX MODE (SAFE)';
+      badge.className = 'mode-badge test';
+    }
+    if (box) box.classList.add('active-test');
+    if (syncStatus) syncStatus.textContent = '🧪 Naka-Testing Mode. Ligtas ang Live Cloud Database.';
+  } else {
+    if (badge) {
+      badge.textContent = '🔴 LIVE DATA MODE';
+      badge.className = 'mode-badge live';
+    }
+    if (box) box.classList.remove('active-test');
+    if (syncStatus) syncStatus.textContent = '✅ Nakakonekta sa Cloud Database (Live)';
+  }
 }
-    
-// ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
+
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('adminTestModeToggle');
+  if (toggle) {
+    toggle.checked = isTestMode;
+    toggle.addEventListener('change', (e) => {
+      isTestMode = e.target.checked;
+      localStorage.setItem('dwbe_is_test_mode', isTestMode);
+      updateAdminModeUI();
+      if (isTestMode) {
+        alert("🧪 Naka-TESTING MODE na ang Admin Panel at Client Portal!\n\nAng anumang aksyon ay nasa Sandbox/SessionStorage lamang at HINDI papasok sa live database.");
+      } else {
+        alert("🔴 Naka-LIVE MODE na muli!\n\nLahat ng babaguhin mo ay direktang magse-save sa Firebase Cloud Database.");
+      }
+      loadFromCloud();
+    });
+  }
+  updateAdminModeUI();
+});
+
+// ILAGAY DITO ANG EMAIL NG ADMIN
 const ADMIN_EMAILS = ['admin@admin.com'];
 const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
 
-// ===== TERMS NG BAYAD (dapat pareho sa index.html) =====
+// TERMS NG BAYAD
 const PAY_TERMS = {
   monthly:     { label: 'Buwanan (End of Month)', days: 30 },
   semimonthly: { label: 'Kada 15 Araw', days: 15 },
   weekly:      { label: 'Lingguhan', days: 7 },
   sellout:     { label: 'Pagkaubos ng Stock', days: 30 }
 };
-// Default password na ibibigay ng admin (hindi bababa sa 6 na karakter ang kailangan ng Firebase)
+
 const DEFAULT_CLIENT_PASSWORD = 'admin123';
-// Standard na Presyo ng Supplier (default lang sa bagong approval; hindi nito binabago ang presyo ng mga kasalukuyang tindahan)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
-// Halaga ng benta ng isang uri: ang mga naitalang benta ay nasa presyong may discount noong benta; ang luma ay sa kasalukuyang presyo
+
 function subSalesValue(sub, sold) {
   const lq = Number(sub.soldValueQty) || 0;
   const lv = Number(sub.soldValue) || 0;
   if (sold <= lq) return lq ? lv * (sold / lq) : 0;
   return lv + (sold - lq) * (Number(sub.price) || 0);
 }
-// ===== DISCOUNT NA MAY PERIOD =====
-// store.discounts = [{ styleType: 'Ordinary'|'Premium'|'All', type: 'amount'|'percent', value, startDate, endDate }]
+
 function ymd(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
@@ -390,7 +442,7 @@ function localToday() { return ymd(new Date()); }
 function fmtDate(s) {
   return s ? new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
-// Presyo ng isang uri ng walis matapos ang discount (kung may aktibo ngayon)
+
 function priceWithDiscount(store, sub) {
   const base = Number(sub.price) || 0;
   const t = localToday();
@@ -405,8 +457,7 @@ function priceWithDiscount(store, sub) {
   const off = best ? Math.round(best.off * 100) / 100 : 0;
   return { base, off, price: Math.round((base - off) * 100) / 100, pct: base ? +(off / base * 100).toFixed(1) : 0, until: best ? best.until : null };
 }
-// Server function sa Vercel na may kapangyarihang mag-reset ng password
-// Sa Vercel, gamitin ang function ng mismong deployment na ito (production man o preview)
+
 const RESET_API = location.hostname.endsWith('vercel.app') ? '/api/reset-password' : 'https://dwbe-consignment.vercel.app/api/reset-password';
 const termOf = (item) => PAY_TERMS[item.paymentTerms] ? item.paymentTerms : 'monthly';
 function nextCollectionDate(item) {
@@ -420,7 +471,6 @@ window.applyTermDate = function() {
   document.getElementById('collectionDate').valueAsDate = new Date(nextCollectionDate({ paymentTerms: k }));
 };
 
-// Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
 const secondaryAuth = getAuth(initializeApp(firebaseConfig, 'secondary'));
 
 const authScreen = document.getElementById('authScreen');
@@ -590,10 +640,8 @@ function cleanSourceData() {
     }
 }
 
-// Update ng status ng restock request sa restockLog (nakikita ng client)
 function setRestockStatus(store, reqId, status, reason) {
     const log = store.restockLog || [];
-    // Hanapin sa id; kung hindi tumugma, kunin ang pinakamatandang request na hindi pa tapos
     const e = log.find(r => r.id === reqId)
         || log.slice().reverse().find(r => r.status === 'Pending' || r.status === 'Approved');
     if (e) {
@@ -694,54 +742,68 @@ function processClientAcceptedRestocks() {
     }
 }
 
+// LOAD DATA CONTROLLED BY TEST MODE
 async function loadFromCloud() {
-    syncStatus.textContent = "Kumukuha ng data sa Cloud...";
-    try {
-        const docRef = doc(db, "app_data", "main_inventory");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            appData = docSnap.data();
-            if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-            if (!appData.consignments) appData.consignments = [];
-            if (!appData.pendingInquiries) appData.pendingInquiries = [];
-            deduplicateConsignments();
-            cleanSourceData();
-            processClientAcceptedRestocks();
-        }
-        renderApp();
-        syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
-    } catch (err) {
-        syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-        const local = localStorage.getItem('consignments_v3');
-        if (local) {
-            appData = JSON.parse(local);
-            deduplicateConsignments();
-            cleanSourceData();
-            renderApp();
-        }
+  updateAdminModeUI();
+  
+  if (isTestMode) {
+    const testCache = sessionStorage.getItem('dwbe_test_app_data');
+    if (testCache) {
+      appData = JSON.parse(testCache);
+      deduplicateConsignments();
+      cleanSourceData();
+      renderApp();
+      syncStatus.textContent = "🧪 Naka-TESTING MODE (Sandbox Loaded)";
+      return;
     }
+  }
+
+  syncStatus.textContent = "Kumukuha ng data sa Cloud...";
+  try {
+    const docRef = doc(db, "app_data", "main_inventory");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      appData = docSnap.data();
+      if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+      if (!appData.consignments) appData.consignments = [];
+      if (!appData.pendingInquiries) appData.pendingInquiries = [];
+      deduplicateConsignments();
+      cleanSourceData();
+      processClientAcceptedRestocks();
+    }
+    renderApp();
+    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database (Live)";
+  } catch (err) {
+    syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
+  }
 }
 
+// SAVE DATA CONTROLLED BY SAFETY LOCK SWITCH
 async function saveToCloud() {
-    syncStatus.textContent = "Nagse-save sa Cloud...";
-    try {
-        deduplicateConsignments();
-        cleanSourceData();
-        await setDoc(doc(db, "app_data", "main_inventory"), appData);
-        localStorage.setItem('consignments_v3', JSON.stringify(appData));
-        syncStatus.textContent = "✅ Na-save sa Cloud";
-        autoDownloadBackup();
-        renderApp();
-    } catch (err) {
-        syncStatus.textContent = "⚠️ Error sa pag-save";
-        localStorage.setItem('consignments_v3', JSON.stringify(appData));
-        autoDownloadBackup();
-        renderApp();
-    }
+  deduplicateConsignments();
+  cleanSourceData();
+
+  if (isTestMode) {
+    sessionStorage.setItem('dwbe_test_app_data', JSON.stringify(appData));
+    syncStatus.textContent = "🧪 Na-save sa Local Sandbox (Ligtas ang Live Data)";
+    renderApp();
+    return;
+  }
+
+  syncStatus.textContent = "Nagse-save sa Cloud...";
+  try {
+    await setDoc(doc(db, "app_data", "main_inventory"), appData);
+    localStorage.setItem('consignments_v3', JSON.stringify(appData));
+    syncStatus.textContent = "✅ Na-save sa Cloud";
+    autoDownloadBackup();
+    renderApp();
+  } catch (err) {
+    syncStatus.textContent = "⚠️ Error sa pag-save";
+    localStorage.setItem('consignments_v3', JSON.stringify(appData));
+    renderApp();
+  }
 }
 
-// Refresh only the displayed Online/Offline badge locally.
-// Walang Firebase read/write dito; nire-recalculate lang ang 10-minute presence window.
 setInterval(() => {
   try { renderApp(); } catch (_) {}
 }, 60000);
@@ -757,11 +819,12 @@ function initApp() {
     loadFromCloud();
 
     setInterval(() => {
-        if (auth.currentUser) { loadFromCloudSilent(); }
+        if (auth.currentUser && !isTestMode) { loadFromCloudSilent(); }
     }, 10000);
 }
 
 async function loadFromCloudSilent() {
+    if (isTestMode) return;
     try {
         const docRef = doc(db, "app_data", "main_inventory");
         const docSnap = await getDoc(docRef);
@@ -1339,8 +1402,8 @@ function renderApp() {
     document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
 }
 
-// Gumagawa ng Firebase account nang walang ipinapadalang email. Ang admin ang magbibigay ng password sa client.
 async function createAccountForClient(email, password) {
+    if (isTestMode) return { ok: true, uid: 'test-uid-' + Date.now() };
     try {
         const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
         const uid = cred.user.uid;
@@ -1349,11 +1412,9 @@ async function createAccountForClient(email, password) {
     } catch (err) {
         if (secondaryAuth.currentUser) { try { await signOut(secondaryAuth); } catch (_) {} }
         if (err.code === 'auth/email-already-in-use') {
-            alert(`May Firebase account na ang ${email}. Hindi mapapalitan ng admin ang password nito.\nKung nakalimutan ng client ang password, burahin ang user sa Firebase Console (Authentication → Users) at ulitin ito.`);
+            alert(`May Firebase account na ang ${email}. Hindi mapapalitan ng admin ang password nito.`);
         } else if (err.code === 'auth/invalid-email') {
             alert('Hindi wastong email address.');
-        } else if (err.code === 'auth/operation-not-allowed') {
-            alert('Hindi naka-enable ang Email/Password provider sa Firebase Authentication.');
         } else {
             alert('⚠️ Hindi nagawa ang Firebase account: ' + err.message);
         }
@@ -1371,7 +1432,6 @@ window.approveInquiryWithPassword = async function(inqIdx) {
         return;
     }
 
-    // Huwag payagang ma-link ang isang email na may existing active store.
     const existingStore = (appData.consignments || []).find(c =>
         (c.email || '').trim().toLowerCase() === email
     );
@@ -1408,8 +1468,6 @@ window.approveInquiryWithPassword = async function(inqIdx) {
     let firebaseUid = '';
 
     try {
-        // Gumawa na ng sariling Firebase account ang client nang isumite ang aplikasyon.
-        // Kung lumang aplikasyon na walang account, ang admin ang magtatakda ng password.
         let adminSetPassword = '';
         if (!inq.accountCreated) {
             const pw = await prompt(`Walang Firebase account ang aplikasyong ito. Magtakda ng password para kay ${email} (hindi bababa sa 6 na karakter). Ibigay ito sa client:`);
@@ -1436,13 +1494,6 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}). Mag-login gamit ang email at password na iyong ginawa.`,
             date: new Date().toLocaleString()
         }];
-        if (isSameName) {
-            notifications.push({
-                id: Date.now() + 1,
-                text: searchValidationMsg,
-                date: new Date().toLocaleString()
-            });
-        }
 
         deduplicateConsignments();
         cleanSourceData();
@@ -1451,7 +1502,6 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             id: Date.now(),
             storeName: inq.storeName,
             ownerName: inq.ownerName || '',
-            // IMPORTANT: no plaintext client password is stored here.
             email: email,
             firebaseUid: firebaseUid || '',
             authStatus: 'active',
@@ -1482,7 +1532,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             clientNotifications: notifications,
             messages: [{
                 sender: 'Admin',
-                text: `Welcome sa aming network! Aplikasyon na-aprube at na-register na sa Firebase Authentication.`
+                text: `Welcome sa aming network! Aplikasyon na-aprube na.`
             , date: new Date().toLocaleString() }],
             lastClientAccess: null,
             searchValidation: searchValidationMsg,
@@ -1490,20 +1540,14 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             history: [{
                 id: Date.now(),
                 date: new Date().toLocaleString(),
-                text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory; Firebase Auth account handa na. Terms: ${PAY_TERMS[payTerm].label}.`
+                text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}). Terms: ${PAY_TERMS[payTerm].label}.`
             }]
         });
 
         appData.pendingInquiries.splice(inqIdx, 1);
         await saveToCloud();
 
-        alert(`✅ Matagumpay na na-aprube ang inquiry!
-
-📧 ${email}
-🔐 Firebase Authentication: HANDA NA
-${adminSetPassword ? `🔑 Password na itinakda mo: ${adminSetPassword}\nIbigay ito sa client.` : 'Mag-login ang client gamit ang password na ginawa niya sa application form.'}
-
-Kasama na ang store sa active consignment list.`);
+        alert(`✅ Matagumpay na na-aprube ang inquiry!\n\n${isTestMode ? '🧪 [TEST MODE] Naitala sa local testing storage!' : 'Kasama na ang store sa active consignment list.'}`);
     } catch (err) {
         if (secondaryAuth.currentUser) {
             try { await signOut(secondaryAuth); } catch (_) {}
@@ -1511,7 +1555,6 @@ Kasama na ang store sa active consignment list.`);
         alert('⚠️ Hindi natuloy ang approval: ' + (err.message || err));
     }
 };
-
 
 window.declineInquiry = async function(inqIdx) {
     if (await confirm('Tanggihan ang aplikasyong ito?')) {
@@ -1543,7 +1586,6 @@ window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApprov
             return;
         }
 
-        // BERIPIKASYON NG PRESYO bago i-approve
         const priceSub = (item.storeItems || []).find(s => s.styleType === style);
         const curPrice = priceSub ? priceSub.price : ((item.storeItems && item.storeItems[0]) ? item.storeItems[0].price : 150);
         const pStr = await prompt(`Beripikahin ang presyo bawat piraso (₱)\n\n🏪 ${item.storeName}\n📦 ${qty} pcs ${style}\nKasalukuyang presyo: ₱${curPrice}\nStandard na Presyo ng Supplier: ₱${STANDARD_PRICES[style] || '-'}\n\nIlagay ang napag-usapang presyo:`, String(curPrice));
@@ -1552,9 +1594,6 @@ window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApprov
         if (isNaN(agreedPrice) || agreedPrice <= 0) {
             alert('Maglagay ng wastong presyo na higit sa zero. Hindi na-approve ang request.');
             return;
-        }
-        if (priceSub && agreedPrice !== Number(priceSub.price)) {
-            if (!await confirm(`Magbabago ang presyo ng ${style} mula ₱${priceSub.price} patungong ₱${agreedPrice}.\nMag-aapply ito sa lahat ng ${style} ng tindahan (kasama ang natitira at nabenta).\n\nItuloy?`)) return;
         }
 
         item.activeRequests.splice(reqIdx, 1);
@@ -1610,7 +1649,6 @@ window.processPendingSales = async function(storeIdx, saleIdx, qty, styleType, i
         }
         if (subItem) {
             subItem.currentStock += qty;
-            // Ibalik din ang naitalang halaga ng benta
             subItem.soldValue = Math.max(0, (Number(subItem.soldValue) || 0) - (Number(sale.totalAmount) || 0));
             subItem.soldValueQty = Math.max(0, (Number(subItem.soldValueQty) || 0) - qty);
         }
@@ -1653,7 +1691,7 @@ window.confirmClientRestock = async function(storeIdx, restockIdx) {
         existingSub.initialQty += qty;
         existingSub.currentStock += qty;
         existingSub.collectionDate = collDateStr;
-                        if (restock.price) existingSub.price = restock.price;
+        if (restock.price) existingSub.price = restock.price;
     } else {
         item.storeItems.push({
             id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
@@ -1744,7 +1782,6 @@ window.editStoreAddress = async function(index) {
     }
 };
 
-// Palitan ang terms ng bayad ng tindahan
 window.editPayTerm = async function(index) {
     const item = appData.consignments[index];
     const v = await prompt(`Terms ng bayad para sa ${item.storeName}\nKasalukuyan: ${PAY_TERMS[termOf(item)].label}\n\n1 = Buwanan\n2 = Kada 15 Araw\n3 = Lingguhan\n4 = Pagkaubos ng Stock`, '1');
@@ -1762,7 +1799,6 @@ window.editPayTerm = async function(index) {
     await saveToCloud();
 };
 
-// Magdagdag o magbura ng discount na may period
 window.editDiscount = async function(index) {
     const item = appData.consignments[index];
     const today = localToday();
@@ -1828,12 +1864,16 @@ window.editDiscount = async function(index) {
     alert(`✅ Naitala ang discount.\n\n${what} sa ${styleName(styleType)}\nHanggang ${fmtDate(endDate)}\n\n${preview}\n\nBabalik sa regular na presyo pagkatapos ng petsang iyon.`);
 };
 
-window.createClientLogin = if (IS_TESTING && !await confirm('🧪 TEST MODE: totoong Firebase account pa rin ang babaguhin nito, hindi test lang. Ituloy?')) return; async function(index) {
+window.createClientLogin = async function(index) {
     const item = appData.consignments[index];
     const email = (item.email || '').trim().toLowerCase();
     if (!email) {
         alert('Maglagay muna ng email ng tindahan.');
         return;
+    }
+    if (isTestMode) {
+      alert("🧪 [TEST MODE] Password simulated as reset to default!");
+      return;
     }
     if (!await confirm(`I-reset ang password ng ${item.storeName} (${email}) sa default na "${DEFAULT_CLIENT_PASSWORD}"?\n\nMapapalitan ang password na ginawa ng client. Kailangan nila itong palitan pagkatapos mag-login.`)) return;
 
@@ -1854,9 +1894,8 @@ window.createClientLogin = if (IS_TESTING && !await confirm('🧪 TEST MODE: tot
         apiErr = err.message;
     }
 
-    // Alternatibo kung hindi gumagana ang server (walang service account key)
     if (!ok) {
-        if (!await confirm(`⚠️ Hindi gumana ang server reset (${apiErr}).\n\nAlternatibo: gagawa ng bagong account na may default password na "${DEFAULT_CLIENT_PASSWORD}".\n\nKung may account na ang email na ito, burahin muna ito sa Firebase Console (Authentication → Users → ⋮ → Delete account), tapos ulitin ito.\n\nItuloy?`)) return;
+        if (!await confirm(`⚠️ Hindi gumana ang server reset (${apiErr}).\n\nAlternatibo: gagawa ng bagong account na may default password na "${DEFAULT_CLIENT_PASSWORD}".\n\nItuloy?`)) return;
         const res = await createAccountForClient(email, DEFAULT_CLIENT_PASSWORD);
         if (!res.ok) return;
         uid = res.uid;
@@ -1870,7 +1909,6 @@ window.createClientLogin = if (IS_TESTING && !await confirm('🧪 TEST MODE: tot
     await saveToCloud();
     alert(`✅ Handa na ang default password.\n\n🏪 ${item.storeName}\n🔑 Default password: ${DEFAULT_CLIENT_PASSWORD}\n\nIbigay ito sa client. Hihilingin sa kanila na palitan ito pagkatapos mag-login.`);
 };
-
 
 window.deleteEntireStore = async function(index) {
     if (await confirm('Burahin nang buo ang tindahang ito?')) {
