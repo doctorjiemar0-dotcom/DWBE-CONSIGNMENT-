@@ -157,7 +157,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
   <!-- Language Selector -->
-  <div class="card no-print" id="langCard" data-no-i18n style="text-align:center;display:none;">
+  <div class="card no-print" id="langCard" data-no-i18n style="text-align:center;">
     <label for="langSelect">🌐 Choose your preferred language / Piliin ang wika</label>
     <select id="langSelect">
       <option value="tl">Tagalog</option>
@@ -726,6 +726,13 @@ var D={
 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 15 days. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
 'Cut-off kada 7 araw (lingguhan). Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 7 days (weekly). The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)':'Payment once the delivered stock is sold out, or after 30 days, whichever comes first. (Sold × Supplier Price)',
+'Abiso at Komunikasyon':'Notices & Communication','Stock at Benta':'Stock & Sales','Restock':'Restock','Tala at Kasunduan':'Records & Agreement','Account at Seguridad':'Account & Security',
+'Katayuan':'Status','Email para sa Restock':'Restock Email','Login Account':'Login Account','Huling na-update':'Last updated',
+'✅ Naka-save at aktibo':'✅ Saved and active','Naka-save':'Saved','Kailangan':'Required','Wala pa':'None yet',
+'• Ginagamit ito para ma-unlock ang Restock request at para makontak ka ng admin.':'• Used to unlock Restock requests and so the admin can reach you.',
+'• Hiwalay ito sa iyong Login account, kaya hindi nito mababago ang paraan ng pag-login mo.':'• This is separate from your Login account, so it will not change how you log in.',
+'• Walang verification na ipapadala. Siguraduhing tama ang pagkaka-type.':'• No verification is sent. Make sure it is typed correctly.',
+'Active Email Address:':'Active Email Address:',
 '📧 Email ng Tindahan':'📧 Store Email',
 'I-save ang Email':'Save Email',
 '⚠️ Kailangan ang email para magamit ang Restock.':'⚠️ An email is required to use Restock.',
@@ -735,6 +742,8 @@ var D={
 };
 var R=[
 [/^Hal\. /,'e.g. '],
+[/^(\d+) aktibo$/,'$1 active'],
+[/^(\d+) kabuuan$/,'$1 total'],
 [/^Dahilan: (.*)$/,'Reason: $1'],
 [/^Kabuuang nakabinbin: ₱(.+)$/,'Total pending: ₱$1'],
 [/^🏷️ May discount \(−₱(.+)\/pc\) — naka-lock ang presyo kahit matapos ang discount$/,'🏷️ Discount applied (−₱$1/pc) — price stays locked even after the discount ends'],
@@ -745,7 +754,7 @@ var R=[
 [/^✅ Naka-save: (.+) \(maaari mo itong palitan anumang oras\)$/,'✅ Saved: $1 (you can change it anytime)'],
 [/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
 ];
-var LANG_SWITCH_ON=false; /* gawing true + alisin ang display:none sa #langCard para ibalik ang palitan ng wika */
+var LANG_SWITCH_ON=true; /* nakikita lang sa login screen; nakatago sa loob ng client dashboard */
 var lang=LANG_SWITCH_ON?(localStorage.getItem('dwbe_lang')||'tl'):'tl',orig=new WeakMap();
 
 function tr(s){
@@ -1540,6 +1549,7 @@ function initPortalView() {
   const showPortal = (on) => {
     $('loginScreen').style.display = on ? 'none' : 'flex';
     $('portalContent').style.display = on ? 'block' : 'none';
+    $('langCard').style.display = on ? 'none' : '';
   };
 
   if (applying) return;
