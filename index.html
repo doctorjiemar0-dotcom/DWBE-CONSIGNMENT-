@@ -5,84 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Doctor's Whisk Broom - Client Portal</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#185c38">
-<meta name="msapplication-navbutton-color" content="#185c38">
+<meta name="theme-color" content="#2e7d32">
+<meta name="msapplication-navbutton-color" content="#2e7d32">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Doctor's Whisk Broom">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23185c38' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%23185c38' width='32' height='32'/><text x='50%' y='50%' font-size='24' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232e7d32' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%232e7d32' width='32' height='32'/><text x='50%' y='50%' font-size='24' text-anchor='middle' dominant-baseline='central' fill='white'>🧹</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-:root{
-  --primary-color:#185c38;
-  --secondary-color:#287a4b;
-  --background-color:#f3f6f4;
-  --text-color:#17251d;
-  --dwbe-muted:#64746a;
-  --dwbe-border:#e1e9e3;
-  --dwbe-shadow:0 8px 24px rgba(22,55,35,.07);
-}
+:root{--primary-color:#2e7d32;--secondary-color:#4caf50;--background-color:#f4f6f8;--text-color:#333}
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif}
-html{scroll-behavior:smooth}
-body{background:linear-gradient(180deg,#eaf3ed 0,#f5f7f5 260px,#f3f6f4 100%);color:var(--text-color);line-height:1.5;padding-bottom:50px}
-header{
-  position:sticky;top:0;z-index:1000;
-  background:linear-gradient(115deg,#12452b,#1d6b40 58%,#2d8050);
-  padding:15px max(16px,calc((100vw - 1160px)/2));
-  min-height:72px;box-shadow:0 5px 18px rgba(10,45,25,.18);
-  border-bottom:1px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;align-items:center;gap:12px
-}
-.header-title{flex-grow:1;text-align:left;font-size:clamp(1rem,2.4vw,1.25rem);font-weight:bold;color:white;letter-spacing:.1px}
-.install-header-btn{border-radius:11px;padding:10px 14px;background:#fff;color:#185c38;min-height:42px;border:none;font-size:.8rem;font-weight:bold;cursor:pointer;white-space:nowrap}
+body{background-color:var(--background-color);color:var(--text-color);padding-bottom:50px}
+header{background-color:var(--primary-color);color:white;padding:15px;text-align:center;font-size:1.2rem;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
+.header-title{flex-grow:1;text-align:center}
+.install-header-btn{background-color:#0288d1;color:white;border:none;padding:8px 12px;border-radius:4px;font-size:.8rem;font-weight:bold;cursor:pointer;white-space:nowrap}
 .install-header-btn:hover{opacity:.9}
 .install-header-btn:disabled{opacity:.5;cursor:not-allowed}
-.container{max-width:1180px;padding:24px 20px 60px;margin:auto}
-#syncStatus{display:table;margin:0 auto 16px;padding:7px 14px;border-radius:999px;background:#fff;border:1px solid var(--dwbe-border);color:var(--dwbe-muted);font-style:normal;font-size:.78rem;box-shadow:0 2px 8px rgba(22,55,35,.04)}
-.card{
-  background:#fff;padding:22px;border:1px solid rgba(221,232,224,.95);
-  border-radius:18px;box-shadow:var(--dwbe-shadow);margin-bottom:18px;
-  transition:box-shadow .18s ease,border-color .18s ease
-}
-.card h2{font-size:1.02rem;line-height:1.35;color:#1a5837;font-weight:800;letter-spacing:-.2px;margin-bottom:13px}
-.card .row{display:flex;justify-content:space-between;align-items:center;gap:12px}
-p{line-height:1.55}
-.form-group{margin-bottom:14px}
-label{display:block;font-size:.82rem;color:#31473a;margin-bottom:6px;font-weight:bold}
-input,select,textarea{width:100%;min-height:43px;border:1px solid #d4dfd7;border-radius:10px;padding:10px 12px;background:#fff;color:#1b2b20;font-size:.9rem}
-input::placeholder,textarea::placeholder{color:#8a978e}
-button{background-color:var(--secondary-color);color:white;border:none;padding:10px 14px;width:100%;min-height:42px;border-radius:10px;font-size:.9rem;font-weight:bold;cursor:pointer;margin-top:5px;transition:transform .15s ease,filter .15s ease,box-shadow .15s ease}
-button:hover{filter:brightness(.97);opacity:1}
-button:active{transform:translateY(1px)}
+.container{padding:15px;max-width:600px;margin:auto}
+.card{background:white;padding:15px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);margin-bottom:15px}
+h2{font-size:1rem;margin-bottom:10px;color:var(--primary-color)}
+.form-group{margin-bottom:10px}
+label{display:block;font-size:.85rem;margin-bottom:3px;font-weight:bold}
+input,select,textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:.9rem}
+button{background-color:var(--secondary-color);color:white;border:none;padding:10px;width:100%;border-radius:4px;font-size:1rem;font-weight:bold;cursor:pointer;margin-top:5px}
+button:hover{opacity:.9}
 button:disabled{opacity:.5;cursor:not-allowed}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(40,122,75,.24);outline-offset:2px}
-
-#loginScreen{max-width:650px;margin:20px auto;padding:clamp(20px,4vw,34px);border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:40vh;text-align:left}
+#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:40vh;text-align:left}
 #portalContent{display:none}
-
-.store-item-box{background:#f8fbf8;border:1px solid #e0e9e2;border-radius:13px;padding:15px;margin-bottom:10px}
-.store-item-box.premium-stock{background:#fffaf0;border-color:#f0d68c}
-.notification-item{background:#e8f5e9;border-left:4px solid #4caf50;padding:12px 13px;margin-bottom:6px;font-size:.85rem;border-radius:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.chat-msg{background:#f1f8e9;padding:11px 12px;border-radius:12px;margin-bottom:6px;font-size:.85rem;border:1px solid #c5e1a5}
+.store-item-box{background:#f9f9f9;border:1px solid #ddd;padding:10px;border-radius:6px;margin-bottom:8px}
+.store-item-box.premium-stock{background:#fffde7;border-color:#fbc02d}
+.notification-item{background:#e8f5e9;border-left:4px solid #4caf50;padding:8px;margin-bottom:6px;font-size:.85rem;border-radius:4px;display:flex;justify-content:space-between;align-items:flex-start}
+.chat-msg{background:#f1f8e9;padding:8px;border-radius:6px;margin-bottom:6px;font-size:.85rem;border:1px solid #c5e1a5}
 .chat-msg.admin{background:#e3f2fd;border-color:#90caf9}
-
-.application-drawer-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:12px;padding:13px 15px;margin:8px 0 10px;cursor:pointer;font-weight:800;font-size:.92rem;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#syncStatus{text-align:center;font-size:.8rem;color:#666;margin-bottom:10px;font-style:italic}
+.application-drawer-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:10px;padding:11px 13px;margin:8px 0 10px;cursor:pointer;font-weight:800;font-size:.92rem;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .application-drawer-toggle:active{transform:scale(.99)}
 .application-drawer-toggle .drawer-arrow{font-size:1.05rem;transition:transform .2s ease}
 .application-drawer-toggle.open .drawer-arrow{transform:rotate(180deg)}
 .application-drawer{display:none;overflow:hidden;width:100%}
 .application-drawer.open{display:block;animation:applicationDrawerIn .2s ease}
 @keyframes applicationDrawerIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
-
-.style-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px}
-.style-option-card{border:1px solid #dce6de;border-radius:15px;padding:12px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;min-height:0;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;box-shadow:0 3px 12px rgba(22,55,35,.035)}
+.style-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.style-option-card{border:2px solid #ddd;border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;min-height:170px;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .style-option-card:active{transform:scale(.99)}
 .style-option-card:focus{outline:3px solid rgba(46,125,50,.25);outline-offset:2px}
-.style-option-card.selected{border:2px solid var(--primary-color);background:#f0f8f2;box-shadow:0 0 0 3px rgba(40,122,75,.09)}
-.style-option-card img{width:100%;height:100px;object-fit:cover;border-radius:9px;margin-bottom:5px;cursor:pointer}
-.style-option-card h4{font-size:.9rem;color:var(--primary-color);margin-bottom:3px}
+.style-option-card.selected{box-shadow:0 0 0 2px rgba(46,125,50,.12)}
+.style-option-card.selected{border-color:var(--primary-color);background:#e8f5e9}
+.style-option-card img{width:100%;height:100px;object-fit:cover;border-radius:4px;margin-bottom:5px;cursor:pointer}
+.style-option-card h4{font-size:.85rem;color:var(--primary-color);margin-bottom:3px}
 .style-option-card p{font-size:.75rem;color:#666}
 .style-gallery{margin-bottom:5px}
 .gal-frame{position:relative;margin-bottom:4px}
@@ -98,84 +71,80 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .style-option-card .gal-thumb{width:calc(33.33% - 3px);height:34px;margin:0;border:2px solid transparent;opacity:.65;border-radius:3px}
 .style-option-card .gal-thumb.on{border-color:var(--primary-color);opacity:1}
 .gal-nav{background:#fff;color:#333;width:auto;padding:8px 18px;font-size:1.2rem;border-radius:4px;margin-top:15px;border:none;font-weight:bold;cursor:pointer}
-.view-img-btn{background:#0288d1;color:white;border:none;padding:8px;font-size:.76rem;border-radius:8px;cursor:pointer;margin-top:4px;display:inline-block;width:100%;min-height:36px}
+.view-img-btn{background:#0288d1;color:white;border:none;padding:3px 6px;font-size:.7rem;border-radius:3px;cursor:pointer;margin-top:4px;display:inline-block;width:100%}
+.tag-feat{margin-top:4px;font-size:.7rem;background:#fff9c4;color:#f57f17;padding:2px 4px;border-radius:3px;font-weight:bold;border:1px dashed #fbc02d}
 .y{background-color:#fff59d;font-weight:bold}
 .r{background-color:#ffcdd2;font-weight:bold}
 .tgl{width:auto;padding:4px 10px;font-size:.75rem;margin-top:0}
-
+.row{display:flex;justify-content:space-between;align-items:center}
 #imageModal{display:none;position:fixed;z-index:9999;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.8);align-items:center;justify-content:center;flex-direction:column}
 #imageModal img{max-width:90%;max-height:80%;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,.3)}
-#imageModalClose{margin-top:15px;background:white;color:#333;padding:8px 20px;border:none;border-radius:4px;font-weight:bold;cursor:pointer;width:auto;min-height:42px}
+#imageModalClose{margin-top:15px;background:white;color:#333;padding:8px 20px;border:none;border-radius:4px;font-weight:bold;cursor:pointer;width:auto}
 @media print{body *{visibility:hidden}#printableInquirySection,#printableInquirySection *{visibility:visible}#printableInquirySection{position:absolute;left:0;top:0;width:100%;padding:20px;background:white}.no-print{display:none!important}}
 
-.broom-style-toggle{display:flex;gap:6px;width:100%;margin:8px 0 12px;background:#f0f6f1;padding:5px;border-radius:12px;border:1px solid #dce8de;box-sizing:border-box}
-.broom-toggle-btn{flex:1!important;width:auto!important;margin:0!important;padding:11px 8px!important;border:2px solid transparent!important;border-radius:9px!important;background:#fff!important;color:#185c38!important;font-weight:800!important;font-size:.9rem!important;cursor:pointer!important;box-shadow:none!important;touch-action:manipulation;min-height:44px!important}
-.broom-toggle-btn.active{background:#185c38!important;color:#fff!important;border-color:#12452b!important;box-shadow:0 2px 5px rgba(0,0,0,.15)!important}
+.broom-style-toggle{display:flex;gap:6px;width:100%;margin:8px 0 12px;background:#e8f5e9;padding:5px;border-radius:12px;border:1px solid #c5e1a5;box-sizing:border-box}
+.broom-toggle-btn{flex:1!important;width:auto!important;margin:0!important;padding:11px 8px!important;border:2px solid transparent!important;border-radius:9px!important;background:#fff!important;color:#2e7d32!important;font-weight:800!important;font-size:.9rem!important;cursor:pointer!important;box-shadow:none!important;touch-action:manipulation}
+.broom-toggle-btn.active{background:#2e7d32!important;color:#fff!important;border-color:#1b5e20!important;box-shadow:0 2px 5px rgba(0,0,0,.15)!important}
 .broom-toggle-btn:active{transform:scale(.98)}
 
-#portalContent > .card:first-child{
-  position:relative;overflow:hidden;text-align:left!important;
-  background:linear-gradient(120deg,#12472d 0%,#1d6a40 62%,#2e8050)!important;
-  color:#fff;border:0;border-radius:22px;padding:26px 26px 22px;
-  box-shadow:0 14px 30px rgba(18,71,45,.19)
-}
-#portalContent > .card:first-child:before{
-  content:"";position:absolute;width:240px;height:240px;border:1px solid rgba(255,255,255,.12);
-  border-radius:50%;right:-65px;top:-110px;box-shadow:0 0 0 28px rgba(255,255,255,.035),0 0 0 58px rgba(255,255,255,.025);pointer-events:none
-}
-#displayStoreName{color:#fff!important;font-size:clamp(1.35rem,3vw,1.85rem);letter-spacing:-.4px;margin-bottom:5px!important}
-#displayStoreStatus{display:inline-flex;margin-top:7px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.14);color:#f1fff5!important;font-size:.78rem!important}
-#portalContent > .card:first-child #toggleQrBtn{background:#fff!important;color:#185c38!important;border-radius:10px;padding:9px 13px}
-#portalContent > .card:first-child button[onclick="requestLogout()"]{background:rgba(255,255,255,.13)!important;border:1px solid rgba(255,255,255,.3);color:#fff}
-
-#emailCard{background:#f4f9ff!important;border-left:4px solid #0288d1!important}
-#emailCard h2{color:#0288d1!important}
-
+/* ===== DWBE Professional Dashboard ===== */
+:root{--primary-color:#185c38;--secondary-color:#287a4b;--dwbe-border:#e1e9e3;--dwbe-muted:#64746a;--dwbe-shadow:0 8px 24px rgba(22,55,35,.07)}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(180deg,#eaf3ed 0,#f5f7f5 260px,#f3f6f4 100%);line-height:1.5}
+header{position:sticky;top:0;z-index:1000;background:linear-gradient(115deg,#12452b,#1d6b40 58%,#2d8050);padding:14px max(16px,calc((100vw - 1180px)/2));min-height:66px;box-shadow:0 5px 18px rgba(10,45,25,.18);gap:12px}
+.header-title{text-align:left;font-size:clamp(.95rem,2.4vw,1.2rem)}
+.install-header-btn{background:#fff;color:#185c38;border-radius:10px;min-height:40px}
+.container{max-width:1180px;padding:22px 18px 60px}
+#syncStatus{display:table;margin:0 auto 16px;padding:6px 14px;border-radius:999px;background:#fff;border:1px solid var(--dwbe-border);color:var(--dwbe-muted);font-style:normal;font-size:.78rem}
+.card{padding:20px;border:1px solid var(--dwbe-border);border-radius:16px;box-shadow:var(--dwbe-shadow);margin-bottom:16px}
+.card h2{font-size:1rem;color:#1a5837;font-weight:800;line-height:1.35}
+button{min-height:42px;border-radius:10px;font-size:.9rem;transition:transform .15s,filter .15s}
+button:hover{filter:brightness(.96);opacity:1}
+button:active{transform:translateY(1px)}
+input,select,textarea{min-height:43px;border:1px solid #d4dfd7;border-radius:10px;padding:10px 12px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid rgba(40,122,75,.25);outline-offset:2px}
+label{font-size:.82rem;color:#31473a;margin-bottom:6px}
+#loginScreen{max-width:650px;margin:16px auto;padding:clamp(20px,4vw,32px);border-radius:20px}
+#portalContent[style*="display: block"]{display:grid!important;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+#portalContent>.card{margin:0;background:#fff!important}
+#portalContent>#pendingSalesCard{background:#fffaf3!important}
+#portalContent>#pendingDeliveryCard{background:#f4f9ff!important}
+#portalContent>.card:last-child{background:#fff6f6!important}
+#portalContent>.card:first-child{position:relative;overflow:hidden;text-align:left!important;background:linear-gradient(120deg,#12472d,#1d6a40 62%,#2e8050)!important;color:#fff;border:0;border-radius:20px;padding:24px;box-shadow:0 14px 30px rgba(18,71,45,.19)}
+#displayStoreName{color:#fff!important;font-size:clamp(1.3rem,3vw,1.8rem);margin-bottom:5px!important}
+#displayStoreStatus{display:inline-flex;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.15);color:#f1fff5!important;font-size:.78rem!important}
+#portalContent>.card:first-child #toggleQrBtn{background:#fff!important;color:#185c38!important;border-radius:999px}
+#portalContent>.card:first-child button[onclick="requestLogout()"]{background:rgba(255,255,255,.13)!important;border:1px solid rgba(255,255,255,.3);color:#fff}
+.sec-title{grid-column:1/-1;margin:8px 2px 0;padding-bottom:6px;border-bottom:2px solid #d6e5db;font-size:.78rem;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:#4d6a58}
+.row{gap:10px}
+.btn-inline{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.tgl,.row>button[id^="toggle"]{width:auto!important;min-height:32px;padding:5px 14px!important;font-size:.75rem!important;border-radius:999px;margin-top:0!important;flex-shrink:0}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.68rem;font-weight:700;vertical-align:middle;margin-left:6px;background:#e8f0ea;color:#3d5a48}
+.pill-ok{background:#e3f4e8;color:#1b6b38}.pill-bad{background:#fde8e8;color:#b3261e}.pill-warn{background:#fff1d6;color:#a35a00}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.info-grid>div{background:#f6faf7;border:1px solid var(--dwbe-border);border-radius:12px;padding:10px 12px;min-width:0}
+.info-k{display:block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--dwbe-muted);margin-bottom:2px}
+.info-v{display:block;font-size:.85rem;font-weight:600;color:#1b2b20;word-break:break-word}
+.hint{font-size:.78rem;color:var(--dwbe-muted);background:#f4f9ff;border-left:3px solid #4387c7;border-radius:8px;padding:9px 11px;margin-bottom:12px;line-height:1.6}
+#clientItemsContainer .store-item-box{background:#f8fbf8;border:1px solid #e0e9e2;border-radius:13px;padding:14px}
+.notification-item,.chat-msg{border-radius:12px;padding:11px 12px}
+.style-option-card{border-radius:14px}
 @media(min-width:900px){
-  #portalContent{display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
-  #portalContent > .card{margin:0}
-  #portalContent > .card:first-child,
-  #portalContent > .card:nth-child(2),
-  #portalContent > .card:nth-child(3),
-  #portalContent > .card:nth-child(4),
-  #portalContent > .card:nth-child(5),
-  #portalContent > .card:nth-child(6),
-  #portalContent > .card:nth-child(7),
-  #portalContent > .card:nth-child(8),
-  #portalContent > .card:nth-child(9),
-  #portalContent > .card:nth-child(10),
-  #portalContent > .card:nth-child(11),
-  #portalContent > .card:nth-child(12){grid-column:span 1}
-  #portalContent > .card:first-child,
-  #portalContent > .card:nth-child(2),
-  #portalContent > .card:nth-child(4),
-  #portalContent > .card:nth-child(6),
-  #portalContent > .card:nth-child(8),
-  #portalContent > .card:nth-child(10),
-  #portalContent > .card:nth-child(11){grid-column:1 / -1}
-  #portalContent[style*="display: block"]{display:grid!important}
-  #portalContent > .card:first-child{min-height:185px}
+#portalContent[style*="display: block"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+#portalContent>.card:first-child,.dash-wide{grid-column:1/-1}
 }
 @media(max-width:640px){
-  header{padding:12px 13px;min-height:62px}
-  .header-title{font-size:.93rem;line-height:1.25}
-  .install-header-btn{padding:8px 9px;font-size:.73rem;min-height:38px}
-  .container{padding:15px 12px 42px}
-  .card{padding:17px;border-radius:15px;margin-bottom:13px}
-  #portalContent > .card:first-child{padding:21px 18px;border-radius:18px}
-  .card h2{font-size:.96rem}
-  .style-grid{gap:9px}
-  .style-option-card{padding:9px;border-radius:12px}
-  .style-option-card img{height:88px}
-  .row{align-items:center}
-  .row button{flex-shrink:0}
-  #updateBanner{left:8px!important;right:8px!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;padding:10px!important}
+.container{padding:14px 12px 42px}
+.card{padding:16px;border-radius:14px}
+.info-grid{grid-template-columns:1fr}
+.header-title{font-size:.92rem}
 }
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
-
 <div id="testBanner" data-no-i18n style="display:none;position:sticky;top:0;z-index:9998;background:#e65100;color:#fff;text-align:center;font-weight:bold;font-size:.8rem;padding:6px;">🧪 TESTING MODE — hindi apektado ang LIVE data</div>
+<!-- Nakatagong TESTING MODE button (hindi nakikita ng client). Buksan: ?test=1 | Isara: ?test=0 | o 5x tap sa title -->
 <button type="button" id="testModeBtn" onclick="toggleTestMode()" style="display:none;">🧪 Testing: OFF</button>
 
 <header>
@@ -187,8 +156,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
   <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
-  <!-- Language Selector (Hidden) -->
-  <div class="card no-print" data-no-i18n style="display:none;">
+  <!-- Language Selector -->
+  <div class="card no-print" id="langCard" data-no-i18n style="text-align:center;display:none;">
     <label for="langSelect">🌐 Choose your preferred language / Piliin ang wika</label>
     <select id="langSelect">
       <option value="tl">Tagalog</option>
@@ -319,16 +288,17 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </div>
 
     <!-- ======== 1. MGA ABISO AT KOMUNIKASYON ======== -->
-    <!-- Notifications (May Toggle Button) -->
-    <div class="card">
-      <div class="row" style="margin-bottom:8px;">
-        <h2 style="margin-bottom:0;font-size:.95rem;">📢 Mga Abiso at Update</h2>
-        <div style="display:flex;gap:6px;">
-          <button type="button" onclick="clearAllNotifications()" style="background-color:#c62828;width:auto;font-size:.75rem;padding:4px 8px;margin-top:0;">Clear All</button>
-          <button type="button" id="toggleNotifBtn" onclick="toggleNotificationVisibility()" class="tgl" style="background-color:#185c38;">Itago</button>
+    <div class="sec-title">Abiso at Komunikasyon</div>
+    <!-- Notifications -->
+    <div class="card" id="notifCard" style="border-left:4px solid #4caf50;">
+      <div class="row">
+        <h2 style="margin-bottom:0;">📢 Mga Abiso at Update <span id="notifCount" class="pill" style="display:none;"></span></h2>
+        <div class="btn-inline">
+          <button type="button" onclick="clearAllNotifications()" class="tgl" style="background-color:#c62828;">Clear All</button>
+          <button type="button" id="toggleNotifBtn" onclick="toggleSection('notifContentWrapper','toggleNotifBtn','dwbe_sec_notif')" class="tgl" style="background-color:#2e7d32;">Itago</button>
         </div>
       </div>
-      <div id="notifContentWrapper">
+      <div id="notifContentWrapper" style="margin-top:12px;">
         <div id="clientNotificationsContainer"><p style="font-size:.85rem;color:#666;">Wala pang bagong abiso.</p></div>
       </div>
     </div>
@@ -349,6 +319,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </div>
 
     <!-- ======== 2. STOCK AT BENTA ======== -->
+    <div class="sec-title">Stock at Benta</div>
     <!-- Active Stock -->
     <div class="card">
       <h2>📦 Aktibong Stock at mga Paninda</h2>
@@ -362,7 +333,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </div>
 
     <!-- Product Catalog -->
-    <div class="card">
+    <div class="card dash-wide">
       <h2>🧹 Mga Klase ng Walis Tambo (Catalog)</h2>
       <div class="style-grid">
 
@@ -384,19 +355,21 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </div>
 
     <!-- ======== 3. RESTOCK (Email -> Request -> Status -> Pagtanggap) ======== -->
-    <!-- Detailed Store Email Card with Toggle Button -->
-    <div class="card" id="emailCard">
+    <div class="sec-title">Restock</div>
+    <!-- Email ng Tindahan (kailangan para magamit ang Restock) -->
+    <div class="card" id="emailCard" style="border-left:4px solid #0288d1;">
       <div class="row">
-        <h2 style="margin-bottom:0;font-size:.95rem;">📧 Email ng Tindahan</h2>
-        <button type="button" id="toggleEmailBtn" onclick="toggleEmailVisibility()" class="tgl" style="background-color:#0288d1;">Buksan</button>
+        <h2 style="margin-bottom:0;">📧 Email ng Tindahan <span id="emailBadge" class="pill"></span></h2>
+        <button type="button" id="toggleEmailBtn" onclick="toggleSection('emailContentWrapper','toggleEmailBtn','dwbe_sec_email')" class="tgl" style="background-color:#0288d1;">Buksan</button>
       </div>
-      
-      <div id="emailContentWrapper" style="display:none;margin-top:10px;">
-        <div style="background:#e3f2fd;border-left:3px solid #0288d1;padding:10px;border-radius:8px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;line-height:1.45;">
-          <strong>💡 Bakit mahalaga ang Email?</strong><br>
-          Gagamitin ang email address na ito para sa mga pormal na abiso sa iyong <strong>Restock Requests</strong>, pagpapalit ng password, at opisyal na opisyal na ulat ng transaksyon.
+      <div id="emailContentWrapper" style="display:none;margin-top:12px;">
+        <div class="info-grid">
+          <div><span class="info-k">Katayuan</span><span class="info-v" id="emailStatusText"></span></div>
+          <div><span class="info-k">Email para sa Restock</span><span class="info-v" id="emailCurrentValue">—</span></div>
+          <div><span class="info-k">Login Account</span><span class="info-v" id="emailLoginValue">—</span></div>
+          <div><span class="info-k">Huling na-update</span><span class="info-v" id="emailUpdatedValue">—</span></div>
         </div>
-        <p id="emailStatusText" style="font-size:.82rem;font-weight:bold;margin-bottom:8px;"></p>
+        <p class="hint">• Ginagamit ito para ma-unlock ang Restock request at para makontak ka ng admin.<br>• Hiwalay ito sa iyong Login account, kaya hindi nito mababago ang paraan ng pag-login mo.<br>• Walang verification na ipapadala. Siguraduhing tama ang pagkaka-type.</p>
         <div class="form-group">
           <label for="clientEmailInput">Active Email Address:</label>
           <input type="email" id="clientEmailInput" placeholder="Hal. alingnena@gmail.com" autocomplete="email">
@@ -408,7 +381,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     <!-- Restock -->
     <div class="card" style="background:#fff8e1;border-left:4px solid #f57f17;">
       <div class="row">
-        <h2 style="margin-bottom:0;font-size:.9rem;">🔄 Restock Request</h2>
+        <h2 style="margin-bottom:0;font-size:.9rem;">🔄 Restock</h2>
         <button type="button" id="toggleRestockBtn" onclick="toggleRestockVisibility()" style="background-color:#f57f17;width:auto;padding:4px 10px;font-size:.7rem;margin-top:0;">Buksan</button>
       </div>
       <div id="restockContentWrapper" style="display:none;margin-top:10px;">
@@ -429,13 +402,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
       </div>
     </div>
 
-    <!-- Restock Request Status (May Toggle Button) -->
-    <div class="card" id="restockStatusCard" style="display:none;background:#fff8e1;border-left:4px solid #f57f17;">
+    <!-- Restock Request Status -->
+    <div class="card" id="restockStatusCard" style="display:none;border-left:4px solid #f57f17;">
       <div class="row">
-        <h2 style="color:#f57f17;margin-bottom:0;font-size:.95rem;">📋 Status ng mga Restock Request</h2>
-        <button type="button" id="toggleRestockStatusBtn" onclick="toggleRestockStatusVisibility()" class="tgl" style="background-color:#f57f17;">Itago</button>
+        <h2 style="margin-bottom:0;">📋 Status ng mga Restock Request <span id="restockStatusCount" class="pill"></span></h2>
+        <button type="button" id="toggleRestockStatusBtn" onclick="toggleSection('restockStatusWrapper','toggleRestockStatusBtn','dwbe_sec_rstatus')" class="tgl" style="background-color:#f57f17;">Buksan</button>
       </div>
-      <div id="restockStatusContentWrapper" style="margin-top:10px;">
+      <div id="restockStatusWrapper" style="display:none;margin-top:12px;">
         <div id="restockStatusContainer"></div>
       </div>
     </div>
@@ -447,8 +420,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </div>
 
     <!-- ======== 4. TALA AT KASUNDUAN ======== -->
+    <div class="sec-title">Tala at Kasunduan</div>
     <!-- Transaction History -->
-    <div class="card" style="background:#e0f7fa;border-left:4px solid #00acc1;">
+    <div class="card dash-wide" style="background:#e0f7fa;border-left:4px solid #00acc1;">
       <div class="row">
         <h2 style="color:#00acc1;font-size:.95rem;margin-bottom:0;">📜 Kasaysayan ng Transaksyon</h2>
         <button type="button" id="toggleTransactionBtn" onclick="toggleTransactionVisibility()" class="tgl" style="background-color:#00acc1;">Buksan</button>
@@ -459,7 +433,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </div>
 
     <!-- Official Consignment Agreement -->
-    <div class="card" style="background:#e8f5e9;border-left:4px solid #2e7d32;">
+    <div class="card dash-wide" style="background:#e8f5e9;border-left:4px solid #2e7d32;">
       <div class="row">
         <h2 style="color:#2e7d32;font-size:.95rem;margin-bottom:0;">📜 Opisyal na Kasunduan sa Consignment</h2>
         <button type="button" id="toggleAgreementBtn" onclick="toggleAgreementVisibility()" class="tgl" style="background-color:#2e7d32;">Buksan</button>
@@ -469,7 +443,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
         <div style="text-align:center;font-weight:bold;margin-bottom:10px;color:#2e7d32;">
           DOCTOR'S WHISK BROOM ETC.<br>
-          <span style="font-size:.75rem;font-weight:normal;color:#555;">Osiao, Sorsogon City • FB: DWBE.23 • 09104057065</span>
+          <span style="font-size:.75rem;font-weight:normal;color:#555;">Osiao, Sorsogon City • FB: Jiemar Garais Doc Tor • 09104057065</span>
           <br>
           <strong>CONSIGNMENT AGREEMENT (STORE PARTNER)</strong>
         </div>
@@ -559,6 +533,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </div>
 
     <!-- ======== 5. ACCOUNT / SEGURIDAD ======== -->
+    <div class="sec-title">Account at Seguridad</div>
     <!-- Password -->
     <div class="card" style="background:#f1f8e9;border-left:4px solid #2e7d32;">
       <div class="row">
@@ -593,7 +568,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
 </div>
 
-<!-- Update Banner -->
+<!-- Update Banner (client ang magdedesisyon) -->
 <div id="updateBanner" style="display:none;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:10000;background:#0d47a1;color:white;padding:12px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.3);align-items:center;gap:10px;">
   <div style="flex:1;font-size:.85rem;">🆕 May bagong bersyon ng app. I-update na?</div>
   <button type="button" onclick="applyUpdate()" style="width:auto;margin:0;padding:8px 12px;font-size:.8rem;background:#4caf50;">I-update Ngayon</button>
@@ -611,19 +586,204 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   </div>
 </div>
 
-<!-- Core Scripts -->
+<!-- Language / i18n (Tagalog default, English optional) -->
 <script>
 (function(){
-var lang='tl';
+var D={
+'Kumokonekta sa Cloud Database...':'Connecting to Cloud Database...',
+'Kumukuha ng data sa Cloud...':'Fetching data from the Cloud...',
+'✅ Nakakonekta sa Cloud Database':'✅ Connected to Cloud Database',
+'⚠️ Nabigo sa pagkonekta sa Cloud.':'⚠️ Failed to connect to the Cloud.',
+'Nagse-save sa Cloud...':'Saving to the Cloud...',
+'✅ Na-save sa Cloud':'✅ Saved to the Cloud',
+'⚠️ Error sa pag-save':'⚠️ Error while saving',
+'📱 I-Install':'📱 Install',
+'🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. Ilagay ang iyong password upang buksan ang portal.':'🔒 Your store was securely detected from the link. Enter your password to open the portal.',
+'Dami ng Nais i-Order (Fixed: 5 pcs):':'Quantity to Order (Fixed: 5 pcs):',
+'I-type ang unang titik o pangalan ng tindahan upang lumitaw ang naka-mask na pagpipilian.':'Type the first letter or the store name to show the masked options.',
+'Ang mga pangalan ng tindahan ay naka-mask para sa iyong seguridad at privacy. Ang nakikita mo dito ay hindi ang buong pangalan ng tindahan.':'Store names are masked for your security and privacy. What you see here is not the full store name.',
+'Pangalan ng Tindahan:':'Store Name:',
+'Pangalan ng Tindahan':'Store Name',
+'I-type ang unang titik...':'Type the first letter...',
+'Ilagay ang password ng tindahan':'Enter the store password',
+'Buksan ang Aking Portal':'Open My Portal',
+'Ituloy sa Aking Portal':'Continue to My Portal',
+'Digital Consignment / Bagong Aplikasyon':'Digital Consignment / New Application',
+'💡 Impormasyon:':'💡 Information:',
+'Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.':'For new clients, the application and digital consignment agreement are submitted here. You can set your own password and the quantity you want to order.',
+'Tandaan o i-memorize ang password na iyong ilalagay':'Remember or memorize the password you enter',
+'dahil ito ang gagamitin mo sa tuwing bubuksan at mag-a-login ka sa iyong portal pagka-apruba.':'because you will use it every time you log in to your portal once approved.',
+'Pangalan ng May-ari:':'Owner Name:',
+'Sariling Password (Para sa Portal Login):':'Your Own Password (For Portal Login):',
+'Gumawa ng iyong sariling password':'Create your own password',
+'Numero ng Telepono / GCash:':'Phone Number / GCash:',
+'Lokasyon / Address:':'Location / Address:',
+'Piliin ang Gusto mong Uri ng Walis (Style):':'Choose Your Preferred Broom Style:',
+'✨ Gitna ng Hibla (Tampok)':'✨ Center of the Fiber (Featured)',
+'Dami ng Nais i-Order (Quantity / Initial Qty):':'Quantity to Order (Initial Qty):',
+'Mensahe / Katanungan (Optional):':'Message / Question (Optional):',
+'I-type ang mensahe...':'Type your message...',
+'Isumite ang Digital Consignment Aplikasyon':'Submit Digital Consignment Application',
+'Aktibo ang Consignment':'Active Consignment',
+'Status: Aktibo ang Consignment':'Status: Active Consignment',
+'✅ Status: Aktibo ang Consignment':'✅ Status: Active Consignment',
+'Ipakita ang QR Code':'Show QR Code',
+'Itago ang QR Code':'Hide QR Code',
+'i-scan para maglogin':'scan to log in',
+'Mag-logout':'Log out',
+'🧹 Mga Klase ng Walis Tambo (Catalog)':'🧹 Broom Types (Catalog)',
+'📦 Aktibong Stock at mga Paninda':'📦 Active Stock & Merchandise',
+'Kinukuha ang data...':'Loading data...',
+'⏳ Mga Nakabinbing Resibo ng Benta':'⏳ Pending Sales Receipts',
+'Nakabinbin sa Admin':'Pending with Admin',
+'🚚 Mga Na-approve na Restock':'🚚 Approved Restocks',
+'✅ Natanggap Ko Na':'✅ I Received It',
+'📢 Mga Abiso at Update':'📢 Notices & Updates',
+'Wala pang bagong abiso.':'No new notices yet.',
+'📜 Opisyal na Kasunduan sa Consignment':'📜 Official Consignment Agreement',
+'Buksan':'Open','Itago':'Hide','Isara':'Close',
+'Piliin ang Uri ng Istilo:':'Choose Style Type:',
+'Dami ng Restock (Fixed: 5 pcs):':'Restock Quantity (Fixed: 5 pcs):',
+'Ipadala ang Request':'Send Request','Ipadala':'Send',
+'Mensahe sa admin...':'Message to admin...',
+'Wala pang mensahe.':'No messages yet.',
+'📜 Kasaysayan ng Transaksyon':'📜 Transaction History',
+'Wala pang naitalang transaksyon.':'No transactions recorded yet.',
+'🔒 Palitan ang Password':'🔒 Change Password',
+'Maaari mong baguhin ang iyong password anumang oras.':'You can change your password at any time.',
+'Bagong Password:':'New Password:',
+'Ilagay ang bagong password':'Enter the new password',
+'I-save ang Bagong Password':'Save New Password',
+'Ang mga aksyon dito ay hindi maaaring i-undo.':'Actions here cannot be undone.',
+'🛑 Itigil ang Kasunduan':'🛑 Stop the Agreement',
+'🔐 Pumunta sa Admin Panel':'🔐 Go to Admin Panel',
+'🛒 MAY BUMILI (I-record ang Benta)':'🛒 SOMEONE BOUGHT (Record the Sale)',
+'Uri:':'Type:','Dami:':'Qty:','| Dami:':'| Qty:',
+'Natitirang Stock:':'Remaining Stock:','Nabenta:':'Sold:',
+'Mangyaring pumili ng tindahan at ilagay ang password.':'Please choose a store and enter the password.',
+'⚠️ Hindi natagpuan ang rehistradong tindahan na ito.':'⚠️ This registered store was not found.',
+'⚠️ Mali ang password para sa tindahang ito.':'⚠️ Wrong password for this store.',
+'✅ Matagumpay na nag-log in!':'✅ Logged in successfully!',
+'Mangyaring ilagay ang bagong password.':'Please enter the new password.',
+'✅ Matagumpay na na-update ang password ng iyong tindahan!':'✅ Your store password was updated successfully!',
+'Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:':'For security, enter the owner name to log out:',
+'Mali ang pangalan ng may-ari.':'Wrong owner name.',
+'⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?':'⚠️ Are you sure you want to STOP or CANCEL your Consignment Agreement?',
+'Matagumpay na naitala ang iyong pagpapahinto sa kasunduan.':'Your request to stop the agreement was recorded.',
+'Matagumpay na naidagdag sa iyong stock!':'Successfully added to your stock!',
+'Wala nang natitirang active stock para sa uring ito.':'There is no active stock left for this type.',
+'Mangyaring maglagay ng wastong bilang ng nabili.':'Please enter a valid number sold.',
+'Matagumpay na naipadala ang pending receipt sa Admin!':'The pending receipt was sent to Admin!',
+'Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!':'Your Digital Consignment application, with the order quantity and password, was submitted successfully!',
+'Mag-request ng restock na eksaktong 5 piraso?':'Request a restock of exactly 5 pieces?',
+'Matagumpay na naipadala ang iyong kahilingan sa Admin!':'Your request was sent to Admin!',
+'🆕 May bagong bersyon ng app. I-update na?':'🆕 A new version of the app is available. Update now?',
+'I-update Ngayon':'Update Now','Mamaya':'Later',
+'📋 Status ng mga Restock Request':'📋 Restock Request Status',
+'⏳ Naghihintay ng aprubal':'⏳ Waiting for approval',
+'✅ Na-approve — hintayin ang delivery':'✅ Approved — wait for delivery',
+'❌ Tinanggihan':'❌ Rejected',
+'📦 Natanggap na':'📦 Received',
+'Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.':'You already requested this style this month. You can request again next month, or choose the other style.',
+'Mag-login gamit ang pangalan ng tindahan at password.':'Log in using your store name and password.',
+'Ilagay ang pangalan ng tindahan':'Enter the store name',
+'Ilagay ang password':'Enter your password',
+'⚠️ Walang aprubadong tindahan na may ganitong pangalan. Hintayin ang pag-apruba ng admin o tingnan kung tama ang pagkaka-type.':'⚠️ No approved store has this name. Please wait for the admin to approve it or check the spelling.',
+'🔒 Na-detect ang iyong tindahan mula sa link. Ilagay ang iyong password upang buksan ang portal.':'🔒 Your store was detected from the link. Enter your password to open the portal.',
+'Kasalukuyang Password:':'Current Password:',
+'Ilagay ang kasalukuyang password':'Enter your current password',
+'Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)':'Create your own password (at least 6 characters)',
+'Mangyaring hanapin at piliin ang tindahan, at ilagay ang password.':'Please search and choose the store, and enter the password.',
+'I-type ang unang titik o pangalan ng tindahan...':'Type the first letter or the store name...',
+'Walang nakitang tindahan.':'No store found.',
+'Naka-mask ang mga pangalan ng tindahan para sa iyong seguridad at privacy.':'Store names are masked for your security and privacy.',
+'Kumukuha pa ng data. Subukan muli sa ilang segundo.':'Still fetching data. Try again in a few seconds.',
+'⚠️ Mali ang pangalan ng tindahan o password.':'⚠️ Wrong store name or password.',
+'⚠️ Maraming maling pagsubok. Subukan muli mamaya.':'⚠️ Too many failed attempts. Try again later.',
+'⚠️ Walang koneksyon sa internet.':'⚠️ No internet connection.',
+'Para sa mas ligtas na account, gumawa ng bagong password (hindi bababa sa 6 na karakter):':'For a safer account, create a new password (at least 6 characters):',
+'Kailangan ng hindi bababa sa 6 na karakter.':'At least 6 characters are required.',
+'Mangyaring ilagay ang kasalukuyan at bagong password.':'Please enter your current and new password.',
+'Ang bagong password ay dapat hindi bababa sa 6 na karakter.':'The new password must be at least 6 characters.',
+'⚠️ Mali ang kasalukuyang password.':'⚠️ Wrong current password.',
+'Ang password ay dapat hindi bababa sa 6 na karakter.':'The password must be at least 6 characters.',
+'⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password.':'⚠️ This email already has an account but the password is different. Use the correct password.',
+'⚠️ Hindi wasto ang email.':'⚠️ The email is not valid.',
+'TERMS NG BAYAD:':'PAYMENT TERMS:',
+'Presyo ng Supplier':'Supplier Price',
+'Presyo mo':'Your Price',
+'/ piraso':'/ piece',
+'Presyo:':'Price:',
+'bawat piraso':'per piece',
+'Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.':'You are still using the default password from the admin. Change it now in the "Change Password" section to keep your account secure.',
+'Ang bagong password ay dapat iba sa kasalukuyan.':'The new password must be different from the current one.',
+'Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.':'These terms apply instead of the cut-off written in Section 3.',
+'Buwanan (End of Month)':'Monthly (End of Month)',
+'Kada 15 Araw':'Every 15 Days',
+'Lingguhan':'Weekly',
+'Pagkaubos ng Stock':'Upon Sell-out',
+'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off at the end of every month. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
+'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 15 days. The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
+'Cut-off kada 7 araw (lingguhan). Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)':'Cut-off every 7 days (weekly). The Owner visits to collect payment and count stock. (Sold × Supplier Price)',
+'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)':'Payment once the delivered stock is sold out, or after 30 days, whichever comes first. (Sold × Supplier Price)',
+'📧 Email ng Tindahan':'📧 Store Email',
+'I-save ang Email':'Save Email',
+'⚠️ Kailangan ang email para magamit ang Restock.':'⚠️ An email is required to use Restock.',
+'🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".':'🔒 Restock is locked. Please enter your email in the "Store Email" section first.',
+'✅ Matagumpay na na-save ang iyong email!':'✅ Your email was saved successfully!',
+'Ilagay muna ang iyong email sa seksyong "Email ng Tindahan" bago mag-request ng restock.':'Please enter your email in the "Store Email" section before requesting a restock.'
+};
+var R=[
+[/^Hal\. /,'e.g. '],
+[/^Dahilan: (.*)$/,'Reason: $1'],
+[/^Kabuuang nakabinbin: ₱(.+)$/,'Total pending: ₱$1'],
+[/^🏷️ May discount \(−₱(.+)\/pc\) — naka-lock ang presyo kahit matapos ang discount$/,'🏷️ Discount applied (−₱$1/pc) — price stays locked even after the discount ends'],
+[/^🏷️ Diskwento −₱(.+) \((.+)%\) hanggang (.+)$/,'🏷️ Discount −₱$1 ($2%) until $3'],
+[/^Diskwento −₱(.+) \((.+)%\) hanggang (.+)$/,'Discount −₱$1 ($2%) until $3'],
+[/^Natanggap mo ba ang (\d+) pcs ng (.+) sa presyong ₱(.*) bawat piraso\?$/,'Did you receive $1 pcs of $2 at ₱$3 per piece?'],
+[/^Presyo: ₱(.*)$/,'Price: ₱$1'],
+[/^✅ Naka-save: (.+) \(maaari mo itong palitan anumang oras\)$/,'✅ Saved: $1 (you can change it anytime)'],
+[/^Ilang piraso ng (.+) ang nabili\?\n\(Kasalukuyang Aktibong Stock: (\d+) pcs\)$/,'How many pieces of $1 were sold?\n(Current Active Stock: $2 pcs)']
+];
+var LANG_SWITCH_ON=false; /* gawing true + alisin ang display:none sa #langCard para ibalik ang palitan ng wika */
+var lang=LANG_SWITCH_ON?(localStorage.getItem('dwbe_lang')||'tl'):'tl',orig=new WeakMap();
+
+function tr(s){
+  var t=s.trim();if(!t)return s;
+  var v=D[t.replace(/\s+/g,' ')];
+  if(v===undefined){
+    for(var i=0;i<R.length;i++){
+      if(R[i][0].test(t)){v=t.replace(R[i][0],R[i][1]);break;}
+    }
+  }
+  if(v===undefined)return s;
+  return s.match(/^\s*/)[0]+v+s.match(/\s*$/)[0];
+}
+
+function apply(){
+  var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n;
+  while((n=w.nextNode())){
+    if(n.parentElement.closest('[data-no-i18n],script,style'))continue;
+    if(!orig.has(n))orig.set(n,n.nodeValue);
+    var nv=lang==='en'?tr(orig.get(n)):orig.get(n);
+    if(n.nodeValue!==nv)n.nodeValue=nv;
+  }
+  document.querySelectorAll('[placeholder]').forEach(function(el){
+    if(!el.dataset.ph)el.dataset.ph=el.getAttribute('placeholder');
+    el.setAttribute('placeholder',lang==='en'?tr(el.dataset.ph):el.dataset.ph);
+  });
+}
+
+// Custom in-app dialogs (pamalit sa browser alert/confirm/prompt na may "xxx.vercel.app says")
 function dlg(msg,o){
   return new Promise(function(res){
-    var t=String(msg);
+    var t=lang==='en'?tr(String(msg)):String(msg);
     var ov=document.createElement('div');ov.setAttribute('data-no-i18n','');
     ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:20000;display:flex;align-items:center;justify-content:center;padding:20px;';
     var box=document.createElement('div');
     box.style.cssText='background:#fff;border-radius:12px;max-width:380px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;';
     var hd=document.createElement('div');
-    hd.style.cssText='background:#185c38;color:#fff;padding:12px 16px;font-weight:bold;font-size:1rem;';
+    hd.style.cssText='background:#2e7d32;color:#fff;padding:12px 16px;font-weight:bold;font-size:1rem;';
     hd.textContent="🧹 Doctor's Whisk Broom";
     var bd=document.createElement('div');
     bd.style.cssText='padding:16px;font-size:.95rem;color:#333;white-space:pre-line;line-height:1.4;';
@@ -644,8 +804,8 @@ function dlg(msg,o){
       b.style.cssText='width:auto;margin:0;padding:10px 18px;font-size:.9rem;background:'+bg+';';
       b.onclick=fn;return b;
     }
-    if(o.cancel)ft.appendChild(mk('Kanselahin','#78909c',function(){done(o.input?null:false);}));
-    ft.appendChild(mk('OK','#185c38',function(){done(o.input?inp.value:true);}));
+    if(o.cancel)ft.appendChild(mk(lang==='en'?'Cancel':'Kanselahin','#78909c',function(){done(o.input?null:false);}));
+    ft.appendChild(mk('OK','#2e7d32',function(){done(o.input?inp.value:true);}));
     box.appendChild(ft);ov.appendChild(box);document.body.appendChild(ov);
     if(inp){inp.focus();inp.addEventListener('keydown',function(e){if(e.key==='Enter')done(inp.value);});}
   });
@@ -653,10 +813,47 @@ function dlg(msg,o){
 window.alert=function(m){return dlg(m,{});};
 window.confirm=function(m){return dlg(m,{cancel:true});};
 window.prompt=function(m,d){return dlg(m,{input:true,cancel:true,def:d});};
+
+new MutationObserver(function(){if(lang==='en')apply();})
+  .observe(document.body,{childList:true,subtree:true});
+
+var sel=document.getElementById('langSelect');
+sel.value=lang;
+document.documentElement.lang=lang;
+sel.addEventListener('change',function(){
+  lang=sel.value;
+  localStorage.setItem('dwbe_lang',lang);
+  document.documentElement.lang=lang;
+  apply();
+});
+apply();
 })();
 </script>
 
-<!-- Firebase Module -->
+<!-- App Update (client-controlled) -->
+<script>
+(function(){
+  if(!('serviceWorker' in navigator))return;
+  var banner=document.getElementById('updateBanner');
+  var ctl=function(){return navigator.serviceWorker.controller;};
+  var check=function(){if(ctl())ctl().postMessage('CHECK');};
+  window.applyUpdate=function(){if(ctl())ctl().postMessage('APPLY');};
+  window.dismissUpdate=function(){banner.style.display='none';};
+  navigator.serviceWorker.addEventListener('message',function(e){
+    if(e.data.type==='STATUS'&&e.data.update)banner.style.display='flex';
+    if(e.data.type==='APPLIED')location.reload();
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',check);
+  navigator.serviceWorker.register('sw.js').then(function(reg){
+    check();reg.update();
+    document.addEventListener('visibilitychange',function(){
+      if(document.visibilityState==='visible'){reg.update();check();}
+    });
+  }).catch(function(){});
+})();
+</script>
+
+<!-- Firebase SDKs -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -675,6 +872,7 @@ const dataApp = initializeApp(dataConfig, "data");
 const authData = getAuth(dataApp);
 const db = getFirestore(dataApp);
 
+// ===== TESTING MODE (nakatago; shared key sa admin.html) =====
 const _qp = new URLSearchParams(location.search);
 if (_qp.get('test') === '1') localStorage.setItem('dwbe_test_mode', '1');
 if (_qp.get('test') === '0') localStorage.removeItem('dwbe_test_mode');
@@ -685,7 +883,6 @@ if (TEST_MODE) {
   document.getElementById('testModeBtn').textContent = '🧪 Testing: ON';
   document.title = '🧪 TEST - ' + document.title;
 }
-
 window.toggleTestMode = async function () {
   if (await confirm(TEST_MODE ? 'Patayin ang TESTING MODE at bumalik sa LIVE data?' : 'I-ON ang TESTING MODE?\nHiwalay na test data ang gagamitin; hindi magagalaw ang LIVE.')) {
     if (TEST_MODE) localStorage.removeItem('dwbe_test_mode');
@@ -693,19 +890,18 @@ window.toggleTestMode = async function () {
     location.reload();
   }
 };
-
+// Nakatagong toggle: 5 beses na tap sa title sa header
 (function () {
   const t = document.querySelector('.header-title');
   let taps = 0, timer = null;
-  if(t){
-    t.addEventListener('click', () => {
-      taps++;
-      clearTimeout(timer);
-      timer = setTimeout(() => { taps = 0; }, 3000);
-      if (taps >= 5) { taps = 0; window.toggleTestMode(); }
-    });
-  }
+  t.addEventListener('click', () => {
+    taps++;
+    clearTimeout(timer);
+    timer = setTimeout(() => { taps = 0; }, 3000);
+    if (taps >= 5) { taps = 0; window.toggleTestMode(); }
+  });
 })();
+
 
 let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
 let currentStoreName = '';
@@ -716,6 +912,7 @@ const syncStatus = document.getElementById('syncStatus');
 const $ = id => document.getElementById(id);
 const now = () => new Date().toLocaleString();
 
+// Terms ng bayad (dapat pareho sa admin.html)
 const PAY_TERMS = {
   monthly:     { label: 'Buwanan (End of Month)', text: 'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
   semimonthly: { label: 'Kada 15 Araw',           text: 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
@@ -723,12 +920,16 @@ const PAY_TERMS = {
   sellout:     { label: 'Pagkaubos ng Stock',     text: 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)' }
 };
 
+// Ang tindahan ay nakikilala sa pamamagitan ng email ng naka-login na Firebase Auth account
 const getStore = () => {
   const em = authUser && authUser.email ? authUser.email.toLowerCase() : '';
   return em ? appData.consignments.find(c => (c.email || '').trim().toLowerCase() === em) : undefined;
 };
 
+// ===== Mga larawan ng bawat uri ng walis (3 bawat isa) =====
+// I-upload ang mga file na ito sa DWBE-AGREEMENTS repo. Kung wala pa ang ibang larawan, ang meron lang ang ipapakita.
 const IMG_BASE = 'https://doctorjiemar0-dotcom.github.io/DWBE-AGREEMENTS/';
+// Mga pangalan ng file (walang extension). Tinatanggap ang .jpg, .jpeg, .png, .JPG at .webp
 const STYLE_IMAGES = {
   Ordinary: ['Ordinary', 'Ordinary-2', 'Ordinary-3'],
   Premium:  ['Premium',  'Premium-2',  'Premium-3']
@@ -755,9 +956,10 @@ async function findImage(base) {
   }
   return null;
 }
-
+// Presyo ng Supplier na ipinapakita sa unang larawan (display lang; hindi nito binabago ang presyo ng mga kasalukuyang client)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
-
+// ===== DISCOUNT NA MAY PERIOD =====
+// store.discounts = [{ styleType: 'Ordinary'|'Premium'|'All', type: 'amount'|'percent', value, startDate, endDate }]
 function ymd(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
@@ -765,7 +967,7 @@ function localToday() { return ymd(new Date()); }
 function fmtDate(s) {
   return s ? new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
-
+// Presyo ng isang uri ng walis matapos ang discount (kung may aktibo ngayon)
 function priceWithDiscount(store, sub) {
   const base = Number(sub.price) || 0;
   const t = localToday();
@@ -780,7 +982,7 @@ function priceWithDiscount(store, sub) {
   const off = best ? Math.round(best.off * 100) / 100 : 0;
   return { base, off, price: Math.round((base - off) * 100) / 100, pct: base ? +(off / base * 100).toFixed(1) : 0, until: best ? best.until : null };
 }
-
+// Sa catalog ng naka-login na client: ipakita ang presyo niya at ang discount (kung aktibo)
 function updateCatalogPrices(store) {
   (store.storeItems || []).forEach(sub => {
     const badge = document.querySelector('#portalContent .style-gallery[data-style="' + sub.styleType + '"] .gal-price');
@@ -791,7 +993,6 @@ function updateCatalogPrices(store) {
       (e.off > 0 ? '<span class="gal-disc">Diskwento −₱' + e.off + ' (' + e.pct + '%) hanggang ' + fmtDate(e.until) + '</span>' : '');
   });
 }
-
 const _validCache = {};
 function getValidImages(style) {
   if (!_validCache[style]) {
@@ -826,7 +1027,21 @@ window.galStep = function(d, e) {
   showGallery();
 };
 window.closeImageViewer = function() { $('imageModal').style.display = 'none'; };
+// Pag-swipe sa larawan; ang pag-tap sa larawan mismo ay hindi nagsasara
+(function() {
+  const img = $('modalImage');
+  let x0 = null;
+  img.addEventListener('click', e => e.stopPropagation());
+  img.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  img.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 50) window.galStep(dx < 0 ? 1 : -1);
+  });
+})();
 
+// Ipakita ang main na larawan at 3 maliit na larawan sa bawat card
 function initGalleries() {
   document.querySelectorAll('.style-gallery').forEach(async el => {
     const style = el.dataset.style;
@@ -849,6 +1064,24 @@ function initGalleries() {
     }
     el.appendChild(frame);
     if (window._catalogStore) updateCatalogPrices(window._catalogStore);
+    if (list.length > 1) {
+      const row = document.createElement('div');
+      row.className = 'gal-thumbs';
+      list.forEach((u, i) => {
+        const t = document.createElement('img');
+        t.src = u;
+        t.alt = style + ' ' + (i + 1);
+        t.className = 'gal-thumb' + (i === 0 ? ' on' : '');
+        t.onclick = e => {
+          e.stopPropagation();
+          cur = i;
+          main.src = u;
+          row.querySelectorAll('.gal-thumb').forEach((x, j) => x.classList.toggle('on', j === i));
+        };
+        row.appendChild(t);
+      });
+      el.appendChild(row);
+    }
   });
 }
 initGalleries();
@@ -915,18 +1148,31 @@ window.togglePasswordVisibility = makeToggle('passwordContentWrapper', 'togglePa
 window.toggleTransactionVisibility = makeToggle('transactionContentWrapper', 'toggleTransactionBtn');
 window.toggleRestockVisibility = makeToggle('restockContentWrapper', 'toggleRestockBtn');
 window.toggleChatVisibility = makeToggle('chatContentWrapper', 'toggleChatBtn');
-window.toggleEmailVisibility = makeToggle('emailContentWrapper', 'toggleEmailBtn');
-window.toggleRestockStatusVisibility = makeToggle('restockStatusContentWrapper', 'toggleRestockStatusBtn');
-window.toggleNotificationVisibility = makeToggle('notifContentWrapper', 'toggleNotifBtn');
 
-// Update Client Password
+// Mga toggle na naaalala ang huling pinili (Abiso, Email, Restock Status)
+function setSection(w, b, open) { $(w).style.display = open ? 'block' : 'none'; $(b).textContent = open ? 'Itago' : 'Buksan'; }
+window.toggleSection = function(w, b, key) {
+  const open = $(w).style.display === 'none';
+  setSection(w, b, open);
+  try { localStorage.setItem(key, open ? '1' : '0'); } catch (e) {}
+};
+(function() {
+  [['notifContentWrapper', 'toggleNotifBtn', 'dwbe_sec_notif', true],
+   ['restockStatusWrapper', 'toggleRestockStatusBtn', 'dwbe_sec_rstatus', false],
+   ['emailContentWrapper', 'toggleEmailBtn', 'dwbe_sec_email', false]].forEach(([w, b, k, d]) => {
+    let v = null; try { v = localStorage.getItem(k); } catch (e) {}
+    setSection(w, b, v === null ? d : v === '1');
+  });
+})();
+
+// Update Client Password (Firebase Auth)
 window.updateClientPassword = async function() {
   const cur = $('currentClientPassword').value;
   const newPass = $('newClientPassword').value.trim();
   if (!cur || !newPass) { alert("Mangyaring ilagay ang kasalukuyan at bagong password."); return; }
   if (newPass.length < 6) { alert("Ang bagong password ay dapat hindi bababa sa 6 na karakter."); return; }
   if (newPass === cur) { alert("Ang bagong password ay dapat iba sa kasalukuyan."); return; }
-  if (TEST_MODE) { alert('🧪 TESTING MODE: hindi puwedeng magpalit ng password.'); return; }
+  if (TEST_MODE) { alert('🧪 TESTING MODE: hindi puwedeng magpalit ng password (totoong account ito).'); return; }
   const user = authData.currentUser;
   const store = getStore();
   if (!user || !store) return;
@@ -934,7 +1180,15 @@ window.updateClientPassword = async function() {
     await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, cur));
     await updatePassword(user, newPass);
   } catch (err) {
-    alert("⚠️ Hindi na-update ang password: " + err.message);
+    if (['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err.code)) {
+      alert("⚠️ Mali ang kasalukuyang password.");
+    } else if (err.code === 'auth/weak-password') {
+      alert("Ang bagong password ay dapat hindi bababa sa 6 na karakter.");
+    } else if (err.code === 'auth/too-many-requests') {
+      alert("⚠️ Maraming maling pagsubok. Subukan muli mamaya.");
+    } else {
+      alert("⚠️ Hindi na-update ang password: " + err.message);
+    }
     return;
   }
   if (!store.transactionHistory) store.transactionHistory = [];
@@ -947,6 +1201,33 @@ window.updateClientPassword = async function() {
   renderClientDashboard(store);
 };
 
+const AUTH_BAD = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'];
+
+// Para sa mga lumang client na wala pang Firebase account: ang dati nilang password ay magagamit nang isang beses
+// para gumawa ng account, at buburahin na ang nakasulat na password sa database.
+async function tryLegacyMigration(email, pass) {
+  if (TEST_MODE) return false;
+  const legacy = appData.consignments.find(c =>
+    (c.email || '').trim().toLowerCase() === email && (c.password || c.contact) && (c.password || c.contact) === pass);
+  if (!legacy) return false;
+  let newPass = pass;
+  if (pass.length < 6) {
+    const p = await prompt("Para sa mas ligtas na account, gumawa ng bagong password (hindi bababa sa 6 na karakter):");
+    if (!p || p.trim().length < 6) { alert("Kailangan ng hindi bababa sa 6 na karakter."); return true; }
+    newPass = p.trim();
+  }
+  try {
+    await createUserWithEmailAndPassword(authData, email, newPass);
+  } catch (err) {
+    alert("⚠️ Mali ang pangalan ng tindahan o password.");
+    return true;
+  }
+  const s2 = appData.consignments.find(c => (c.email || '').trim().toLowerCase() === email);
+  if (s2) { delete s2.password; await saveData(); }
+  return true;
+}
+
+// Paghahanap ng tindahan sa login (naka-mask ang pangalan: unang titik lang ng bawat salita ang kita)
 let loginStores = [];
 let loginLabels = [];
 let paramApplied = false;
@@ -977,6 +1258,12 @@ function renderSuggestions() {
     row.onclick = () => selectLoginStore(i);
     box.appendChild(row);
   });
+  if (!hits.length) {
+    const none = document.createElement('div');
+    none.textContent = 'Walang nakitang tindahan.';
+    none.style.cssText = 'padding:10px;font-size:.85rem;color:#666;';
+    box.appendChild(none);
+  }
   box.style.display = 'block';
 }
 function populateStoreList() {
@@ -1012,6 +1299,7 @@ $('storeSearchInput').addEventListener('input', () => {
   renderSuggestions();
 });
 
+// Login (Firebase Auth)
 $('unifiedLoginBtn').addEventListener('click', async () => {
   const idxVal = $('unifiedStoreInput').value;
   const pass = $('unifiedPasswordInput').value;
@@ -1020,6 +1308,7 @@ $('unifiedLoginBtn').addEventListener('click', async () => {
   if (idxVal === '' || !pass) { alert('Mangyaring hanapin at piliin ang tindahan, at ilagay ang password.'); return; }
   if (!dataLoaded) { alert('Kumukuha pa ng data. Subukan muli sa ilang segundo.'); return; }
 
+  // Ang email ng napiling tindahan ang gagamitin sa Firebase Authentication
   const found = loginStores[parseInt(idxVal)];
   const email = found ? (found.email || '').trim().toLowerCase() : '';
   if (!found || !email) { $('noStoreNotice').style.display = 'block'; return; }
@@ -1028,10 +1317,23 @@ $('unifiedLoginBtn').addEventListener('click', async () => {
     await signInWithEmailAndPassword(authData, email, pass);
     $('unifiedPasswordInput').value = '';
   } catch (err) {
-    alert('⚠️ Mali ang pangalan ng tindahan o password.');
+    if (AUTH_BAD.includes(err.code)) {
+      if (await tryLegacyMigration(email, pass)) return;
+      alert('⚠️ Mali ang pangalan ng tindahan o password.');
+    } else if (err.code === 'auth/too-many-requests') {
+      alert('⚠️ Maraming maling pagsubok. Subukan muli mamaya.');
+    } else if (err.code === 'auth/network-request-failed') {
+      alert('⚠️ Walang koneksyon sa internet.');
+    } else if (err.code === 'auth/invalid-email') {
+      alert('⚠️ Hindi wasto ang email.');
+    } else {
+      alert('⚠️ Hindi makapag-login: ' + err.message);
+    }
   }
 });
+$('unifiedPasswordInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') $('unifiedLoginBtn').click(); });
 
+// Logout
 window.requestLogout = async function() {
   const storeInput = await prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
   if (storeInput === null) return;
@@ -1045,6 +1347,7 @@ window.requestLogout = async function() {
   }
 };
 
+// Clear Notifications
 window.clearAllNotifications = async function() {
   const store = getStore();
   if (!store) return;
@@ -1052,6 +1355,7 @@ window.clearAllNotifications = async function() {
   await saveData();
 };
 
+// Stop Agreement
 window.promptStopAgreement = async function() {
   if (!(await confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?"))) return;
   const store = getStore();
@@ -1071,6 +1375,7 @@ window.promptStopAgreement = async function() {
   renderClientDashboard(store);
 };
 
+// Dismiss Notification
 window.dismissNotification = async function(index) {
   const store = getStore();
   if (!store || !store.clientNotifications) return;
@@ -1078,11 +1383,14 @@ window.dismissNotification = async function(index) {
   await saveData();
 };
 
+// Confirm Restock
 window.confirmReceiveRestock = async function(index) {
   const store = getStore();
   if (!store || !store.approvedRestocks || !store.approvedRestocks[index]) return;
 
   const itemToReceive = store.approvedRestocks[index];
+
+  // Beripikasyon ng presyo bago tanggapin
   if (itemToReceive.price && !(await confirm(`Natanggap mo ba ang ${itemToReceive.qty} pcs ng ${itemToReceive.styleType} sa presyong ₱${itemToReceive.price} bawat piraso?`))) return;
 
   if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
@@ -1121,6 +1429,7 @@ window.confirmReceiveRestock = async function(index) {
   renderClientDashboard(store);
 };
 
+// Record Sale
 window.promptRecordSale = async function(styleType) {
   const store = getStore();
   if (!store) return;
@@ -1142,6 +1451,7 @@ window.promptRecordSale = async function(styleType) {
 
   sub.currentStock -= qtySold;
   const eff = priceWithDiscount(store, sub);
+  // Itala ang halaga ng benta sa presyong may discount (hindi nababago kahit matapos ang discount)
   sub.soldValue = Math.round(((Number(sub.soldValue) || 0) + qtySold * eff.price) * 100) / 100;
   sub.soldValueQty = (Number(sub.soldValueQty) || 0) + qtySold;
 
@@ -1168,6 +1478,7 @@ window.promptRecordSale = async function(styleType) {
   renderClientDashboard(store);
 };
 
+// Load Data (live sync: nag-a-update kapag may nag-save na iba)
 let unsubData = null;
 let listenFailed = false;
 function listenData() {
@@ -1193,6 +1504,7 @@ function listenData() {
   });
 }
 
+// Save Data
 async function saveData() {
   syncStatus.textContent = "Nagse-save sa Cloud...";
   try {
@@ -1204,11 +1516,30 @@ async function saveData() {
   }
 }
 
+// ===== Lightweight client presence =====
+// Hindi tayo nagha-heartbeat kada segundo. Isang Cloud write lang kapag bagong login
+// o lumagpas na ng 5 minuto ang huling presence update. Ang Admin ay ituturing na
+// Online ang client kung may presence sa loob ng huling 10 minuto.
+let lastPresenceWrite = 0;
+async function markClientPresence(force = false) {
+  const user = authData.currentUser;
+  if (!user || !dataLoaded) return;
+  const store = getStore();
+  if (!store) return;
+  const nowMs = Date.now();
+  const existing = typeof store.lastClientAccess === 'number' ? store.lastClientAccess : Date.parse(store.lastClientAccess || '');
+  if (!force && existing && !isNaN(existing) && nowMs - existing < 5 * 60 * 1000) return;
+  store.lastClientAccess = nowMs;
+  lastPresenceWrite = nowMs;
+  try { await saveData(); } catch (_) {}
+}
+
+// Initialize Portal
 function initPortalView() {
   const paramStore = new URLSearchParams(window.location.search).get('store');
   const showPortal = (on) => {
     $('loginScreen').style.display = on ? 'none' : 'flex';
-    $('portalContent').style.display = on ? (window.matchMedia('(min-width: 900px)').matches ? 'grid' : 'block') : 'none';
+    $('portalContent').style.display = on ? 'block' : 'none';
   };
 
   if (applying) return;
@@ -1223,6 +1554,7 @@ function initPortalView() {
       renderClientDashboard(found);
       return;
     }
+    // may account pero wala pang aprubadong tindahan
     $('noStoreNotice').style.display = 'block';
     signOut(authData).catch(() => {});
   }
@@ -1234,6 +1566,7 @@ function initPortalView() {
   }
 }
 
+// Inquiry Form Submission (gumagawa ng Firebase account; hindi na sine-save ang password sa database)
 const inquiryForm = $('inquiryForm');
 if (inquiryForm) {
   inquiryForm.addEventListener('submit', async (e) => {
@@ -1246,7 +1579,7 @@ if (inquiryForm) {
     const email = $('inqEmail').value.trim().toLowerCase();
     const address = $('inqAddress').value.trim();
     const styleType = $('inqStyleType').value;
-    const initialQty = 5;
+    const initialQty = 5; // Fixed: min at max ay 5 pcs
     const message = $('inqMessage').value.trim();
 
     if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
@@ -1254,21 +1587,28 @@ if (inquiryForm) {
     applying = true;
     try {
       if (!TEST_MODE) {
-        try {
-          await createUserWithEmailAndPassword(authData, email, password);
-        } catch (err) {
-          if (err.code === 'auth/email-already-in-use') {
-            try {
-              await signInWithEmailAndPassword(authData, email, password);
-            } catch (err2) {
-              alert('⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password.');
-              return;
-            }
-          } else {
-            alert('⚠️ Hindi nagawa ang account: ' + err.message);
+      try {
+        await createUserWithEmailAndPassword(authData, email, password);
+      } catch (err) {
+        if (err.code === 'auth/email-already-in-use') {
+          try {
+            await signInWithEmailAndPassword(authData, email, password);
+          } catch (err2) {
+            alert('⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password.');
             return;
           }
+        } else if (err.code === 'auth/invalid-email') {
+          alert('⚠️ Hindi wasto ang email.');
+          return;
+        } else if (err.code === 'auth/weak-password') {
+          alert('Ang password ay dapat hindi bababa sa 6 na karakter.');
+          return;
+        } else {
+          alert('⚠️ Hindi nagawa ang account: ' + err.message);
+          return;
         }
+      }
+
       }
 
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
@@ -1289,19 +1629,26 @@ if (inquiryForm) {
   });
 }
 
+// Ang status ay hinahango sa tunay na estado ng request, kaya hindi ito nagkakaiba sa aktuwal
 function restockStatusOf(store, r) {
   if ((store.activeRequests || []).some(a => a.id === r.id)) return 'Pending';
   if ((store.approvedRestocks || []).some(a => a.reqId === r.id)) return 'Approved';
   if (r.status === 'Rejected') return 'Rejected';
   if (r.status === 'Received') return 'Received';
+  // wala na sa pila ng request at hindi tinanggihan: natapos na
   return (store.approvedRestocks || []).length || (store.activeRequests || []).length ? r.status : 'Received';
 }
 
+// Restock request status
 function renderRestockStatus(store) {
-  const card = $('restockStatusCard'), box = $('restockStatusContainer'), note =$('restockNotice');
+  const card = $('restockStatusCard'), box = $('restockStatusContainer'), note = $('restockNotice');
   const log = (store.restockLog || []).slice(0, 5);
   box.innerHTML = '';
   card.style.display = log.length ? 'block' : 'none';
+  const active = (store.restockLog || []).filter(r => ['Pending', 'Approved'].includes(restockStatusOf(store, r))).length;
+  const rc = $('restockStatusCount');
+  rc.textContent = active ? active + ' aktibo' : log.length + ' kabuuan';
+  rc.className = 'pill ' + (active ? 'pill-warn' : 'pill-ok');
   const labels = { Pending: '⏳ Naghihintay ng aprubal', Approved: '✅ Na-approve — hintayin ang delivery', Rejected: '❌ Tinanggihan', Received: '📦 Natanggap na' };
   const colors = { Pending: '#f57c00', Approved: '#0288d1', Rejected: '#c62828', Received: '#2e7d32' };
   log.forEach(r => {
@@ -1318,16 +1665,30 @@ function renderRestockStatus(store) {
   note.style.display = restockBlocked(store, $('restockStyleType').value) ? 'block' : 'none';
 }
 
+// ===== Email ng Tindahan (walang verification; kailangan para magamit ang Restock) =====
+// Hiwalay ito sa login email ng Firebase Auth (store.email), kaya hindi apektado ang login.
 const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const hasEmail = s => validEmail((s.contactEmail || '').trim());
 
 function renderEmailLock(store) {
   const ok = hasEmail(store);
-  $('emailStatusText').textContent = ok
-    ? '✅ Naka-save: ' + store.contactEmail + ' (maaari mo itong palitan anumang oras)'
-    : '⚠️ Kailangan ang email para magamit ang Restock.';
-  $('emailStatusText').style.color = ok ? '#2e7d32' : '#c62828';
-  if (document.activeElement !== $('clientEmailInput')) $('clientEmailInput').value = store.contactEmail \vert{}\vert{} '';$('restockEmailLock').style.display = ok ? 'none' : 'block';
+  const st = $('emailStatusText');
+  st.textContent = ok ? '✅ Naka-save at aktibo' : '⚠️ Kailangan ang email para magamit ang Restock.';
+  st.style.color = ok ? '#2e7d32' : '#c62828';
+  const bd = $('emailBadge');
+  bd.textContent = ok ? 'Naka-save' : 'Kailangan';
+  bd.className = 'pill ' + (ok ? 'pill-ok' : 'pill-bad');
+  $('emailCurrentValue').textContent = ok ? store.contactEmail : 'Wala pa';
+  $('emailLoginValue').textContent = store.email || '—';
+  $('emailUpdatedValue').textContent = store.contactEmailUpdated || '—';
+  if (document.activeElement !== $('clientEmailInput')) $('clientEmailInput').value = store.contactEmail || '';
+  // Una lang: buksan ang seksyon kung wala pang email (maliban kung may naka-save nang pinili ang client)
+  if (!window._emailInit) {
+    window._emailInit = true;
+    let v = null; try { v = localStorage.getItem('dwbe_sec_email'); } catch (e) {}
+    if (v === null) setSection('emailContentWrapper', 'toggleEmailBtn', !ok);
+  }
+  $('restockEmailLock').style.display = ok ? 'none' : 'block';
   const b = $('restockSubmitBtn');
   b.disabled = !ok;
   b.style.opacity = ok ? '' : '.5';
@@ -1339,6 +1700,7 @@ window.saveClientEmail = async function() {
   const em = $('clientEmailInput').value.trim().toLowerCase();
   if (!validEmail(em)) { alert('⚠️ Hindi wasto ang email.'); return; }
   store.contactEmail = em;
+  store.contactEmailUpdated = now();
   if (!store.transactionHistory) store.transactionHistory = [];
   store.transactionHistory.unshift({ type: 'Email', text: 'Na-save ang email ng tindahan: ' + em, date: now() });
   await saveData();
@@ -1346,13 +1708,21 @@ window.saveClientEmail = async function() {
   renderClientDashboard(store);
 };
 
+// Render Dashboard
 function renderClientDashboard(store) {
+
   $('displayStoreName').innerHTML =
     store.storeName + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${store.ownerName})</span>` : '');
 
   const agreementStorePartner = $('agreementStorePartner');
   if (agreementStorePartner) {
     agreementStorePartner.textContent = `${store.storeName} (${store.ownerName || 'May-ari'})`;
+  }
+
+  const agreementSupplierPrice = $('agreementSupplierPrice');
+  if (agreementSupplierPrice) {
+    const activeItem = store.storeItems && store.storeItems[0] ? store.storeItems[0] : null;
+    agreementSupplierPrice.textContent = activeItem ? (activeItem.price || store.price || '___') : (store.price || '___');
   }
 
   const agreementStatusDisplay = $('agreementStatusDisplay');
@@ -1364,20 +1734,30 @@ function renderClientDashboard(store) {
   $('agreementPayTermLabel').textContent = term.label;
   $('agreementPayTermText').textContent = term.text;
 
+  // Default password mula sa admin: hilingin na palitan agad
+  if (store.mustChangePassword && !window._pwNagShown) {
+    window._pwNagShown = true;
+    $('passwordContentWrapper').style.display = 'block';
+    $('togglePasswordBtn').textContent = 'Itago';
+    alert('Default password mula sa admin pa ang gamit mo. Palitan ito ngayon sa seksyong "Palitan ang Password" para sa seguridad ng iyong account.');
+  }
+
   renderRestockStatus(store);
   renderEmailLock(store);
   window._catalogStore = store;
   updateCatalogPrices(store);
 
+  // QR Code
   const smallQrContainer = $('smallQrcode');
   smallQrContainer.innerHTML = "";
   const currentUrl = window.location.origin + window.location.pathname + "?store=" + encodeURIComponent(store.storeName);
   new QRCode(smallQrContainer, {
     text: currentUrl, width: 100, height: 100,
-    colorDark: "#185c38", colorLight: "#ffffff",
+    colorDark: "#2e7d32", colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
   });
 
+  // Pending Delivery
   const pendingDeliveryCard = $('pendingDeliveryCard');
   const pendingDeliveryContainer = $('pendingDeliveryContainer');
   pendingDeliveryContainer.innerHTML = '';
@@ -1390,13 +1770,14 @@ function renderClientDashboard(store) {
       div.innerHTML =
         `<div>Uri: <strong>${req.styleType}</strong> | Dami: <strong>${req.qty} pcs</strong></div>
          ${req.price ? `<div>Presyo: <strong>₱${req.price}</strong> bawat piraso</div>` : ''}
-         <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #185c38; padding: 6px; font-size: 0.8rem; margin-top: 5px;">✅ Natanggap Ko Na</button>`;
+         <button type="button" onclick="confirmReceiveRestock(${index})" style="background-color: #2e7d32; padding: 6px; font-size: 0.8rem; margin-top: 5px;">✅ Natanggap Ko Na</button>`;
       pendingDeliveryContainer.appendChild(div);
     });
   } else {
     pendingDeliveryCard.style.display = 'none';
   }
 
+  // Pending Sales
   const pendingSalesCard = $('pendingSalesCard');
   const pendingSalesContainer = $('pendingSalesContainer');
   pendingSalesContainer.innerHTML = '';
@@ -1414,6 +1795,7 @@ function renderClientDashboard(store) {
       div.innerHTML =
         `<div>Uri: <strong>${sale.styleType}</strong> | Dami: <strong>${sale.qty} pcs</strong></div>
          ${sale.price ? `<div style="font-size:0.8rem;">Presyo: ${sale.discountOff > 0 ? `<s style="color:#999">₱${sale.listPrice}</s> ` : ''}<strong>₱${sale.price}</strong> × ${sale.qty} = <strong>₱${sale.totalAmount}</strong></div>` : ''}
+         ${sale.discountOff > 0 ? `<div style="font-size:0.75rem;color:#2e7d32;">🏷️ May discount (−₱${sale.discountOff}/pc) — naka-lock ang presyo kahit matapos ang discount</div>` : ''}
          <span style="color: #f57c00; font-weight: bold;">Nakabinbin sa Admin</span>`;
       pendingSalesContainer.appendChild(div);
     });
@@ -1421,6 +1803,7 @@ function renderClientDashboard(store) {
     pendingSalesCard.style.display = 'none';
   }
 
+  // Transaction History
   const transContainer = $('clientTransactionContainer');
   transContainer.innerHTML = '';
   if (!store.transactionHistory) store.transactionHistory = [];
@@ -1438,7 +1821,10 @@ function renderClientDashboard(store) {
     transContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang naitalang transaksyon.</p>';
   }
 
+  // Notifications
   const notifContainer = $('clientNotificationsContainer');
+  const nc = (store.clientNotifications || []).length;
+  $('notifCount').textContent = nc; $('notifCount').style.display = nc ? 'inline-block' : 'none';
   notifContainer.innerHTML = '';
 
   if (store.clientNotifications && store.clientNotifications.length > 0) {
@@ -1457,6 +1843,7 @@ function renderClientDashboard(store) {
     notifContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong abiso.</p>';
   }
 
+  // Store Items
   if (!store.storeItems || store.storeItems.length === 0) {
     store.storeItems = [{
       styleType: store.styleType || 'Ordinary',
@@ -1478,17 +1865,19 @@ function renderClientDashboard(store) {
     const div = document.createElement('div');
     div.className = 'store-item-box' + (sub.styleType === 'Premium' ? ' premium-stock' : '');
     div.innerHTML =
-      `<div style="font-weight: bold; color: #185c38; display: flex; justify-content: space-between;">
+      `<div style="font-weight: bold; color: #2e7d32; display: flex; justify-content: space-between;">
          <span>${sub.styleType}</span>
          <span>Presyo: ${dsc.off > 0 ? `<s style="color:#999">₱${dsc.base}</s> <strong>₱${dsc.price}</strong>` : '₱' + (sub.price || 0)}</span>
        </div>
        <div style="font-size: 0.85rem; color: #444; margin: 5px 0;">
          Natitirang Stock: <strong>${sub.currentStock} pcs</strong> / Nabenta: <strong>${subSold} pcs</strong>
        </div>
+       ${dsc.off > 0 ? `<div style="font-size:.78rem;color:#2e7d32;margin-bottom:5px;">🏷️ Diskwento −₱${dsc.off} (${dsc.pct}%) hanggang ${fmtDate(dsc.until)}</div>` : ''}
        <button type="button" onclick="promptRecordSale('${sub.styleType}')" style="background-color: #0288d1; font-size: 0.85rem; padding: 6px;">🛒 MAY BUMILI (I-record ang Benta)</button>`;
     itemsContainer.appendChild(div);
   });
 
+  // Chat
   const chatContainer = $('clientChatContainer');
   chatContainer.innerHTML = '';
 
@@ -1507,11 +1896,15 @@ function renderClientDashboard(store) {
   }
 }
 
+// Submit Restock Request
 const monthKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 
+// Isang request lang bawat buwan (ang Tinanggihan ay hindi binibilang). Bawal din kung may nakabinbin pa.
 function restockBlocked(store, style) {
+  // May nakabinbin pa para sa parehong uri
   if ((store.activeRequests || []).some(r => r.styleType === style)) return true;
   if ((store.approvedRestocks || []).some(r => r.styleType === style)) return true;
+  // O nakapag-request na ng parehong uri ngayong buwan (ang Tinanggihan ay hindi binibilang)
   return (store.restockLog || []).some(r => r.styleType === style && r.monthKey === monthKey() && r.status !== 'Rejected');
 }
 
@@ -1519,6 +1912,7 @@ window.submitRestockRequest = async function() {
   const store = getStore();
   if (!store) return;
 
+  // Naka-lock ang restock hangga't walang email
   if (!hasEmail(store)) {
     alert('Ilagay muna ang iyong email sa seksyong "Email ng Tindahan" bago mag-request ng restock.');
     return;
@@ -1549,6 +1943,7 @@ window.submitRestockRequest = async function() {
   renderClientDashboard(store);
 };
 
+// Send Client Message
 window.sendClientMessage = async function() {
   const input = $('clientChatInput');
   const text = input.value.trim();
@@ -1565,13 +1960,23 @@ window.sendClientMessage = async function() {
   renderClientDashboard(store);
 };
 
+// Palitan ang abiso kapag ibang uri ang pinili sa restock
 $('restockStyleType').addEventListener('change', () => { const st = getStore(); if (st) renderRestockStatus(st); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && authData.currentUser) markClientPresence(false);
+});
 
+// Start
 onAuthStateChanged(authData, (user) => {
   authUser = user;
   if (!unsubData || listenFailed) listenData();
   initPortalView();
+  if (user) {
+    // Presence is deliberately throttled: no continuous Firebase writes.
+    setTimeout(() => markClientPresence(true), 250);
+  }
 });
+
 </script>
 
 </body>
