@@ -89,6 +89,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </style>
 </head>
 <body>
+<div id="testBanner" data-no-i18n style="display:none;position:sticky;top:0;z-index:9998;background:#e65100;color:#fff;text-align:center;font-weight:bold;font-size:.8rem;padding:6px;">🧪 TESTING MODE — hindi apektado ang LIVE data</div>
+<!-- Nakatagong TESTING MODE button (hindi nakikita ng client). Buksan: ?test=1 | Isara: ?test=0 | o 5x tap sa title -->
+<button type="button" id="testModeBtn" onclick="toggleTestMode()" style="display:none;">🧪 Testing: OFF</button>
 
 <header>
   <div class="header-title">🧹 Doctor's Whisk Broom - Client Portal</div>
@@ -787,6 +790,37 @@ const dataApp = initializeApp(dataConfig, "data");
 const authData = getAuth(dataApp);
 const db = getFirestore(dataApp);
 
+// ===== TESTING MODE (nakatago; shared key sa admin.html) =====
+const _qp = new URLSearchParams(location.search);
+if (_qp.get('test') === '1') localStorage.setItem('dwbe_test_mode', '1');
+if (_qp.get('test') === '0') localStorage.removeItem('dwbe_test_mode');
+const TEST_MODE = localStorage.getItem('dwbe_test_mode') === '1';
+const DATA_DOC = TEST_MODE ? 'test_inventory' : 'main_inventory';
+if (TEST_MODE) {
+  document.getElementById('testBanner').style.display = 'block';
+  document.getElementById('testModeBtn').textContent = '🧪 Testing: ON';
+  document.title = '🧪 TEST - ' + document.title;
+}
+window.toggleTestMode = async function () {
+  if (await confirm(TEST_MODE ? 'Patayin ang TESTING MODE at bumalik sa LIVE data?' : 'I-ON ang TESTING MODE?\nHiwalay na test data ang gagamitin; hindi magagalaw ang LIVE.')) {
+    if (TEST_MODE) localStorage.removeItem('dwbe_test_mode');
+    else localStorage.setItem('dwbe_test_mode', '1');
+    location.reload();
+  }
+};
+// Nakatagong toggle: 5 beses na tap sa title sa header
+(function () {
+  const t = document.querySelector('.header-title');
+  let taps = 0, timer = null;
+  t.addEventListener('click', () => {
+    taps++;
+    clearTimeout(timer);
+    timer = setTimeout(() => { taps = 0; }, 3000);
+    if (taps >= 5) { taps = 0; window.toggleTestMode(); }
+  });
+})();
+
+
 let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
 let currentStoreName = '';
 let authUser = null;
@@ -1040,6 +1074,7 @@ window.updateClientPassword = async function() {
   if (!cur || !newPass) { alert("Mangyaring ilagay ang kasalukuyan at bagong password."); return; }
   if (newPass.length < 6) { alert("Ang bagong password ay dapat hindi bababa sa 6 na karakter."); return; }
   if (newPass === cur) { alert("Ang bagong password ay dapat iba sa kasalukuyan."); return; }
+  if (TEST_MODE) { alert('🧪 TESTING MODE: hindi puwedeng magpalit ng password (totoong account ito).'); return; }
   const user = authData.currentUser;
   const store = getStore();
   if (!user || !store) return;
@@ -1073,6 +1108,7 @@ const AUTH_BAD = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-cr
 // Para sa mga lumang client na wala pang Firebase account: ang dati nilang password ay magagamit nang isang beses
 // para gumawa ng account, at buburahin na ang nakasulat na password sa database.
 async function tryLegacyMigration(email, pass) {
+  if (TEST_MODE) return false;
   const legacy = appData.consignments.find(c =>
     (c.email || '').trim().toLowerCase() === email && (c.password || c.contact) && (c.password || c.contact) === pass);
   if (!legacy) return false;
@@ -1351,7 +1387,7 @@ function listenData() {
   if (unsubData) unsubData();
   listenFailed = false;
   syncStatus.textContent = "Kumukuha ng data sa Cloud...";
-  unsubData = onSnapshot(doc(db, "app_data", "main_inventory"), (snap) => {
+  unsubData = onSnapshot(doc(db, "app_data", DATA_DOC), (snap) => {
     if (snap.metadata.hasPendingWrites) return;
     if (snap.exists()) {
       appData = snap.data();
@@ -1374,7 +1410,7 @@ function listenData() {
 async function saveData() {
   syncStatus.textContent = "Nagse-save sa Cloud...";
   try {
-    await setDoc(doc(db, "app_data", "main_inventory"), appData);
+    await setDoc(doc(db, "app_data", DATA_DOC), appData);
     syncStatus.textContent = "✅ Na-save sa Cloud";
   } catch (err) {
     console.error(err);
@@ -1452,6 +1488,7 @@ if (inquiryForm) {
 
     applying = true;
     try {
+      if (!TEST_MODE) {
       try {
         await createUserWithEmailAndPassword(authData, email, password);
       } catch (err) {
@@ -1472,6 +1509,8 @@ if (inquiryForm) {
           alert('⚠️ Hindi nagawa ang account: ' + err.message);
           return;
         }
+      }
+
       }
 
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
