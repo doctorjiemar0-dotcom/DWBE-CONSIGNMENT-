@@ -222,7 +222,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         <div class="form-group"><label>Pangalan ng May-ari:</label><input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required></div>
         <div class="form-group"><label>Sariling Password (Para sa Portal Login):</label><input type="password" id="inqPassword" placeholder="Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)" minlength="6" required></div>
         <div class="form-group"><label>Numero ng Telepono / GCash:</label><input type="text" id="inqContact" placeholder="Hal. 09123456789" required></div>
-        <div class="form-group"><label>Gmail / Active Email Address:</label><input type="email" id="inqEmail" placeholder="Hal. alingenastore@gmail.com" required></div>
+        <div class="form-group"><label>Personal Active Email Address (sarili mong aktibong email):</label><input type="email" id="inqEmail" placeholder="Ilagay ang sarili mong aktibong Gmail/email" autocomplete="email" required></div>
         <div class="form-group"><label>Lokasyon / Address:</label><input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required></div>
 
         <!-- Walis Style Selection -->
@@ -371,8 +371,9 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         </div>
         <p class="hint">• Ginagamit ito para ma-unlock ang Restock request at para makontak ka ng admin.<br>• Hiwalay ito sa iyong Login account, kaya hindi nito mababago ang paraan ng pag-login mo.<br>• Walang verification na ipapadala. Siguraduhing tama ang pagkaka-type.</p>
         <div class="form-group">
-          <label for="clientEmailInput">Active Email Address:</label>
-          <input type="email" id="clientEmailInput" placeholder="Hal. alingnena@gmail.com" autocomplete="email">
+          <label for="clientEmailInput">Personal Active Email Address (hindi default email ng Admin):</label>
+          <input type="email" id="clientEmailInput" placeholder="Ilagay ang sarili mong aktibong Gmail/email" autocomplete="email">
+          <p class="hint" style="margin-top:8px;">⚠️ Dapat ay sarili mong <strong>Personal Active Email</strong> na nagagamit mo. Bawal ilagay ang default/login email na ginawa o ibinigay ng Admin. Hindi tatanggapin ang email kung kapareho ito ng Login Account.</p>
         </div>
         <button type="button" onclick="saveClientEmail()" style="background-color:#0288d1;">I-save ang Email</button>
       </div>
@@ -732,7 +733,10 @@ var D={
 '• Ginagamit ito para ma-unlock ang Restock request at para makontak ka ng admin.':'• Used to unlock Restock requests and so the admin can reach you.',
 '• Hiwalay ito sa iyong Login account, kaya hindi nito mababago ang paraan ng pag-login mo.':'• This is separate from your Login account, so it will not change how you log in.',
 '• Walang verification na ipapadala. Siguraduhing tama ang pagkaka-type.':'• No verification is sent. Make sure it is typed correctly.',
-'Active Email Address:':'Active Email Address:',
+'Active Email Address:':'Personal Active Email Address (not the Admin default email):',
+'Personal Active Email Address (sarili mong aktibong email):':'Personal Active Email Address (your own active email):',
+'Personal Active Email Address (hindi default email ng Admin):':'Personal Active Email Address (not the Admin default email):',
+'Ilagay ang sarili mong aktibong Gmail/email':'Enter your own active Gmail/email',
 '📧 Email ng Tindahan':'📧 Store Email',
 'I-save ang Email':'Save Email',
 '⚠️ Kailangan ang email para magamit ang Restock.':'⚠️ An email is required to use Restock.',
@@ -1709,6 +1713,12 @@ window.saveClientEmail = async function() {
   if (!store) return;
   const em = $('clientEmailInput').value.trim().toLowerCase();
   if (!validEmail(em)) { alert('⚠️ Hindi wasto ang email.'); return; }
+  const loginEmail = String(store.email || '').trim().toLowerCase();
+  if (loginEmail && em === loginEmail) {
+    alert('⚠️ Bawal gamitin ang default/login email na ginawa o ibinigay ng Admin. Ilagay ang sarili mong Personal Active Email na ikaw ang may access.');
+    $('clientEmailInput').focus();
+    return;
+  }
   store.contactEmail = em;
   store.contactEmailUpdated = now();
   if (!store.transactionHistory) store.transactionHistory = [];
