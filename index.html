@@ -119,7 +119,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
 
     <div id="manualLoginSection" style="width:100%;">
-      <h2 style="color:var(--primary-color);font-size:1.1rem;margin-bottom:5px;">Pribadong Portal ng Tindahan (Login)</h2>
+      <h2 style="color:var(--primary-color);font-size:1.1rem;margin-bottom:5px;">Consignment Portal (Login)</h2>
       <p style="font-size:.80rem;color:#666;margin-bottom:8px;">Mag-login gamit ang pangalan ng tindahan at password.</p>
 
       <div id="noStoreNotice" style="display:none;background:#fff3e0;border-left:4px solid #f57c00;padding:8px;margin-bottom:12px;font-size:.8rem;color:#e65100;border-radius:4px;">
@@ -198,7 +198,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
           </div>
         </div>
 
-        <div class="form-group"><label>Dami ng Nais i-Order (Quantity / Initial Qty):</label><input type="number" id="inqInitialQty" value="5" min="1" placeholder="Hal. 5" required></div>
+        <div class="form-group"><label>Dami ng Nais i-Order (Fixed: 5 pcs):</label><input type="number" id="inqInitialQty" value="5" min="5" max="5" readonly required style="background:#eee;"></div>
         <div class="form-group"><label>Mensahe / Katanungan (Optional):</label><textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea></div>
 
         <button type="submit" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
@@ -518,7 +518,7 @@ var D={
 '⚠️ Error sa pag-save':'⚠️ Error while saving',
 '📱 I-Install':'📱 Install',
 '🔒 Ligtas na na-detect ang iyong tindahan mula sa ibinigay na link. Ilagay ang iyong password upang buksan ang portal.':'🔒 Your store was securely detected from the link. Enter your password to open the portal.',
-'Pribadong Portal ng Tindahan (Login)':'Private Store Portal (Login)',
+'Dami ng Nais i-Order (Fixed: 5 pcs):':'Quantity to Order (Fixed: 5 pcs):',
 'I-type ang unang titik o pangalan ng tindahan upang lumitaw ang naka-mask na pagpipilian.':'Type the first letter or the store name to show the masked options.',
 'Ang mga pangalan ng tindahan ay naka-mask para sa iyong seguridad at privacy. Ang nakikita mo dito ay hindi ang buong pangalan ng tindahan.':'Store names are masked for your security and privacy. What you see here is not the full store name.',
 'Pangalan ng Tindahan:':'Store Name:',
@@ -1481,7 +1481,7 @@ if (inquiryForm) {
     const email = $('inqEmail').value.trim().toLowerCase();
     const address = $('inqAddress').value.trim();
     const styleType = $('inqStyleType').value;
-    const initialQty = parseInt($('inqInitialQty').value) || 5;
+    const initialQty = 5; // Fixed: min at max ay 5 pcs
     const message = $('inqMessage').value.trim();
 
     if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
