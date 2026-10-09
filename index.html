@@ -233,6 +233,44 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </div>
 
+    <!-- ======== 1. MGA ABISO AT KOMUNIKASYON ======== -->
+    <!-- Notifications -->
+    <div class="card">
+      <div class="row" style="margin-bottom:8px;">
+        <h2 style="margin-bottom:0;">📢 Mga Abiso at Update</h2>
+        <button type="button" onclick="clearAllNotifications()" style="background-color:#c62828;width:auto;font-size:.75rem;padding:4px 8px;margin-top:0;">Clear All</button>
+      </div>
+      <div id="clientNotificationsContainer"><p style="font-size:.85rem;color:#666;">Wala pang bagong abiso.</p></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="card">
+      <div class="row">
+        <h2 style="margin-bottom:0;font-size:.9rem;">💬 Support</h2>
+        <button type="button" id="toggleChatBtn" onclick="toggleChatVisibility()" style="background-color:#0288d1;width:auto;padding:4px 10px;font-size:.7rem;margin-top:0;">Buksan</button>
+      </div>
+      <div id="chatContentWrapper" style="display:none;margin-top:10px;">
+        <div id="clientChatContainer" style="max-height:150px;overflow-y:auto;margin-bottom:8px;border:1px solid #eee;padding:8px;border-radius:4px;background:#fafafa;"></div>
+        <div class="form-group" style="margin-bottom:5px;">
+          <input type="text" id="clientChatInput" placeholder="Mensahe sa admin..." style="font-size:.85rem;">
+        </div>
+        <button type="button" onclick="sendClientMessage()" style="background-color:#0288d1;font-size:.85rem;">Ipadala</button>
+      </div>
+    </div>
+
+    <!-- ======== 2. STOCK AT BENTA ======== -->
+    <!-- Active Stock -->
+    <div class="card">
+      <h2>📦 Aktibong Stock at mga Paninda</h2>
+      <div id="clientItemsContainer"><p style="font-size:.85rem;color:#666;">Kinukuha ang data...</p></div>
+    </div>
+
+    <!-- Pending Sales -->
+    <div class="card" id="pendingSalesCard" style="display:none;background:#fff3e0;border-left:4px solid #f57c00;">
+      <h2 style="color:#f57c00;">⏳ Mga Nakabinbing Resibo ng Benta</h2>
+      <div id="pendingSalesContainer"></div>
+    </div>
+
     <!-- Product Catalog -->
     <div class="card">
       <h2>🧹 Mga Klase ng Walis Tambo (Catalog)</h2>
@@ -255,22 +293,39 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </div>
 
-    <!-- Active Stock -->
-    <div class="card">
-      <h2>📦 Aktibong Stock at mga Paninda</h2>
-      <div id="clientItemsContainer"><p style="font-size:.85rem;color:#666;">Kinukuha ang data...</p></div>
+    <!-- ======== 3. RESTOCK (Email -> Request -> Status -> Pagtanggap) ======== -->
+    <!-- Email ng Tindahan (kailangan para magamit ang Restock) -->
+    <div class="card" id="emailCard" style="background:#e3f2fd;border-left:4px solid #0288d1;">
+      <h2 style="color:#0288d1;font-size:.95rem;">📧 Email ng Tindahan</h2>
+      <p id="emailStatusText" style="font-size:.8rem;margin-bottom:8px;"></p>
+      <div class="form-group">
+        <input type="email" id="clientEmailInput" placeholder="Hal. alingnena@gmail.com" autocomplete="email">
+      </div>
+      <button type="button" onclick="saveClientEmail()" style="background-color:#0288d1;">I-save ang Email</button>
     </div>
 
-    <!-- Pending Sales -->
-    <div class="card" id="pendingSalesCard" style="display:none;background:#fff3e0;border-left:4px solid #f57c00;">
-      <h2 style="color:#f57c00;">⏳ Mga Nakabinbing Resibo ng Benta</h2>
-      <div id="pendingSalesContainer"></div>
-    </div>
-
-    <!-- Pending Delivery -->
-    <div class="card" id="pendingDeliveryCard" style="display:none;background:#e3f2fd;border-left:4px solid #0288d1;">
-      <h2 style="color:#0288d1;">🚚 Mga Na-approve na Restock</h2>
-      <div id="pendingDeliveryContainer"></div>
+    <!-- Restock -->
+    <div class="card" style="background:#fff8e1;border-left:4px solid #f57f17;">
+      <div class="row">
+        <h2 style="margin-bottom:0;font-size:.9rem;">🔄 Restock</h2>
+        <button type="button" id="toggleRestockBtn" onclick="toggleRestockVisibility()" style="background-color:#f57f17;width:auto;padding:4px 10px;font-size:.7rem;margin-top:0;">Buksan</button>
+      </div>
+      <div id="restockContentWrapper" style="display:none;margin-top:10px;">
+        <div class="form-group">
+          <label for="restockStyleType">Piliin ang Uri ng Istilo:</label>
+          <select id="restockStyleType">
+            <option value="Ordinary">Ordinary Style</option>
+            <option value="Premium">Premium Style</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dami ng Restock (Fixed: 5 pcs):</label>
+          <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
+        </div>
+        <p id="restockEmailLock" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".</p>
+        <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.</p>
+        <button type="button" id="restockSubmitBtn" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
+      </div>
     </div>
 
     <!-- Restock Request Status -->
@@ -279,13 +334,22 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <div id="restockStatusContainer"></div>
     </div>
 
-    <!-- Notifications -->
-    <div class="card">
-      <div class="row" style="margin-bottom:8px;">
-        <h2 style="margin-bottom:0;">📢 Mga Abiso at Update</h2>
-        <button type="button" onclick="clearAllNotifications()" style="background-color:#c62828;width:auto;font-size:.75rem;padding:4px 8px;margin-top:0;">Clear All</button>
+    <!-- Pending Delivery -->
+    <div class="card" id="pendingDeliveryCard" style="display:none;background:#e3f2fd;border-left:4px solid #0288d1;">
+      <h2 style="color:#0288d1;">🚚 Mga Na-approve na Restock</h2>
+      <div id="pendingDeliveryContainer"></div>
+    </div>
+
+    <!-- ======== 4. TALA AT KASUNDUAN ======== -->
+    <!-- Transaction History -->
+    <div class="card" style="background:#e0f7fa;border-left:4px solid #00acc1;">
+      <div class="row">
+        <h2 style="color:#00acc1;font-size:.95rem;margin-bottom:0;">📜 Kasaysayan ng Transaksyon</h2>
+        <button type="button" id="toggleTransactionBtn" onclick="toggleTransactionVisibility()" class="tgl" style="background-color:#00acc1;">Buksan</button>
       </div>
-      <div id="clientNotificationsContainer"><p style="font-size:.85rem;color:#666;">Wala pang bagong abiso.</p></div>
+      <div id="transactionContentWrapper" style="display:none;margin-top:10px;">
+        <div id="clientTransactionContainer"><p style="font-size:.85rem;color:#666;">Wala pang naitalang transaksyon.</p></div>
+      </div>
     </div>
 
     <!-- Official Consignment Agreement -->
@@ -388,70 +452,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </div>
 
-    <!-- Email ng Tindahan (kailangan para magamit ang Restock) -->
-    <div class="card" id="emailCard" style="background:#e3f2fd;border-left:4px solid #0288d1;">
-      <h2 style="color:#0288d1;font-size:.95rem;">📧 Email ng Tindahan</h2>
-      <p id="emailStatusText" style="font-size:.8rem;margin-bottom:8px;"></p>
-      <div class="form-group">
-        <input type="email" id="clientEmailInput" placeholder="Hal. alingnena@gmail.com" autocomplete="email">
-      </div>
-      <button type="button" onclick="saveClientEmail()" style="background-color:#0288d1;">I-save ang Email</button>
-    </div>
-
-    <!-- Action Buttons -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
-
-      <!-- Restock -->
-      <div class="card" style="background:#fff8e1;border-left:4px solid #f57f17;margin-bottom:0;">
-        <div class="row">
-          <h2 style="margin-bottom:0;font-size:.9rem;">🔄 Restock</h2>
-          <button type="button" id="toggleRestockBtn" onclick="toggleRestockVisibility()" style="background-color:#f57f17;width:auto;padding:4px 10px;font-size:.7rem;margin-top:0;">Buksan</button>
-        </div>
-        <div id="restockContentWrapper" style="display:none;margin-top:10px;">
-          <div class="form-group">
-            <label for="restockStyleType">Piliin ang Uri ng Istilo:</label>
-            <select id="restockStyleType">
-              <option value="Ordinary">Ordinary Style</option>
-              <option value="Premium">Premium Style</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Dami ng Restock (Fixed: 5 pcs):</label>
-            <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
-          </div>
-          <p id="restockEmailLock" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".</p>
-          <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.</p>
-          <button type="button" id="restockSubmitBtn" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
-        </div>
-      </div>
-
-      <!-- Chat -->
-      <div class="card" style="margin-bottom:0;">
-        <div class="row">
-          <h2 style="margin-bottom:0;font-size:.9rem;">💬 Support</h2>
-          <button type="button" id="toggleChatBtn" onclick="toggleChatVisibility()" style="background-color:#0288d1;width:auto;padding:4px 10px;font-size:.7rem;margin-top:0;">Buksan</button>
-        </div>
-        <div id="chatContentWrapper" style="display:none;margin-top:10px;">
-          <div id="clientChatContainer" style="max-height:150px;overflow-y:auto;margin-bottom:8px;border:1px solid #eee;padding:8px;border-radius:4px;background:#fafafa;"></div>
-          <div class="form-group" style="margin-bottom:5px;">
-            <input type="text" id="clientChatInput" placeholder="Mensahe sa admin..." style="font-size:.85rem;">
-          </div>
-          <button type="button" onclick="sendClientMessage()" style="background-color:#0288d1;font-size:.85rem;">Ipadala</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Transaction History -->
-    <div class="card" style="background:#e0f7fa;border-left:4px solid #00acc1;">
-      <div class="row">
-        <h2 style="color:#00acc1;font-size:.95rem;margin-bottom:0;">📜 Kasaysayan ng Transaksyon</h2>
-        <button type="button" id="toggleTransactionBtn" onclick="toggleTransactionVisibility()" class="tgl" style="background-color:#00acc1;">Buksan</button>
-      </div>
-      <div id="transactionContentWrapper" style="display:none;margin-top:10px;">
-        <div id="clientTransactionContainer"><p style="font-size:.85rem;color:#666;">Wala pang naitalang transaksyon.</p></div>
-      </div>
-    </div>
-
+    <!-- ======== 5. ACCOUNT / SEGURIDAD ======== -->
     <!-- Password -->
     <div class="card" style="background:#f1f8e9;border-left:4px solid #2e7d32;">
       <div class="row">
@@ -478,7 +479,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <p style="font-size:.85rem;color:#c62828;margin-bottom:10px;">Ang mga aksyon dito ay hindi maaaring i-undo.</p>
       <button type="button" onclick="promptStopAgreement()" style="background-color:#d32f2f;font-size:.9rem;padding:8px;">🛑 Itigil ang Kasunduan</button>
     </div>
-
   </div>
 
   <div style="text-align:center;margin-top:20px;margin-bottom:10px;">
