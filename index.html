@@ -240,6 +240,19 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         <div class="form-group"><label>Personal Active Email Address (sarili mong aktibong email):</label><input type="email" id="inqEmail" placeholder="Ilagay ang sarili mong aktibong Gmail/email" autocomplete="email" required></div>
         <div class="form-group"><label>Lokasyon / Address:</label><input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required></div>
 
+        <!-- Mga larawang kailangan (1 Valid ID at Store Front) -->
+        <div class="form-group">
+          <label for="inqIdFile">📇 1 Valid ID ng May-ari (litrato ng harap):</label>
+          <input type="file" id="inqIdFile" accept="image/*" required>
+          <img id="inqIdPrev" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;">
+        </div>
+        <div class="form-group">
+          <label for="inqStoreFile">🏪 Upload your Store Front (litrato ng tindahan):</label>
+          <input type="file" id="inqStoreFile" accept="image/*" required>
+          <img id="inqStorePrev" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;">
+        </div>
+        <p class="hint" style="margin-top:-2px;">🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.</p>
+
         <!-- Walis Style Selection -->
         <div class="form-group">
           <label>Piliin ang Gusto mong Uri ng Walis (Style):</label>
@@ -657,6 +670,11 @@ var D={
 'Gumawa ng iyong sariling password':'Create your own password',
 'Numero ng Telepono / GCash:':'Phone Number / GCash:',
 'Lokasyon / Address:':'Location / Address:',
+'📇 1 Valid ID ng May-ari (litrato ng harap):':'📇 1 Valid ID of the Owner (photo of the front):',
+'🏪 Upload your Store Front (litrato ng tindahan):':'🏪 Upload your Store Front (photo of the store):',
+'🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.':'🔒 These photos are only for the Admin\'s verification and cannot be seen by anyone else.',
+'Kailangan ang litrato ng 1 Valid ID at ng Store Front.':'A photo of 1 Valid ID and of the Store Front is required.',
+'Larawan lang ang tinatanggap (hanggang 15 MB).':'Only images are accepted (up to 15 MB).',
 'Piliin ang Gusto mong Uri ng Walis (Style):':'Choose Your Preferred Broom Style:',
 '✨ Gitna ng Hibla (Tampok)':'✨ Center of the Fiber (Featured)',
 'Dami ng Nais i-Order (Quantity / Initial Qty):':'Quantity to Order (Initial Qty):',
@@ -920,6 +938,7 @@ apply();
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const dataConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -933,6 +952,7 @@ const dataConfig = {
 const dataApp = initializeApp(dataConfig, "data");
 const authData = getAuth(dataApp);
 const db = getFirestore(dataApp);
+const storage = getStorage(dataApp);
 
 // ===== TESTING MODE (nakatago; shared key sa admin.html) =====
 const _qp = new URLSearchParams(location.search);
@@ -1715,6 +1735,39 @@ function initPortalView() {
   }
 }
 
+// ===== LARAWAN NG APLIKASYON (1 Valid ID at Store Front) =====
+// Ang larawan ay kino-compress muna at inia-upload sa Firebase Storage.
+// Sa Firestore, ang PATH lang ang sine-save (hindi ang mismong larawan) para hindi mapuno ang dokumento.
+function compressImage(file, max = 1280, q = 0.75) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const s = Math.min(1, max / Math.max(im.width, im.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error('compress')), 'image/jpeg', q);
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Hindi mabasa ang larawan')); };
+    im.src = url;
+  });
+}
+async function uploadAppImage(uid, name, file) {
+  const path = 'applications/' + uid + '/' + name + '.jpg';
+  await uploadBytes(ref(storage, path), await compressImage(file), { contentType: 'image/jpeg' });
+  return path; // path ang sine-save, hindi URL
+}
+function bindPreview(inputId, imgId) {
+  $(inputId).addEventListener('change', e => {
+    const f = e.target.files[0], im = $(imgId);
+    if (!f) { im.style.display = 'none'; return; }
+    im.src = URL.createObjectURL(f); im.style.display = 'block';
+  });
+}
+bindPreview('inqIdFile', 'inqIdPrev');
+bindPreview('inqStoreFile', 'inqStorePrev');
+
 // Inquiry Form Submission (gumagawa ng Firebase account; hindi na sine-save ang password sa database)
 const inquiryForm = $('inquiryForm');
 if (inquiryForm) {
@@ -1732,6 +1785,13 @@ if (inquiryForm) {
     const message = $('inqMessage').value.trim();
 
     if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
+
+    // Kailangan ang 1 Valid ID at Store Front (larawan lang, hanggang 15 MB bawat isa)
+    const idFile = $('inqIdFile').files[0], storeFile = $('inqStoreFile').files[0];
+    if (!idFile || !storeFile) { alert('Kailangan ang litrato ng 1 Valid ID at ng Store Front.'); return; }
+    if (![idFile, storeFile].every(f => f.type.startsWith('image/') && f.size < 15 * 1024 * 1024)) {
+      alert('Larawan lang ang tinatanggap (hanggang 15 MB).'); return;
+    }
 
     applying = true;
     try {
@@ -1760,16 +1820,32 @@ if (inquiryForm) {
 
       }
 
+      // I-upload ang mga larawan sa Firebase Storage (sa TESTING MODE, hindi nag-a-upload)
+      let idPath = 'TEST', storePath = 'TEST';
+      if (!TEST_MODE) {
+        try {
+          const uid = authData.currentUser.uid;
+          idPath = await uploadAppImage(uid, 'valid-id', idFile);
+          storePath = await uploadAppImage(uid, 'storefront', storeFile);
+        } catch (err) {
+          alert('⚠️ Hindi na-upload ang larawan: ' + err.message);
+          try { await signOut(authData); } catch (_) {}
+          return;
+        }
+      }
+
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
       appData.pendingInquiries.push(Object.assign({
         storeName, ownerName, contact, email, address,
-        styleType, initialQty, message, accountCreated: true
+        styleType, initialQty, message, idPath, storePath, accountCreated: true
       }, stamp()));
 
       await saveData();
       try { await signOut(authData); } catch (err3) {}
       alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!');
       inquiryForm.reset();
+      $('inqIdPrev').style.display = 'none';
+      $('inqStorePrev').style.display = 'none';
     } finally {
       applying = false;
       initPortalView();
