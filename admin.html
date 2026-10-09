@@ -75,6 +75,7 @@ button:hover { background-color: #1b5e20; }
 </style>
 </head>
 <body>
+<div id="testBanner" style="display:none;position:sticky;top:0;z-index:9998;background:#e65100;color:#fff;text-align:center;font-weight:bold;font-size:.85rem;padding:8px;">🧪 TESTING MODE — hiwalay na test data, hindi apektado ang LIVE</div>
 <header>
     <span>🧹 Doctor's Whisk Broom - ADMIN</span>
     <button type="button" id="logoutBtn" onclick="handleAdminLogout()" style="background-color: #c62828; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: none; width: auto; margin-top: 0;">Logout</button>
@@ -106,6 +107,8 @@ button:hover { background-color: #1b5e20; }
         <div class="action-bar-top">
             <button type="button" onclick="openModal('broadcastModal')" style="background-color: #6a1b9a;">📢 Broadcast</button>
             <button type="button" onclick="openModal('backupModal')" style="background-color: #00796b;">💾 Backup</button>
+            <button type="button" id="testModeBtn" onclick="toggleTestMode()" style="background-color:#455a64;">🧪 Testing: OFF</button>
+            <button type="button" id="seedTestBtn" onclick="seedTestFromLive()" style="background-color:#e65100;display:none;">🔄 Kopyahin Live → Test</button>
             <button type="button" onclick="openModal('requestModal')" style="background-color: #f57c00; position:relative;">💰 Benta & 📦 Requests <span id="requestTopBadge" style="background:#d32f2f; color:white; border-radius:50%; padding:1px 5px; font-size:10px; display:none;">0</span></button>
         </div>
 
@@ -348,6 +351,56 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
 
+// ===== TESTING MODE (shared key sa index.html) =====
+const LIVE_DOC_ID = 'main_inventory';
+const TEST_DOC_ID = 'test_inventory';
+const TEST_MODE = localStorage.getItem('dwbe_test_mode') === '1';
+const DATA_DOC = TEST_MODE ? TEST_DOC_ID : LIVE_DOC_ID;
+const LOCAL_KEY = TEST_MODE ? 'consignments_test' : 'consignments_v3';
+
+(function () {
+  const banner = document.getElementById('testBanner');
+  const btn = document.getElementById('testModeBtn');
+  const seed = document.getElementById('seedTestBtn');
+  if (TEST_MODE) {
+    if (banner) banner.style.display = 'block';
+    if (btn) { btn.textContent = '🧪 Testing: ON'; btn.style.backgroundColor = '#e65100'; }
+    if (seed) seed.style.display = '';
+    document.title = '🧪 TEST - ' + document.title;
+  }
+})();
+
+async function copyLiveToTest() {
+  const liveSnap = await getDoc(doc(db, 'app_data', LIVE_DOC_ID)); // READ lang sa live
+  if (!liveSnap.exists()) { alert('Walang laman ang Live data.'); return false; }
+  await setDoc(doc(db, 'app_data', TEST_DOC_ID), liveSnap.data()); // WRITE sa test lang
+  return true;
+}
+
+window.toggleTestMode = async function () {
+  if (TEST_MODE) {
+    if (!(await confirm('Patayin ang TESTING MODE at bumalik sa LIVE data?'))) return;
+    localStorage.removeItem('dwbe_test_mode');
+    location.reload();
+    return;
+  }
+  if (!(await confirm('I-ON ang TESTING MODE?\nHiwalay na test data ang gagamitin; hindi magagalaw ang LIVE.'))) return;
+  try {
+    const t = await getDoc(doc(db, 'app_data', TEST_DOC_ID));
+    if (!t.exists()) { if (!(await copyLiveToTest())) return; }
+  } catch (e) { alert('⚠️ Hindi ma-setup ang test data: ' + e.message); return; }
+  localStorage.setItem('dwbe_test_mode', '1');
+  location.reload();
+};
+
+window.seedTestFromLive = async function () {
+  if (!TEST_MODE) return;
+  if (!(await confirm('Papalitan ng kopya ng LIVE data ang lahat ng TEST data. Ituloy?'))) return;
+  try { if (await copyLiveToTest()) { alert('✅ Na-kopya ang Live → Test.'); location.reload(); } }
+  catch (e) { alert('⚠️ Error: ' + e.message); }
+};
+
+
 // ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
 const ADMIN_EMAILS = ['admin@admin.com'];
 const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
@@ -518,7 +571,7 @@ function autoDownloadBackup() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `DWBE_Admin_Backup_${new Date().toISOString().slice(0,10)}.json`);
+        downloadAnchor.setAttribute("download", `DWBE_Admin_${TEST_MODE ? 'TEST_' : ''}Backup_${new Date().toISOString().slice(0,10)}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
@@ -686,7 +739,7 @@ function processClientAcceptedRestocks() {
 async function loadFromCloud() {
     syncStatus.textContent = "Kumukuha ng data sa Cloud...";
     try {
-        const docRef = doc(db, "app_data", "main_inventory");
+        const docRef = doc(db, "app_data", DATA_DOC);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             appData = docSnap.data();
@@ -701,7 +754,7 @@ async function loadFromCloud() {
         syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
     } catch (err) {
         syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-        const local = localStorage.getItem('consignments_v3');
+        const local = localStorage.getItem(LOCAL_KEY);
         if (local) {
             appData = JSON.parse(local);
             deduplicateConsignments();
@@ -716,14 +769,14 @@ async function saveToCloud() {
     try {
         deduplicateConsignments();
         cleanSourceData();
-        await setDoc(doc(db, "app_data", "main_inventory"), appData);
-        localStorage.setItem('consignments_v3', JSON.stringify(appData));
+        await setDoc(doc(db, "app_data", DATA_DOC), appData);
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(appData));
         syncStatus.textContent = "✅ Na-save sa Cloud";
         autoDownloadBackup();
         renderApp();
     } catch (err) {
         syncStatus.textContent = "⚠️ Error sa pag-save";
-        localStorage.setItem('consignments_v3', JSON.stringify(appData));
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(appData));
         autoDownloadBackup();
         renderApp();
     }
@@ -752,7 +805,7 @@ function initApp() {
 
 async function loadFromCloudSilent() {
     try {
-        const docRef = doc(db, "app_data", "main_inventory");
+        const docRef = doc(db, "app_data", DATA_DOC);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             const cloudData = docSnap.data();
@@ -1330,6 +1383,7 @@ function renderApp() {
 
 // Gumagawa ng Firebase account nang walang ipinapadalang email. Ang admin ang magbibigay ng password sa client.
 async function createAccountForClient(email, password) {
+    if (TEST_MODE) return { ok: true, uid: 'TEST-' + Date.now() };
     try {
         const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
         const uid = cred.user.uid;
@@ -1824,6 +1878,7 @@ window.createClientLogin = async function(index) {
         alert('Maglagay muna ng email ng tindahan.');
         return;
     }
+    if (TEST_MODE) { alert('🧪 TESTING MODE: naka-block ang Reset Password (totoong Firebase account ito).'); return; }
     if (!await confirm(`I-reset ang password ng ${item.storeName} (${email}) sa default na "${DEFAULT_CLIENT_PASSWORD}"?\n\nMapapalitan ang password na ginawa ng client. Kailangan nila itong palitan pagkatapos mag-login.`)) return;
 
     let uid = '', ok = false, apiErr = '';
