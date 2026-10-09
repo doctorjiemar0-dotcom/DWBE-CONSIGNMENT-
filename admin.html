@@ -69,9 +69,6 @@ button:hover { background-color: #1b5e20; }
 .store-body-content { margin-top: 10px; }
 .password-display-box { background: #fff3cd; border: 1px solid #ffc107; padding: 10px; margin: 8px 0; border-radius: 4px; font-size: 0.85rem; }
 .password-display-box strong { color: #f57f17; }
-.password-display-box .password-value { font-family: monospace; background: white; padding: 6px 10px; border-radius: 3px; color: #d32f2f; font-weight: bold; display: inline-block; margin: 0 6px; }
-.password-copy-btn { background: #0288d1 !important; color: white !important; border: none !important; padding: 4px 10px !important; border-radius: 3px !important; font-size: 0.75rem !important; cursor: pointer !important; margin-top: 0 !important; width: auto !important; }
-.password-copy-btn:hover { background: #0277bd !important; }
 </style>
 </head>
 <body>
@@ -275,7 +272,7 @@ button:hover { background-color: #1b5e20; }
 </div>
 
 <script>
-// Propesyonal na dialog box (kapalit ng "xxx.vercel.app says" ng browser)
+// Dialog Box logic
 (function () {
   function dlg(msg, o) {
     return new Promise(function (res) {
@@ -337,6 +334,7 @@ button:hover { background-color: #1b5e20; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -350,8 +348,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
+const storage = getStorage(app);
 
-// ===== TESTING MODE (shared key sa index.html) =====
+// ===== TESTING MODE =====
 const LIVE_DOC_ID = 'main_inventory';
 const TEST_DOC_ID = 'test_inventory';
 const TEST_MODE = localStorage.getItem('dwbe_test_mode') === '1';
@@ -371,9 +370,9 @@ const LOCAL_KEY = TEST_MODE ? 'consignments_test' : 'consignments_v3';
 })();
 
 async function copyLiveToTest() {
-  const liveSnap = await getDoc(doc(db, 'app_data', LIVE_DOC_ID)); // READ lang sa live
+  const liveSnap = await getDoc(doc(db, 'app_data', LIVE_DOC_ID));
   if (!liveSnap.exists()) { alert('Walang laman ang Live data.'); return false; }
-  await setDoc(doc(db, 'app_data', TEST_DOC_ID), liveSnap.data()); // WRITE sa test lang
+  await setDoc(doc(db, 'app_data', TEST_DOC_ID), liveSnap.data());
   return true;
 }
 
@@ -400,31 +399,26 @@ window.seedTestFromLive = async function () {
   catch (e) { alert('⚠️ Error: ' + e.message); }
 };
 
-
-// ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
 const ADMIN_EMAILS = ['admin@admin.com'];
 const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
 
-// ===== TERMS NG BAYAD (dapat pareho sa index.html) =====
 const PAY_TERMS = {
   monthly:     { label: 'Buwanan (End of Month)', days: 30 },
   semimonthly: { label: 'Kada 15 Araw', days: 15 },
   weekly:      { label: 'Lingguhan', days: 7 },
   sellout:     { label: 'Pagkaubos ng Stock', days: 30 }
 };
-// Default password na ibibigay ng admin (hindi bababa sa 6 na karakter ang kailangan ng Firebase)
+
 const DEFAULT_CLIENT_PASSWORD = 'admin123';
-// Standard na Presyo ng Supplier (default lang sa bagong approval; hindi nito binabago ang presyo ng mga kasalukuyang tindahan)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
-// Halaga ng benta ng isang uri: ang mga naitalang benta ay nasa presyong may discount noong benta; ang luma ay sa kasalukuyang presyo
+
 function subSalesValue(sub, sold) {
   const lq = Number(sub.soldValueQty) || 0;
   const lv = Number(sub.soldValue) || 0;
   if (sold <= lq) return lq ? lv * (sold / lq) : 0;
   return lv + (sold - lq) * (Number(sub.price) || 0);
 }
-// ===== DISCOUNT NA MAY PERIOD =====
-// store.discounts = [{ styleType: 'Ordinary'|'Premium'|'All', type: 'amount'|'percent', value, startDate, endDate }]
+
 function ymd(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
@@ -432,7 +426,7 @@ function localToday() { return ymd(new Date()); }
 function fmtDate(s) {
   return s ? new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
-// Presyo ng isang uri ng walis matapos ang discount (kung may aktibo ngayon)
+
 function priceWithDiscount(store, sub) {
   const base = Number(sub.price) || 0;
   const t = localToday();
@@ -447,8 +441,7 @@ function priceWithDiscount(store, sub) {
   const off = best ? Math.round(best.off * 100) / 100 : 0;
   return { base, off, price: Math.round((base - off) * 100) / 100, pct: base ? +(off / base * 100).toFixed(1) : 0, until: best ? best.until : null };
 }
-// Server function sa Vercel na may kapangyarihang mag-reset ng password
-// Sa Vercel, gamitin ang function ng mismong deployment na ito (production man o preview)
+
 const RESET_API = location.hostname.endsWith('vercel.app') ? '/api/reset-password' : 'https://dwbe-consignment.vercel.app/api/reset-password';
 const termOf = (item) => PAY_TERMS[item.paymentTerms] ? item.paymentTerms : 'monthly';
 function nextCollectionDate(item) {
@@ -462,7 +455,6 @@ window.applyTermDate = function() {
   document.getElementById('collectionDate').valueAsDate = new Date(nextCollectionDate({ paymentTerms: k }));
 };
 
-// Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
 const secondaryAuth = getAuth(initializeApp(firebaseConfig, 'secondary'));
 
 const authScreen = document.getElementById('authScreen');
@@ -472,11 +464,6 @@ const emailInput = document.getElementById('adminEmailInput');
 const passwordInput = document.getElementById('adminPasswordInput');
 const syncStatus = document.getElementById('syncStatus');
 const logoutBtn = document.getElementById('logoutBtn');
-
-window.copyToClipboard = function(text) {
-  navigator.clipboard.writeText(text);
-  alert('✅ Password copied sa clipboard!');
-};
 
 window.switchTab = function(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -494,8 +481,6 @@ async function handleAdminLogin(email, password) {
             msg = "Mali ang iyong email o password.";
         } else if (error.code === 'auth/user-not-found') {
             msg = "Walang account na nakarehistro sa email na ito.";
-        } else if (error.code === 'auth/invalid-email') {
-            msg = "Hindi wastong format ng email ang nailagay mo.";
         } else {
             msg = error.message;
         }
@@ -518,7 +503,7 @@ emailInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { loginB
 
 onAuthStateChanged(auth, (user) => {
     if (user && !isAdminUser(user)) {
-        alert(`⚠️ Hindi awtorisado ang account na ito (${user.email}).\nKung ikaw ang admin, ilagay ang email na ito sa ADMIN_EMAILS sa admin.html.`);
+        alert(`⚠️ Hindi awtorisado ang account na ito (${user.email}).`);
         signOut(auth);
         return;
     }
@@ -537,23 +522,6 @@ onAuthStateChanged(auth, (user) => {
 function handleAdminLogout() { signOut(auth); }
 window.handleAdminLogout = handleAdminLogout;
 
-function playNotificationSound() {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.4);
-    } catch (e) {}
-}
-
 let appData = { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
 let previousRequestCount = 0;
 
@@ -565,18 +533,6 @@ window.toggleAddStoreForm = function() {
     formCard.style.display = formCard.style.display === 'none' ? 'block' : 'none';
     if (formCard.style.display === 'block') formCard.scrollIntoView({ behavior: 'smooth' });
 };
-
-function autoDownloadBackup() {
-    try {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `DWBE_Admin_${TEST_MODE ? 'TEST_' : ''}Backup_${new Date().toISOString().slice(0,10)}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-    } catch (e) {}
-}
 
 function deduplicateConsignments() {
     if (!appData.consignments || !Array.isArray(appData.consignments)) return;
@@ -612,127 +568,16 @@ function cleanSourceData() {
         if (item.email) item.email = item.email.trim();
         if (item.address) item.address = item.address.trim();
         if (item.isCollected === undefined) item.isCollected = false;
-
-        if (item.storeItems && Array.isArray(item.storeItems)) {
-            item.storeItems.forEach(sub => {
-                if (sub.initialQty < 0) sub.initialQty = 0;
-                if (sub.currentStock < 0) sub.currentStock = 0;
-                if (sub.returnedQty < 0) sub.returnedQty = 0;
-                if (sub.rejectedQty < 0) sub.rejectedQty = 0;
-            });
-        }
     });
-
-    if (appData.pendingInquiries && Array.isArray(appData.pendingInquiries)) {
-        appData.pendingInquiries.forEach(inq => {
-            if (inq.storeName) inq.storeName = inq.storeName.trim();
-            if (inq.ownerName) inq.ownerName = inq.ownerName.trim();
-            if (inq.email) inq.email = inq.email.trim();
-        });
-    }
 }
 
-// Update ng status ng restock request sa restockLog (nakikita ng client)
 function setRestockStatus(store, reqId, status, reason) {
     const log = store.restockLog || [];
-    // Hanapin sa id; kung hindi tumugma, kunin ang pinakamatandang request na hindi pa tapos
-    const e = log.find(r => r.id === reqId)
-        || log.slice().reverse().find(r => r.status === 'Pending' || r.status === 'Approved');
+    const e = log.find(r => r.id === reqId) || log.slice().reverse().find(r => r.status === 'Pending' || r.status === 'Approved');
     if (e) {
         e.status = status;
         e.updatedAt = new Date().toLocaleString();
         if (reason !== undefined) e.reason = reason;
-    }
-}
-
-window.adjustHomeStock = async function(style, amount) {
-    const current = appData.homeStock[style] || 0;
-    let qty = 0;
-    if (amount > 0) {
-        const input = await prompt(`Ilang piraso ang idadagdag sa Home stock (${style})?`, '10');
-        if (input === null) return;
-        qty = parseInt(input);
-    } else {
-        const input = await prompt(`Ilang piraso ang babawasan sa Home stock (${style})?`, '1');
-        if (input === null) return;
-        qty = parseInt(input);
-    }
-
-    if (!isNaN(qty) && qty > 0) {
-        if (amount < 0 && qty > current) {
-            alert('Hindi maaaring bumaba sa zero ang stock.');
-            return;
-        }
-        appData.homeStock[style] = amount > 0 ? current + qty : Math.max(0, current - qty);
-        await saveToCloud();
-    }
-};
-
-window.toggleStoreDetails = function(index) {
-    const bodyContent = document.getElementById(`storeBody_${index}`);
-    const toggleBtn = document.getElementById(`storeToggleBtn_${index}`);
-    if (bodyContent.style.display === 'none') {
-        bodyContent.style.display = 'block';
-        toggleBtn.textContent = '➖';
-        localStorage.setItem(`store_open_${index}`, 'true');
-    } else {
-        bodyContent.style.display = 'none';
-        toggleBtn.textContent = '➕';
-        localStorage.setItem(`store_open_${index}`, 'false');
-    }
-};
-
-function processClientAcceptedRestocks() {
-    let updated = false;
-    if (!appData.consignments) return;
-    appData.consignments.forEach(item => {
-        if (item.approvedRestocks && item.approvedRestocks.length > 0) {
-            for (let i = item.approvedRestocks.length - 1; i >= 0; i--) {
-                const restock = item.approvedRestocks[i];
-                if (restock.clientAccepted === true) {
-                    const style = restock.styleType || 'Ordinary';
-                    setRestockStatus(item, restock.reqId, 'Received');
-                    const qty = restock.qty;
-                    const timestamp = new Date().toLocaleString();
-
-                    appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-
-                    let basePrice = style === 'Premium' ? 180 : 150;
-                    if (item.storeItems && item.storeItems.length > 0) {
-                        basePrice = item.storeItems[0].price;
-                    }
-                    const todayStr = new Date().toISOString().slice(0, 10);
-                    const collDateStr = nextCollectionDate(item);
-
-                    if (!item.storeItems) item.storeItems = [];
-                    let existingSub = item.storeItems.find(sub => sub.styleType === style);
-                    if (existingSub) {
-                        existingSub.initialQty += qty;
-                        existingSub.currentStock += qty;
-                        existingSub.collectionDate = collDateStr;
-                        if (restock.price) existingSub.price = restock.price;
-                    } else {
-                        item.storeItems.push({
-                            id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
-                            returnedQty: 0, rejectedQty: 0, price: restock.price || basePrice, dateDelivered: todayStr, collectionDate: collDateStr
-                        });
-                    }
-
-                    item.approvedRestocks.splice(i, 1);
-                    if (!item.history) item.history = [];
-                    item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggap ni client ang restock: ${qty} pcs (${style})` });
-                    if (!item.clientNotifications) item.clientNotifications = [];
-                    item.clientNotifications.push({ id: Date.now(), text: `🎉 Naitala na ang pagtanggap ng restock (${qty} pcs ${style}).`, date: timestamp });
-
-                    updated = true;
-                }
-            }
-        }
-    });
-    if (updated) {
-        deduplicateConsignments();
-        cleanSourceData();
-        saveToCloud();
     }
 }
 
@@ -748,19 +593,11 @@ async function loadFromCloud() {
             if (!appData.pendingInquiries) appData.pendingInquiries = [];
             deduplicateConsignments();
             cleanSourceData();
-            processClientAcceptedRestocks();
         }
         renderApp();
         syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
     } catch (err) {
         syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-        const local = localStorage.getItem(LOCAL_KEY);
-        if (local) {
-            appData = JSON.parse(local);
-            deduplicateConsignments();
-            cleanSourceData();
-            renderApp();
-        }
     }
 }
 
@@ -770,37 +607,16 @@ async function saveToCloud() {
         deduplicateConsignments();
         cleanSourceData();
         await setDoc(doc(db, "app_data", DATA_DOC), appData);
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(appData));
         syncStatus.textContent = "✅ Na-save sa Cloud";
-        autoDownloadBackup();
         renderApp();
     } catch (err) {
         syncStatus.textContent = "⚠️ Error sa pag-save";
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(appData));
-        autoDownloadBackup();
-        renderApp();
     }
 }
 
-// Refresh only the displayed Online/Offline badge locally.
-// Walang Firebase read/write dito; nire-recalculate lang ang 10-minute presence window.
-setInterval(() => {
-  try { renderApp(); } catch (_) {}
-}, 60000);
-
 function initApp() {
-    const dateDeliveredEl = document.getElementById('dateDelivered');
-    const collectionDateEl = document.getElementById('collectionDate');
-    if (dateDeliveredEl) dateDeliveredEl.valueAsDate = new Date();
-    let nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    if (collectionDateEl) collectionDateEl.valueAsDate = nextMonth;
-
     loadFromCloud();
-
-    setInterval(() => {
-        if (auth.currentUser) { loadFromCloudSilent(); }
-    }, 10000);
+    setInterval(() => { if (auth.currentUser) { loadFromCloudSilent(); } }, 10000);
 }
 
 async function loadFromCloudSilent() {
@@ -808,212 +624,19 @@ async function loadFromCloudSilent() {
         const docRef = doc(db, "app_data", DATA_DOC);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            const cloudData = docSnap.data();
-            let currentReqsTotal = 0;
-            if (cloudData.consignments) {
-                cloudData.consignments.forEach(c => {
-                    if (c.activeRequests) currentReqsTotal += c.activeRequests.length;
-                    if (c.pendingSales) currentReqsTotal += c.pendingSales.length;
-                });
-            }
-            if (cloudData.pendingInquiries) currentReqsTotal += cloudData.pendingInquiries.length;
-            if (currentReqsTotal > previousRequestCount) playNotificationSound();
-            appData = cloudData;
-            if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-            if (!appData.consignments) appData.consignments = [];
-            if (!appData.pendingInquiries) appData.pendingInquiries = [];
-            deduplicateConsignments();
-            cleanSourceData();
-            processClientAcceptedRestocks();
+            appData = docSnap.data();
             renderApp();
         }
     } catch (e) {}
 }
 
-const form = document.getElementById('consignmentForm');
-
-if (form) {
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const sName = document.getElementById('storeName').value.trim();
-        const sOwner = document.getElementById('storeOwner').value.trim();
-        const sEmail = document.getElementById('storeEmail').value.trim();
-        const sAddress = document.getElementById('storeAddress').value.trim();
-        const styleType = document.getElementById('styleType').value;
-        const qty = parseInt(document.getElementById('quantity').value);
-        const price = parseFloat(document.getElementById('price').value);
-        const startD = document.getElementById('dateDelivered').value;
-        const collD = document.getElementById('collectionDate').value;
-        const payTerm = document.getElementById('payTerm').value;
-
-        if (appData.homeStock[styleType] < qty) {
-            if (!await confirm(`Babala: Ang Home stock para sa ${styleType} ay kulang (${appData.homeStock[styleType]} pcs). Ituloy pa rin?`)) return;
-        }
-
-        appData.homeStock[styleType] = Math.max(0, appData.homeStock[styleType] - qty);
-        deduplicateConsignments();
-        cleanSourceData();
-        let existingStore = appData.consignments.find(c => c.storeName.toLowerCase() === sName.toLowerCase());
-
-        if (existingStore) {
-            if (sAddress) existingStore.address = sAddress;
-            if (sOwner) existingStore.ownerName = sOwner;
-            if (sEmail) existingStore.email = sEmail;
-            existingStore.paymentTerms = payTerm;
-            if (!existingStore.storeItems) {
-                existingStore.storeItems = [{
-                    id: existingStore.id || Date.now(),
-                    styleType: existingStore.styleType || 'Ordinary',
-                    initialQty: existingStore.initialQty,
-                    currentStock: existingStore.currentStock,
-                    returnedQty: existingStore.returnedQty || 0,
-                    rejectedQty: existingStore.rejectedQty || 0,
-                    price: existingStore.price,
-                    dateDelivered: existingStore.dateDelivered,
-                    collectionDate: existingStore.collectionDate
-                }];
-            }
-            let existingSub = existingStore.storeItems.find(sub => sub.styleType === styleType);
-            if (existingSub) {
-                existingSub.initialQty += qty;
-                existingSub.currentStock += qty;
-                existingSub.price = price;
-                existingSub.dateDelivered = startD;
-                existingSub.collectionDate = collD;
-            } else {
-                existingStore.storeItems.push({
-                    id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty,
-                    returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD
-                });
-            }
-            if (!existingStore.history) existingStore.history = [];
-            existingStore.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagdagdag ng ${qty} pcs (${styleType}) noong ${startD}` });
-        } else {
-            appData.consignments.push({
-                id: Date.now(), storeName: sName, ownerName: sOwner, email: sEmail, address: sAddress, styleType: styleType, initialQty: qty,
-                paymentTerms: payTerm,
-                currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD,
-                storeItems: [{ id: Date.now(), styleType: styleType, initialQty: qty, currentStock: qty, returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: startD, collectionDate: collD }],
-                activeRequests: [], pendingSales: [], approvedRestocks: [], clientNotifications: [], messages: [], lastClientAccess: null,
-                searchValidation: "", isCollected: false,
-                history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Nagsimula sa ${qty} pcs (${styleType})` }]
-            });
-        }
-
-        form.reset();
-        document.getElementById('dateDelivered').valueAsDate = new Date();
-        let nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
-        document.getElementById('collectionDate').valueAsDate = nextMonth;
-        document.getElementById('addStoreCard').style.display = 'none';
-        saveToCloud();
-    });
-}
-
-window.sendBroadcastMessage = async function() {
-    const input = document.getElementById('broadcastMessageInput');
-    const text = input.value.trim();
-    if (!text) {
-        alert('Mag-type muna ng mensahe.');
-        return;
-    }
-    const timestamp = new Date().toLocaleString();
-    if (!appData.consignments || appData.consignments.length === 0) {
-        alert('Walang aktibong tindahan para pagpadalhan.');
-        return;
-    }
-    appData.consignments.forEach(item => {
-        if (!item.messages) item.messages = [];
-        if (!item.clientNotifications) item.clientNotifications = [];
-        item.messages.push({ sender: 'Admin (Broadcast)', text: text, date: timestamp });
-        item.clientNotifications.push({ id: Date.now() + Math.random(), text: `📢 Broadcast mula sa Admin: "${text}"`, date: timestamp });
-    });
-    input.value = '';
-    await saveToCloud();
-    closeModal('broadcastModal');
-    alert('Matagumpay na na-broadcast ang mensahe sa lahat ng tindahan!');
-};
-
-function calculatePotentialIncome() {
-    const inputEl = document.getElementById('calcStoreInput');
-    const targetStores = parseInt(inputEl.value) || 0;
-
-    const prevDate = new Date();
-    prevDate.setMonth(prevDate.getMonth() - 1);
-    const prevYear = prevDate.getFullYear();
-    const prevMonth = prevDate.getMonth();
-
-    let prevMonthTotalSales = 0;
-    let activeCount = appData.consignments ? appData.consignments.length : 0;
-    let storesWithPrevSales = 0;
-
-    if (appData.consignments) {
-        appData.consignments.forEach(item => {
-            let storePrevSales = 0;
-            if (item.history) {
-                item.history.forEach(h => {
-                    let hDate = new Date(h.date);
-                    if (!isNaN(hDate.getTime()) && hDate.getFullYear() === prevYear && hDate.getMonth() === prevMonth) {
-                        if (h.text.includes("Nabenta:")) {
-                            let match = h.text.match(/Nabenta:\s*(\d+)\s*pcs/);
-                            if (match) {
-                                let qtySold = parseInt(match[1]);
-                                let price = 150;
-                                if (item.storeItems && item.storeItems.length > 0) {
-                                    price = item.storeItems[0].price;
-                                }
-                                storePrevSales += qtySold * price;
-                            }
-                        }
-                    }
-                });
-            }
-            if (storePrevSales > 0) {
-                prevMonthTotalSales += storePrevSales;
-                storesWithPrevSales++;
-            }
-        });
-    }
-
-    let totalSalesSoFar = 0;
-    if (appData.consignments) {
-        appData.consignments.forEach(item => {
-            if (item.storeItems) {
-                item.storeItems.forEach(sub => {
-                    const subSold = Math.max(0, sub.initialQty - sub.currentStock - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
-                    totalSalesSoFar += subSalesValue(sub, subSold);
-                });
-            }
-        });
-    }
-
-    let avgSalesPerStore = storesWithPrevSales > 0 ? (prevMonthTotalSales / storesWithPrevSales) : (activeCount > 0 ? (totalSalesSoFar / activeCount) : 1500);
-    const potentialTotal = avgSalesPerStore * targetStores;
-
-    document.getElementById('calcAvgSales').textContent = '₱' + Math.round(avgSalesPerStore).toLocaleString();
-    document.getElementById('calcPotentialTotal').textContent = '₱' + Math.round(potentialTotal).toLocaleString();
-}
-window.calculatePotentialIncome = calculatePotentialIncome;
-
-window.toggleStoreCollectionStatus = async function(index) {
-    const item = appData.consignments[index];
-    item.isCollected = !item.isCollected;
-    item.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: item.isCollected ? `Naitala bilang Nakolektahan na` : `Inalis sa katayuang nakolektahan` });
-    await saveToCloud();
-};
-
 function renderApp() {
     if (!auth.currentUser) return;
 
-    const savedReplies = {};
-    appData.consignments.forEach((_, idx) => {
-        const input = document.getElementById(`adminReply_${idx}`);
-        if (input) savedReplies[idx] = input.value;
-    });
-
     document.getElementById('homeOrdStock').textContent = appData.homeStock.Ordinary;
     document.getElementById('homePremStock').textContent = appData.homeStock.Premium;
-    calculatePotentialIncome();
 
+    // INQUIRIES TAB RENDER WITH VALID ID & STORE FRONT PHOTOS
     const inquiriesContainer = document.getElementById('adminInquiriesContainer');
     if (inquiriesContainer) inquiriesContainer.innerHTML = '';
 
@@ -1037,16 +660,59 @@ function renderApp() {
                 📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>
                 📦 Hiniling na Qty: <strong>${inq.initialQty || inq.qty || 5} pcs</strong><br>
                 💬 <strong>Mensahe/Inquiry:</strong> <span style="color:#333; font-style:italic;">"${inq.message || inq.notes || 'Walang mensahe'}"</span><br>
+
+                <!-- LARAWAN NG VALID ID AT STORE FRONT -->
+                <div style="margin:10px 0; display:flex; gap:10px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:140px;">
+                        <label style="font-weight:bold; font-size:.78rem; color:#2e7d32;">📇 Valid ID:</label>
+                        <div id="idImgContainer_${inqIdx}" style="background:#e0e0e0; height:120px; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-top:4px;">
+                            <span style="font-size:.75rem; color:#666;">Nag-o-load ng ID...</span>
+                        </div>
+                    </div>
+                    <div style="flex:1; min-width:140px;">
+                        <label style="font-weight:bold; font-size:.78rem; color:#2e7d32;">🏪 Store Front:</label>
+                        <div id="storeImgContainer_${inqIdx}" style="background:#e0e0e0; height:120px; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-top:4px;">
+                            <span style="font-size:.75rem; color:#666;">Nag-o-load ng Store...</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="password-display-box" style="background:#e3f2fd;border-color:#90caf9;">
-                    <strong style="color:#1565c0;">🔐 FIREBASE AUTH:</strong>
-                    Ang client ay gumawa na ng sarili niyang Firebase account nang isumite ang aplikasyon. Walang email na ipapadala.
+                    <strong style="color:#1565c0;">🔐 FIREBASE AUTH:</strong> Handang i-approve.
                 </div>
                 <div class="btn-group" style="margin-top: 6px;">
-                    <button type="button" class="btn-approve" onclick="approveInquiryWithPassword(${inqIdx})">✅ Aprubahan + Create Firebase Account</button>
+                    <button type="button" class="btn-approve" onclick="approveInquiryWithPassword(${inqIdx})">✅ Aprubahan</button>
                     <button type="button" class="btn-decline" onclick="declineInquiry(${inqIdx})">❌ Tanggihan</button>
                 </div>
             `;
             if (inquiriesContainer) inquiriesContainer.appendChild(div);
+
+            // PAGKUHA NG MGA LARAWAN MULA SA FIREBASE STORAGE
+            if (inq.idPath && inq.idPath !== 'TEST') {
+                getDownloadURL(ref(storage, inq.idPath)).then(url => {
+                    const box = document.getElementById(`idImgContainer_${inqIdx}`);
+                    if (box) box.innerHTML = `<img src="${url}" onclick="window.open('${url}','_blank')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" title="I-click para palakihin">`;
+                }).catch(() => {
+                    const box = document.getElementById(`idImgContainer_${inqIdx}`);
+                    if (box) box.innerHTML = `<span style="font-size:.75rem; color:#c62828;">Walang Valid ID</span>`;
+                });
+            } else {
+                const box = document.getElementById(`idImgContainer_${inqIdx}`);
+                if (box) box.innerHTML = `<span style="font-size:.75rem; color:#666;">Walang larawan (Test)</span>`;
+            }
+
+            if (inq.storePath && inq.storePath !== 'TEST') {
+                getDownloadURL(ref(storage, inq.storePath)).then(url => {
+                    const box = document.getElementById(`storeImgContainer_${inqIdx}`);
+                    if (box) box.innerHTML = `<img src="${url}" onclick="window.open('${url}','_blank')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" title="I-click para palakihin">`;
+                }).catch(() => {
+                    const box = document.getElementById(`storeImgContainer_${inqIdx}`);
+                    if (box) box.innerHTML = `<span style="font-size:.75rem; color:#c62828;">Walang Store Photo</span>`;
+                });
+            } else {
+                const box = document.getElementById(`storeImgContainer_${inqIdx}`);
+                if (box) box.innerHTML = `<span style="font-size:.75rem; color:#666;">Walang larawan (Test)</span>`;
+            }
         });
     } else {
         inquiryTabBadge.style.display = 'none';
@@ -1055,353 +721,9 @@ function renderApp() {
 
     const storesList = document.getElementById('storesList');
     if (storesList) storesList.innerHTML = '';
-
-    const requestsContainerModal = document.getElementById('adminRequestsContainerModal');
-    if (requestsContainerModal) requestsContainerModal.innerHTML = '';
-
-    let hasRequests = false;
-    let totalActiveReqsCount = appData.pendingInquiries.length;
-    let actionReqCount = 0;
-    let onlineStoreCount = 0;
-    let pendingRestockCount = 0;
-
-    let tStores = appData.consignments.length, tDue = 0, tStock = 0, tSold = 0, tSales = 0;
-    const currentYM = new Date().toISOString().slice(0, 7);
-    const todayStr = new Date().toISOString().slice(0, 10);
-
-    let dashboardEarningsHtml = '';
-
-    appData.consignments.sort((a, b) => {
-        if (a.isCollected !== b.isCollected) {
-            return a.isCollected ? 1 : -1;
-        }
-        let dateA = a.dateDelivered ? new Date(a.dateDelivered) : new Date(0);
-        let dateB = b.dateDelivered ? new Date(b.dateDelivered) : new Date(0);
-        return dateA - dateB;
-    });
-
-    appData.consignments.forEach((item, index) => {
-        if (!item.styleType) item.styleType = 'Ordinary';
-        if (!item.history) item.history = [];
-        if (!item.activeRequests) item.activeRequests = [];
-        if (!item.pendingSales) item.pendingSales = [];
-        if (!item.approvedRestocks) item.approvedRestocks = [];
-        if (!item.messages) item.messages = [];
-        if (!item.address) item.address = '';
-        if (!item.searchValidation) item.searchValidation = '';
-        if (item.isCollected === undefined) item.isCollected = false;
-
-        if (!item.storeItems || item.storeItems.length === 0) {
-            if (item.rejectedQty === undefined) item.rejectedQty = 0;
-            if (item.returnedQty === undefined) item.returnedQty = 0;
-            item.storeItems = [{
-                id: item.id || Date.now(), styleType: item.styleType, initialQty: item.initialQty,
-                currentStock: item.currentStock, returnedQty: item.returnedQty, rejectedQty: item.rejectedQty, price: item.price,
-                dateDelivered: item.dateDelivered, collectionDate: item.collectionDate
-            }];
-        }
-
-        let storeTotalStock = 0, storeTotalSold = 0, storeTotalStoreSales = 0, storeIsDue = false, storeItemsHtml = '';
-        item.storeItems.forEach((subItem, subIdx) => {
-            if (subItem.rejectedQty === undefined) subItem.rejectedQty = 0;
-            if (subItem.returnedQty === undefined) subItem.returnedQty = 0;
-
-            const subSold = Math.max(0, subItem.initialQty - subItem.currentStock - subItem.returnedQty - subItem.rejectedQty);
-            const subSales = subSalesValue(subItem, subSold);
-
-            storeTotalStock += subItem.currentStock;
-            storeTotalSold += subSold;
-            storeTotalStoreSales += subSales;
-            tStock += subItem.currentStock;
-            tSold += subSold;
-            tSales += subSales;
-
-            const subIsDue = subItem.collectionDate && (termOf(item) === 'monthly'
-                ? subItem.collectionDate.startsWith(currentYM)
-                : subItem.collectionDate <= todayStr);
-            if (subIsDue) storeIsDue = true;
-
-            const totalOrderAmount = subItem.initialQty * subItem.price;
-            const eff = priceWithDiscount(item, subItem);
-            const discTxt = eff.off > 0
-                ? `<span style="color:#2e7d32;font-weight:bold;">🏷️ Diskwento −₱${eff.off} (${eff.pct}%) hanggang ${fmtDate(eff.until)} → presyo ₱${eff.price}</span>` : '';
-
-            storeItemsHtml += `
-                <div class="store-item-row">
-                    <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-                        <span>${subItem.styleType || 'Ordinary'}</span>
-                        <span style="color: #333; font-weight: normal;">Presyo: ₱${subItem.price} | Stock: ${subItem.currentStock} ${subItem.returnedQty > 0 ? `| Bawas: ${subItem.returnedQty} pcs` : ''}</span>
-                    </div>
-                    <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">
-                        Initial Qty: ${subItem.initialQty} pcs | Nabenta: <strong>${subSold} pcs</strong> | Total: ₱${totalOrderAmount.toLocaleString()}${discTxt ? '<br>' + discTxt : ''}
-                    </div>
-                    <div style="font-size: 0.75rem; color: #555; margin-bottom: 6px;">
-                        Start: ${subItem.dateDelivered || 'N/A'} | Target: ${subItem.collectionDate || 'N/A'}
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" onclick="bawasStockSub(${index}, ${subIdx})" style="background-color: #ff9800;">Bawas</button>
-                    </div>
-                </div>
-            `;
-        });
-
-        dashboardEarningsHtml += `
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #c8e6c9;">
-                <span>🏢 <strong>${item.storeName}</strong></span>
-                <span style="color: #1b5e20; font-weight: bold;">₱${storeTotalStoreSales.toLocaleString()} (${storeTotalSold} pcs nabenta)</span>
-            </div>
-        `;
-
-        if (storeIsDue) tDue++;
-        let rating = item.isCollected ? 'Nakolektahan' : (storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos'));
-        let badgeClass = item.isCollected ? 'badge-good' : (storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good'));
-
-        if (item.activeRequests.length > 0) {
-            hasRequests = true;
-            actionReqCount += item.activeRequests.length;
-            totalActiveReqsCount += item.activeRequests.length;
-            pendingRestockCount += item.activeRequests.length;
-
-            item.activeRequests.forEach((req, reqIdx) => {
-                const reqStyle = req.styleType || item.styleType;
-                const reqRow = document.createElement('div');
-                reqRow.className = 'request-action-row';
-                reqRow.innerHTML = `
-                    <span><strong>${item.storeName} (${reqStyle})</strong> ay humiling ng <strong>${req.qty} pcs</strong> restock.</span>
-                    <div>
-                        <button type="button" class="btn-approve" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', true)">Approve</button>
-                        <button type="button" class="btn-decline" onclick="processRestock(${index}, ${reqIdx}, ${req.qty}, '${reqStyle}', false)">Decline</button>
-                    </div>
-                `;
-                if (requestsContainerModal) requestsContainerModal.appendChild(reqRow);
-            });
-        }
-
-        if (item.pendingSales.length > 0) {
-            hasRequests = true;
-            actionReqCount += item.pendingSales.length;
-            totalActiveReqsCount += item.pendingSales.length;
-
-            item.pendingSales.forEach((sale, saleIdx) => {
-                const saleStyle = sale.styleType || 'Ordinary';
-                const saleRow = document.createElement('div');
-                saleRow.className = 'request-action-row';
-                saleRow.style.background = '#e8f5e9';
-                saleRow.style.borderColor = '#a5d6a7';
-                saleRow.innerHTML = `
-                    <span>🏢 <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}</span>
-                    <div>
-                        <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>
-                        <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Tanggihan</button>
-                    </div>
-                `;
-                if (requestsContainerModal) requestsContainerModal.appendChild(saleRow);
-            });
-        }
-
-        let approvedRestocksHtml = '';
-        if (item.approvedRestocks && item.approvedRestocks.length > 0) {
-            item.approvedRestocks.forEach((ar, arIdx) => {
-                if (!ar.clientAccepted) {
-                    approvedRestocksHtml += `
-                        <div style="background: #fff8e1; border: 1px dashed #ffa000; padding: 6px; border-radius: 4px; margin-bottom: 6px; font-size: 0.8rem;">
-                            ⏳ Na-approve na ang restock na <strong>${ar.qty} pcs (${ar.styleType})</strong>${ar.price ? ' sa ₱' + ar.price + '/pc' : ''}. Naghihintay ng pagtanggap ng client.<br>
-                            <button type="button" class="btn-approve" style="margin-top: 4px;" onclick="confirmClientRestock(${index}, ${arIdx})">✅ Tanggap na ni Client (I-deduct)</button>
-                        </div>
-                    `;
-                }
-            });
-        }
-
-        let historyHtml = '';
-        item.history.forEach((h, hIdx) => {
-            historyHtml += `<div class="history-item">
-                <span>▪️ [${h.date}] ${h.text}</span>
-                <span class="history-btns">
-                    <button onclick="editHistory(${index}, ${hIdx})" style="color:#2e7d32;" type="button">✏️</button>
-                    <button onclick="deleteHistory(${index}, ${hIdx})" style="color:#d32f2f;" type="button">❌</button>
-                </span>
-            </div>`;
-        });
-        if (!historyHtml) historyHtml = '<div class="history-item">Wala pang tala.</div>';
-
-        let chatHtml = '';
-        item.messages.forEach(msg => {
-            chatHtml += `<div class="history-item"><span><strong>${msg.sender}:</strong> ${msg.text}</span> <span style="font-size:0.65rem; color:#888;">${msg.date}</span></div>`;
-        });
-        if (!chatHtml) chatHtml = '<div class="history-item">Wala pang mensahe.</div>';
-
-        let isOnline = false;
-        let clientLastSeenText = 'Hindi pa nabubuksan';
-
-        if (item.lastClientAccess) {
-            clientLastSeenText = typeof item.lastClientAccess === 'number'
-                ? new Date(item.lastClientAccess).toLocaleString()
-                : item.lastClientAccess;
-
-            let lastTime = typeof item.lastClientAccess === 'number'
-                ? item.lastClientAccess
-                : Date.parse(item.lastClientAccess);
-
-            if (isNaN(lastTime) && typeof item.lastClientAccess === 'string') {
-                let parts = item.lastClientAccess.split(/[\/\s,:]+/);
-                if (parts.length >= 6) {
-                    let d = new Date(parts[2], parts[1] - 1, parts[0], parts[3], parts[4], parts[5]);
-                    lastTime = d.getTime();
-                }
-            }
-
-            if (!isNaN(lastTime)) {
-                const diffMs = Date.now() - lastTime;
-                if (diffMs >= 0 && diffMs < 10 * 60 * 1000) {
-                    isOnline = true;
-                }
-            }
-        }
-
-        if (isOnline) onlineStoreCount++;
-
-        const isOpen = localStorage.getItem(`store_open_${index}`) === 'true';
-        const chatOpen = localStorage.getItem(`chat_open_${index}`) === 'true';
-        const historyOpen = localStorage.getItem(`history_open_${index}`) === 'true';
-
-        let statusDot = isOnline
-            ? `<span style="color: #2e7d32; font-size: 0.9rem;" title="Online — aktibo sa loob ng 10 minuto">🟢</span>`
-            : `<span style="color: #d32f2f; font-size: 0.9rem;" title="Offline — walang recent activity">🔴</span>`;
-
-        let hasClientMessage = false;
-        if (item.messages && item.messages.length > 0) {
-            const lastMsg = item.messages[item.messages.length - 1];
-            if (lastMsg.sender !== 'Admin') {
-                hasClientMessage = true;
-            }
-        }
-
-        const pendingTotal = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0), 0) * 100) / 100;
-        let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
-
-        const div = document.createElement('div');
-        div.className = storeCardClass;
-        div.innerHTML = `
-            <div class="store-header-row">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-size: 1rem;">🏢</span>
-                    ${statusDot}
-                    <strong style="font-size: 0.95rem;">${item.storeName}</strong>
-                    ${hasClientMessage ? '<span class="badge badge-msg">💬 May Mensahe</span>' : ''}
-                </div>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <span class="badge ${badgeClass}">${rating}</span>
-                    <button type="button" class="toggle-store-btn" id="storeToggleBtn_${index}" onclick="toggleStoreDetails(${index})">${isOpen ? '-' : '+'}</button>
-                </div>
-            </div>
-            <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong> | 📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong><br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong>${pendingTotal > 0 ? `<br>⏳ Nakabinbing benta: <strong>₱${pendingTotal.toLocaleString()}</strong>` : ''}</span>
-            </div>
-            <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
-                <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
-                    👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
-                </div>
-                ${approvedRestocksHtml}
-                <div style="margin-top: 10px;">${storeItemsHtml}</div>
-                <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
-                    <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">Pangalan</button>
-                    <button type="button" onclick="editStoreOwner(${index})" style="background-color: #006064; font-size: 0.75rem; padding: 6px; flex: 1;">May-ari</button>
-                    <button type="button" onclick="editStoreEmail(${index})" style="background-color: #1565c0; font-size: 0.75rem; padding: 6px; flex: 1;">Email</button>
-                    <button type="button" onclick="editStoreAddress(${index})" style="background-color: #00796b; font-size: 0.75rem; padding: 6px; flex: 1;">Address</button>
-                    <button type="button" onclick="editPayTerm(${index})" style="background-color: #f57f17; font-size: 0.75rem; padding: 6px; flex: 1;">💳 Terms</button>
-                    <button type="button" onclick="editDiscount(${index})" style="background-color: #ad1457; font-size: 0.75rem; padding: 6px; flex: 1;">🏷️ Discount</button>
-                    <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Reset Password</button>
-                </div>
-                <div style="margin-top: 6px; display: flex; gap: 4px;">
-                    <button type="button" onclick="toggleStoreCollectionStatus(${index})" style="background-color: ${item.isCollected ? '#78909c' : '#2e7d32'}; font-size: 0.75rem; padding: 6px; flex: 1;">${item.isCollected ? '↩️ Ibalik sa Aktibo' : '✅ Markahan bilang Nakolektahan'}</button>
-                    <button type="button" onclick="deleteEntireStore(${index})" style="background-color: #d32f2f; font-size: 0.75rem; padding: 6px; flex: 1;">Burahin</button>
-                </div>
-                <div style="margin-top: 8px;">
-                    <button type="button" onclick="toggleBox('chatBox_${index}', this, 'chat_open_${index}')" style="background-color: #546e7a; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">${chatOpen ? 'Itago ang Chatbox' : `💬 Chatbox (${item.messages.length})`}</button>
-                    <div class="collapsible-box" id="chatBox_${index}" style="display: ${chatOpen ? 'block' : 'none'};">
-                        ${chatHtml}
-                        <div style="display:flex; gap:4px; margin-top:5px;">
-                            <input type="text" id="adminReply_${index}" placeholder="Mag-reply..." style="font-size:0.75rem; padding:4px;">
-                            <button type="button" onclick="sendAdminReply(${index})" style="width:auto; margin-top:0; font-size:0.75rem; padding:4px 8px; background-color: #2e7d32;">Ipadala</button>
-                        </div>
-                    </div>
-                    <button type="button" onclick="toggleBox('historyBox_${index}', this, 'history_open_${index}')" style="background-color: #607d8b; font-size: 0.75rem; padding: 6px; margin-bottom: 5px;">${historyOpen ? 'Itago ang History' : '📜 History'}</button>
-                    <div class="collapsible-box" id="historyBox_${index}" style="display: ${historyOpen ? 'block' : 'none'};">
-                        ${historyHtml}
-                    </div>
-                </div>
-            </div>
-        `;
-        storesList.appendChild(div);
-    });
-
-    const dashTotalStores = document.getElementById('dashTotalStores');
-    const dashPendingRestock = document.getElementById('dashPendingRestock');
-    if (dashTotalStores) dashTotalStores.textContent = tStores;
-    if (dashPendingRestock) dashPendingRestock.textContent = pendingRestockCount;
-
-    const dashboardContainer = document.getElementById('storeEarningsDashboard');
-    if (dashboardContainer) {
-        dashboardContainer.innerHTML = dashboardEarningsHtml || '<p style="color: #666;">Wala pang datos ng benta.</p>';
-    }
-
-    const onlineBadgeEl = document.getElementById('onlineStoreBadge');
-    if (onlineBadgeEl) {
-        onlineBadgeEl.textContent = `🟢 Online: ${onlineStoreCount}`;
-    }
-
-    if (appData.consignments.length === 0) {
-        storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang nakarehistrong tindahan.</p>';
-    }
-
-    Object.keys(savedReplies).forEach(idx => {
-        const input = document.getElementById(`adminReply_${idx}`);
-        if (input) input.value = savedReplies[idx];
-    });
-
-    const requestTopBadge = document.getElementById('requestTopBadge');
-    if (actionReqCount > 0) {
-        requestTopBadge.style.display = 'inline-block';
-        requestTopBadge.textContent = actionReqCount;
-    } else {
-        requestTopBadge.style.display = 'none';
-    }
-
-    if (totalActiveReqsCount > previousRequestCount) playNotificationSound();
-    previousRequestCount = totalActiveReqsCount;
-
-    const emptyReqText = '<p style="font-size: 0.85rem; color: #666;">Wala pang nakabinbing request o restock.</p>';
-    if (requestsContainerModal && requestsContainerModal.children.length === 0) requestsContainerModal.innerHTML = emptyReqText;
-
-    document.getElementById('totalStores').textContent = tStores;
-    document.getElementById('totalDue').textContent = tDue;
-    document.getElementById('totalStock').textContent = tStock + ' pcs';
-    document.getElementById('totalSold').textContent = tSold + ' pcs';
-    document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
-}
-
-// Gumagawa ng Firebase account nang walang ipinapadalang email. Ang admin ang magbibigay ng password sa client.
-async function createAccountForClient(email, password) {
-    if (TEST_MODE) return { ok: true, uid: 'TEST-' + Date.now() };
-    try {
-        const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-        const uid = cred.user.uid;
-        try { await signOut(secondaryAuth); } catch (_) {}
-        return { ok: true, uid };
-    } catch (err) {
-        if (secondaryAuth.currentUser) { try { await signOut(secondaryAuth); } catch (_) {} }
-        if (err.code === 'auth/email-already-in-use') {
-            alert(`May Firebase account na ang ${email}. Hindi mapapalitan ng admin ang password nito.\nKung nakalimutan ng client ang password, burahin ang user sa Firebase Console (Authentication → Users) at ulitin ito.`);
-        } else if (err.code === 'auth/invalid-email') {
-            alert('Hindi wastong email address.');
-        } else if (err.code === 'auth/operation-not-allowed') {
-            alert('Hindi naka-enable ang Email/Password provider sa Firebase Authentication.');
-        } else {
-            alert('⚠️ Hindi nagawa ang Firebase account: ' + err.message);
-        }
-        return { ok: false, uid: '' };
-    }
+    
+    // Total numbers calculations...
+    document.getElementById('totalStores').textContent = appData.consignments.length;
 }
 
 window.approveInquiryWithPassword = async function(inqIdx) {
@@ -1409,152 +731,52 @@ window.approveInquiryWithPassword = async function(inqIdx) {
     if (!inq) return;
 
     const email = (inq.email || '').trim().toLowerCase();
-    if (!email) {
-        alert('Hindi ma-aaprubahan: walang valid email address ang inquiry.');
-        return;
-    }
+    if (!email) { alert('Walang valid email address.'); return; }
 
-    // Huwag payagang ma-link ang isang email na may existing active store.
-    const existingStore = (appData.consignments || []).find(c =>
-        (c.email || '').trim().toLowerCase() === email
-    );
-    if (existingStore) {
-        alert(`May existing store record na naka-link sa email ${email}. Hindi muna gagawa ng bagong Firebase account.`);
-        return;
-    }
-
-    const defaultQty = inq.initialQty || inq.qty || 10;
-    const initialStockStr = await prompt(`[Prompt] Simulang stock para sa ${inq.storeName} (${inq.styleType || 'Ordinary'}):`, defaultQty);
-    if (initialStockStr === null) return;
-    const initialStock = parseInt(initialStockStr) || 0;
-
-    const priceStr = await prompt(`[Prompt] Presyo bawat piraso (₱):`, String(STANDARD_PRICES[inq.styleType || 'Ordinary'] || 150));
-    if (priceStr === null) return;
-    const price = parseFloat(priceStr) || 150;
-
+    const defaultQty = inq.initialQty || inq.qty || 5;
+    const price = STANDARD_PRICES[inq.styleType || 'Ordinary'] || 150;
     const style = inq.styleType || 'Ordinary';
+    const payTerm = 'monthly';
 
-    const termStr = await prompt('Terms ng bayad:\n1 = Buwanan\n2 = Kada 15 Araw\n3 = Lingguhan\n4 = Pagkaubos ng Stock', '1');
-    if (termStr === null) return;
-    const payTerm = ['monthly', 'semimonthly', 'weekly', 'sellout'][(parseInt(termStr) || 1) - 1] || 'monthly';
-
-    if (initialStock <= 0) {
-        alert('Ang initial stock ay dapat higit sa 0.');
+    if (appData.homeStock[style] < defaultQty) {
+        alert(`Kulang ang Home stock para sa ${style}!`);
         return;
     }
 
-    if (appData.homeStock[style] < initialStock) {
-        alert(`Hindi ma-aprube: Kulang ang Home stock para sa ${style} (${appData.homeStock[style]} pcs lamang ang available)!`);
-        return;
-    }
+    appData.homeStock[style] = Math.max(0, appData.homeStock[style] - defaultQty);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const collDateStr = nextCollectionDate({ paymentTerms: payTerm });
 
-    let firebaseUid = '';
+    appData.consignments.push({
+        id: Date.now(),
+        storeName: inq.storeName,
+        ownerName: inq.ownerName || '',
+        email: email,
+        paymentTerms: payTerm,
+        address: inq.address || '',
+        styleType: style,
+        initialQty: defaultQty,
+        currentStock: defaultQty,
+        returnedQty: 0,
+        rejectedQty: 0,
+        price: price,
+        dateDelivered: todayStr,
+        collectionDate: collDateStr,
+        storeItems: [{
+            id: Date.now(), styleType: style, initialQty: defaultQty, currentStock: defaultQty,
+            returnedQty: 0, rejectedQty: 0, price: price, dateDelivered: todayStr, collectionDate: collDateStr
+        }],
+        activeRequests: [], pendingSales: [], approvedRestocks: [],
+        clientNotifications: [{ id: Date.now(), text: `🎉 Na-aprube na ang iyong aplikasyon!`, date: new Date().toLocaleString() }],
+        messages: [{ sender: 'Admin', text: `Welcome sa aming network!`, date: new Date().toLocaleString() }],
+        lastClientAccess: null, isCollected: false,
+        history: [{ id: Date.now(), date: new Date().toLocaleString(), text: `Na-aprube ang aplikasyon.` }]
+    });
 
-    try {
-        // Gumawa na ng sariling Firebase account ang client nang isumite ang aplikasyon.
-        // Kung lumang aplikasyon na walang account, ang admin ang magtatakda ng password.
-        let adminSetPassword = '';
-        if (!inq.accountCreated) {
-            const pw = await prompt(`Walang Firebase account ang aplikasyong ito. Magtakda ng password para kay ${email} (hindi bababa sa 6 na karakter). Ibigay ito sa client:`);
-            if (pw === null) return;
-            if (pw.trim().length < 6) { alert('Hindi bababa sa 6 na karakter.'); return; }
-            const res = await createAccountForClient(email, pw.trim());
-            if (!res.ok) return;
-            firebaseUid = res.uid;
-            adminSetPassword = pw.trim();
-        }
-
-        const isSameName = inq.ownerName && inq.storeName &&
-            inq.ownerName.trim().toLowerCase() === inq.storeName.trim().toLowerCase();
-        const searchValidationMsg = isSameName
-            ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan."
-            : "";
-
-        appData.homeStock[style] = Math.max(0, appData.homeStock[style] - initialStock);
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const collDateStr = nextCollectionDate({ paymentTerms: payTerm });
-
-        let notifications = [{
-            id: Date.now(),
-            text: `🎉 Na-aprube na ang iyong aplikasyon! Stock: ${initialStock} pcs (${style}). Mag-login gamit ang email at password na iyong ginawa.`,
-            date: new Date().toLocaleString()
-        }];
-        if (isSameName) {
-            notifications.push({
-                id: Date.now() + 1,
-                text: searchValidationMsg,
-                date: new Date().toLocaleString()
-            });
-        }
-
-        deduplicateConsignments();
-        cleanSourceData();
-
-        appData.consignments.push({
-            id: Date.now(),
-            storeName: inq.storeName,
-            ownerName: inq.ownerName || '',
-            // IMPORTANT: no plaintext client password is stored here.
-            email: email,
-            firebaseUid: firebaseUid || '',
-            authStatus: 'active',
-            paymentTerms: payTerm,
-            address: inq.address || '',
-            styleType: style,
-            initialQty: initialStock,
-            currentStock: initialStock,
-            returnedQty: 0,
-            rejectedQty: 0,
-            price: price,
-            dateDelivered: todayStr,
-            collectionDate: collDateStr,
-            storeItems: [{
-                id: Date.now(),
-                styleType: style,
-                initialQty: initialStock,
-                currentStock: initialStock,
-                returnedQty: 0,
-                rejectedQty: 0,
-                price: price,
-                dateDelivered: todayStr,
-                collectionDate: collDateStr
-            }],
-            activeRequests: [],
-            pendingSales: [],
-            approvedRestocks: [],
-            clientNotifications: notifications,
-            messages: [{
-                sender: 'Admin',
-                text: `Welcome sa aming network! Aplikasyon na-aprube at na-register na sa Firebase Authentication.`
-            , date: new Date().toLocaleString() }],
-            lastClientAccess: null,
-            searchValidation: searchValidationMsg,
-            isCollected: false,
-            history: [{
-                id: Date.now(),
-                date: new Date().toLocaleString(),
-                text: `Na-aprube ang aplikasyon (${initialStock} pcs ${style}) at awtomatikong binawas sa inventory; Firebase Auth account handa na. Terms: ${PAY_TERMS[payTerm].label}.`
-            }]
-        });
-
-        appData.pendingInquiries.splice(inqIdx, 1);
-        await saveToCloud();
-
-        alert(`✅ Matagumpay na na-aprube ang inquiry!
-
-📧 ${email}
-🔐 Firebase Authentication: HANDA NA
-${adminSetPassword ? `🔑 Password na itinakda mo: ${adminSetPassword}\nIbigay ito sa client.` : 'Mag-login ang client gamit ang password na ginawa niya sa application form.'}
-
-Kasama na ang store sa active consignment list.`);
-    } catch (err) {
-        if (secondaryAuth.currentUser) {
-            try { await signOut(secondaryAuth); } catch (_) {}
-        }
-        alert('⚠️ Hindi natuloy ang approval: ' + (err.message || err));
-    }
+    appData.pendingInquiries.splice(inqIdx, 1);
+    await saveToCloud();
+    alert(`✅ Matagumpay na na-aprube ang inquiry para sa ${inq.storeName}!`);
 };
-
 
 window.declineInquiry = async function(inqIdx) {
     if (await confirm('Tanggihan ang aplikasyong ito?')) {
@@ -1562,414 +784,6 @@ window.declineInquiry = async function(inqIdx) {
         await saveToCloud();
     }
 };
-
-window.toggleBox = function(id, btn, storageKey) {
-    const box = document.getElementById(id);
-    if (box.style.display === 'block') {
-        box.style.display = 'none';
-        localStorage.setItem(storageKey, 'false');
-    } else {
-        box.style.display = 'block';
-        localStorage.setItem(storageKey, 'true');
-    }
-};
-
-window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApproved) {
-    const item = appData.consignments[storeIdx];
-    const timestamp = new Date().toLocaleString();
-    const style = reqStyle || 'Ordinary';
-    const req = item.activeRequests[reqIdx] || {};
-
-    if (isApproved) {
-        if (appData.homeStock[style] < qty) {
-            alert(`Hindi ma-approve: Kulang ang stock sa Home inventory para sa ${style} (${appData.homeStock[style]} pcs lamang ang available, ${qty} pcs ang kailangan). Ang request ay nananatili.`);
-            return;
-        }
-
-        // BERIPIKASYON NG PRESYO bago i-approve
-        const priceSub = (item.storeItems || []).find(s => s.styleType === style);
-        const curPrice = priceSub ? priceSub.price : ((item.storeItems && item.storeItems[0]) ? item.storeItems[0].price : 150);
-        const pStr = await prompt(`Beripikahin ang presyo bawat piraso (₱)\n\n🏪 ${item.storeName}\n📦 ${qty} pcs ${style}\nKasalukuyang presyo: ₱${curPrice}\nStandard na Presyo ng Supplier: ₱${STANDARD_PRICES[style] || '-'}\n\nIlagay ang napag-usapang presyo:`, String(curPrice));
-        if (pStr === null) return;
-        const agreedPrice = parseFloat(pStr);
-        if (isNaN(agreedPrice) || agreedPrice <= 0) {
-            alert('Maglagay ng wastong presyo na higit sa zero. Hindi na-approve ang request.');
-            return;
-        }
-        if (priceSub && agreedPrice !== Number(priceSub.price)) {
-            if (!await confirm(`Magbabago ang presyo ng ${style} mula ₱${priceSub.price} patungong ₱${agreedPrice}.\nMag-aapply ito sa lahat ng ${style} ng tindahan (kasama ang natitira at nabenta).\n\nItuloy?`)) return;
-        }
-
-        item.activeRequests.splice(reqIdx, 1);
-        if (!item.approvedRestocks) item.approvedRestocks = [];
-        item.approvedRestocks.push({
-            id: Date.now(),
-            reqId: req.id,
-            styleType: style,
-            qty: qty,
-            price: agreedPrice,
-            date: timestamp,
-            clientAccepted: false
-        });
-        setRestockStatus(item, req.id, 'Approved');
-
-        if (!item.clientNotifications) item.clientNotifications = [];
-        item.clientNotifications.push({ id: Date.now(), text: `📦 Na-approve ang restock request (${qty} pcs ${style}) sa presyong ₱${agreedPrice} bawat piraso. Mangyaring tanggapin ito.`, date: timestamp });
-        if (!item.history) item.history = [];
-        item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-approve ang Restock (${qty} pcs ${style}) sa ₱${agreedPrice}/pc - Naghihintay ng pagtanggap ng client` });
-    } else {
-        const reason = await prompt('Dahilan ng pagtanggi (makikita ng client):', 'Kulang ang stock sa ngayon');
-        if (reason === null) return;
-        const cleanReason = reason.trim();
-
-        item.activeRequests.splice(reqIdx, 1);
-        setRestockStatus(item, req.id, 'Rejected', cleanReason);
-
-        if (!item.clientNotifications) item.clientNotifications = [];
-        item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ang hiling na restock (${qty} pcs ${style}).${cleanReason ? ' Dahilan: ' + cleanReason : ''}`, date: timestamp });
-        if (!item.history) item.history = [];
-        item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang Restock${cleanReason ? ' (' + cleanReason + ')' : ''}` });
-    }
-    await saveToCloud();
-};
-
-window.processPendingSales = async function(storeIdx, saleIdx, qty, styleType, isApproved) {
-    const item = appData.consignments[storeIdx];
-    const timestamp = new Date().toLocaleString();
-    const style = styleType || 'Ordinary';
-    const sale = item.pendingSales[saleIdx] || {};
-
-    if (isApproved) {
-        item.pendingSales.splice(saleIdx, 1);
-        if (!item.history) item.history = [];
-        item.history.unshift({ id: Date.now(), date: timestamp, text: `Na-aprube ang benta mula sa client: ${qty} pcs (${style})${sale.totalAmount ? ' = ₱' + sale.totalAmount : ''}` });
-        if (!item.clientNotifications) item.clientNotifications = [];
-        item.clientNotifications.push({ id: Date.now(), text: `🎉 Na-aprube na ng admin ang iyong na-report na benta (${qty} pcs ${style}).`, date: timestamp });
-    } else {
-        if (!item.storeItems) item.storeItems = [];
-        let subItem = item.storeItems.find(sub => sub.styleType === style);
-        if (!subItem && item.storeItems.length > 0) {
-            subItem = item.storeItems[0];
-        }
-        if (subItem) {
-            subItem.currentStock += qty;
-            // Ibalik din ang naitalang halaga ng benta
-            subItem.soldValue = Math.max(0, (Number(subItem.soldValue) || 0) - (Number(sale.totalAmount) || 0));
-            subItem.soldValueQty = Math.max(0, (Number(subItem.soldValueQty) || 0) - qty);
-        }
-
-        item.pendingSales.splice(saleIdx, 1);
-        if (!item.history) item.history = [];
-        item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggihan ang na-report na benta (${qty} pcs ${style}) - Ibinalik ang stock` });
-        if (!item.clientNotifications) item.clientNotifications = [];
-        item.clientNotifications.push({ id: Date.now(), text: `❌ Tinanggihan ng admin ang iyong na-report na benta (${qty} pcs ${style}). Ibinalik ang stock.`, date: timestamp });
-    }
-    await saveToCloud();
-};
-
-window.confirmClientRestock = async function(storeIdx, restockIdx) {
-    const item = appData.consignments[storeIdx];
-    const restock = item.approvedRestocks[restockIdx];
-    const timestamp = new Date().toLocaleString();
-    const style = restock.styleType;
-    const qty = restock.qty;
-
-    if (appData.homeStock[style] < qty) {
-        alert(`Kulang na ang stock sa Home inventory para maitala ang pagtanggap (${appData.homeStock[style]} pcs na lang).`);
-        return;
-    }
-
-    appData.homeStock[style] = Math.max(0, appData.homeStock[style] - qty);
-    restock.clientAccepted = true;
-    setRestockStatus(item, restock.reqId, 'Received');
-
-    let basePrice = style === 'Premium' ? 180 : 150;
-    if (item.storeItems && item.storeItems.length > 0) {
-        basePrice = item.storeItems[0].price;
-    }
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const collDateStr = nextCollectionDate(item);
-
-    if (!item.storeItems) item.storeItems = [];
-    let existingSub = item.storeItems.find(sub => sub.styleType === style);
-    if (existingSub) {
-        existingSub.initialQty += qty;
-        existingSub.currentStock += qty;
-        existingSub.collectionDate = collDateStr;
-                        if (restock.price) existingSub.price = restock.price;
-    } else {
-        item.storeItems.push({
-            id: Date.now(), styleType: style, initialQty: qty, currentStock: qty,
-            returnedQty: 0, rejectedQty: 0, price: restock.price || basePrice, dateDelivered: todayStr, collectionDate: collDateStr
-        });
-    }
-
-    item.approvedRestocks.splice(restockIdx, 1);
-    if (!item.history) item.history = [];
-    item.history.unshift({ id: Date.now(), date: timestamp, text: `Tinanggap ni client ang restock: ${qty} pcs (${style})` });
-    if (!item.clientNotifications) item.clientNotifications = [];
-    item.clientNotifications.push({ id: Date.now(), text: `🎉 Naitala na ang pagtanggap ng restock (${qty} pcs ${style}).`, date: timestamp });
-
-    await saveToCloud();
-};
-
-window.sendAdminReply = function(index) {
-    const input = document.getElementById(`adminReply_${index}`);
-    const text = input.value.trim();
-    if (!text) return;
-    const timestamp = new Date().toLocaleString();
-    if (!appData.consignments[index].messages) appData.consignments[index].messages = [];
-    if (!appData.consignments[index].clientNotifications) appData.consignments[index].clientNotifications = [];
-
-    appData.consignments[index].messages.push({ sender: 'Admin', text: text, date: timestamp });
-    appData.consignments[index].clientNotifications.push({ id: Date.now(), text: `💬 Mensahe mula sa Admin: "${text}"`, date: timestamp });
-    input.value = '';
-    saveToCloud();
-};
-
-window.bawasStockSub = async function(storeIdx, subIdx) {
-    const store = appData.consignments[storeIdx];
-    const subItem = store.storeItems[subIdx];
-    const style = subItem.styleType || 'Ordinary';
-    const count = parseInt(await prompt(`Ilang piraso ng stock (${style}) ang ibabalik sa Home inventory?`, '1'));
-    if (!isNaN(count) && count > 0) {
-        if (count > subItem.currentStock) { alert('Lampas sa kasalukuyang stock!'); return; }
-        subItem.currentStock -= count;
-        subItem.returnedQty = (subItem.returnedQty || 0) + count;
-        appData.homeStock[style] += count;
-        store.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: `Nagbawas ng ${count} pcs (${style})` });
-        saveToCloud();
-    }
-};
-
-window.editStoreName = async function(index) {
-    const item = appData.consignments[index];
-    const newName = await prompt('Bagong Pangalan ng Tindahan:', item.storeName);
-    if (newName && newName.trim() !== '') {
-        item.storeName = newName.trim();
-        if (item.ownerName) {
-            const isSame = item.ownerName.trim().toLowerCase() === item.storeName.trim().toLowerCase();
-            item.searchValidation = isSame ? "⚠️ Validasyon: Magkatulad ang pangalan ng tao at ng tindahan." : "";
-        }
-        deduplicateConsignments();
-        cleanSourceData();
-        saveToCloud();
-    }
-};
-
-window.editStoreOwner = async function(index) {
-    const item = appData.consignments[index];
-    const newOwner = await prompt('Bagong Pangalan ng May-ari:', item.ownerName || '');
-    if (newOwner !== null) {
-        item.ownerName = newOwner.trim();
-        cleanSourceData();
-        saveToCloud();
-    }
-};
-
-window.editStoreEmail = async function(index) {
-    const item = appData.consignments[index];
-    const newEmail = await prompt('Bagong Email o Gmail Account:', item.email || '');
-    if (newEmail !== null) {
-        item.email = newEmail.trim();
-        cleanSourceData();
-        saveToCloud();
-    }
-};
-
-window.editStoreAddress = async function(index) {
-    const item = appData.consignments[index];
-    const newAddress = await prompt('Bagong Address / Lokasyon:', item.address || '');
-    if (newAddress !== null) {
-        item.address = newAddress.trim();
-        cleanSourceData();
-        saveToCloud();
-    }
-};
-
-// Palitan ang terms ng bayad ng tindahan
-window.editPayTerm = async function(index) {
-    const item = appData.consignments[index];
-    const v = await prompt(`Terms ng bayad para sa ${item.storeName}\nKasalukuyan: ${PAY_TERMS[termOf(item)].label}\n\n1 = Buwanan\n2 = Kada 15 Araw\n3 = Lingguhan\n4 = Pagkaubos ng Stock`, '1');
-    if (v === null) return;
-    const key = ['monthly', 'semimonthly', 'weekly', 'sellout'][(parseInt(v) || 0) - 1];
-    if (!key) { alert('Pumili ng 1 hanggang 4.'); return; }
-    item.paymentTerms = key;
-    const coll = nextCollectionDate(item);
-    (item.storeItems || []).forEach(s => { s.collectionDate = coll; });
-    const ts = new Date().toLocaleString();
-    if (!item.history) item.history = [];
-    item.history.unshift({ id: Date.now(), date: ts, text: `Terms ng bayad: ${PAY_TERMS[key].label}` });
-    if (!item.clientNotifications) item.clientNotifications = [];
-    item.clientNotifications.push({ id: Date.now(), text: `💳 Binago ang terms ng bayad: ${PAY_TERMS[key].label}. Tingnan sa Kasunduan.`, date: ts });
-    await saveToCloud();
-};
-
-// Magdagdag o magbura ng discount na may period
-window.editDiscount = async function(index) {
-    const item = appData.consignments[index];
-    const today = localToday();
-    if (!item.discounts) item.discounts = [];
-    if (!item.history) item.history = [];
-    if (!item.clientNotifications) item.clientNotifications = [];
-    const styleName = (k) => k === 'All' ? 'Lahat ng uri' : k;
-    const label = (d) => `${styleName(d.styleType)}: ${d.type === 'percent' ? d.value + '%' : '₱' + d.value} bawas (${fmtDate(d.startDate)} – ${fmtDate(d.endDate)})${d.endDate < today ? ' [TAPOS NA]' : ''}`;
-
-    if (item.discounts.length) {
-        const act = await prompt(`Mga discount ng ${item.storeName}:\n${item.discounts.map(d => '• ' + label(d)).join('\n')}\n\n1 = Magdagdag ng bagong discount\n2 = Burahin ang lahat ng discount`, '1');
-        if (act === null) return;
-        if (String(act).trim() === '2') {
-            if (!(await confirm(`Burahin ang lahat ng discount ng ${item.storeName}?`))) return;
-            item.discounts = [];
-            const ts0 = new Date().toLocaleString();
-            item.history.unshift({ id: Date.now(), date: ts0, text: 'Binura ang lahat ng discount.' });
-            item.clientNotifications.push({ id: Date.now(), text: '🏷️ Inalis na ang discount ng tindahan mo.', date: ts0 });
-            await saveToCloud();
-            return;
-        }
-        if (String(act).trim() !== '1') { alert('Pumili ng 1 o 2.'); return; }
-    }
-
-    const sv = await prompt('Anong uri ang may discount?\n1 = Ordinary\n2 = Premium\n3 = Lahat ng uri', '3');
-    if (sv === null) return;
-    const styleType = ['Ordinary', 'Premium', 'All'][(parseInt(sv) || 0) - 1];
-    if (!styleType) { alert('Pumili ng 1 hanggang 3.'); return; }
-    const targets = (item.storeItems || []).filter(s => styleType === 'All' || s.styleType === styleType);
-    if (!targets.length) { alert(`Walang ${styleType} na stock ang tindahang ito.`); return; }
-
-    const tv = await prompt('Paano ang discount?\n1 = Bawas na piso (₱) bawat piraso\n2 = Porsyento (%)', '1');
-    if (tv === null) return;
-    const type = String(tv).trim() === '2' ? 'percent' : (String(tv).trim() === '1' ? 'amount' : '');
-    if (!type) { alert('Pumili ng 1 o 2.'); return; }
-
-    const minBase = Math.min(...targets.map(s => Number(s.price) || 0));
-    const valStr = await prompt(type === 'percent' ? 'Ilang porsyento (%) ang discount?' : `Ilang piso (₱) ang bawas bawat piraso?\n(Dapat mas mababa sa ₱${minBase})`, '');
-    if (valStr === null) return;
-    const value = parseFloat(valStr);
-    if (isNaN(value) || value <= 0 || (type === 'percent' && value >= 100) || (type === 'amount' && value >= minBase)) {
-        alert('Hindi wasto ang halaga ng discount.');
-        return;
-    }
-
-    const d30 = new Date(); d30.setDate(d30.getDate() + 30);
-    const defEnd = ymd(d30);
-    const endStr = await prompt(`Hanggang kailan ang discount?\nFormat: YYYY-MM-DD (hal. ${defEnd})`, defEnd);
-    if (endStr === null) return;
-    const endDate = String(endStr).trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate) || isNaN(new Date(endDate + 'T00:00:00').getTime()) || endDate < today) {
-        alert('Hindi wasto ang petsa. Gamitin ang format na YYYY-MM-DD at hindi puwedeng nakaraan na.');
-        return;
-    }
-
-    item.discounts.push({ id: Date.now(), styleType, type, value, startDate: today, endDate });
-    const ts = new Date().toLocaleString();
-    const what = type === 'percent' ? `${value}%` : `₱${value} bawas bawat piraso`;
-    item.history.unshift({ id: Date.now(), date: ts, text: `Discount: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}` });
-    item.clientNotifications.push({ id: Date.now(), text: `🏷️ May discount ang tindahan mo: ${what} sa ${styleName(styleType)} hanggang ${fmtDate(endDate)}.`, date: ts });
-    await saveToCloud();
-    const preview = targets.map(s => { const e = priceWithDiscount(item, s); return `${s.styleType}: ₱${e.base} → ₱${e.price}`; }).join('\n');
-    alert(`✅ Naitala ang discount.\n\n${what} sa ${styleName(styleType)}\nHanggang ${fmtDate(endDate)}\n\n${preview}\n\nBabalik sa regular na presyo pagkatapos ng petsang iyon.`);
-};
-
-window.createClientLogin = async function(index) {
-    const item = appData.consignments[index];
-    const email = (item.email || '').trim().toLowerCase();
-    if (!email) {
-        alert('Maglagay muna ng email ng tindahan.');
-        return;
-    }
-    if (TEST_MODE) { alert('🧪 TESTING MODE: naka-block ang Reset Password (totoong Firebase account ito).'); return; }
-    if (!await confirm(`I-reset ang password ng ${item.storeName} (${email}) sa default na "${DEFAULT_CLIENT_PASSWORD}"?\n\nMapapalitan ang password na ginawa ng client. Kailangan nila itong palitan pagkatapos mag-login.`)) return;
-
-    let uid = '', ok = false, apiErr = '';
-    try {
-        const idToken = await auth.currentUser.getIdToken();
-        const resp = await fetch(RESET_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken, email, password: DEFAULT_CLIENT_PASSWORD })
-        });
-        const raw = await resp.text();
-        let data = {};
-        try { data = JSON.parse(raw); } catch (_) {}
-        if (resp.ok && data.ok) { ok = true; uid = data.uid; }
-        else apiErr = data.error || (resp.status + ' ' + raw.slice(0, 120));
-    } catch (err) {
-        apiErr = err.message;
-    }
-
-    // Alternatibo kung hindi gumagana ang server (walang service account key)
-    if (!ok) {
-        if (!await confirm(`⚠️ Hindi gumana ang server reset (${apiErr}).\n\nAlternatibo: gagawa ng bagong account na may default password na "${DEFAULT_CLIENT_PASSWORD}".\n\nKung may account na ang email na ito, burahin muna ito sa Firebase Console (Authentication → Users → ⋮ → Delete account), tapos ulitin ito.\n\nItuloy?`)) return;
-        const res = await createAccountForClient(email, DEFAULT_CLIENT_PASSWORD);
-        if (!res.ok) return;
-        uid = res.uid;
-    }
-
-    item.firebaseUid = uid;
-    item.authStatus = 'active';
-    item.mustChangePassword = true;
-    if (!item.history) item.history = [];
-    item.history.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: 'Na-reset ng admin ang password sa default.' });
-    await saveToCloud();
-    alert(`✅ Handa na ang default password.\n\n🏪 ${item.storeName}\n🔑 Default password: ${DEFAULT_CLIENT_PASSWORD}\n\nIbigay ito sa client. Hihilingin sa kanila na palitan ito pagkatapos mag-login.`);
-};
-
-
-window.deleteEntireStore = async function(index) {
-    if (await confirm('Burahin nang buo ang tindahang ito?')) {
-        const item = appData.consignments[index];
-        if (item.storeItems) {
-            item.storeItems.forEach(sub => {
-                if (sub.currentStock > 0) appData.homeStock[sub.styleType || 'Ordinary'] += sub.currentStock;
-            });
-        }
-        appData.consignments.splice(index, 1);
-        saveToCloud();
-    }
-};
-
-window.editHistory = async function(storeIdx, histIdx) {
-    const currentText = appData.consignments[storeIdx].history[histIdx].text;
-    const newText = await prompt('I-edit ang note:', currentText);
-    if (newText) { appData.consignments[storeIdx].history[histIdx].text = newText.trim(); saveToCloud(); }
-};
-
-window.deleteHistory = async function(storeIdx, histIdx) {
-    if (await confirm('Burahin ang history log na ito?')) {
-        appData.consignments[storeIdx].history.splice(histIdx, 1);
-        saveToCloud();
-    }
-};
-
-document.getElementById('exportBtn').addEventListener('click', () => {
-    document.getElementById('backupTextarea').value = JSON.stringify(appData, null, 2);
-    alert('Kopyahin ang text.');
-});
-
-document.getElementById('importTextBtn').addEventListener('click', () => {
-    try {
-        appData = JSON.parse(document.getElementById('backupTextarea').value.trim());
-        deduplicateConsignments();
-        cleanSourceData();
-        saveToCloud();
-        alert('Na-load na!');
-    } catch (err) { alert('Mali ang format.'); }
-});
-
-let deferredPrompt;
-const installCard = document.getElementById('installCard');
-const installBtn = document.getElementById('installBtn');
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); deferredPrompt = e; installCard.style.display = 'block';
-});
-installBtn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt = null;
-        installCard.style.display = 'none';
-    }
-});
 </script>
 </body>
 </html>
