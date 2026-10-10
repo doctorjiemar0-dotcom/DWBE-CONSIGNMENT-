@@ -240,6 +240,19 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         <div class="form-group"><label>Personal Active Email Address (sarili mong aktibong email):</label><input type="email" id="inqEmail" placeholder="Ilagay ang sarili mong aktibong Gmail/email" autocomplete="email" required></div>
         <div class="form-group"><label>Lokasyon / Address:</label><input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required></div>
 
+        <!-- Mga larawang kailangan (1 Valid ID at Store Front) -->
+        <div class="form-group">
+          <label for="inqIdFile">📇 1 Valid ID ng May-ari (litrato ng harap):</label>
+          <input type="file" id="inqIdFile" accept="image/*" required>
+          <img id="inqIdPrev" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;">
+        </div>
+        <div class="form-group">
+          <label for="inqStoreFile">🏪 Upload your Store Front (litrato ng tindahan):</label>
+          <input type="file" id="inqStoreFile" accept="image/*" required>
+          <img id="inqStorePrev" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;">
+        </div>
+        <p class="hint" style="margin-top:-2px;">🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.</p>
+
         <!-- Walis Style Selection -->
         <div class="form-group">
           <label>Piliin ang Gusto mong Uri ng Walis (Style):</label>
@@ -661,7 +674,7 @@ var D={
 '🏪 Upload your Store Front (litrato ng tindahan):':'🏪 Upload your Store Front (photo of the store):',
 '🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.':'🔒 These photos are only for the Admin\'s verification and cannot be seen by anyone else.',
 'Kailangan ang litrato ng 1 Valid ID at ng Store Front.':'A photo of 1 Valid ID and of the Store Front is required.',
-'Larawan lang ang tinatanggap (hanggang 15 MB).':'Only images are accepted (up to 15 MB).',
+'Larawan lang ang tinatanggap (awtomatikong paliliitin sa ilalim ng 1 MB).':'Only images are accepted (auto-shrunk to under 1 MB).',
 'Piliin ang Gusto mong Uri ng Walis (Style):':'Choose Your Preferred Broom Style:',
 '✨ Gitna ng Hibla (Tampok)':'✨ Center of the Fiber (Featured)',
 'Dami ng Nais i-Order (Quantity / Initial Qty):':'Quantity to Order (Initial Qty):',
@@ -1723,18 +1736,23 @@ function initPortalView() {
 // ===== LARAWAN NG APLIKASYON (1 Valid ID at Store Front) =====
 // Ang larawan ay kino-compress muna at inia-upload sa Firebase Storage.
 // Sa Firestore, ang PATH lang ang sine-save (hindi ang mismong larawan) para hindi mapuno ang dokumento.
-function compressImage(file, max = 900) {
-  // Ginagawang maliit na JPEG (dataURL) para magkasya sa Firestore (libre, walang Storage)
+function compressImage(file) {
+  // Ginagawang maliit na JPEG (dataURL) at nasa ilalim ng 1 MB, para magkasya sa libreng Firestore (walang Storage/Blaze)
   return new Promise((res, rej) => {
     const url = URL.createObjectURL(file), im = new Image();
     im.onload = () => {
-      const s = Math.min(1, max / Math.max(im.width, im.height));
-      const c = document.createElement('canvas');
-      c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
-      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
-      let q = 0.65, d = c.toDataURL('image/jpeg', q);
-      while (d.length > 380000 && q > 0.3) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
+      let max = 900, d = '';
+      for (let t = 0; t < 4; t++) {
+        const k = Math.min(1, max / Math.max(im.width, im.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        let q = 0.7; d = c.toDataURL('image/jpeg', q);
+        while (d.length > 380000 && q > 0.3) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
+        if (d.length <= 380000) break;
+        max = Math.round(max * 0.75);
+      }
       res(d);
     };
     im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Hindi mabasa ang larawan')); };
@@ -1748,6 +1766,8 @@ function bindPreview(inputId, imgId) {
     im.src = URL.createObjectURL(f); im.style.display = 'block';
   });
 }
+bindPreview('inqIdFile', 'inqIdPrev');
+bindPreview('inqStoreFile', 'inqStorePrev');
 
 // Inquiry Form Submission (gumagawa ng Firebase account; hindi na sine-save ang password sa database)
 const inquiryForm = $('inquiryForm');
@@ -1766,6 +1786,13 @@ if (inquiryForm) {
     const message = $('inqMessage').value.trim();
 
     if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
+
+    // Kailangan ang 1 Valid ID at Store Front (larawan lang, hanggang 15 MB bawat isa)
+    const idFile = $('inqIdFile').files[0], storeFile = $('inqStoreFile').files[0];
+    if (!idFile || !storeFile) { alert('Kailangan ang litrato ng 1 Valid ID at ng Store Front.'); return; }
+    if (![idFile, storeFile].every(f => f.type.startsWith('image/') && f.size < 15 * 1024 * 1024)) {
+      alert('Larawan lang ang tinatanggap (awtomatikong paliliitin sa ilalim ng 1 MB).'); return;
+    }
 
     applying = true;
     try {
@@ -1794,16 +1821,33 @@ if (inquiryForm) {
 
       }
 
+      // I-upload ang mga larawan sa Firebase Storage (sa TESTING MODE, hindi nag-a-upload)
+      let idPath = 'TEST', storePath = 'TEST';
+      if (!TEST_MODE) {
+        try {
+          const uid = authData.currentUser.uid;
+          const idImg = await compressImage(idFile), storeImg = await compressImage(storeFile);
+          await setDoc(doc(db, 'app_images', uid), Object.assign({ idImg, storeImg, email }, stamp()));
+          idPath = 'app_images/' + uid + '#id'; storePath = 'app_images/' + uid + '#store';
+        } catch (err) {
+          alert('⚠️ Hindi na-upload ang larawan: ' + err.message);
+          try { await signOut(authData); } catch (_) {}
+          return;
+        }
+      }
+
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
       appData.pendingInquiries.push(Object.assign({
         storeName, ownerName, contact, email, address,
-        styleType, initialQty, message, accountCreated: true
+        styleType, initialQty, message, idPath, storePath, accountCreated: true
       }, stamp()));
 
       await saveData();
       try { await signOut(authData); } catch (err3) {}
       alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!');
       inquiryForm.reset();
+      $('inqIdPrev').style.display = 'none';
+      $('inqStorePrev').style.display = 'none';
     } finally {
       applying = false;
       initPortalView();
