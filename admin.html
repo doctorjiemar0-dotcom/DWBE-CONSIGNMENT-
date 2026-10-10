@@ -353,13 +353,15 @@ button:hover { background-color: #1b5e20; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getStorage, ref, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
   authDomain: "dwbe-consignment.firebaseapp.com",
   projectId: "dwbe-consignment",
+  storageBucket: "dwbe-consignment.firebasestorage.app",
   messagingSenderId: "205759197252",
   appId: "1:205759197252:web:b04400821f81791d10cc11"
 };
@@ -367,6 +369,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
+const storage = getStorage(app);
 
 // ===== TESTING MODE (shared key sa index.html) =====
 const LIVE_DOC_ID = 'main_inventory';
@@ -419,7 +422,7 @@ window.seedTestFromLive = async function () {
 
 
 // ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
-// Dapat pareho ang email na ito sa nakasulat sa Firestore Security Rules.
+// Dapat pareho ang email na ito sa nakasulat sa Firebase Storage Rules.
 const ADMIN_EMAILS = ['admin@admin.com'];
 const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
 
@@ -480,23 +483,14 @@ window.applyTermDate = function() {
   document.getElementById('collectionDate').valueAsDate = new Date(nextCollectionDate({ paymentTerms: k }));
 };
 
-// ===== MGA LARAWAN NG APLIKASYON (Firestore only — compatible sa Spark Plan) =====
-// Bagong format: FS_PHOTO:<uid>/<kind>; bawat larawan ay nasa hiwalay na Firestore document.
+// ===== MGA LARAWAN NG APLIKASYON (Valid ID at Store Front mula sa Firebase Storage) =====
+// Ang index.html ay nagse-save ng PATH (hal. applications/<uid>/valid-id.jpg) sa idPath at storePath.
+// Dito kinukuha ang tunay na link gamit ang getDownloadURL (admin lang ang pinapayagan ng Storage Rules).
 const hasPhoto = (p) => !!p && p !== 'TEST';
-const imgUrlCache = new Map();
-function photoDocRef(path) {
-    if (!path || !path.startsWith('FS_PHOTO:')) throw new Error('Ang lumang Storage photo path ay hindi mabubuksan sa Firebase Spark Plan.');
-    const bits = path.slice('FS_PHOTO:'.length).split('/');
-    if (bits.length !== 2 || !bits[0] || !['valid-id','store-front'].includes(bits[1])) throw new Error('Hindi wasto ang reference ng larawan.');
-    return doc(db, 'application_photos', bits[0], 'photos', bits[1]);
-}
-async function getImgUrl(path) {
-    if (imgUrlCache.has(path)) return imgUrlCache.get(path);
-    const snap = await getDoc(photoDocRef(path));
-    if (!snap.exists() || !snap.data().dataUrl) throw new Error('Walang naka-save na larawan sa Firestore.');
-    const dataUrl = snap.data().dataUrl;
-    imgUrlCache.set(path, dataUrl);
-    return dataUrl;
+const imgUrlCache = new Map(); // path -> url (para hindi paulit-ulit ang pagkuha tuwing magre-render)
+function getImgUrl(path) {
+    if (imgUrlCache.has(path)) return Promise.resolve(imgUrlCache.get(path));
+    return getDownloadURL(ref(storage, path)).then(url => { imgUrlCache.set(path, url); return url; });
 }
 function appPhotosHtml(idPath, storePath) {
     const one = (path, label) => hasPhoto(path)
@@ -504,6 +498,7 @@ function appPhotosHtml(idPath, storePath) {
         : `<div class="inq-photo"><span>${label}</span><div class="no-photo">${path === 'TEST' ? 'Test mode (walang upload)' : 'Walang larawan'}</div></div>`;
     return `<div class="inq-photos">${one(idPath, '📇 Valid ID')}${one(storePath, '🏪 Store Front')}</div>`;
 }
+// Pagkatapos mag-render, punuin ang mga larawan (mula sa cache kung meron na)
 function hydrateAppImages() {
     document.querySelectorAll('img.app-img[data-path]').forEach(img => {
         const path = img.dataset.path;
@@ -513,7 +508,7 @@ function hydrateAppImages() {
             .catch(err => {
                 const box = document.createElement('div');
                 box.className = 'no-photo';
-                box.textContent = '⚠️ Hindi ma-load ang larawan (' + (err.code || err.message || 'error') + ')';
+                box.textContent = '⚠️ Hindi ma-load (' + (err.code || 'error') + ')';
                 if (img.parentNode) img.replaceWith(box);
             });
     });
@@ -525,18 +520,19 @@ window.openAppImage = async function(path, title) {
         document.getElementById('appImageBig').src = url;
         document.getElementById('appImageModal').style.display = 'flex';
     } catch (err) {
-        alert('⚠️ Hindi mabuksan ang larawan: ' + (err.code || err.message) + '\nTiyaking tama ang Firestore Security Rules at admin account.');
+        alert('⚠️ Hindi mabuksan ang larawan: ' + (err.code || err.message) + '\nTiyaking tama ang Firebase Storage Rules at ang admin email.');
     }
 };
 window.closeAppImage = function() {
     document.getElementById('appImageModal').style.display = 'none';
     document.getElementById('appImageBig').src = '';
 };
+// Burahin ang mga larawan sa Storage (kapag tinanggihan ang aplikasyon o binura ang tindahan)
 async function deleteAppImages(rec) {
     if (TEST_MODE || !rec) return;
     for (const p of [rec.idPath, rec.storePath]) {
-        if (!p || !p.startsWith('FS_PHOTO:')) continue;
-        try { await deleteDoc(photoDocRef(p)); imgUrlCache.delete(p); } catch (e) { console.warn('Hindi nabura ang Firestore application photo:', e); }
+        if (!hasPhoto(p)) continue;
+        try { await deleteObject(ref(storage, p)); imgUrlCache.delete(p); } catch (e) { /* ayos lang kung wala na */ }
     }
 }
 
@@ -1382,7 +1378,7 @@ function renderApp() {
                 </div>
             </div>
             <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong><br>🔑 Login: <strong>${item.email || 'N/A'}</strong><br>📧 Totoong Email: ${item.contactEmail ? `<strong style="color:#2e7d32;">${item.contactEmail}</strong> <span style="font-size:0.7rem;color:#888;">(${item.contactEmailUpdated || ''})</span>` : '<strong style="color:#c62828;">Wala pa</strong>'}<br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong>${pendingTotal > 0 ? `<br>⏳ Nakabinbing benta: <strong>₱${pendingTotal.toLocaleString()}</strong>` : ''}</span>
+                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong><br>${item.personalEmail ? `📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong> <span style="font-size:0.7rem;color:#888;">(personal email ng client)</span>` : `🔑 Login: <strong>${item.email || 'N/A'}</strong><br>📧 Totoong Email: ${item.contactEmail ? `<strong style="color:#2e7d32;">${item.contactEmail}</strong> <span style="font-size:0.7rem;color:#888;">(${item.contactEmailUpdated || ''})</span>` : '<strong style="color:#c62828;">Wala pa</strong>'}`}<br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong>${pendingTotal > 0 ? `<br>⏳ Nakabinbing benta: <strong>₱${pendingTotal.toLocaleString()}</strong>` : ''}</span>
             </div>
             <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                 <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
@@ -1586,11 +1582,13 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             ownerName: inq.ownerName || '',
             // IMPORTANT: no plaintext client password is stored here.
             email: email,
+            // Personal email na ng client ang gamit sa pag-login (galing sa aplikasyon); hindi na kailangan ng hiwalay na Totoong Email
+            personalEmail: !!inq.accountCreated,
             firebaseUid: firebaseUid || '',
             authStatus: 'active',
             paymentTerms: payTerm,
             address: inq.address || '',
-            // Dinala mula sa aplikasyon (Firestore photo reference): 1 Valid ID at Store Front
+            // Dinala mula sa aplikasyon (path lang sa Firebase Storage): 1 Valid ID at Store Front
             idPath: inq.idPath || '',
             storePath: inq.storePath || '',
             styleType: style,
@@ -1650,7 +1648,7 @@ Kasama na ang store sa active consignment list.`);
 
 
 window.declineInquiry = async function(inqIdx) {
-    if (await confirm('Tanggihan ang aplikasyong ito?\nMabubura rin ang mga larawan (Valid ID at Store Front) sa Firestore.')) {
+    if (await confirm('Tanggihan ang aplikasyong ito?\nMabubura rin ang mga larawan (Valid ID at Store Front) sa Storage.')) {
         const inq = appData.pendingInquiries[inqIdx];
         await deleteAppImages(inq);
         appData.pendingInquiries.splice(inqIdx, 1);
@@ -2012,7 +2010,7 @@ window.createClientLogin = async function(index) {
 
 
 window.deleteEntireStore = async function(index) {
-    if (await confirm('Burahin nang buo ang tindahang ito?\nMabubura rin ang naka-save na Valid ID at Store Front nito sa Firestore.')) {
+    if (await confirm('Burahin nang buo ang tindahang ito?\nMabubura rin ang naka-save na Valid ID at Store Front nito sa Storage.')) {
         const item = appData.consignments[index];
         if (item.storeItems) {
             item.storeItems.forEach(sub => {
