@@ -1675,9 +1675,12 @@ async function saveData() {
   try {
     await setDoc(doc(db, "app_data", DATA_DOC), appData);
     syncStatus.textContent = "✅ Na-save sa Cloud";
+    return true;
   } catch (err) {
     console.error(err);
     syncStatus.textContent = "⚠️ Error sa pag-save";
+    window._lastSaveErr = err.code || err.message;
+    return false;
   }
 }
 
@@ -1794,6 +1797,7 @@ if (inquiryForm) {
       alert('Larawan lang ang tinatanggap (awtomatikong paliliitin sa ilalim ng 1 MB).'); return;
     }
 
+    if (!dataLoaded) { alert('⚠️ Hindi pa nakakonekta sa Cloud. Hintayin ang "Nakakonekta" sa itaas, tapos ulitin.'); return; }
     applying = true;
     try {
       if (!TEST_MODE) {
@@ -1836,14 +1840,25 @@ if (inquiryForm) {
         }
       }
 
+      // Basahin muna ang pinakabagong data para hindi mapatungan ang mga pagbabago ng admin/ibang client
+      try {
+        const fresh = await getDoc(doc(db, "app_data", DATA_DOC));
+        if (fresh.exists()) appData = fresh.data();
+      } catch (e) { console.error(e); }
+      if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+      if (!appData.consignments) appData.consignments = [];
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
       appData.pendingInquiries.push(Object.assign({
         storeName, ownerName, contact, email, address,
         styleType, initialQty, message, idPath, storePath, accountCreated: true
       }, stamp()));
 
-      await saveData();
+      const saved = await saveData();
       try { await signOut(authData); } catch (err3) {}
+      if (!saved) {
+        alert('⚠️ Hindi na-save ang aplikasyon sa Cloud (' + (window._lastSaveErr || 'error') + '). Subukan ulit gamit ang parehong email at password.');
+        return;
+      }
       alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!');
       inquiryForm.reset();
       $('inqIdPrev').style.display = 'none';
