@@ -673,7 +673,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
   </div>
 </div>
 
-<!-- Password Eye Toggle Function -->
+<!-- Global Utility Functions (Password & Application Drawer Toggles) -->
 <script>
 function togglePasswordVisibilityField(inputId, btnEl) {
   const input = document.getElementById(inputId);
@@ -685,6 +685,19 @@ function togglePasswordVisibilityField(inputId, btnEl) {
     input.type = 'password';
     btnEl.textContent = '👁️';
   }
+}
+
+function toggleApplicationDrawer() {
+  const drawer = document.getElementById('applicationDrawer');
+  const btn = document.getElementById('applicationDrawerToggle');
+  if (!drawer || !btn) return;
+  const willOpen = !drawer.classList.contains('open');
+  drawer.classList.toggle('open', willOpen);
+  btn.classList.toggle('open', willOpen);
+  btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  drawer.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+  const label = btn.querySelector('span:first-child');
+  if (label) label.textContent = willOpen ? '📋 Isara ang Application' : '📋 Buksan ang Bagong Application';
 }
 </script>
 
@@ -1262,19 +1275,6 @@ window.selectInqStyle = function(style, el) {
     card.classList.toggle('selected', selected);
     card.setAttribute('aria-pressed', selected ? 'true' : 'false');
   });
-};
-
-window.toggleApplicationDrawer = function() {
-  const drawer = $('applicationDrawer');
-  const btn = $('applicationDrawerToggle');
-  if (!drawer || !btn) return;
-  const willOpen = !drawer.classList.contains('open');
-  drawer.classList.toggle('open', willOpen);
-  btn.classList.toggle('open', willOpen);
-  btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-  drawer.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
-  const label = btn.querySelector('span:first-child');
-  if (label) label.textContent = willOpen ? '📋 Isara ang Application' : '📋 Buksan ang Bagong Application';
 };
 
 window.toggleQrVisibility = function() {
