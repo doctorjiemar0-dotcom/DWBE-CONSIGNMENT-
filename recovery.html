@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWBE - Data Recovery & Backup Tool</title>
+<style>
+  :root { --primary: #185c38; --danger: #c62828; --bg: #f4f6f8; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  body { background: var(--bg); color: #333; padding: 20px; line-height: 1.5; }
+  .container { max-width: 800px; margin: auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  h1 { color: var(--primary); font-size: 1.5rem; margin-bottom: 5px; text-align: center; }
+  p.subtitle { font-size: 0.85rem; color: #666; text-align: center; margin-bottom: 20px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #fafafa; }
+  .card h2 { font-size: 1.05rem; color: var(--primary); margin-bottom: 10px; }
+  label { font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px; }
+  select, textarea, input[type="file"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; margin-bottom: 10px; }
+  textarea { height: 160px; font-family: monospace; font-size: 0.8rem; }
+  .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  button { flex: 1; min-width: 140px; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; transition: opacity 0.2s; }
+  button:hover { opacity: 0.9; }
+  .btn-green { background: var(--primary); }
+  .btn-blue { background: #0288d1; }
+  .btn-orange { background: #f57c00; }
+  .btn-danger { background: var(--danger); }
+  #status { text-align: center; font-weight: bold; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; display: none; }
+  .status-info { background: #e3f2fd; color: #0d47a1; }
+  .status-success { background: #e8f5e9; color: #1b5e20; }
+  .status-error { background: #ffebee; color: #c62828; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🛠️ DWBE Emergency Data Recovery</h1>
+  <p class="subtitle">Doctor Whisk Broom Enterprises • Cloud Database Backup & Restore Tool</p>
+
+  <div id="status"></div>
+
+  <!-- Database Mode Selection -->
+  <div class="card">
+    <h2>1. Piliin ang Target Database Document</h2>
+    <label for="docTarget">Target Document:</label>
+    <select id="docTarget">
+      <option value="main_inventory">LIVE Database (main_inventory)</option>
+      <option value="test_inventory">TESTING Database (test_inventory)</option>
+    </select>
+    <button type="button" class="btn-blue" onclick="loadCurrentData()">🔄 Silipin ang Kasalukuyang Data mula sa Cloud</button>
+  </div>
+
+  <!-- Backup Section -->
+  <div class="card">
+    <h2>2. I-download ang Full Backup (JSON)</h2>
+    <p style="font-size:0.8rem; color:#555; margin-bottom:10px;">I-download ang kumpletong kopya ng iyong inventory, consignments, sales, at history bago gumawa ng anomang pagbabago.</p>
+    <button type="button" class="btn-green" onclick="downloadBackup()">📥 Download JSON Backup File</button>
+  </div>
+
+  <!-- Quick Recovery / Sample Data -->
+  <div class="card" style="border-left: 4px solid #f57c00;">
+    <h2>3. Mabilis na Pag-recover (Quick Fixes)</h2>
+    <p style="font-size:0.8rem; color:#555; margin-bottom:10px;">Pindutin ito upang awtomatikong maisama o maibalik ang record ni Don Desunia kung sakaling nabura ito.</p>
+    <button type="button" class="btn-orange" onclick="restoreDonDesuniaRecord()">👤 Maibalik ang Record ni Don Desunia</button>
+  </div>
+
+  <!-- Full JSON Restore -->
+  <div class="card" style="border-left: 4px solid var(--danger);">
+    <h2>4. Manual JSON Restore / Overwrite</h2>
+    <label for="fileInput">Pumili ng JSON Backup File:</label>
+    <input type="file" id="fileInput" accept=".json" onchange="handleFileSelect(event)">
+    
+    <label for="jsonText">O i-paste ang RAW JSON Data dito:</label>
+    <textarea id="jsonText" placeholder="I-paste ang JSON data dito..."></textarea>
+    
+    <div class="btn-group">
+      <button type="button" class="btn-danger" onclick="restoreFullDatabase()">⚠️ I-restore at I-overwrite ang Cloud Database</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase Modular SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+  authDomain: "dwbe-consignment.firebaseapp.com",
+  projectId: "dwbe-consignment",
+  storageBucket: "dwbe-consignment.firebasestorage.app",
+  messagingSenderId: "205759197252",
+  appId: "1:205759197252:web:b04400821f81791d10cc11"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const $ = id => document.getElementById(id);
+
+function showStatus(msg, type = 'info') {
+  const st = $('status');
+  st.style.display = 'block';
+  st.className = 'status-' + type;
+  st.textContent = msg;
+}
+
+// 1. Basahin ang data mula sa Cloud
+window.loadCurrentData = async function() {
+  const docId = $('docTarget').value;
+  showStatus(`Kumukuha ng data mula sa ${docId}...`, 'info');
+  try {
+    const snap = await getDoc(doc(db, "app_data", docId));
+    if (snap.exists()) {
+      const data = snap.data();
+      $('jsonText').value = JSON.stringify(data, null, 2);
+      showStatus(`✅ Matagumpay na nakuha ang data mula sa [${docId}]!`, 'success');
+    } else {
+      showStatus(`⚠️ Walang nahanap na dokumento para sa [${docId}].`, 'error');
+    }
+  } catch (e) {
+    showStatus(`❌ Error sa pagbasa: ${e.message}`, 'error');
+  }
+};
+
+// 2. Download Backup File
+window.downloadBackup = async function() {
+  const docId = $('docTarget').value;
+  try {
+    const snap = await getDoc(doc(db, "app_data", docId));
+    if (!snap.exists()) { alert("Walang data na mai-download."); return; }
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(snap.data(), null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", `DWBE_Backup_${docId}_${new Date().toISOString().slice(0,10)}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+    showStatus(`✅ Matagumpay na na-download ang backup para sa [${docId}]!`, 'success');
+  } catch (e) {
+    showStatus(`❌ Error sa pag-download: ${e.message}`, 'error');
+  }
+};
+
+// 3. Basahin ang na-upload na JSON file
+window.handleFileSelect = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    $('jsonText').value = evt.target.result;
+    showStatus("✅ Handa na ang na-upload na file para sa restore.", "info");
+  };
+  reader.readAsText(file);
+};
+
+// 4. Overwrite Database gamit ang JSON
+window.restoreFullDatabase = async function() {
+  const docId = $('docTarget').value;
+  const rawText = $('jsonText').value.trim();
+  if (!rawText) { alert("Maglagay o pumili muna ng JSON data."); return; }
+
+  let parsedData;
+  try {
+    parsedData = JSON.parse(rawText);
+  } catch (e) {
+    alert("⚠️ Hindi valid na JSON format. Paki-check ang nilalaman.");
+    return;
+  }
+
+  if (!confirm(`⚠️ SIGURADO KA BA?\nIsusulat at i-o-overwrite nito ang buong [${docId}] database sa Cloud!`)) return;
+
+  showStatus(`Nag-o-overwrite sa ${docId}...`, 'info');
+  try {
+    await setDoc(doc(db, "app_data", docId), parsedData);
+    showStatus(`🎉 Matagumpay na na-restore at na-overwrite ang [${docId}]!`, 'success');
+  } catch (e) {
+    showStatus(`❌ Error sa pag-restore: ${e.message}`, 'error');
+  }
+};
+
+// 5. Quick Fix: Add/Restore Don Desunia Record
+window.restoreDonDesuniaRecord = async function() {
+  const docId = $('docTarget').value;
+  showStatus(`Sinusuri ang database [${docId}]...`, 'info');
+
+  try {
+    const snap = await getDoc(doc(db, "app_data", docId));
+    let currentData = snap.exists() ? snap.data() : { homeStock: { Ordinary: 0, Premium: 0 }, consignments: [], pendingInquiries: [] };
+
+    if (!currentData.consignments) currentData.consignments = [];
+
+    const nowStr = new Date().toLocaleString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+
+    const donDesunia = {
+      storeName: "Don Desunia Store",
+      ownerName: "Don Desunia",
+      contact: "09123456789",
+      email: "dondesunia@gmail.com",
+      address: "Sorsogon City",
+      consignmentStatus: "Aktibo ang Consignment",
+      paymentTerms: "monthly",
+      price: 150,
+      mustChangePassword: false,
+      storeItems: [
+        { styleType: "Ordinary", initialQty: 5, currentStock: 5, returnedQty: 0, rejectedQty: 0, price: 150, soldValue: 0, soldValueQty: 0, collectionDate: "N/A" },
+        { styleType: "Premium", initialQty: 5, currentStock: 5, returnedQty: 0, rejectedQty: 0, price: 160, soldValue: 0, soldValueQty: 0, collectionDate: "N/A" }
+      ],
+      activeRequests: [],
+      approvedRestocks: [],
+      restockLog: [],
+      pendingSales: [],
+      transactionHistory: [
+        { type: "Consignment", text: "Nagsimula ang paunang consignment agreement para kay Don Desunia (5 pcs Ordinary, 5 pcs Premium).", date: nowStr, ts: Date.now() }
+      ],
+      clientNotifications: [
+        { text: "Maligayang pagdating sa DWBE Client Portal, Don Desunia!", date: nowStr, ts: Date.now() }
+      ],
+      messages: []
+    };
+
+    const idx = currentData.consignments.findIndex(c => c.storeName.toLowerCase() === donDesunia.storeName.toLowerCase());
+    if (idx >= 0) {
+      currentData.consignments[idx] = donDesunia;
+    } else {
+      currentData.consignments.push(donDesunia);
+    }
+
+    await setDoc(doc(db, "app_data", docId), currentData);
+    $('jsonText').value = JSON.stringify(currentData, null, 2);
+    showStatus(`🎉 Matagumpay na naidagdag/naibalik ang record ni Don Desunia sa [${docId}]!`, 'success');
+  } catch (e) {
+    showStatus(`❌ Error sa pag-update: ${e.message}`, 'error');
+  }
+};
+</script>
+
+</body>
+</html>
