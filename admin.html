@@ -353,9 +353,8 @@ button:hover { background-color: #1b5e20; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getStorage, ref, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -369,7 +368,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
-const storage = getStorage(app);
 
 // ===== TESTING MODE (shared key sa index.html) =====
 const LIVE_DOC_ID = 'main_inventory';
@@ -488,9 +486,15 @@ window.applyTermDate = function() {
 // Dito kinukuha ang tunay na link gamit ang getDownloadURL (admin lang ang pinapayagan ng Storage Rules).
 const hasPhoto = (p) => !!p && p !== 'TEST';
 const imgUrlCache = new Map(); // path -> url (para hindi paulit-ulit ang pagkuha tuwing magre-render)
-function getImgUrl(path) {
-    if (imgUrlCache.has(path)) return Promise.resolve(imgUrlCache.get(path));
-    return getDownloadURL(ref(storage, path)).then(url => { imgUrlCache.set(path, url); return url; });
+// Ang larawan ay naka-save sa Firestore: app_images/<uid>, field na idImg o storeImg. Path format: app_images/<uid>#id o #store
+const imgDocCache = new Map();
+async function getImgUrl(path) {
+    if (imgUrlCache.has(path)) return imgUrlCache.get(path);
+    const [p, f] = String(path).split('#'), uid = p.split('/')[1];
+    if (!imgDocCache.has(uid)) { const snap = await getDoc(doc(db, 'app_images', uid)); imgDocCache.set(uid, snap.exists() ? snap.data() : {}); }
+    const url = imgDocCache.get(uid)[f === 'id' ? 'idImg' : 'storeImg'];
+    if (!url) throw new Error('Walang larawan');
+    imgUrlCache.set(path, url); return url;
 }
 function appPhotosHtml(idPath, storePath) {
     const one = (path, label) => hasPhoto(path)
@@ -530,10 +534,9 @@ window.closeAppImage = function() {
 // Burahin ang mga larawan sa Storage (kapag tinanggihan ang aplikasyon o binura ang tindahan)
 async function deleteAppImages(rec) {
     if (TEST_MODE || !rec) return;
-    for (const p of [rec.idPath, rec.storePath]) {
-        if (!hasPhoto(p)) continue;
-        try { await deleteObject(ref(storage, p)); imgUrlCache.delete(p); } catch (e) { /* ayos lang kung wala na */ }
-    }
+    const p = [rec.idPath, rec.storePath].find(hasPhoto);
+    if (!p) return;
+    try { await deleteDoc(doc(db, 'app_images', String(p).split('#')[0].split('/')[1])); } catch (e) { /* ayos lang kung wala na */ }
 }
 
 // Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
@@ -1378,7 +1381,7 @@ function renderApp() {
                 </div>
             </div>
             <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
-                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong><br>🔑 Login: <strong>${item.email || 'N/A'}</strong><br>📧 Totoong Email: ${item.contactEmail ? `<strong style="color:#2e7d32;">${item.contactEmail}</strong> <span style="font-size:0.7rem;color:#888;">(${item.contactEmailUpdated || ''})</span>` : '<strong style="color:#c62828;">Wala pa</strong>'}<br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong>${pendingTotal > 0 ? `<br>⏳ Nakabinbing benta: <strong>₱${pendingTotal.toLocaleString()}</strong>` : ''}</span>
+                <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong><br>${item.personalEmail ? `📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong> <span style="font-size:0.7rem;color:#888;">(personal email ng client)</span>` : `🔑 Login: <strong>${item.email || 'N/A'}</strong><br>📧 Totoong Email: ${item.contactEmail ? `<strong style="color:#2e7d32;">${item.contactEmail}</strong> <span style="font-size:0.7rem;color:#888;">(${item.contactEmailUpdated || ''})</span>` : '<strong style="color:#c62828;">Wala pa</strong>'}`}<br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong>${pendingTotal > 0 ? `<br>⏳ Nakabinbing benta: <strong>₱${pendingTotal.toLocaleString()}</strong>` : ''}</span>
             </div>
             <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                 <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
@@ -1582,6 +1585,8 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             ownerName: inq.ownerName || '',
             // IMPORTANT: no plaintext client password is stored here.
             email: email,
+            // Personal email na ng client ang gamit sa pag-login (galing sa aplikasyon); hindi na kailangan ng hiwalay na Totoong Email
+            personalEmail: !!inq.accountCreated,
             firebaseUid: firebaseUid || '',
             authStatus: 'active',
             paymentTerms: payTerm,
