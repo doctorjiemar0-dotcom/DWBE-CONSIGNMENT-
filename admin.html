@@ -83,6 +83,14 @@ button:hover { background-color: #1b5e20; }
 #appImageModal img { max-width: 95%; max-height: 78vh; border-radius: 8px; background: #fff; }
 #appImageModal h3 { color: #fff; font-size: 1rem; margin-bottom: 10px; }
 #appImageModal button { width: auto; padding: 8px 22px; margin-top: 14px; background: #fff; color: #333; }
+
+/* ===== Mata sa Password at Facebook link ===== */
+.fb-header-link{display:inline-block;background:#1877f2;color:white;text-decoration:none;font-size:.75rem;padding:3px 8px;border-radius:12px;margin-top:3px;font-weight:normal}
+.fb-header-link:hover{background:#145dbf;text-decoration:underline}
+.pw-wrapper{position:relative;display:flex;align-items:center}
+.pw-wrapper input{padding-right:42px}
+.pw-toggle-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none!important;border:none!important;color:#666;font-size:1.1rem;padding:4px;cursor:pointer;width:auto!important;min-height:0!important;margin-top:0!important;box-shadow:none!important}
+.pw-toggle-btn:hover{color:#2e7d32}
 </style>
 </head>
 <body>
@@ -100,7 +108,7 @@ button:hover { background-color: #1b5e20; }
             <label for="adminEmailInput">Admin Email:</label>
             <input type="email" id="adminEmailInput" placeholder="I-type ang email..." style="margin-bottom: 10px;">
             <label for="adminPasswordInput">Password:</label>
-            <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
+            <div class="pw-wrapper"><input type="password" id="adminPasswordInput" placeholder="I-type ang password..."><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('adminPasswordInput', this)">👁️</button></div>
         </div>
         <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
     </div>
@@ -292,6 +300,15 @@ button:hover { background-color: #1b5e20; }
     <button type="button" onclick="closeAppImage()">Isara</button>
 </div>
 
+<script>
+function togglePasswordVisibilityField(inputId, btnEl) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btnEl.textContent = show ? '🙈' : '👁️';
+}
+</script>
 <script>
 // Propesyonal na dialog box (kapalit ng "xxx.vercel.app says" ng browser)
 (function () {
@@ -490,9 +507,9 @@ const imgUrlCache = new Map(); // path -> url (para hindi paulit-ulit ang pagkuh
 const imgDocCache = new Map();
 async function getImgUrl(path) {
     if (imgUrlCache.has(path)) return imgUrlCache.get(path);
-    const [p, f] = String(path).split('#'), uid = p.split('/')[1];
-    if (!imgDocCache.has(uid)) { const snap = await getDoc(doc(db, 'app_images', uid)); imgDocCache.set(uid, snap.exists() ? snap.data() : {}); }
-    const url = imgDocCache.get(uid)[f === 'id' ? 'idImg' : 'storeImg'];
+    const [p, f] = String(path).split('#'), [col, id] = p.split('/');
+    if (!imgDocCache.has(p)) { const snap = await getDoc(doc(db, col, id)); imgDocCache.set(p, snap.exists() ? snap.data() : {}); }
+    const url = imgDocCache.get(p)[f === 'id' ? 'idImg' : 'storeImg'];
     if (!url) throw new Error('Walang larawan');
     imgUrlCache.set(path, url); return url;
 }
@@ -533,10 +550,12 @@ window.closeAppImage = function() {
 };
 // Burahin ang mga larawan sa Storage (kapag tinanggihan ang aplikasyon o binura ang tindahan)
 async function deleteAppImages(rec) {
-    if (TEST_MODE || !rec) return;
+    if (!rec) return;
     const p = [rec.idPath, rec.storePath].find(hasPhoto);
     if (!p) return;
-    try { await deleteDoc(doc(db, 'app_images', String(p).split('#')[0].split('/')[1])); } catch (e) { /* ayos lang kung wala na */ }
+    const [col, id] = String(p).split('#')[0].split('/');
+    if (TEST_MODE && col !== 'app_images_test') return; // huwag galawin ang LIVE na larawan mula sa Testing
+    try { await deleteDoc(doc(db, col, id)); } catch (e) { /* ayos lang kung wala na */ }
 }
 
 // Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
