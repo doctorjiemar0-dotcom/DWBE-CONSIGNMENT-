@@ -72,6 +72,17 @@ button:hover { background-color: #1b5e20; }
 .password-display-box .password-value { font-family: monospace; background: white; padding: 6px 10px; border-radius: 3px; color: #d32f2f; font-weight: bold; display: inline-block; margin: 0 6px; }
 .password-copy-btn { background: #0288d1 !important; color: white !important; border: none !important; padding: 4px 10px !important; border-radius: 3px !important; font-size: 0.75rem !important; cursor: pointer !important; margin-top: 0 !important; width: auto !important; }
 .password-copy-btn:hover { background: #0277bd !important; }
+
+/* ===== Mga larawan ng aplikasyon (Valid ID at Store Front) ===== */
+.inq-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.inq-photo { background: #fff; border: 1px solid #c5e1a5; border-radius: 8px; padding: 6px; text-align: center; min-width: 0; }
+.inq-photo > span { display: block; font-size: 0.72rem; font-weight: bold; color: #33691e; margin-bottom: 4px; }
+.inq-photo img.app-img { width: 100%; height: 110px; object-fit: cover; border-radius: 6px; background: #eceff1; cursor: zoom-in; display: block; }
+.inq-photo .no-photo { height: 110px; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; color: #888; background: #f5f5f5; border-radius: 6px; padding: 4px; }
+#appImageModal { background: rgba(0,0,0,0.88); flex-direction: column; z-index: 3000; }
+#appImageModal img { max-width: 95%; max-height: 78vh; border-radius: 8px; background: #fff; }
+#appImageModal h3 { color: #fff; font-size: 1rem; margin-bottom: 10px; }
+#appImageModal button { width: auto; padding: 8px 22px; margin-top: 14px; background: #fff; color: #333; }
 </style>
 </head>
 <body>
@@ -274,6 +285,13 @@ button:hover { background-color: #1b5e20; }
     </div>
 </div>
 
+<!-- Malaking larawan ng aplikasyon (Valid ID / Store Front) -->
+<div class="modal-overlay" id="appImageModal" onclick="closeAppImage()">
+    <h3 id="appImageTitle"></h3>
+    <img id="appImageBig" src="" alt="">
+    <button type="button" onclick="closeAppImage()">Isara</button>
+</div>
+
 <script>
 // Propesyonal na dialog box (kapalit ng "xxx.vercel.app says" ng browser)
 (function () {
@@ -337,6 +355,7 @@ button:hover { background-color: #1b5e20; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getStorage, ref, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -350,6 +369,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
+const storage = getStorage(app);
 
 // ===== TESTING MODE (shared key sa index.html) =====
 const LIVE_DOC_ID = 'main_inventory';
@@ -402,6 +422,7 @@ window.seedTestFromLive = async function () {
 
 
 // ⚠️ ILAGAY DITO ANG EMAIL NG ADMIN (pwedeng higit sa isa). Ang ibang account, tulad ng mga client, ay hindi makakapasok sa admin panel.
+// Dapat pareho ang email na ito sa nakasulat sa Firebase Storage Rules.
 const ADMIN_EMAILS = ['admin@admin.com'];
 const isAdminUser = (u) => !!u && !!u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase());
 
@@ -461,6 +482,59 @@ window.applyTermDate = function() {
   const k = document.getElementById('payTerm').value;
   document.getElementById('collectionDate').valueAsDate = new Date(nextCollectionDate({ paymentTerms: k }));
 };
+
+// ===== MGA LARAWAN NG APLIKASYON (Valid ID at Store Front mula sa Firebase Storage) =====
+// Ang index.html ay nagse-save ng PATH (hal. applications/<uid>/valid-id.jpg) sa idPath at storePath.
+// Dito kinukuha ang tunay na link gamit ang getDownloadURL (admin lang ang pinapayagan ng Storage Rules).
+const hasPhoto = (p) => !!p && p !== 'TEST';
+const imgUrlCache = new Map(); // path -> url (para hindi paulit-ulit ang pagkuha tuwing magre-render)
+function getImgUrl(path) {
+    if (imgUrlCache.has(path)) return Promise.resolve(imgUrlCache.get(path));
+    return getDownloadURL(ref(storage, path)).then(url => { imgUrlCache.set(path, url); return url; });
+}
+function appPhotosHtml(idPath, storePath) {
+    const one = (path, label) => hasPhoto(path)
+        ? `<div class="inq-photo"><span>${label}</span><img class="app-img" data-path="${path}" alt="${label}" onclick="openAppImage('${path}','${label}')"></div>`
+        : `<div class="inq-photo"><span>${label}</span><div class="no-photo">${path === 'TEST' ? 'Test mode (walang upload)' : 'Walang larawan'}</div></div>`;
+    return `<div class="inq-photos">${one(idPath, '📇 Valid ID')}${one(storePath, '🏪 Store Front')}</div>`;
+}
+// Pagkatapos mag-render, punuin ang mga larawan (mula sa cache kung meron na)
+function hydrateAppImages() {
+    document.querySelectorAll('img.app-img[data-path]').forEach(img => {
+        const path = img.dataset.path;
+        if (img.dataset.loaded === path) return;
+        if (imgUrlCache.has(path)) { img.src = imgUrlCache.get(path); img.dataset.loaded = path; return; }
+        getImgUrl(path).then(url => { img.src = url; img.dataset.loaded = path; })
+            .catch(err => {
+                const box = document.createElement('div');
+                box.className = 'no-photo';
+                box.textContent = '⚠️ Hindi ma-load (' + (err.code || 'error') + ')';
+                if (img.parentNode) img.replaceWith(box);
+            });
+    });
+}
+window.openAppImage = async function(path, title) {
+    try {
+        const url = await getImgUrl(path);
+        document.getElementById('appImageTitle').textContent = title || '';
+        document.getElementById('appImageBig').src = url;
+        document.getElementById('appImageModal').style.display = 'flex';
+    } catch (err) {
+        alert('⚠️ Hindi mabuksan ang larawan: ' + (err.code || err.message) + '\nTiyaking tama ang Firebase Storage Rules at ang admin email.');
+    }
+};
+window.closeAppImage = function() {
+    document.getElementById('appImageModal').style.display = 'none';
+    document.getElementById('appImageBig').src = '';
+};
+// Burahin ang mga larawan sa Storage (kapag tinanggihan ang aplikasyon o binura ang tindahan)
+async function deleteAppImages(rec) {
+    if (TEST_MODE || !rec) return;
+    for (const p of [rec.idPath, rec.storePath]) {
+        if (!hasPhoto(p)) continue;
+        try { await deleteObject(ref(storage, p)); imgUrlCache.delete(p); } catch (e) { /* ayos lang kung wala na */ }
+    }
+}
 
 // Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
 const secondaryAuth = getAuth(initializeApp(firebaseConfig, 'secondary'));
@@ -1037,6 +1111,7 @@ function renderApp() {
                 📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>
                 📦 Hiniling na Qty: <strong>${inq.initialQty || inq.qty || 5} pcs</strong><br>
                 💬 <strong>Mensahe/Inquiry:</strong> <span style="color:#333; font-style:italic;">"${inq.message || inq.notes || 'Walang mensahe'}"</span><br>
+                ${appPhotosHtml(inq.idPath, inq.storePath)}
                 <div class="password-display-box" style="background:#e3f2fd;border-color:#90caf9;">
                     <strong style="color:#1565c0;">🔐 FIREBASE AUTH:</strong>
                     Ang client ay gumawa na ng sarili niyang Firebase account nang isumite ang aplikasyon. Walang email na ipapadala.
@@ -1280,6 +1355,13 @@ function renderApp() {
         const pendingTotal = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0), 0) * 100) / 100;
         let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
+        // Mga larawan ng aplikasyon na dinala mula sa inquiry (kung meron)
+        const docBtns = (hasPhoto(item.idPath) || hasPhoto(item.storePath)) ? `
+                <div style="margin-top: 6px; display: flex; gap: 4px;">
+                    ${hasPhoto(item.idPath) ? `<button type="button" onclick="openAppImage('${item.idPath}','📇 Valid ID')" style="background-color: #37474f; font-size: 0.75rem; padding: 6px; flex: 1;">📇 Tingnan ang Valid ID</button>` : ''}
+                    ${hasPhoto(item.storePath) ? `<button type="button" onclick="openAppImage('${item.storePath}','🏪 Store Front')" style="background-color: #37474f; font-size: 0.75rem; padding: 6px; flex: 1;">🏪 Tingnan ang Store Front</button>` : ''}
+                </div>` : '';
+
         const div = document.createElement('div');
         div.className = storeCardClass;
         div.innerHTML = `
@@ -1313,6 +1395,7 @@ function renderApp() {
                     <button type="button" onclick="editDiscount(${index})" style="background-color: #ad1457; font-size: 0.75rem; padding: 6px; flex: 1;">🏷️ Discount</button>
                     <button type="button" onclick="createClientLogin(${index})" style="background-color: #5e35b1; font-size: 0.75rem; padding: 6px; flex: 1;">🔑 Reset Password</button>
                 </div>
+                ${docBtns}
                 <div style="margin-top: 6px; display: flex; gap: 4px;">
                     <button type="button" onclick="toggleStoreCollectionStatus(${index})" style="background-color: ${item.isCollected ? '#78909c' : '#2e7d32'}; font-size: 0.75rem; padding: 6px; flex: 1;">${item.isCollected ? '↩️ Ibalik sa Aktibo' : '✅ Markahan bilang Nakolektahan'}</button>
                     <button type="button" onclick="deleteEntireStore(${index})" style="background-color: #d32f2f; font-size: 0.75rem; padding: 6px; flex: 1;">Burahin</button>
@@ -1379,6 +1462,9 @@ function renderApp() {
     document.getElementById('totalStock').textContent = tStock + ' pcs';
     document.getElementById('totalSold').textContent = tSold + ' pcs';
     document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
+
+    // Kunin at ipakita ang mga larawan ng aplikasyon
+    hydrateAppImages();
 }
 
 // Gumagawa ng Firebase account nang walang ipinapadalang email. Ang admin ang magbibigay ng password sa client.
@@ -1500,6 +1586,9 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             authStatus: 'active',
             paymentTerms: payTerm,
             address: inq.address || '',
+            // Dinala mula sa aplikasyon (path lang sa Firebase Storage): 1 Valid ID at Store Front
+            idPath: inq.idPath || '',
+            storePath: inq.storePath || '',
             styleType: style,
             initialQty: initialStock,
             currentStock: initialStock,
@@ -1557,7 +1646,9 @@ Kasama na ang store sa active consignment list.`);
 
 
 window.declineInquiry = async function(inqIdx) {
-    if (await confirm('Tanggihan ang aplikasyong ito?')) {
+    if (await confirm('Tanggihan ang aplikasyong ito?\nMabubura rin ang mga larawan (Valid ID at Store Front) sa Storage.')) {
+        const inq = appData.pendingInquiries[inqIdx];
+        await deleteAppImages(inq);
         appData.pendingInquiries.splice(inqIdx, 1);
         await saveToCloud();
     }
@@ -1917,13 +2008,14 @@ window.createClientLogin = async function(index) {
 
 
 window.deleteEntireStore = async function(index) {
-    if (await confirm('Burahin nang buo ang tindahang ito?')) {
+    if (await confirm('Burahin nang buo ang tindahang ito?\nMabubura rin ang naka-save na Valid ID at Store Front nito sa Storage.')) {
         const item = appData.consignments[index];
         if (item.storeItems) {
             item.storeItems.forEach(sub => {
                 if (sub.currentStock > 0) appData.homeStock[sub.styleType || 'Ordinary'] += sub.currentStock;
             });
         }
+        await deleteAppImages(item);
         appData.consignments.splice(index, 1);
         saveToCloud();
     }
