@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alisin ang Restock Email</title>
+<style>
+*{box-sizing:border-box;font-family:"Segoe UI",sans-serif}body{margin:0;background:#f1f8e9;padding:16px;max-width:560px;margin:auto}
+.c{background:#fff;border:1px solid #c5e1a5;border-radius:12px;padding:14px;margin-bottom:12px}
+input{width:100%;padding:10px;border:1px solid #c5e1a5;border-radius:8px;margin:4px 0 8px}
+button{background:#2e7d32;color:#fff;border:0;border-radius:8px;padding:10px 14px;font-weight:bold;width:100%}
+button.r{background:#c62828}.m{color:#666;font-size:.8rem}.hl{border-color:#c62828;background:#fff5f5}
+</style></head><body>
+<h3>🧹 Alisin ang Restock Email</h3>
+<div class="c" id="lg"><b>Admin Login</b><input id="e" type="email" placeholder="Admin email"><input id="p" type="password" placeholder="Password"><button onclick="login()">Mag-login</button></div>
+<div id="list"></div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import{getFirestore,doc,getDoc,setDoc}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import{getAuth,signInWithEmailAndPassword,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+const app=initializeApp({apiKey:"AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",authDomain:"dwbe-consignment.firebaseapp.com",projectId:"dwbe-consignment",storageBucket:"dwbe-consignment.firebasestorage.app",messagingSenderId:"205759197252",appId:"1:205759197252:web:b04400821f81791d10cc11"},"clr");
+const auth=getAuth(app),db=getFirestore(app);
+const DOC=localStorage.getItem('dwbe_test_mode')==='1'?'test_inventory':'main_inventory';
+const $=id=>document.getElementById(id),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+window.login=async()=>{try{await signInWithEmailAndPassword(auth,$('e').value.trim(),$('p').value)}catch(x){alert('⚠️ '+x.message)}};
+onAuthStateChanged(auth,u=>{$('lg').style.display=u?'none':'';if(u)show()});
+async function show(){
+  const d=(await getDoc(doc(db,'app_data',DOC))).data()||{};
+  const L=(d.consignments||[]).map((s,i)=>({s,i})).filter(o=>o.s.contactEmail);
+  $('list').innerHTML=`<p class="m">Database: <b>${DOC}</b></p>`+(L.length?L.map(({s})=>{
+    const don=/desunia/i.test(s.storeName+' '+(s.ownerName||''));
+    return `<div class="c ${don?'hl':''}"><b>${esc(s.storeName)}</b>${don?' 👈':''}<br><span class="m">Restock email: ${esc(s.contactEmail)}</span><br><br><button class="r" onclick="clr('${esc(s.email)}')">🧹 Alisin ang Restock Email</button></div>`}).join(''):'<div class="c">Walang tindahang may Restock Email.</div>');
+}
+window.clr=async em=>{
+  if(!confirm('Alisin ang Restock Email ng tindahang ito?'))return;
+  const ref=doc(db,'app_data',DOC),d=(await getDoc(ref)).data(); // basahin muli bago i-save
+  const s=(d.consignments||[]).find(x=>(x.email||'').toLowerCase()===em.toLowerCase());
+  if(!s)return alert('Hindi nahanap ang tindahan.');
+  delete s.contactEmail;delete s.contactEmailUpdated;
+  (s.transactionHistory||(s.transactionHistory=[])).unshift({type:'Email',text:'Inalis ng Admin ang Restock Email.',date:new Date().toLocaleString('en-PH'),ts:Date.now()});
+  await setDoc(ref,d);alert('✅ Naalis na.');show();
+};
+</script></body></html>
