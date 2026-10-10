@@ -87,7 +87,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .broom-toggle-btn.active{background:#2e7d32!important;color:#fff!important;border-color:#1b5e20!important;box-shadow:0 2px 5px rgba(0,0,0,.15)!important}
 .broom-toggle-btn:active{transform:scale(.98)}
 
-/* ===== DWBE Professional Dashboard ===== */
 :root{--primary-color:#185c38;--secondary-color:#287a4b;--dwbe-border:#e1e9e3;--dwbe-muted:#64746a;--dwbe-shadow:0 8px 24px rgba(22,55,35,.07)}
 html{scroll-behavior:smooth}
 body{background:linear-gradient(180deg,#eaf3ed 0,#f5f7f5 260px,#f3f6f4 100%);line-height:1.5}
@@ -1220,7 +1219,7 @@ window.toggleSection = function(w, b, key) {
 (function() {
   [['notifContentWrapper', 'toggleNotifBtn', 'dwbe_sec_notif', true],
    ['restockStatusWrapper', 'toggleRestockStatusBtn', 'dwbe_sec_rstatus', false],
-   ['emailContentWrapper', 'toggleEmailBtn', 'dwbe_sec_email', false]].forEach(([w, b, k, d]) => {
+   ['emailContentWrapper', 'toggleEmailBtn', 'dwbe_sec_email', false']].forEach(([w, b, k, d]) => {
     let v = null; try { v = localStorage.getItem(k); } catch (e) {}
     setSection(w, b, v === null ? d : v === '1');
   });
@@ -1564,27 +1563,40 @@ window.promptRecordSale = async function(styleType) {
 
 let unsubData = null;
 let listenFailed = false;
+
 function listenData() {
   if (unsubData) unsubData();
   listenFailed = false;
   syncStatus.textContent = "Kumukuha ng data sa Cloud...";
-  unsubData = onSnapshot(doc(db, "app_data", DATA_DOC), (snap) => {
-    if (snap.metadata.hasPendingWrites) return;
-    if (snap.exists()) {
-      appData = snap.data();
-      if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
-      if (!appData.consignments) appData.consignments = [];
-      if (!appData.pendingInquiries) appData.pendingInquiries = [];
-    }
+  
+  try {
+    unsubData = onSnapshot(doc(db, "app_data", DATA_DOC), (snap) => {
+      if (snap.metadata && snap.metadata.hasPendingWrites) return;
+      if (snap.exists()) {
+        appData = snap.data();
+        if (!appData.homeStock) appData.homeStock = { Ordinary: 0, Premium: 0 };
+        if (!appData.consignments) appData.consignments = [];
+        if (!appData.pendingInquiries) appData.pendingInquiries = [];
+      }
+      dataLoaded = true;
+      syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+      populateStoreList();
+      initPortalView();
+    }, (err) => {
+      console.error("Firestore Listen Error:", err);
+      listenFailed = true;
+      dataLoaded = true; // Pinapayagan ang pagpapatuloy kahit mag-fail para hindi ma-stuck ang form
+      syncStatus.textContent = "⚠️ Offline / Restricted Mode (Cloud connection failed).";
+      populateStoreList();
+      initPortalView();
+    });
+  } catch (e) {
+    console.error("Snapshot catch error:", e);
     dataLoaded = true;
-    syncStatus.textContent = "✅ Nakakonekta sa Cloud Database";
+    syncStatus.textContent = "⚠️ System Error sa pagkonekta.";
     populateStoreList();
     initPortalView();
-  }, (err) => {
-    console.error(err);
-    listenFailed = true;
-    syncStatus.textContent = "⚠️ Nabigo sa pagkonekta sa Cloud.";
-  });
+  }
 }
 
 async function saveData() {
@@ -1689,12 +1701,12 @@ if (inquiryForm) {
     const initialQty = 5; 
     const message = $('inqMessage').value.trim();
 
-    if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter[span_1](start_span)[span_1](end_span).'); return; }
+    if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
 
     const idFile = $('inqIdFile').files[0], storeFile = $('inqStoreFile').files[0];
-    if (!idFile || !storeFile) { alert('Kailangan ang litrato ng 1 Valid ID at ng Store Front[span_2](start_span)[span_2](end_span).'); return; }
+    if (!idFile || !storeFile) { alert('Kailangan ang litrato ng 1 Valid ID at ng Store Front.'); return; }
     if (![idFile, storeFile].every(f => f.type.startsWith('image/') && f.size < 15 * 1024 * 1024)) {
-      alert('Larawan lang ang tinatanggap (hanggang 15 MB)[span_3](start_span)[span_3](end_span).'); return;
+      alert('Larawan lang ang tinatanggap (hanggang 15 MB).'); return;
     }
 
     applying = true;
@@ -1707,14 +1719,14 @@ if (inquiryForm) {
             try {
               await signInWithEmailAndPassword(authData, email, password);
             } catch (err2) {
-              alert('⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password[span_4](start_span)[span_4](end_span).');
+              alert('⚠️ May account na ang email na ito pero iba ang password. Gamitin ang tamang password.');
               return;
             }
           } else if (err.code === 'auth/invalid-email') {
-            alert('⚠️ Hindi wasto ang email[span_5](start_span)[span_5](end_span).');
+            alert('⚠️ Hindi wasto ang email.');
             return;
           } else if (err.code === 'auth/weak-password') {
-            alert('Ang password ay dapat hindi bababa sa 6 na karakter[span_6](start_span)[span_6](end_span).');
+            alert('Ang password ay dapat hindi bababa sa 6 na karakter.');
             return;
           } else {
             alert('⚠️ Hindi nagawa ang account: ' + err.message);
@@ -1744,7 +1756,7 @@ if (inquiryForm) {
 
       await saveData();
       try { await signOut(authData); } catch (err3) {}
-      alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password[span_7](start_span)[span_7](end_span)!');
+      alert('Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!');
       inquiryForm.reset();
       $('inqIdPrev').style.display = 'none';
       $('inqStorePrev').style.display = 'none';
