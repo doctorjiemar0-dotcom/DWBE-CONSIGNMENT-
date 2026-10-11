@@ -116,6 +116,8 @@ button:hover { background-color: #1b5e20; }
     <div id="mainAppContent">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
 
+        <div id="stopAlertBanner" style="display:none;background:#ffebee;border:2px solid #c62828;border-left:8px solid #c62828;border-radius:10px;padding:12px;margin-bottom:12px;color:#b71c1c;font-size:.88rem;"></div>
+
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>
             <button type="button" class="tab-btn" onclick="switchTab('inquiriesTab', this)">📥 Inquiries<span class="tab-badge" id="inquiryTabBadge">0</span></button>
@@ -1167,6 +1169,8 @@ function renderApp() {
     const todayStr = new Date().toISOString().slice(0, 10);
 
     let dashboardEarningsHtml = '';
+    const stoppedList = [];
+    const newStops = [];
 
     appData.consignments.sort((a, b) => {
         if (a.isCollected !== b.isCollected) {
@@ -1250,8 +1254,8 @@ function renderApp() {
         `;
 
         if (storeIsDue) tDue++;
-        let rating = item.isCollected ? 'Nakolektahan' : (storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos'));
-        let badgeClass = item.isCollected ? 'badge-good' : (storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good'));
+        let rating = (isStoppedStatus && !item.isCollected) ? 'Nag-STOP' : item.isCollected ? 'Nakolektahan' : (storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos'));
+        let badgeClass = (isStoppedStatus && !item.isCollected) ? 'badge-due' : item.isCollected ? 'badge-good' : (storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good'));
 
         if (item.activeRequests.length > 0) {
             hasRequests = true;
@@ -1294,6 +1298,29 @@ function renderApp() {
                 `;
                 if (requestsContainerModal) requestsContainerModal.appendChild(saleRow);
             });
+        }
+
+        // ===== ABISO: NAG-STOP NG KASUNDUAN =====
+        const isStoppedStatus = item.consignmentStatus === 'Stopped';
+        if (isStoppedStatus && !item.stopAcknowledged) {
+            hasRequests = true;
+            actionReqCount += 1;
+            totalActiveReqsCount += 1;
+            stoppedList.push(item.storeName);
+            const stopKey = 'stop_seen_' + (TEST_MODE ? 't_' : 'l_') + (item.id || item.email) + '_' + (item.stopRequestedAt || '');
+            if (!localStorage.getItem(stopKey)) newStops.push({ key: stopKey, name: item.storeName });
+            const pendAmt = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0), 0) * 100) / 100;
+            const stopRow = document.createElement('div');
+            stopRow.className = 'request-action-row';
+            stopRow.style.cssText = 'background:#ffebee;border-color:#ef9a9a;flex-direction:column;align-items:stretch;gap:6px;';
+            stopRow.innerHTML = `
+                <span>🛑 <strong>${item.storeName}</strong> ay nag-<strong>STOP/CANCEL</strong> ng Consignment Agreement${item.stopRequestedAt ? ` <small style="color:#888;">(${item.stopRequestedAt})</small>` : ''}.<br>
+                <small>Natitirang stock na kukunin: <strong>${storeTotalStock} pcs</strong> | Nakabinbing benta: <strong>₱${pendAmt.toLocaleString()}</strong>. Gawin ang pinal na settlement: kolektahin ang bayad at kunin ang natitirang stock.</small></span>
+                <div>
+                    <button type="button" class="btn-approve" onclick="ackStopAgreement(${index})">✅ Natanggap / Tapos na ang Settlement</button>
+                    <button type="button" class="btn-decline" style="background:#607d8b;" onclick="reactivateStore(${index})">↩️ I-activate ulit</button>
+                </div>`;
+            if (requestsContainerModal) requestsContainerModal.appendChild(stopRow);
         }
 
         let approvedRestocksHtml = '';
@@ -1375,7 +1402,7 @@ function renderApp() {
         }
 
         const pendingTotal = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0), 0) * 100) / 100;
-        let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
+        let storeCardClass = `store-card ${(storeIsDue || (isStoppedStatus && !item.stopAcknowledged)) ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
         // Mga larawan ng aplikasyon na dinala mula sa inquiry (kung meron)
         const docBtns = (hasPhoto(item.idPath) || hasPhoto(item.storePath)) ? `
@@ -1484,6 +1511,23 @@ function renderApp() {
     document.getElementById('totalStock').textContent = tStock + ' pcs';
     document.getElementById('totalSold').textContent = tSold + ' pcs';
     document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
+
+    // Banner sa itaas para sa mga nag-STOP
+    const stopBanner = document.getElementById('stopAlertBanner');
+    if (stopBanner) {
+        if (stoppedList.length) {
+            stopBanner.style.display = 'block';
+            stopBanner.innerHTML = `🛑 <strong>${stoppedList.length} tindahan ang nag-STOP ng Consignment Agreement:</strong><br>${stoppedList.join(', ')}<br><button type="button" onclick="openModal('requestModal')" style="background:#c62828;margin-top:8px;font-size:.85rem;padding:8px;">Tingnan at I-settle</button>`;
+        } else {
+            stopBanner.style.display = 'none';
+        }
+    }
+    // Popup (isang beses lang bawat bagong STOP)
+    if (newStops.length && !window._stopAlertOpen) {
+        window._stopAlertOpen = true;
+        newStops.forEach(s => localStorage.setItem(s.key, '1'));
+        alert('🛑 Nag-STOP ng Consignment Agreement:\n\n' + newStops.map(s => '• ' + s.name).join('\n') + '\n\nBuksan ang "Benta & Requests" para i-settle.').then(() => { window._stopAlertOpen = false; });
+    }
 
     // Kunin at ipakita ang mga larawan ng aplikasyon
     hydrateAppImages();
@@ -2056,6 +2100,32 @@ window.deleteHistory = async function(storeIdx, histIdx) {
         appData.consignments[storeIdx].history.splice(histIdx, 1);
         saveToCloud();
     }
+};
+
+window.ackStopAgreement = async function(index) {
+    const item = appData.consignments[index];
+    if (!(await confirm(`Naitala na ba ang pinal na settlement ng ${item.storeName}? (bayad at pagkuha ng natitirang stock)`))) return;
+    item.stopAcknowledged = true;
+    const ts = new Date().toLocaleString();
+    if (!item.history) item.history = [];
+    item.history.unshift({ id: Date.now(), date: ts, text: 'Natanggap ng Admin ang pagpapahinto ng kasunduan; naitala ang pinal na settlement.' });
+    if (!item.clientNotifications) item.clientNotifications = [];
+    item.clientNotifications.push({ id: Date.now(), text: '✅ Natanggap na ng Admin ang pagpapahinto ng iyong Consignment Agreement. Salamat!', date: ts });
+    await saveToCloud();
+};
+
+window.reactivateStore = async function(index) {
+    const item = appData.consignments[index];
+    if (!(await confirm(`I-activate ulit ang Consignment ng ${item.storeName}?`))) return;
+    item.consignmentStatus = 'Aktibo ang Consignment';
+    item.stopAcknowledged = false;
+    delete item.stopRequestedAt;
+    const ts = new Date().toLocaleString();
+    if (!item.history) item.history = [];
+    item.history.unshift({ id: Date.now(), date: ts, text: 'Ini-activate ulit ng Admin ang Consignment.' });
+    if (!item.clientNotifications) item.clientNotifications = [];
+    item.clientNotifications.push({ id: Date.now(), text: '🔄 Ini-activate ulit ng Admin ang iyong Consignment.', date: ts });
+    await saveToCloud();
 };
 
 document.getElementById('exportBtn').addEventListener('click', () => {
