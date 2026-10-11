@@ -280,6 +280,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
             <ul>
               <li><b>Bawat walis na maibenta, automatic na may ₱10 kang kita</b> (ibinabawas sa babayaran mo sa Owner).</li>
               <li>Ikaw ang bahala sa sarili mong <b>retail price / patong (mark-up)</b>; sa iyo ang patong na iyon.</li>
+              <li><b>Daily ang cut-off.</b> Kapag ayaw mo nang magtinda, awtomatiko mong ibabalik ang natitirang stock at babayaran ang mga naibenta.</li>
               <li>Sumasang-ayon sa simpleng <b>Sales Agent Agreement</b>.</li>
             </ul>
           </div>
@@ -635,9 +636,9 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
             <li style="margin-bottom:6px;"><strong>PAGBEBENTA:</strong> Ibebenta ng Agent ang mga Walis Tambo (Ordinary at Premium) na ibinigay ng Owner nang <span class="r">walang advance na bayad</span>. I-record ang bawat benta gamit ang <span class="y">"May Bumili"</span> button.</li>
             <li style="margin-bottom:6px;"><strong>PRESYO AT MARK-UP:</strong> Supplier Price bawat piraso: <strong id="agentSupplierPriceText">___</strong>. Ang Agent ang bahala sa sarili niyang <span class="y">retail price / patong (mark-up)</span> at sa kanya ang patong na iyon.</li>
             <li style="margin-bottom:6px;"><strong>AUTOMATIC NA KITA:</strong> Sa <span class="y">bawat (1) walis na maibenta</span>, may <span class="r">automatic na ₱10 na kita ang Agent</span>, na ibinabawas sa babayaran. <em>Net na ibabayad = (Naibenta × Supplier Price) − (Naibenta × ₱10).</em></li>
-            <li style="margin-bottom:6px;"><strong>BAYAD:</strong> Babayaran ng Agent sa Owner ang net na halaga ng mga naibenta ayon sa Terms ng Bayad sa ibaba.</li>
+            <li style="margin-bottom:6px;"><strong>CUT-OFF AT BAYAD:</strong> Ang cut-off ay <span class="r">araw-araw (daily)</span>. Babayaran ng Agent sa Owner ang net na halaga ng mga naibenta ayon sa Terms ng Bayad sa ibaba.</li>
             <li style="margin-bottom:6px;"><strong>HINDI NABENTANG STOCK:</strong> Mananatiling pag-aari ng Owner ang mga hindi nabentang walis.</li>
-            <li><strong>PAGWAWAKAS:</strong> Maaaring itigil ng Agent ang kasunduan anumang oras gamit ang <span style="background-color:#ffeb3b;color:#d32f2f;font-weight:bold;padding:2px 6px;border-radius:3px;">"STOP/CANCEL"</span> button. Sa araw ng pagwawakas, babayaran ang mga naibenta at ibabalik ang natitirang walang sirang stock.</li>
+            <li><strong>PAGWAWAKAS:</strong> Kapag <span class="y">ayaw nang magtinda</span> ng Agent, pipindutin lang ang <span style="background-color:#ffeb3b;color:#d32f2f;font-weight:bold;padding:2px 6px;border-radius:3px;">"STOP/CANCEL"</span> button. <span class="r">Awtomatiko niyang ibabalik ang natitirang stock at babayaran ang mga naibenta.</span></li>
           </ol>
         </div>
 
@@ -1138,7 +1139,8 @@ const PAY_TERMS = {
   monthly:     { label: 'Buwanan (End of Month)', text: 'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
   semimonthly: { label: 'Kada 15 Araw',           text: 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
   weekly:      { label: 'Lingguhan',              text: 'Cut-off kada 7 araw (lingguhan). Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
-  sellout:     { label: 'Pagkaubos ng Stock',     text: 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)' }
+  sellout:     { label: 'Pagkaubos ng Stock',     text: 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)' },
+  daily:       { label: 'Araw-araw (Daily Cut-off)', text: 'Cut-off ay araw-araw. Sa katapusan ng bawat araw, bayaran ang mga naibenta. Kapag ayaw nang magtinda, awtomatikong ibabalik ang natitirang stock at babayaran ang mga naibenta. (Net: Naibenta × Supplier Price − ₱10 auto-kita bawat piraso)' }
 };
 
 // Ang tindahan ay nakikilala sa pamamagitan ng email ng naka-login na Firebase Auth account
@@ -1723,19 +1725,28 @@ window.clearAllNotifications = async function() {
 
 // Stop Agreement (Kasaysayan ng Transaksyon lang ang tinatala; hindi na ito napupunta sa Support chat)
 window.promptStopAgreement = async function() {
-  if (!(await confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?"))) return;
   const store = getStore();
   if (!store) return;
+  const agent = isAgentStore(store);
+  let settle = null;
+  if (agent) {
+    settle = agentSettlement(store);
+    const msg = `⚠️ Ayaw mo na bang magtinda?\n\nAwtomatikong mangyayari:\n• Ibabalik mo ang natitirang stock: ${settle.remaining} pcs\n• Babayaran mo ang mga naibenta: ${settle.sold} pcs = ₱${settle.net.toLocaleString()} (net, matapos ang ₱${settle.bonus} auto-kita mo)\n\nItuloy?`;
+    if (!(await confirm(msg))) return;
+  } else if (!(await confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?"))) return;
 
   store.agreementAccepted = false;
   store.consignmentStatus = "Stopped";
   store.stopRequestedAt = now();
   store.stopAcknowledged = false;
 
-  addTx(store, 'Kasunduan', 'Itinigil/Ikinansela ang Consignment Agreement.');
+  if (agent && settle) {
+    store.stopSettlement = Object.assign({ at: now() }, settle);
+    addTx(store, 'Kasunduan', `Sales Agent: ayaw nang magtinda. Awtomatikong ibabalik ang ${settle.remaining} pcs na tira at babayaran ang ${settle.sold} pcs na naibenta (net ₱${settle.net}).`);
+  } else addTx(store, 'Kasunduan', 'Itinigil/Ikinansela ang Consignment Agreement.');
 
   await saveData();
-  alert("Matagumpay na naitala ang iyong pagpapahinto sa kasunduan.");
+  alert(agent ? "Naitala na. Ibalik ang natitirang stock at bayaran ang mga naibenta ayon sa settlement." : "Matagumpay na naitala ang iyong pagpapahinto sa kasunduan.");
   renderClientDashboard(store);
 };
 
@@ -2235,6 +2246,17 @@ function applyStoreLock(store) {
   pc.addEventListener('submit', (e) => { if (blocked()) { e.preventDefault(); e.stopPropagation(); } }, true);
 })();
 
+// Awtomatikong settlement ng Sales Agent kapag ayaw na magtinda: ibalik ang tira + bayaran ang naibenta (net ng auto-kita)
+function agentSettlement(store) {
+  let sold = 0, gross = 0, remaining = 0;
+  (store.storeItems || []).forEach(sub => {
+    const sSold = Math.max(0, (sub.initialQty || 0) - (sub.currentStock || 0) - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
+    sold += sSold; gross += subSalesValueC(sub, sSold); remaining += Math.max(0, sub.currentStock || 0);
+  });
+  gross = Math.round(gross * 100) / 100;
+  const bonus = sold * AGENT_BONUS_PER_PC;
+  return { sold, gross, bonus, net: Math.round((gross - bonus) * 100) / 100, remaining };
+}
 // Halaga ng benta ng isang uri (kapareho ng sa Admin)
 function subSalesValueC(sub, sold) {
   const lq = Number(sub.soldValueQty) || 0, lv = Number(sub.soldValue) || 0;
@@ -2249,6 +2271,10 @@ function applyAgentPortalView(store) {
   show('agreementOl', !agent);
   show('agentAgreementBox', agent);
   show('agreementPayTermNote', !agent);
+  document.querySelectorAll('button[onclick*="promptStopAgreement"]').forEach(b => {
+    if (!b.dataset.orig) b.dataset.orig = b.textContent;
+    b.textContent = agent ? '🛑 Ayaw nang magtinda (ibalik ang tira at bayaran ang benta)' : b.dataset.orig;
+  });
   const ct = $('agreementCardTitle'); if (ct) ct.textContent = agent ? '📜 Sales Agent Agreement' : '📜 Opisyal na Kasunduan sa Consignment';
   const title = $('agreementTitleType'); if (title) title.textContent = agent ? 'SALES AGENT AGREEMENT' : 'CONSIGNMENT AGREEMENT (STORE PARTNER)';
   if (agent) {
@@ -2261,17 +2287,13 @@ function applyAgentPortalView(store) {
   const box = $('agentEarningsBox');
   if (box) {
     if (!agent) { box.style.display = 'none'; return; }
-    let sold = 0, gross = 0;
-    (store.storeItems || []).forEach(sub => {
-      const sSold = Math.max(0, (sub.initialQty || 0) - (sub.currentStock || 0) - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
-      sold += sSold; gross += subSalesValueC(sub, sSold);
-    });
-    const bonus = sold * AGENT_BONUS_PER_PC, net = Math.round((gross - bonus) * 100) / 100;
+    const st0 = agentSettlement(store), sold = st0.sold, gross = st0.gross, bonus = st0.bonus, net = st0.net;
     box.style.display = 'block';
     box.innerHTML = `<strong>💰 Kita ng Sales Agent Partner</strong><br>
       ✨ Automatic na kita mo (₱${AGENT_BONUS_PER_PC} × ${sold} pcs): <strong style="color:#2e7d32;">₱${bonus.toLocaleString()}</strong><br>
       💵 Naibenta × Supplier Price: ₱${Math.round(gross * 100) / 100}<br>
       🧾 Net na ibabayad sa Owner: <strong>₱${net.toLocaleString()}</strong><br>
+      📅 Cut-off: <strong>araw-araw</strong> • Tira ngayon: ${st0.remaining} pcs<br>
       <small>Ikaw ang bahala sa retail price / patong (mark-up) mo. Sa iyo ang patong na iyon, bukod sa ₱${AGENT_BONUS_PER_PC} bawat benta.</small>`;
   }
 }
@@ -2300,7 +2322,7 @@ function _renderClientDashboardInner(store) {
     agreementStatusDisplay.textContent = agentStore ? `Status: ${(store.consignmentStatus || 'Aktibo').replace('Aktibo ang Consignment', 'Aktibo bilang Sales Agent')}` : `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
   }
 
-  const term = PAY_TERMS[store.paymentTerms] || PAY_TERMS.monthly;
+  const term = agentStore ? PAY_TERMS.daily : (PAY_TERMS[store.paymentTerms] || PAY_TERMS.monthly);
   $('agreementPayTermLabel').textContent = term.label;
   $('agreementPayTermText').textContent = term.text;
 
