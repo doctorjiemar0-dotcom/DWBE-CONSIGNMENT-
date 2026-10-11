@@ -1998,9 +1998,20 @@ if (inquiryForm) {
     try {
       if (!TEST_MODE) {
       try {
-        await createUserWithEmailAndPassword(authData, email, password);
+        try {
+          await createUserWithEmailAndPassword(authData, email, password);
+        } catch (e0) {
+          // Mahinang signal: subukan ulit isang beses bago sumuko
+          if (e0 && e0.code === 'auth/network-request-failed') {
+            await new Promise(r => setTimeout(r, 1500));
+            await createUserWithEmailAndPassword(authData, email, password);
+          } else { throw e0; }
+        }
       } catch (err) {
-        if (err.code === 'auth/email-already-in-use') {
+        if (err.code === 'auth/network-request-failed') {
+          alert('⚠️ Hindi maabot ang Cloud (Firebase): walang o mahina ang internet. Suriin ang data/WiFi, patayin ang VPN, Data Saver o Battery Saver, tapos pindutin ulit ang "Isumite". Naka-save pa ang mga nilagay mo.');
+          return;
+        } else if (err.code === 'auth/email-already-in-use') {
           try {
             await signInWithEmailAndPassword(authData, email, password);
           } catch (err2) {
