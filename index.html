@@ -140,6 +140,11 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 .rec-x{background:none!important;border:none;color:#d32f2f;font-weight:bold;cursor:pointer;width:auto;min-height:0;padding:0 4px;margin:0;font-size:1rem;line-height:1}
 .rec .rec-btn{background-color:#2e7d32;padding:6px;font-size:.8rem;margin-top:6px}
 
+/* ===== LOCKED: naka-deactivate (Stopped) na tindahan ===== */
+#portalContent.store-locked button:not([data-keep]){display:none!important}
+#portalContent.store-locked input,#portalContent.store-locked select,#portalContent.store-locked textarea{pointer-events:none;opacity:.55}
+#portalContent.store-locked .style-option-card,#portalContent.store-locked .application-drawer-toggle{pointer-events:none}
+
 /* ===== Sapilitang pagpapalit ng default password ===== */
 #forcePwOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:15000;background:rgba(10,45,25,.94);align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 #forcePwOverlay .card{max-width:420px;width:100%;margin:auto}
@@ -155,6 +160,14 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 .header-title{font-size:.92rem}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+/* ===== Mata sa Password at Facebook link ===== */
+.fb-header-link{display:inline-block;background:#1877f2;color:white;text-decoration:none;font-size:.75rem;padding:3px 8px;border-radius:12px;margin-top:3px;font-weight:normal}
+.fb-header-link:hover{background:#145dbf;text-decoration:underline}
+.pw-wrapper{position:relative;display:flex;align-items:center}
+.pw-wrapper input{padding-right:42px}
+.pw-toggle-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none!important;border:none!important;color:#666;font-size:1.1rem;padding:4px;cursor:pointer;width:auto!important;min-height:0!important;margin-top:0!important;box-shadow:none!important}
+.pw-toggle-btn:hover{color:#2e7d32}
 </style>
 </head>
 <body>
@@ -205,7 +218,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
       <div class="form-group" style="width:100%;">
         <label for="unifiedPasswordInput">Password:</label>
-        <input type="password" id="unifiedPasswordInput" placeholder="Ilagay ang password" autocomplete="current-password">
+        <div class="pw-wrapper"><input type="password" id="unifiedPasswordInput" placeholder="Ilagay ang password" autocomplete="current-password"><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('unifiedPasswordInput', this)">👁️</button></div>
       </div>
 
       <button type="button" id="unifiedLoginBtn" style="background-color:var(--primary-color);margin-bottom:5px;">Buksan ang Aking Portal</button>
@@ -235,7 +248,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
       <form id="inquiryForm" style="width:100%;margin-top:8px;">
         <div class="form-group"><label>Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
         <div class="form-group"><label>Pangalan ng May-ari:</label><input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required></div>
-        <div class="form-group"><label>Sariling Password (Para sa Portal Login):</label><input type="password" id="inqPassword" placeholder="Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)" minlength="6" required></div>
+        <div class="form-group"><label>Sariling Password (Para sa Portal Login):</label><div class="pw-wrapper"><input type="password" id="inqPassword" placeholder="Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)" minlength="6" required><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('inqPassword', this)">👁️</button></div></div>
         <div class="form-group"><label>Numero ng Telepono / GCash:</label><input type="text" id="inqContact" placeholder="Hal. 09123456789" required></div>
         <div class="form-group"><label>Personal Active Email Address (sarili mong aktibong email):</label><input type="email" id="inqEmail" placeholder="Ilagay ang sarili mong aktibong Gmail/email" autocomplete="email" required></div>
         <div class="form-group"><label>Lokasyon / Address:</label><input type="text" id="inqAddress" placeholder="Hal. Brgy. Osiao, Sorsogon" required></div>
@@ -296,6 +309,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
       <div>
         <h2 id="displayStoreName" style="margin-bottom:0;color:#2e7d32;">Pangalan ng Tindahan</h2>
         <span style="font-size:.75rem;color:#555;" id="displayStoreStatus">Aktibo ang Consignment</span>
+        <div id="lockedBanner" style="display:none;margin-top:10px;background:#ffebee;border:2px solid #c62828;color:#b71c1c;border-radius:10px;padding:10px 12px;font-size:.85rem;font-weight:bold;text-align:left;">🔒 Naka-deactivate ang iyong Consignment. Naka-lock na ang dashboard at wala nang magagamit na button. Makipag-ugnayan sa Admin kung nais mong ibalik ito sa Aktibo.</div>
       </div>
 
       <!-- QR Code -->
@@ -311,7 +325,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
       <!-- Logout -->
       <div style="margin-top:12px;">
-        <button type="button" onclick="requestLogout()" style="background-color:#d32f2f;width:100%;font-size:.9rem;padding:10px;margin-top:0;">Mag-logout</button>
+        <button type="button" data-keep="1" onclick="requestLogout()" style="background-color:#d32f2f;width:100%;font-size:.9rem;padding:10px;margin-top:0;">Mag-logout</button>
       </div>
     </div>
 
@@ -574,11 +588,11 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         <p style="font-size:.80rem;color:#333;margin-bottom:8px;">Maaari mong baguhin ang iyong password anumang oras.</p>
         <div class="form-group">
           <label>Kasalukuyang Password:</label>
-          <input type="password" id="currentClientPassword" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password">
+          <div class="pw-wrapper"><input type="password" id="currentClientPassword" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password"><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('currentClientPassword', this)">👁️</button></div>
         </div>
         <div class="form-group">
           <label>Bagong Password:</label>
-          <input type="password" id="newClientPassword" placeholder="Ilagay ang bagong password" autocomplete="new-password">
+          <div class="pw-wrapper"><input type="password" id="newClientPassword" placeholder="Ilagay ang bagong password" autocomplete="new-password"><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('newClientPassword', this)">👁️</button></div>
         </div>
         <button type="button" onclick="updateClientPassword()" style="background-color:#2e7d32;">I-save ang Bagong Password</button>
       </div>
@@ -593,7 +607,8 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
   </div>
 
   <div style="text-align:center;margin-top:20px;margin-bottom:10px;">
-    <a href="admin.html" style="font-size:.8rem;color:#666;text-decoration:none;">🔐 Pumunta sa Admin Panel</a>
+    <a href="https://www.facebook.com/DWBE.23" target="_blank" rel="noopener" style="font-size:.9rem;color:#1877f2;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877f2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.03 4.39 11.03 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg><span>Sundan ang aming Facebook Page</span></a><br><br>
+    <a id="adminLink" href="admin.html" style="font-size:.8rem;color:#666;text-decoration:none;">🔐 Pumunta sa Admin Panel</a>
   </div>
 
 </div>
@@ -605,15 +620,15 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
     <p class="hint">Default password mula sa admin pa ang gamit mo. Para sa seguridad ng iyong account, kailangan mo munang gumawa ng sarili mong password bago magpatuloy sa portal.</p>
     <div class="form-group">
       <label for="forceCurPw">Kasalukuyang Password:</label>
-      <input type="password" id="forceCurPw" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password">
+      <div class="pw-wrapper"><input type="password" id="forceCurPw" placeholder="Ilagay ang kasalukuyang password" autocomplete="current-password"><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('forceCurPw', this)">👁️</button></div>
     </div>
     <div class="form-group">
       <label for="forceNewPw">Bagong Password:</label>
-      <input type="password" id="forceNewPw" placeholder="Hindi bababa sa 6 na karakter" autocomplete="new-password">
+      <div class="pw-wrapper"><input type="password" id="forceNewPw" placeholder="Hindi bababa sa 6 na karakter" autocomplete="new-password"><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('forceNewPw', this)">👁️</button></div>
     </div>
     <div class="form-group">
       <label for="forceConfirmPw">Kumpirmahin ang Bagong Password:</label>
-      <input type="password" id="forceConfirmPw" placeholder="Ulitin ang bagong password" autocomplete="new-password">
+      <div class="pw-wrapper"><input type="password" id="forceConfirmPw" placeholder="Ulitin ang bagong password" autocomplete="new-password"><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('forceConfirmPw', this)">👁️</button></div>
     </div>
     <button type="button" onclick="forceChangePassword()" style="background-color:#2e7d32;">Palitan at Magpatuloy</button>
     <button type="button" onclick="forceLogout()" style="background-color:#78909c;">Mag-logout muna</button>
@@ -638,6 +653,15 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
   </div>
 </div>
 
+<script>
+function togglePasswordVisibilityField(inputId, btnEl) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btnEl.textContent = show ? '🙈' : '👁️';
+}
+</script>
 <!-- Language / i18n (Tagalog default, English optional) -->
 <script>
 (function(){
@@ -714,6 +738,7 @@ var D={
 'I-save ang Bagong Password':'Save New Password',
 'Ang mga aksyon dito ay hindi maaaring i-undo.':'Actions here cannot be undone.',
 '🛑 Itigil ang Kasunduan':'🛑 Stop the Agreement',
+'Sundan ang aming Facebook Page':'Follow our Facebook Page',
 '🔐 Pumunta sa Admin Panel':'🔐 Go to Admin Panel',
 '🛒 MAY BUMILI (I-record ang Benta)':'🛒 SOMEONE BOUGHT (Record the Sale)',
 'Uri:':'Type:','Dami:':'Qty:','| Dami:':'| Qty:',
@@ -1539,6 +1564,8 @@ window.promptStopAgreement = async function() {
 
   store.agreementAccepted = false;
   store.consignmentStatus = "Stopped";
+  store.stopRequestedAt = now();
+  store.stopAcknowledged = false;
 
   addTx(store, 'Kasunduan', 'Itinigil/Ikinansela ang Consignment Agreement.');
 
@@ -1843,19 +1870,23 @@ if (inquiryForm) {
 
       }
 
-      // I-upload ang mga larawan sa Firebase Storage (sa TESTING MODE, hindi nag-a-upload)
-      let idPath = 'TEST', storePath = 'TEST';
-      if (!TEST_MODE) {
-        try {
+      // Ang mga larawan ay naka-save sa Firestore (Live: app_images/<uid>; Testing: app_images_test/<id>)
+      let idPath = '', storePath = '';
+      try {
+        const idImg = await compressImage(idFile), storeImg = await compressImage(storeFile);
+        if (TEST_MODE) {
+          const tid = 'T' + Date.now() + Math.random().toString(36).slice(2, 7);
+          await setDoc(doc(db, 'app_images_test', tid), Object.assign({ idImg, storeImg, email }, stamp()));
+          idPath = 'app_images_test/' + tid + '#id'; storePath = 'app_images_test/' + tid + '#store';
+        } else {
           const uid = authData.currentUser.uid;
-          const idImg = await compressImage(idFile), storeImg = await compressImage(storeFile);
           await setDoc(doc(db, 'app_images', uid), Object.assign({ idImg, storeImg, email }, stamp()));
           idPath = 'app_images/' + uid + '#id'; storePath = 'app_images/' + uid + '#store';
-        } catch (err) {
-          alert('⚠️ Hindi na-upload ang larawan: ' + err.message);
-          try { await signOut(authData); } catch (_) {}
-          return;
         }
+      } catch (err) {
+        alert('⚠️ Hindi na-upload ang larawan: ' + (err.message || err.code));
+        try { await signOut(authData); } catch (_) {}
+        return;
       }
 
       // Basahin muna ang pinakabagong data para hindi mapatungan ang mga pagbabago ng admin/ibang client
@@ -1982,6 +2013,47 @@ const isPersonalMsg = m => m && (m.kind === 'chat' || (!m.kind && !SYSTEM_MSG_RE
 
 // Render Dashboard
 function renderClientDashboard(store) {
+  try { _renderClientDashboardInner(store); } finally { applyStoreLock(store); }
+}
+
+// ===== LOCK: kapag Deactivated/Stopped ang tindahan, walang button na gagana maliban sa Logout (at pagbukas/pagtago ng mga seksyon) =====
+const isStoreLocked = (st) => !!st && st.consignmentStatus === 'Stopped';
+function applyStoreLock(store) {
+  const pc = $('portalContent');
+  if (!pc) return;
+  const locked = isStoreLocked(store);
+  pc.classList.toggle('store-locked', locked);
+  const banner = $('lockedBanner');
+  if (banner) banner.style.display = locked ? 'block' : 'none';
+  const st = $('displayStoreStatus');
+  if (st) st.textContent = locked ? '⛔ Deactivated (Naka-lock)' : 'Aktibo ang Consignment';
+  const sd = $('agreementStatusDisplay');
+  if (sd) { sd.style.backgroundColor = locked ? '#c62828' : '#2e7d32'; if (locked) sd.textContent = '⛔ Status: Deactivated (Nag-STOP ang Consignment)'; }
+  // Panatilihing gumagana ang pagbukas/pagtago ng mga seksyon (read-only), maliban sa QR at Password
+  pc.querySelectorAll('button[id^="toggle"]').forEach(b => {
+    if (b.id === 'toggleQrBtn' || b.id === 'togglePasswordBtn') return;
+    b.setAttribute('data-keep', '1');
+  });
+  // I-disable ang lahat ng input; ibalik kapag na-activate ulit
+  pc.querySelectorAll('input,select,textarea').forEach(el => {
+    if (locked) { if (!el.disabled) { el.disabled = true; el.setAttribute('data-locked', '1'); } }
+    else if (el.getAttribute('data-locked')) { el.disabled = false; el.removeAttribute('data-locked'); }
+  });
+}
+// Sagabal sa anumang click/submit habang naka-lock (pangalawang proteksyon laban sa mga button na dynamic o nakatago)
+(function () {
+  const pc = document.getElementById('portalContent');
+  if (!pc) return;
+  const blocked = () => pc.classList.contains('store-locked');
+  pc.addEventListener('click', (e) => {
+    if (!blocked()) return;
+    const el = e.target.closest('button,[onclick]');
+    if (el && !el.closest('[data-keep]')) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
+  }, true);
+  pc.addEventListener('submit', (e) => { if (blocked()) { e.preventDefault(); e.stopPropagation(); } }, true);
+})();
+
+function _renderClientDashboardInner(store) {
 
   $('displayStoreName').innerHTML =
     esc(store.storeName) + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${esc(store.ownerName)})</span>` : '');
