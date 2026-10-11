@@ -140,6 +140,11 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 .rec-x{background:none!important;border:none;color:#d32f2f;font-weight:bold;cursor:pointer;width:auto;min-height:0;padding:0 4px;margin:0;font-size:1rem;line-height:1}
 .rec .rec-btn{background-color:#2e7d32;padding:6px;font-size:.8rem;margin-top:6px}
 
+/* ===== LOCKED: naka-deactivate (Stopped) na tindahan ===== */
+#portalContent.store-locked button:not([data-keep]){display:none!important}
+#portalContent.store-locked input,#portalContent.store-locked select,#portalContent.store-locked textarea{pointer-events:none;opacity:.55}
+#portalContent.store-locked .style-option-card,#portalContent.store-locked .application-drawer-toggle{pointer-events:none}
+
 /* ===== Sapilitang pagpapalit ng default password ===== */
 #forcePwOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:15000;background:rgba(10,45,25,.94);align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 #forcePwOverlay .card{max-width:420px;width:100%;margin:auto}
@@ -304,6 +309,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
       <div>
         <h2 id="displayStoreName" style="margin-bottom:0;color:#2e7d32;">Pangalan ng Tindahan</h2>
         <span style="font-size:.75rem;color:#555;" id="displayStoreStatus">Aktibo ang Consignment</span>
+        <div id="lockedBanner" style="display:none;margin-top:10px;background:#ffebee;border:2px solid #c62828;color:#b71c1c;border-radius:10px;padding:10px 12px;font-size:.85rem;font-weight:bold;text-align:left;">🔒 Naka-deactivate ang iyong Consignment. Naka-lock na ang dashboard at wala nang magagamit na button. Makipag-ugnayan sa Admin kung nais mong ibalik ito sa Aktibo.</div>
       </div>
 
       <!-- QR Code -->
@@ -319,7 +325,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
       <!-- Logout -->
       <div style="margin-top:12px;">
-        <button type="button" onclick="requestLogout()" style="background-color:#d32f2f;width:100%;font-size:.9rem;padding:10px;margin-top:0;">Mag-logout</button>
+        <button type="button" data-keep="1" onclick="requestLogout()" style="background-color:#d32f2f;width:100%;font-size:.9rem;padding:10px;margin-top:0;">Mag-logout</button>
       </div>
     </div>
 
@@ -2007,6 +2013,47 @@ const isPersonalMsg = m => m && (m.kind === 'chat' || (!m.kind && !SYSTEM_MSG_RE
 
 // Render Dashboard
 function renderClientDashboard(store) {
+  try { _renderClientDashboardInner(store); } finally { applyStoreLock(store); }
+}
+
+// ===== LOCK: kapag Deactivated/Stopped ang tindahan, walang button na gagana maliban sa Logout (at pagbukas/pagtago ng mga seksyon) =====
+const isStoreLocked = (st) => !!st && st.consignmentStatus === 'Stopped';
+function applyStoreLock(store) {
+  const pc = $('portalContent');
+  if (!pc) return;
+  const locked = isStoreLocked(store);
+  pc.classList.toggle('store-locked', locked);
+  const banner = $('lockedBanner');
+  if (banner) banner.style.display = locked ? 'block' : 'none';
+  const st = $('displayStoreStatus');
+  if (st) st.textContent = locked ? '⛔ Deactivated (Naka-lock)' : 'Aktibo ang Consignment';
+  const sd = $('agreementStatusDisplay');
+  if (sd) { sd.style.backgroundColor = locked ? '#c62828' : '#2e7d32'; if (locked) sd.textContent = '⛔ Status: Deactivated (Nag-STOP ang Consignment)'; }
+  // Panatilihing gumagana ang pagbukas/pagtago ng mga seksyon (read-only), maliban sa QR at Password
+  pc.querySelectorAll('button[id^="toggle"]').forEach(b => {
+    if (b.id === 'toggleQrBtn' || b.id === 'togglePasswordBtn') return;
+    b.setAttribute('data-keep', '1');
+  });
+  // I-disable ang lahat ng input; ibalik kapag na-activate ulit
+  pc.querySelectorAll('input,select,textarea').forEach(el => {
+    if (locked) { if (!el.disabled) { el.disabled = true; el.setAttribute('data-locked', '1'); } }
+    else if (el.getAttribute('data-locked')) { el.disabled = false; el.removeAttribute('data-locked'); }
+  });
+}
+// Sagabal sa anumang click/submit habang naka-lock (pangalawang proteksyon laban sa mga button na dynamic o nakatago)
+(function () {
+  const pc = document.getElementById('portalContent');
+  if (!pc) return;
+  const blocked = () => pc.classList.contains('store-locked');
+  pc.addEventListener('click', (e) => {
+    if (!blocked()) return;
+    const el = e.target.closest('button,[onclick]');
+    if (el && !el.closest('[data-keep]')) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
+  }, true);
+  pc.addEventListener('submit', (e) => { if (blocked()) { e.preventDefault(); e.stopPropagation(); } }, true);
+})();
+
+function _renderClientDashboardInner(store) {
 
   $('displayStoreName').innerHTML =
     esc(store.storeName) + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${esc(store.ownerName)})</span>` : '');
