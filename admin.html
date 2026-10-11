@@ -83,6 +83,14 @@ button:hover { background-color: #1b5e20; }
 #appImageModal img { max-width: 95%; max-height: 78vh; border-radius: 8px; background: #fff; }
 #appImageModal h3 { color: #fff; font-size: 1rem; margin-bottom: 10px; }
 #appImageModal button { width: auto; padding: 8px 22px; margin-top: 14px; background: #fff; color: #333; }
+
+/* ===== Mata sa Password at Facebook link ===== */
+.fb-header-link{display:inline-block;background:#1877f2;color:white;text-decoration:none;font-size:.75rem;padding:3px 8px;border-radius:12px;margin-top:3px;font-weight:normal}
+.fb-header-link:hover{background:#145dbf;text-decoration:underline}
+.pw-wrapper{position:relative;display:flex;align-items:center}
+.pw-wrapper input{padding-right:42px}
+.pw-toggle-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none!important;border:none!important;color:#666;font-size:1.1rem;padding:4px;cursor:pointer;width:auto!important;min-height:0!important;margin-top:0!important;box-shadow:none!important}
+.pw-toggle-btn:hover{color:#2e7d32}
 </style>
 </head>
 <body>
@@ -100,13 +108,15 @@ button:hover { background-color: #1b5e20; }
             <label for="adminEmailInput">Admin Email:</label>
             <input type="email" id="adminEmailInput" placeholder="I-type ang email..." style="margin-bottom: 10px;">
             <label for="adminPasswordInput">Password:</label>
-            <input type="password" id="adminPasswordInput" placeholder="I-type ang password...">
+            <div class="pw-wrapper"><input type="password" id="adminPasswordInput" placeholder="I-type ang password..."><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('adminPasswordInput', this)">👁️</button></div>
         </div>
         <button type="button" id="loginBtn" style="background-color: var(--primary-color);">Mag-login</button>
     </div>
 
     <div id="mainAppContent">
         <div id="syncStatus">Kumokonekta sa Cloud Database...</div>
+
+        <div id="stopAlertBanner" style="display:none;background:#ffebee;border:2px solid #c62828;border-left:8px solid #c62828;border-radius:10px;padding:12px;margin-bottom:12px;color:#b71c1c;font-size:.88rem;"></div>
 
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>
@@ -220,7 +230,11 @@ button:hover { background-color: #1b5e20; }
                     </form>
                 </div>
 
+                <h2 style="margin-top:6px;">🟢 Aktibong Tindahan <span id="activeStoresCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
                 <div id="storesList"><p style="text-align:center; color:#778; font-size:0.9rem;">Nag-load ng mga tindahan...</p></div>
+
+                <h2 style="margin-top:22px;border-bottom-color:#ffcdd2;color:#b71c1c;">⛔ Deactivated / Nag-STOP na Tindahan <span id="inactiveStoresCount" style="font-size:.8rem;color:#b71c1c;">(0)</span></h2>
+                <div id="storesListInactive"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na tindahan.</p></div>
             </div>
         </div>
 
@@ -292,6 +306,15 @@ button:hover { background-color: #1b5e20; }
     <button type="button" onclick="closeAppImage()">Isara</button>
 </div>
 
+<script>
+function togglePasswordVisibilityField(inputId, btnEl) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btnEl.textContent = show ? '🙈' : '👁️';
+}
+</script>
 <script>
 // Propesyonal na dialog box (kapalit ng "xxx.vercel.app says" ng browser)
 (function () {
@@ -490,9 +513,9 @@ const imgUrlCache = new Map(); // path -> url (para hindi paulit-ulit ang pagkuh
 const imgDocCache = new Map();
 async function getImgUrl(path) {
     if (imgUrlCache.has(path)) return imgUrlCache.get(path);
-    const [p, f] = String(path).split('#'), uid = p.split('/')[1];
-    if (!imgDocCache.has(uid)) { const snap = await getDoc(doc(db, 'app_images', uid)); imgDocCache.set(uid, snap.exists() ? snap.data() : {}); }
-    const url = imgDocCache.get(uid)[f === 'id' ? 'idImg' : 'storeImg'];
+    const [p, f] = String(path).split('#'), [col, id] = p.split('/');
+    if (!imgDocCache.has(p)) { const snap = await getDoc(doc(db, col, id)); imgDocCache.set(p, snap.exists() ? snap.data() : {}); }
+    const url = imgDocCache.get(p)[f === 'id' ? 'idImg' : 'storeImg'];
     if (!url) throw new Error('Walang larawan');
     imgUrlCache.set(path, url); return url;
 }
@@ -533,10 +556,12 @@ window.closeAppImage = function() {
 };
 // Burahin ang mga larawan sa Storage (kapag tinanggihan ang aplikasyon o binura ang tindahan)
 async function deleteAppImages(rec) {
-    if (TEST_MODE || !rec) return;
+    if (!rec) return;
     const p = [rec.idPath, rec.storePath].find(hasPhoto);
     if (!p) return;
-    try { await deleteDoc(doc(db, 'app_images', String(p).split('#')[0].split('/')[1])); } catch (e) { /* ayos lang kung wala na */ }
+    const [col, id] = String(p).split('#')[0].split('/');
+    if (TEST_MODE && col !== 'app_images_test') return; // huwag galawin ang LIVE na larawan mula sa Testing
+    try { await deleteDoc(doc(db, col, id)); } catch (e) { /* ayos lang kung wala na */ }
 }
 
 // Hiwalay na koneksyon para makagawa ng account ng client nang hindi nalo-logout ang admin
@@ -1133,6 +1158,9 @@ function renderApp() {
 
     const storesList = document.getElementById('storesList');
     if (storesList) storesList.innerHTML = '';
+    const storesListInactive = document.getElementById('storesListInactive');
+    if (storesListInactive) storesListInactive.innerHTML = '';
+    let activeStoreCount = 0, inactiveStoreCount = 0;
 
     const requestsContainerModal = document.getElementById('adminRequestsContainerModal');
     if (requestsContainerModal) requestsContainerModal.innerHTML = '';
@@ -1148,6 +1176,8 @@ function renderApp() {
     const todayStr = new Date().toISOString().slice(0, 10);
 
     let dashboardEarningsHtml = '';
+    const stoppedList = [];
+    const newStops = [];
 
     appData.consignments.sort((a, b) => {
         if (a.isCollected !== b.isCollected) {
@@ -1231,8 +1261,9 @@ function renderApp() {
         `;
 
         if (storeIsDue) tDue++;
-        let rating = item.isCollected ? 'Nakolektahan' : (storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos'));
-        let badgeClass = item.isCollected ? 'badge-good' : (storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good'));
+        const isStoppedStatus = item.consignmentStatus === 'Stopped'; // dapat nasa itaas bago gamitin sa rating/badge
+        let rating = (isStoppedStatus && !item.isCollected) ? 'Nag-STOP' : item.isCollected ? 'Nakolektahan' : (storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos'));
+        let badgeClass = (isStoppedStatus && !item.isCollected) ? 'badge-due' : item.isCollected ? 'badge-good' : (storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good'));
 
         if (item.activeRequests.length > 0) {
             hasRequests = true;
@@ -1275,6 +1306,28 @@ function renderApp() {
                 `;
                 if (requestsContainerModal) requestsContainerModal.appendChild(saleRow);
             });
+        }
+
+        // ===== ABISO: NAG-STOP NG KASUNDUAN =====
+        if (isStoppedStatus && !item.stopAcknowledged) {
+            hasRequests = true;
+            actionReqCount += 1;
+            totalActiveReqsCount += 1;
+            stoppedList.push(item.storeName);
+            const stopKey = 'stop_seen_' + (TEST_MODE ? 't_' : 'l_') + (item.id || item.email) + '_' + (item.stopRequestedAt || '');
+            if (!localStorage.getItem(stopKey)) newStops.push({ key: stopKey, name: item.storeName });
+            const pendAmt = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0), 0) * 100) / 100;
+            const stopRow = document.createElement('div');
+            stopRow.className = 'request-action-row';
+            stopRow.style.cssText = 'background:#ffebee;border-color:#ef9a9a;flex-direction:column;align-items:stretch;gap:6px;';
+            stopRow.innerHTML = `
+                <span>🛑 <strong>${item.storeName}</strong> ay nag-<strong>STOP/CANCEL</strong> ng Consignment Agreement${item.stopRequestedAt ? ` <small style="color:#888;">(${item.stopRequestedAt})</small>` : ''}.<br>
+                <small>Natitirang stock na kukunin: <strong>${storeTotalStock} pcs</strong> | Nakabinbing benta: <strong>₱${pendAmt.toLocaleString()}</strong>. Gawin ang pinal na settlement: kolektahin ang bayad at kunin ang natitirang stock.</small></span>
+                <div>
+                    <button type="button" class="btn-approve" onclick="ackStopAgreement(${index})">✅ Natanggap / Tapos na ang Settlement</button>
+                    <button type="button" class="btn-decline" style="background:#607d8b;" onclick="reactivateStore(${index})">↩️ I-activate ulit</button>
+                </div>`;
+            if (requestsContainerModal) requestsContainerModal.appendChild(stopRow);
         }
 
         let approvedRestocksHtml = '';
@@ -1356,7 +1409,7 @@ function renderApp() {
         }
 
         const pendingTotal = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0), 0) * 100) / 100;
-        let storeCardClass = `store-card ${storeIsDue ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
+        let storeCardClass = `store-card ${(storeIsDue || (isStoppedStatus && !item.stopAcknowledged)) ? 'due' : (hasClientMessage ? 'has-message' : '')}`;
 
         // Mga larawan ng aplikasyon na dinala mula sa inquiry (kung meron)
         const docBtns = (hasPhoto(item.idPath) || hasPhoto(item.storePath)) ? `
@@ -1383,6 +1436,10 @@ function renderApp() {
             <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
                 <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong><br>${item.personalEmail ? `📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong> <span style="font-size:0.7rem;color:#888;">(personal email ng client)</span>` : `🔑 Login: <strong>${item.email || 'N/A'}</strong><br>📧 Totoong Email: ${item.contactEmail ? `<strong style="color:#2e7d32;">${item.contactEmail}</strong> <span style="font-size:0.7rem;color:#888;">(${item.contactEmailUpdated || ''})</span>` : '<strong style="color:#c62828;">Wala pa</strong>'}`}<br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong>${pendingTotal > 0 ? `<br>⏳ Nakabinbing benta: <strong>₱${pendingTotal.toLocaleString()}</strong>` : ''}</span>
             </div>
+            ${isStoppedStatus ? `<div style="margin-top:8px;padding:8px;background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;">
+                <div style="font-size:.78rem;color:#b71c1c;margin-bottom:6px;">⛔ Naka-deactivate at naka-lock ang Client Dashboard ng tindahang ito.</div>
+                <button type="button" onclick="reactivateStore(${index})" style="background-color:#2e7d32;font-size:.85rem;padding:8px;margin-top:0;">↩️ Ibalik sa Aktibo</button>
+            </div>` : ''}
             <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                 <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
                     👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
@@ -1419,8 +1476,16 @@ function renderApp() {
                 </div>
             </div>
         `;
-        storesList.appendChild(div);
+        if (isStoppedStatus) { inactiveStoreCount++; div.style.opacity = '0.92'; storesListInactive.appendChild(div); }
+        else { activeStoreCount++; storesList.appendChild(div); }
     });
+
+    const activeCntEl = document.getElementById('activeStoresCount');
+    const inactiveCntEl = document.getElementById('inactiveStoresCount');
+    if (activeCntEl) activeCntEl.textContent = `(${activeStoreCount})`;
+    if (inactiveCntEl) inactiveCntEl.textContent = `(${inactiveStoreCount})`;
+    if (activeStoreCount === 0) storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong tindahan.</p>';
+    if (inactiveStoreCount === 0) storesListInactive.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na tindahan.</p>';
 
     const dashTotalStores = document.getElementById('dashTotalStores');
     const dashPendingRestock = document.getElementById('dashPendingRestock');
@@ -1465,6 +1530,23 @@ function renderApp() {
     document.getElementById('totalStock').textContent = tStock + ' pcs';
     document.getElementById('totalSold').textContent = tSold + ' pcs';
     document.getElementById('totalSales').textContent = '₱' + tSales.toLocaleString();
+
+    // Banner sa itaas para sa mga nag-STOP
+    const stopBanner = document.getElementById('stopAlertBanner');
+    if (stopBanner) {
+        if (stoppedList.length) {
+            stopBanner.style.display = 'block';
+            stopBanner.innerHTML = `🛑 <strong>${stoppedList.length} tindahan ang nag-STOP ng Consignment Agreement:</strong><br>${stoppedList.join(', ')}<br><button type="button" onclick="openModal('requestModal')" style="background:#c62828;margin-top:8px;font-size:.85rem;padding:8px;">Tingnan at I-settle</button>`;
+        } else {
+            stopBanner.style.display = 'none';
+        }
+    }
+    // Popup (isang beses lang bawat bagong STOP)
+    if (newStops.length && !window._stopAlertOpen) {
+        window._stopAlertOpen = true;
+        newStops.forEach(s => localStorage.setItem(s.key, '1'));
+        alert('🛑 Nag-STOP ng Consignment Agreement:\n\n' + newStops.map(s => '• ' + s.name).join('\n') + '\n\nBuksan ang "Benta & Requests" para i-settle.').then(() => { window._stopAlertOpen = false; });
+    }
 
     // Kunin at ipakita ang mga larawan ng aplikasyon
     hydrateAppImages();
@@ -2037,6 +2119,33 @@ window.deleteHistory = async function(storeIdx, histIdx) {
         appData.consignments[storeIdx].history.splice(histIdx, 1);
         saveToCloud();
     }
+};
+
+window.ackStopAgreement = async function(index) {
+    const item = appData.consignments[index];
+    if (!(await confirm(`Naitala na ba ang pinal na settlement ng ${item.storeName}? (bayad at pagkuha ng natitirang stock)`))) return;
+    item.stopAcknowledged = true;
+    const ts = new Date().toLocaleString();
+    if (!item.history) item.history = [];
+    item.history.unshift({ id: Date.now(), date: ts, text: 'Natanggap ng Admin ang pagpapahinto ng kasunduan; naitala ang pinal na settlement.' });
+    if (!item.clientNotifications) item.clientNotifications = [];
+    item.clientNotifications.push({ id: Date.now(), text: '✅ Natanggap na ng Admin ang pagpapahinto ng iyong Consignment Agreement. Salamat!', date: ts });
+    await saveToCloud();
+};
+
+window.reactivateStore = async function(index) {
+    const item = appData.consignments[index];
+    if (!(await confirm(`Ibalik sa Aktibo ang ${item.storeName}? Mabubuksan ulit ang Client Dashboard nila at aalis sila sa Deactivated.`))) return;
+    item.consignmentStatus = 'Aktibo ang Consignment';
+    item.agreementAccepted = true;
+    item.stopAcknowledged = false;
+    delete item.stopRequestedAt;
+    const ts = new Date().toLocaleString();
+    if (!item.history) item.history = [];
+    item.history.unshift({ id: Date.now(), date: ts, text: 'Ini-activate ulit ng Admin ang Consignment.' });
+    if (!item.clientNotifications) item.clientNotifications = [];
+    item.clientNotifications.push({ id: Date.now(), text: '🔄 Ini-activate ulit ng Admin ang iyong Consignment.', date: ts });
+    await saveToCloud();
 };
 
 document.getElementById('exportBtn').addEventListener('click', () => {
