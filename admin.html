@@ -1436,6 +1436,10 @@ function renderApp() {
             <div style="font-size: 0.8rem; color: #555; margin-top: 4px;">
                 <span>📍 Address: <strong>${item.address || 'Walang nakalagay na address'}</strong> | 👤 May-ari: <strong>${item.ownerName || 'N/A'}</strong><br>${item.personalEmail ? `📧 Email: <strong style="color:#2e7d32;">${item.email || 'N/A'}</strong> <span style="font-size:0.7rem;color:#888;">(personal email ng client)</span>` : `🔑 Login: <strong>${item.email || 'N/A'}</strong><br>📧 Totoong Email: ${item.contactEmail ? `<strong style="color:#2e7d32;">${item.contactEmail}</strong> <span style="font-size:0.7rem;color:#888;">(${item.contactEmailUpdated || ''})</span>` : '<strong style="color:#c62828;">Wala pa</strong>'}`}<br>💳 Terms: <strong>${PAY_TERMS[termOf(item)].label}</strong>${pendingTotal > 0 ? `<br>⏳ Nakabinbing benta: <strong>₱${pendingTotal.toLocaleString()}</strong>` : ''}</span>
             </div>
+            ${isStoppedStatus ? `<div style="margin-top:8px;padding:8px;background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;">
+                <div style="font-size:.78rem;color:#b71c1c;margin-bottom:6px;">⛔ Naka-deactivate at naka-lock ang Client Dashboard ng tindahang ito.</div>
+                <button type="button" onclick="reactivateStore(${index})" style="background-color:#2e7d32;font-size:.85rem;padding:8px;margin-top:0;">↩️ Ibalik sa Aktibo</button>
+            </div>` : ''}
             <div class="store-body-content" id="storeBody_${index}" style="display: ${isOpen ? 'block' : 'none'};">
                 <div style="font-size: 0.75rem; color: #444; margin: 6px 0; background: #f8f9fa; padding: 4px 6px; border-radius: 4px;">
                     👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
@@ -2131,8 +2135,9 @@ window.ackStopAgreement = async function(index) {
 
 window.reactivateStore = async function(index) {
     const item = appData.consignments[index];
-    if (!(await confirm(`I-activate ulit ang Consignment ng ${item.storeName}?`))) return;
+    if (!(await confirm(`Ibalik sa Aktibo ang ${item.storeName}? Mabubuksan ulit ang Client Dashboard nila at aalis sila sa Deactivated.`))) return;
     item.consignmentStatus = 'Aktibo ang Consignment';
+    item.agreementAccepted = true;
     item.stopAcknowledged = false;
     delete item.stopRequestedAt;
     const ts = new Date().toLocaleString();
