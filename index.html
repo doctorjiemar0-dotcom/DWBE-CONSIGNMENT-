@@ -140,6 +140,20 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 .rec-x{background:none!important;border:none;color:#d32f2f;font-weight:bold;cursor:pointer;width:auto;min-height:0;padding:0 4px;margin:0;font-size:1rem;line-height:1}
 .rec .rec-btn{background-color:#2e7d32;padding:6px;font-size:.8rem;margin-top:6px}
 
+/* ===== Eligibility / Sales Partner Agent ===== */
+.elig-card{background:#f1f8e9;border:1px solid #c5e1a5;border-radius:12px;padding:12px 14px;margin:0 0 12px;font-size:.84rem;line-height:1.5;color:#1b3a26}
+.elig-card h3{margin:0 0 6px;font-size:.95rem;color:#2e7d32}
+.elig-card ul{margin:4px 0 8px;padding-left:18px}
+.elig-card li{margin:2px 0}
+.elig-types{display:flex;gap:8px;margin:8px 0}
+.elig-type{flex:1;background:#fff;border:1px solid #c5e1a5;border-radius:10px;padding:8px 10px}
+.elig-type b{display:block;color:#2e7d32;margin-bottom:2px}
+.agent-apply-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;background:#fff8e1;border:2px solid #f9a825;color:#8a5a00;border-radius:10px;padding:11px 13px;margin:0 0 10px;cursor:pointer;font-weight:800;font-size:.92rem;touch-action:manipulation}
+.agent-apply-btn small{display:block;font-weight:600;font-size:.74rem;opacity:.9}
+.agent-apply-btn:active{transform:scale(.99)}
+#applicantTypeToggle .broom-toggle-btn.active{background:#f9a825!important;color:#3b2a00!important;border-color:#c17900!important}
+#applicantTypeToggle .broom-toggle-btn.active[data-type="Store Partner"]{background:#2e7d32!important;color:#fff!important;border-color:#1b5e20!important}
+
 /* ===== LOCKED: naka-deactivate (Stopped) na tindahan ===== */
 #portalContent.store-locked button:not([data-keep]){display:none!important}
 #portalContent.store-locked input,#portalContent.store-locked select,#portalContent.store-locked textarea{pointer-events:none;opacity:.55}
@@ -237,7 +251,31 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         <span class="drawer-arrow">▼</span>
       </button>
 
+      <button type="button" id="agentApplyBtn" class="agent-apply-btn" onclick="openAgentApplication()">
+        <span>🤝</span><span>Mag-apply bilang SALES PARTNER AGENT<small>Pareho ang patakaran • 1 Valid ID lang sa online registration</small></span>
+      </button>
+
       <div id="applicationDrawer" class="application-drawer" aria-hidden="true">
+        <div class="elig-card no-print" id="eligibilityCard">
+          <h3>✅ Eligibility / Kwalipikasyon: Sino ang pwedeng mag-apply?</h3>
+          <div class="elig-types">
+            <div class="elig-type"><b>🏪 Store Partner</b>May-ari o taga-pamahala ng tindahan (sari-sari, grocery, hardware, stall sa palengke, atbp.).</div>
+            <div class="elig-type"><b>🤝 Sales Partner Agent</b>Indibidwal na magbebenta o mag-aalok ng walis, kahit walang sariling tindahan.</div>
+          </div>
+          <strong>Pangkalahatang kwalipikasyon (pareho ang patakaran):</strong>
+          <ul>
+            <li>Hindi bababa sa 18 taong gulang.</li>
+            <li>May aktibong email at numero ng telepono / GCash.</li>
+            <li>May kumpletong address at nasa lugar na naseserbisyuhan ng DWBE.</li>
+            <li>Sumasang-ayon sa lahat ng nakasaad sa Consignment Agreement (supplier price, cut-off, bayad sa naibenta, at pagtigil ng kasunduan).</li>
+          </ul>
+          <strong>Mga requirements sa online registration:</strong>
+          <ul>
+            <li><b>Sales Partner Agent:</b> 1 Valid ID lang.</li>
+            <li><b>Store Partner:</b> 1 Valid ID at litrato ng Store Front.</li>
+          </ul>
+        </div>
+
         <div class="no-print" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
           <strong>💡 Impormasyon:</strong>
           Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.
@@ -246,8 +284,16 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         </div>
 
       <form id="inquiryForm" style="width:100%;margin-top:8px;">
-        <div class="form-group"><label>Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
-        <div class="form-group"><label>Pangalan ng May-ari:</label><input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required></div>
+        <div class="form-group">
+          <label>Uri ng Aplikante:</label>
+          <input type="hidden" id="inqApplicantType" value="Store Partner">
+          <div id="applicantTypeToggle" class="broom-style-toggle" role="group" aria-label="Uri ng Aplikante">
+            <button type="button" class="broom-toggle-btn active" data-type="Store Partner" aria-pressed="true" onclick="selectApplicantType('Store Partner')">🏪 Store Partner</button>
+            <button type="button" class="broom-toggle-btn" data-type="Sales Partner Agent" aria-pressed="false" onclick="selectApplicantType('Sales Partner Agent')">🤝 Sales Partner Agent</button>
+          </div>
+        </div>
+        <div class="form-group"><label id="inqStoreNameLabel">Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
+        <div class="form-group"><label id="inqOwnerNameLabel">Pangalan ng May-ari:</label><input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required></div>
         <div class="form-group"><label>Sariling Password (Para sa Portal Login):</label><div class="pw-wrapper"><input type="password" id="inqPassword" placeholder="Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)" minlength="6" required><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('inqPassword', this)">👁️</button></div></div>
         <div class="form-group"><label>Numero ng Telepono / GCash:</label><input type="text" id="inqContact" placeholder="Hal. 09123456789" required></div>
         <div class="form-group"><label>Personal Active Email Address (sarili mong aktibong email):</label><input type="email" id="inqEmail" placeholder="Ilagay ang sarili mong aktibong Gmail/email" autocomplete="email" required></div>
@@ -255,16 +301,16 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
         <!-- Mga larawang kailangan (1 Valid ID at Store Front) -->
         <div class="form-group">
-          <label for="inqIdFile">📇 1 Valid ID ng May-ari (litrato ng harap):</label>
+          <label for="inqIdFile" id="inqIdLabel">📇 1 Valid ID ng May-ari (litrato ng harap):</label>
           <input type="file" id="inqIdFile" accept="image/*" required>
           <img id="inqIdPrev" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;">
         </div>
-        <div class="form-group">
+        <div class="form-group" id="storeFrontGroup">
           <label for="inqStoreFile">🏪 Upload your Store Front (litrato ng tindahan):</label>
           <input type="file" id="inqStoreFile" accept="image/*" required>
           <img id="inqStorePrev" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;">
         </div>
-        <p class="hint" style="margin-top:-2px;">🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.</p>
+        <p class="hint" id="inqPhotoHint" style="margin-top:-2px;">🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.</p>
 
         <!-- Walis Style Selection -->
         <div class="form-group">
@@ -1262,6 +1308,33 @@ window.selectInqStyle = function(style, el) {
   });
 };
 
+window.selectApplicantType = function(type) {
+  const isAgent = type === 'Sales Partner Agent';
+  const hidden = $('inqApplicantType'); if (hidden) hidden.value = isAgent ? 'Sales Partner Agent' : 'Store Partner';
+  document.querySelectorAll('#applicantTypeToggle .broom-toggle-btn').forEach(btn => {
+    const active = btn.dataset.type === (isAgent ? 'Sales Partner Agent' : 'Store Partner');
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  const sf = $('storeFrontGroup'), sfi = $('inqStoreFile');
+  if (sf) sf.style.display = isAgent ? 'none' : '';
+  if (sfi) { sfi.required = !isAgent; if (isAgent) { sfi.value = ''; const pv = $('inqStorePrev'); if (pv) pv.style.display = 'none'; } }
+  const set = (id, t) => { const el = $(id); if (el) el.textContent = t; };
+  set('inqStoreNameLabel', isAgent ? 'Pangalan ng Negosyo / Pangalan ng Agent:' : 'Pangalan ng Tindahan:');
+  set('inqOwnerNameLabel', isAgent ? 'Buong Pangalan ng Agent:' : 'Pangalan ng May-ari:');
+  set('inqIdLabel', isAgent ? '📇 1 Valid ID ng Agent (litrato ng harap):' : '📇 1 Valid ID ng May-ari (litrato ng harap):');
+  set('inqPhotoHint', isAgent ? '🔒 Sales Partner Agent: 1 Valid ID lang ang kailangan. Para lang sa beripikasyon ng Admin ang larawan at hindi makikita ng ibang tao.' : '🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.');
+  const sn = $('inqStoreName'); if (sn) sn.placeholder = isAgent ? 'Hal. Juan Dela Cruz Sales' : 'Hal. Aling Nena Store';
+};
+
+window.openAgentApplication = function() {
+  const drawer = $('applicationDrawer');
+  if (drawer && !drawer.classList.contains('open')) window.toggleApplicationDrawer();
+  window.selectApplicantType('Sales Partner Agent');
+  const t = $('applicantTypeToggle');
+  if (t && t.scrollIntoView) setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+};
+
 window.toggleApplicationDrawer = function() {
   const drawer = $('applicationDrawer');
   const btn = $('applicationDrawerToggle');
@@ -1832,13 +1905,15 @@ if (inquiryForm) {
     const styleType = $('inqStyleType').value;
     const initialQty = 5; // Fixed: min at max ay 5 pcs
     const message = $('inqMessage').value.trim();
+    const applicantType = ($('inqApplicantType') && $('inqApplicantType').value === 'Sales Partner Agent') ? 'Sales Partner Agent' : 'Store Partner';
+    const isAgent = applicantType === 'Sales Partner Agent';
 
     if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
 
-    // Kailangan ang 1 Valid ID at Store Front (larawan lang, hanggang 15 MB bawat isa)
-    const idFile = $('inqIdFile').files[0], storeFile = $('inqStoreFile').files[0];
-    if (!idFile || !storeFile) { alert('Kailangan ang litrato ng 1 Valid ID at ng Store Front.'); return; }
-    if (![idFile, storeFile].every(f => f.type.startsWith('image/') && f.size < 15 * 1024 * 1024)) {
+    // Store Partner: 1 Valid ID at Store Front. Sales Partner Agent: 1 Valid ID lang (larawan lang, hanggang 15 MB)
+    const idFile = $('inqIdFile').files[0], storeFile = isAgent ? null : $('inqStoreFile').files[0];
+    if (!idFile || (!isAgent && !storeFile)) { alert(isAgent ? 'Kailangan ang litrato ng 1 Valid ID.' : 'Kailangan ang litrato ng 1 Valid ID at ng Store Front.'); return; }
+    if (![idFile, storeFile].filter(Boolean).every(f => f.type.startsWith('image/') && f.size < 15 * 1024 * 1024)) {
       alert('Larawan lang ang tinatanggap (awtomatikong paliliitin sa ilalim ng 1 MB).'); return;
     }
 
@@ -1873,15 +1948,15 @@ if (inquiryForm) {
       // Ang mga larawan ay naka-save sa Firestore (Live: app_images/<uid>; Testing: app_images_test/<id>)
       let idPath = '', storePath = '';
       try {
-        const idImg = await compressImage(idFile), storeImg = await compressImage(storeFile);
+        const idImg = await compressImage(idFile), storeImg = storeFile ? await compressImage(storeFile) : '';
         if (TEST_MODE) {
           const tid = 'T' + Date.now() + Math.random().toString(36).slice(2, 7);
           await setDoc(doc(db, 'app_images_test', tid), Object.assign({ idImg, storeImg, email }, stamp()));
-          idPath = 'app_images_test/' + tid + '#id'; storePath = 'app_images_test/' + tid + '#store';
+          idPath = 'app_images_test/' + tid + '#id'; storePath = storeFile ? 'app_images_test/' + tid + '#store' : '';
         } else {
           const uid = authData.currentUser.uid;
           await setDoc(doc(db, 'app_images', uid), Object.assign({ idImg, storeImg, email }, stamp()));
-          idPath = 'app_images/' + uid + '#id'; storePath = 'app_images/' + uid + '#store';
+          idPath = 'app_images/' + uid + '#id'; storePath = storeFile ? 'app_images/' + uid + '#store' : '';
         }
       } catch (err) {
         alert('⚠️ Hindi na-upload ang larawan: ' + (err.message || err.code));
@@ -1899,7 +1974,7 @@ if (inquiryForm) {
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
       appData.pendingInquiries.push(Object.assign({
         storeName, ownerName, contact, email, address,
-        styleType, initialQty, message, idPath, storePath, accountCreated: true
+        styleType, initialQty, message, idPath, storePath, applicantType, accountCreated: true
       }, stamp()));
 
       const saved = await saveData();
@@ -1912,6 +1987,7 @@ if (inquiryForm) {
       inquiryForm.reset();
       $('inqIdPrev').style.display = 'none';
       $('inqStorePrev').style.display = 'none';
+      window.selectApplicantType('Store Partner');
     } finally {
       applying = false;
       initPortalView();
