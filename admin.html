@@ -1254,6 +1254,7 @@ function renderApp() {
         `;
 
         if (storeIsDue) tDue++;
+        const isStoppedStatus = item.consignmentStatus === 'Stopped'; // dapat nasa itaas bago gamitin sa rating/badge
         let rating = (isStoppedStatus && !item.isCollected) ? 'Nag-STOP' : item.isCollected ? 'Nakolektahan' : (storeIsDue ? 'Due Na!' : (storeTotalSold === 0 ? 'Mabagal' : 'Maayos'));
         let badgeClass = (isStoppedStatus && !item.isCollected) ? 'badge-due' : item.isCollected ? 'badge-good' : (storeIsDue ? 'badge-due' : (storeTotalSold === 0 ? 'badge-ok' : 'badge-good'));
 
@@ -1301,7 +1302,6 @@ function renderApp() {
         }
 
         // ===== ABISO: NAG-STOP NG KASUNDUAN =====
-        const isStoppedStatus = item.consignmentStatus === 'Stopped';
         if (isStoppedStatus && !item.stopAcknowledged) {
             hasRequests = true;
             actionReqCount += 1;
