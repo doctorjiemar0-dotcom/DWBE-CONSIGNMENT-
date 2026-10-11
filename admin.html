@@ -458,7 +458,8 @@ const PAY_TERMS = {
   monthly:     { label: 'Buwanan (End of Month)', days: 30 },
   semimonthly: { label: 'Kada 15 Araw', days: 15 },
   weekly:      { label: 'Lingguhan', days: 7 },
-  sellout:     { label: 'Pagkaubos ng Stock', days: 30 }
+  sellout:     { label: 'Pagkaubos ng Stock', days: 30 },
+  daily:       { label: 'Araw-araw (Daily Cut-off)', days: 1 }
 };
 // Default password na ibibigay ng admin (hindi bababa sa 6 na karakter ang kailangan ng Firebase)
 const DEFAULT_CLIENT_PASSWORD = 'admin123';
@@ -513,7 +514,8 @@ function priceWithDiscount(store, sub) {
 // Server function sa Vercel na may kapangyarihang mag-reset ng password
 // Sa Vercel, gamitin ang function ng mismong deployment na ito (production man o preview)
 const RESET_API = location.hostname.endsWith('vercel.app') ? '/api/reset-password' : 'https://dwbe-consignment.vercel.app/api/reset-password';
-const termOf = (item) => PAY_TERMS[item.paymentTerms] ? item.paymentTerms : 'monthly';
+// Ang Sales Agent Partner ay laging DAILY ang cut-off
+const termOf = (item) => (item && item.applicantType === 'Sales Partner Agent') ? 'daily' : (PAY_TERMS[item.paymentTerms] ? item.paymentTerms : 'monthly');
 function nextCollectionDate(item) {
   const d = new Date();
   if (termOf(item) === 'monthly') d.setMonth(d.getMonth() + 1);
@@ -1369,7 +1371,7 @@ function renderApp() {
             stopRow.style.cssText = 'background:#ffebee;border-color:#ef9a9a;flex-direction:column;align-items:stretch;gap:6px;';
             stopRow.innerHTML = `
                 <span>🛑 <strong>${item.storeName}</strong> ay nag-<strong>STOP/CANCEL</strong> ng Consignment Agreement${item.stopRequestedAt ? ` <small style="color:#888;">(${item.stopRequestedAt})</small>` : ''}.<br>
-                <small>Natitirang stock na kukunin: <strong>${storeTotalStock} pcs</strong> | Nakabinbing benta: <strong>₱${pendAmt.toLocaleString()}</strong>. Gawin ang pinal na settlement: kolektahin ang bayad at kunin ang natitirang stock.</small></span>
+                <small>${isAgentStore ? `🤝 Sales Agent: awtomatikong ibabalik ang natitirang <strong>${storeTotalStock} pcs</strong> at babayaran ang naibenta: <strong>net ₱${storeTotalStoreSales.toLocaleString()}</strong> (+ nakabinbing benta: <strong>₱${pendAmt.toLocaleString()}</strong>). Kolektahin ang bayad at kunin ang tira.` : `Natitirang stock na kukunin: <strong>${storeTotalStock} pcs</strong> | Nakabinbing benta: <strong>₱${pendAmt.toLocaleString()}</strong>. Gawin ang pinal na settlement: kolektahin ang bayad at kunin ang natitirang stock.`}</small></span>
                 <div>
                     <button type="button" class="btn-approve" onclick="ackStopAgreement(${index})">✅ Natanggap / Tapos na ang Settlement</button>
                     <button type="button" class="btn-decline" style="background:#607d8b;" onclick="reactivateStore(${index})">↩️ I-activate ulit</button>
@@ -1673,9 +1675,12 @@ window.approveInquiryWithPassword = async function(inqIdx) {
 
     const style = inq.styleType || 'Ordinary';
 
-    const termStr = await prompt('Terms ng bayad:\n1 = Buwanan\n2 = Kada 15 Araw\n3 = Lingguhan\n4 = Pagkaubos ng Stock', '1');
-    if (termStr === null) return;
-    const payTerm = ['monthly', 'semimonthly', 'weekly', 'sellout'][(parseInt(termStr) || 1) - 1] || 'monthly';
+    let payTerm = 'daily';   // Sales Agent Partner: daily lagi ang cut-off
+    if (!isAgentRec(inq)) {
+        const termStr = await prompt('Terms ng bayad:\n1 = Buwanan\n2 = Kada 15 Araw\n3 = Lingguhan\n4 = Pagkaubos ng Stock', '1');
+        if (termStr === null) return;
+        payTerm = ['monthly', 'semimonthly', 'weekly', 'sellout'][(parseInt(termStr) || 1) - 1] || 'monthly';
+    }
 
     if (initialStock <= 0) {
         alert('Ang initial stock ay dapat higit sa 0.');
@@ -2039,6 +2044,7 @@ window.editStoreAddress = async function(index) {
 // Palitan ang terms ng bayad ng tindahan
 window.editPayTerm = async function(index) {
     const item = appData.consignments[index];
+    if (isAgentRec(item)) { alert('Ang Sales Agent Partner ay laging Araw-araw (Daily) ang cut-off. Hindi ito mababago.'); return; }
     const v = await prompt(`Terms ng bayad para sa ${item.storeName}\nKasalukuyan: ${PAY_TERMS[termOf(item)].label}\n\n1 = Buwanan\n2 = Kada 15 Araw\n3 = Lingguhan\n4 = Pagkaubos ng Stock`, '1');
     if (v === null) return;
     const key = ['monthly', 'semimonthly', 'weekly', 'sellout'][(parseInt(v) || 0) - 1];
