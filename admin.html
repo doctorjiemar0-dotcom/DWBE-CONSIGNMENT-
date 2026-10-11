@@ -230,7 +230,11 @@ button:hover { background-color: #1b5e20; }
                     </form>
                 </div>
 
+                <h2 style="margin-top:6px;">🟢 Aktibong Tindahan <span id="activeStoresCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
                 <div id="storesList"><p style="text-align:center; color:#778; font-size:0.9rem;">Nag-load ng mga tindahan...</p></div>
+
+                <h2 style="margin-top:22px;border-bottom-color:#ffcdd2;color:#b71c1c;">⛔ Deactivated / Nag-STOP na Tindahan <span id="inactiveStoresCount" style="font-size:.8rem;color:#b71c1c;">(0)</span></h2>
+                <div id="storesListInactive"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na tindahan.</p></div>
             </div>
         </div>
 
@@ -1154,6 +1158,9 @@ function renderApp() {
 
     const storesList = document.getElementById('storesList');
     if (storesList) storesList.innerHTML = '';
+    const storesListInactive = document.getElementById('storesListInactive');
+    if (storesListInactive) storesListInactive.innerHTML = '';
+    let activeStoreCount = 0, inactiveStoreCount = 0;
 
     const requestsContainerModal = document.getElementById('adminRequestsContainerModal');
     if (requestsContainerModal) requestsContainerModal.innerHTML = '';
@@ -1465,8 +1472,16 @@ function renderApp() {
                 </div>
             </div>
         `;
-        storesList.appendChild(div);
+        if (isStoppedStatus) { inactiveStoreCount++; div.style.opacity = '0.92'; storesListInactive.appendChild(div); }
+        else { activeStoreCount++; storesList.appendChild(div); }
     });
+
+    const activeCntEl = document.getElementById('activeStoresCount');
+    const inactiveCntEl = document.getElementById('inactiveStoresCount');
+    if (activeCntEl) activeCntEl.textContent = `(${activeStoreCount})`;
+    if (inactiveCntEl) inactiveCntEl.textContent = `(${inactiveStoreCount})`;
+    if (activeStoreCount === 0) storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong tindahan.</p>';
+    if (inactiveStoreCount === 0) storesListInactive.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na tindahan.</p>';
 
     const dashTotalStores = document.getElementById('dashTotalStores');
     const dashPendingRestock = document.getElementById('dashPendingRestock');
