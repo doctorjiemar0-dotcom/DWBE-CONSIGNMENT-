@@ -263,6 +263,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
             <strong>Requirements sa online registration:</strong>
             <ul><li>1 Valid ID ng may-ari.</li><li>Litrato ng Store Front (tindahan).</li><li>Tunay na pangalan ng may-ari at ng tindahan.</li></ul>
             <strong>Presyo:</strong> Supplier Price ang bayad sa Owner (Ordinary at Premium); ang Store Partner ang magtatakda ng sariling patong/mark-up.
+            <ul style="margin-top:6px"><li>Sumasang-ayon sa lahat ng nakasaad sa Consignment Agreement (supplier price, cut-off, bayad sa naibenta, at pagtigil ng kasunduan).</li></ul>
           </div>
           <div id="eligAgent" style="display:none">
             <h3>✅ Eligibility: Sales Agent Partner</h3>
@@ -271,21 +272,20 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
             <ul><li><b>1 Valid ID lang</b> (walang Store Front).</li><li><b>Alyas</b> ang gagamitin sa app at makikita ng iba. Ang tunay na pangalan ay para sa beripikasyon ng Admin lang.</li></ul>
             <strong>Espesyal na terms ng Sales Agent Partner:</strong>
             <ul>
-              <li>Ang <b>Supplier Price ay ₱10 na mas mataas</b> kaysa sa Store Partner.</li>
               <li><b>Bawat walis na maibenta, automatic na may ₱10 kang kita</b> (ibinabawas sa babayaran mo sa Owner).</li>
               <li>Ikaw ang bahala sa sarili mong <b>retail price / patong (mark-up)</b>; sa iyo ang patong na iyon.</li>
+              <li>Sumasang-ayon sa simpleng <b>Sales Agent Agreement</b>.</li>
             </ul>
           </div>
-          <strong>Pangkalahatang kwalipikasyon (pareho ang patakaran):</strong>
+          <strong>Pangkalahatang kwalipikasyon:</strong>
           <ul>
             <li>Hindi bababa sa 18 taong gulang.</li>
             <li>May aktibong email at numero ng telepono / GCash.</li>
             <li>May kumpletong address at nasa lugar na naseserbisyuhan ng DWBE.</li>
-            <li>Sumasang-ayon sa lahat ng nakasaad sa Consignment Agreement (supplier price, cut-off, bayad sa naibenta, at pagtigil ng kasunduan).</li>
           </ul>
         </div>
 
-        <div class="no-print" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
+        <div class="no-print" id="applyInfoBox" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
           <strong>💡 Impormasyon:</strong>
           Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.
           <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong>
@@ -299,6 +299,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         </div>
         <div class="form-group"><label id="inqStoreNameLabel">Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
         <div class="form-group"><label id="inqOwnerNameLabel">Pangalan ng May-ari:</label><input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required></div>
+        <p class="hint" id="agentNameHint" style="display:none;margin-top:-4px;">🎭 Ang <b>Alyas</b> ang makikita sa app. Ang <b>Real Name</b> ay para lang sa Admin (tugma sa Valid ID) at hindi makikita ng iba.</p>
         <div class="form-group"><label>Sariling Password (Para sa Portal Login):</label><div class="pw-wrapper"><input type="password" id="inqPassword" placeholder="Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)" minlength="6" required><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('inqPassword', this)">👁️</button></div></div>
         <div class="form-group"><label>Numero ng Telepono / GCash:</label><input type="text" id="inqContact" placeholder="Hal. 09123456789" required></div>
         <div class="form-group"><label>Personal Active Email Address (sarili mong aktibong email):</label><input type="email" id="inqEmail" placeholder="Ilagay ang sarili mong aktibong Gmail/email" autocomplete="email" required></div>
@@ -347,7 +348,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         <div class="form-group"><label>Dami ng Nais i-Order (Fixed: 5 pcs):</label><input type="number" id="inqInitialQty" value="5" min="5" max="5" readonly required style="background:#eee;"></div>
         <div class="form-group"><label>Mensahe / Katanungan (Optional):</label><textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea></div>
 
-        <button type="submit" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
+        <button type="submit" id="inqSubmitBtn" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
       </div>
     </div>
@@ -531,7 +532,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
     <!-- Official Consignment Agreement -->
     <div class="card dash-wide" style="background:#e8f5e9;border-left:4px solid #2e7d32;">
       <div class="row">
-        <h2 style="color:#2e7d32;font-size:.95rem;margin-bottom:0;">📜 Opisyal na Kasunduan sa Consignment</h2>
+        <h2 id="agreementCardTitle" style="color:#2e7d32;font-size:.95rem;margin-bottom:0;">📜 Opisyal na Kasunduan sa Consignment</h2>
         <button type="button" id="toggleAgreementBtn" onclick="toggleAgreementVisibility()" class="tgl" style="background-color:#2e7d32;">Buksan</button>
       </div>
 
@@ -544,7 +545,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
           <strong id="agreementTitleType">CONSIGNMENT AGREEMENT (STORE PARTNER)</strong>
         </div>
 
-        <p style="margin-bottom:8px;background-color:#e8f5e9;padding:8px;border-left:4px solid #2e7d32;border-radius:4px;">
+        <p id="agreementIntroP" style="margin-bottom:8px;background-color:#e8f5e9;padding:8px;border-left:4px solid #2e7d32;border-radius:4px;">
           <strong>SA MGA KINAUUKULAN:</strong>
           Ang kasunduang ito ay pinagbisa sa pagitan ng Owner
           (<strong style="color:#c62828;">JIEMAR GARAIS DOCTOR</strong>)
@@ -553,7 +554,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
           upang pormal na itakda ang mga sumusunod na detalyadong alituntunin:
         </p>
 
-        <ol style="padding-left:18px;margin-bottom:10px;">
+        <ol id="agreementOl" style="padding-left:18px;margin-bottom:10px;">
           <li style="margin-bottom:6px;">
             <strong>SISTEMA NG SUPPLY:</strong>
             Mag-iiwan ang Owner ng mga produktong Walis Tambo sa tindahan ng Store Partner nang
@@ -618,20 +619,26 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
           </li>
         </ol>
 
-        <div id="agentContractBox" style="display:none;margin-bottom:10px;padding:8px;border-radius:4px;background:#fff8e1;border-left:4px solid #f9a825;">
-          🤝 <strong>ESPESYAL NA TERMS PARA SA SALES AGENT PARTNER</strong> (kapalit ng Seksyon 2):
-          <ol style="padding-left:18px;margin:6px 0 0;">
-            <li style="margin-bottom:4px;"><strong>ALYAS:</strong> Ang <span class="y">Alyas</span> ng Agent ang gagamitin sa lahat ng bahagi ng app. Ang tunay na pangalan at Valid ID ay para lamang sa beripikasyon ng Owner at hindi ipapakita sa iba.</li>
-            <li style="margin-bottom:4px;"><strong>SUPPLIER PRICE:</strong> <span class="r">₱10 na mas mataas</span> ang Supplier Price ng Agent kaysa sa Store Partner. Ang pinal na presyo bawat piraso ay: <strong id="agentSupplierPriceText">___</strong>.</li>
-            <li style="margin-bottom:4px;"><strong>AUTOMATIC NA KITA:</strong> Sa <span class="y">bawat (1) walis tambo na maibenta</span>, awtomatikong may <span class="r">₱10 na kita ang Agent</span>, na ibinabawas sa remittance. <em>Net na ibabayad = (Naibenta × Supplier Price) − (Naibenta × ₱10).</em></li>
-            <li><strong>SARILING MARK-UP:</strong> Ang Agent ang bahala sa sarili niyang <span class="y">retail price o patong (mark-up)</span>. Ang patong na ito ay direktang kita ng Agent, bukod sa automatic na ₱10.</li>
+        <div id="agentAgreementBox" style="display:none;">
+          <p style="margin-bottom:8px;background-color:#fff8e1;padding:8px;border-left:4px solid #f9a825;border-radius:4px;">
+            <strong>SA MGA KINAUUKULAN:</strong>
+            Ang simpleng kasunduang ito ay sa pagitan ng Owner (<strong style="color:#c62828;">JIEMAR GARAIS DOCTOR</strong>) at ng Sales Agent Partner (<span id="agentAgreementParty" style="font-weight:bold;color:#8a5a00;">Alyas</span>).
+          </p>
+          <ol style="padding-left:18px;margin-bottom:10px;">
+            <li style="margin-bottom:6px;"><strong>ALYAS:</strong> <span class="y">Alyas</span> ng Agent ang gagamitin sa app. Ang Real Name at Valid ID ay para lang sa beripikasyon ng Owner at hindi ipapakita sa iba.</li>
+            <li style="margin-bottom:6px;"><strong>PAGBEBENTA:</strong> Ibebenta ng Agent ang mga Walis Tambo (Ordinary at Premium) na ibinigay ng Owner nang <span class="r">walang advance na bayad</span>. I-record ang bawat benta gamit ang <span class="y">"May Bumili"</span> button.</li>
+            <li style="margin-bottom:6px;"><strong>PRESYO AT MARK-UP:</strong> Supplier Price bawat piraso: <strong id="agentSupplierPriceText">___</strong>. Ang Agent ang bahala sa sarili niyang <span class="y">retail price / patong (mark-up)</span> at sa kanya ang patong na iyon.</li>
+            <li style="margin-bottom:6px;"><strong>AUTOMATIC NA KITA:</strong> Sa <span class="y">bawat (1) walis na maibenta</span>, may <span class="r">automatic na ₱10 na kita ang Agent</span>, na ibinabawas sa babayaran. <em>Net na ibabayad = (Naibenta × Supplier Price) − (Naibenta × ₱10).</em></li>
+            <li style="margin-bottom:6px;"><strong>BAYAD:</strong> Babayaran ng Agent sa Owner ang net na halaga ng mga naibenta ayon sa Terms ng Bayad sa ibaba.</li>
+            <li style="margin-bottom:6px;"><strong>HINDI NABENTANG STOCK:</strong> Mananatiling pag-aari ng Owner ang mga hindi nabentang walis.</li>
+            <li><strong>PAGWAWAKAS:</strong> Maaaring itigil ng Agent ang kasunduan anumang oras gamit ang <span style="background-color:#ffeb3b;color:#d32f2f;font-weight:bold;padding:2px 6px;border-radius:3px;">"STOP/CANCEL"</span> button. Sa araw ng pagwawakas, babayaran ang mga naibenta at ibabalik ang natitirang walang sirang stock.</li>
           </ol>
         </div>
 
         <div id="agreementPayTermBox" style="margin-bottom:10px;padding:8px;border-radius:4px;background:#fff8e1;border-left:4px solid #f57f17;">
           💳 <strong>TERMS NG BAYAD:</strong> <strong id="agreementPayTermLabel" style="color:#e65100;">Buwanan (End of Month)</strong><br>
           <span id="agreementPayTermText"></span><br>
-          <em style="font-size:.75rem;color:#555;">Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.</em>
+          <em id="agreementPayTermNote" style="font-size:.75rem;color:#555;">Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.</em>
         </div>
 
         <div id="agreementStatusDisplay" style="font-weight:bold;color:white;background-color:#2e7d32;margin-top:12px;border-radius:4px;padding:8px;text-align:center;font-size:1.05em;">✅ Status: Aktibo ang Consignment</div>
@@ -1335,6 +1342,7 @@ window.selectInqStyle = function(style, el) {
   });
 };
 
+const IB_STORE_HTML = (document.getElementById('applyInfoBox') || {}).innerHTML || '';
 window.selectApplicantType = function(type) {
   const isAgent = type === 'Sales Partner Agent';
   const hidden = $('inqApplicantType'); if (hidden) hidden.value = isAgent ? 'Sales Partner Agent' : 'Store Partner';
@@ -1342,8 +1350,14 @@ window.selectApplicantType = function(type) {
   if (sf) sf.style.display = isAgent ? 'none' : '';
   if (sfi) { sfi.required = !isAgent; if (isAgent) { sfi.value = ''; const pv = $('inqStorePrev'); if (pv) pv.style.display = 'none'; } }
   const set = (id, t) => { const el = $(id); if (el) el.textContent = t; };
-  set('inqStoreNameLabel', isAgent ? '🎭 Alyas (ito ang gagamitin sa app at makikita ng iba):' : 'Pangalan ng Tindahan:');
-  set('inqOwnerNameLabel', isAgent ? '👤 Tunay na Buong Pangalan (Admin lang ang makakakita; dapat tugma sa Valid ID):' : 'Pangalan ng May-ari:');
+  set('inqStoreNameLabel', isAgent ? '🎭 Alyas:' : 'Pangalan ng Tindahan:');
+  set('inqOwnerNameLabel', isAgent ? '👤 Real Name (Tunay na Pangalan):' : 'Pangalan ng May-ari:');
+  const nh = $('agentNameHint'); if (nh) nh.style.display = isAgent ? '' : 'none';
+  const sbtn = $('inqSubmitBtn'); if (sbtn) sbtn.textContent = isAgent ? 'Isumite ang Sales Agent Aplikasyon' : 'Isumite ang Digital Consignment Aplikasyon';
+  const ib = $('applyInfoBox');
+  if (ib) ib.innerHTML = isAgent
+    ? '<strong>💡 Impormasyon:</strong> Para sa mga bagong Sales Agent Partner. Itakda ang iyong sariling password at <strong>tandaan ito</strong>, dahil ito ang gagamitin mo sa pag-login sa portal pagka-apruba.'
+    : IB_STORE_HTML;
   set('inqIdLabel', isAgent ? '📇 1 Valid ID ng Agent (litrato ng harap):' : '📇 1 Valid ID ng May-ari (litrato ng harap):');
   set('inqPhotoHint', isAgent ? '🔒 Sales Agent Partner: 1 Valid ID lang ang kailangan. Para lang sa beripikasyon ng Admin ang larawan at hindi makikita ng ibang tao.' : '🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.');
   const sn = $('inqStoreName'); if (sn) sn.placeholder = isAgent ? 'Hal. Boss Juan' : 'Hal. Aling Nena Store';
@@ -1970,7 +1984,7 @@ if (inquiryForm) {
     const isAgent = applicantType === 'Sales Partner Agent';
 
     if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
-    if (isAgent && storeName.toLowerCase() === ownerName.toLowerCase()) { alert('Para sa Sales Agent Partner, gumamit ng Alyas na HINDI katulad ng tunay mong pangalan.'); return; }
+    if (isAgent && storeName.toLowerCase() === ownerName.toLowerCase()) { alert('Gumamit ng Alyas na HINDI katulad ng Real Name mo.'); return; }
 
     // Store Partner: 1 Valid ID at Store Front. Sales Partner Agent: 1 Valid ID lang (larawan lang, hanggang 15 MB)
     const idFile = $('inqIdFile').files[0], storeFile = isAgent ? null : $('inqStoreFile').files[0];
@@ -2163,10 +2177,12 @@ function applyStoreLock(store) {
   pc.classList.toggle('store-locked', locked);
   const banner = $('lockedBanner');
   if (banner) banner.style.display = locked ? 'block' : 'none';
+  const agentLk = isAgentStore(store);
   const st = $('displayStoreStatus');
-  if (st) st.textContent = locked ? '⛔ Deactivated (Naka-lock)' : 'Aktibo ang Consignment';
+  if (st) st.textContent = locked ? '⛔ Deactivated (Naka-lock)' : (agentLk ? 'Aktibo bilang Sales Agent' : 'Aktibo ang Consignment');
   const sd = $('agreementStatusDisplay');
-  if (sd) { sd.style.backgroundColor = locked ? '#c62828' : '#2e7d32'; if (locked) sd.textContent = '⛔ Status: Deactivated (Nag-STOP ang Consignment)'; }
+  if (sd) { sd.style.backgroundColor = locked ? '#c62828' : '#2e7d32'; if (locked) sd.textContent = agentLk ? '⛔ Status: Deactivated (Nag-STOP ang Sales Agent Agreement)' : '⛔ Status: Deactivated (Nag-STOP ang Consignment)'; }
+  if (banner && locked && agentLk) banner.textContent = '🔒 Naka-deactivate ang iyong Sales Agent account. Naka-lock na ang dashboard at wala nang magagamit na button. Makipag-ugnayan sa Admin kung nais mong ibalik ito sa Aktibo.';
   // Panatilihing gumagana ang pagbukas/pagtago ng mga seksyon (read-only), maliban sa QR at Password
   pc.querySelectorAll('button[id^="toggle"]').forEach(b => {
     if (b.id === 'toggleQrBtn' || b.id === 'togglePasswordBtn') return;
@@ -2197,25 +2213,21 @@ function subSalesValueC(sub, sold) {
   if (sold <= lq) return lq ? lv * (sold / lq) : 0;
   return lv + (sold - lq) * (Number(sub.price) || 0);
 }
-// Hiwalay na itsura ng portal/kontrata ng Sales Agent Partner
+// Hiwalay na itsura ng portal/kontrata ng Sales Agent Partner (simpleng Sales Agent Agreement, hindi Consignment Agreement)
 function applyAgentPortalView(store) {
   const agent = isAgentStore(store);
   const show = (id, on) => { const el = $(id); if (el) el.style.display = on ? '' : 'none'; };
-  show('clauseSupplierStore', !agent);
-  show('agentContractBox', agent);
-  const title = $('agreementTitleType'); if (title) title.textContent = agent ? 'CONSIGNMENT AGREEMENT (SALES AGENT PARTNER)' : 'CONSIGNMENT AGREEMENT (STORE PARTNER)';
-  const rf = $('remitFormulaSpan'); if (rf) rf.textContent = agent ? 'Naibenta × Supplier Price − (Naibenta × ₱10 Auto-Kita ng Agent)' : 'Bilang ng Naibenta × Supplier Price';
-  // "Store Partner" -> "Sales Agent Partner" sa mga nakasulat sa kontrata (hindi ginagalaw ang espesyal na kahon)
+  show('agreementIntroP', !agent);
+  show('agreementOl', !agent);
+  show('agentAgreementBox', agent);
+  show('agreementPayTermNote', !agent);
+  const ct = $('agreementCardTitle'); if (ct) ct.textContent = agent ? '📜 Sales Agent Agreement' : '📜 Opisyal na Kasunduan sa Consignment';
+  const title = $('agreementTitleType'); if (title) title.textContent = agent ? 'SALES AGENT AGREEMENT' : 'CONSIGNMENT AGREEMENT (STORE PARTNER)';
   if (agent) {
-    const wrap = $('agreementContentWrapper'), box = $('agentContractBox');
-    if (wrap) {
-      const w = document.createTreeWalker(wrap, NodeFilter.SHOW_TEXT);
-      const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
-      nodes.forEach(n => { if (!(box && box.contains(n)) && /Store Partner/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/Store Partner/g, 'Sales Agent Partner'); });
-    }
     const items = store.storeItems || [];
     const prices = items.map(i => `${i.styleType} ₱${i.price}`).join(' • ');
-    const sp = $('agentSupplierPriceText'); if (sp) sp.textContent = prices || `Ordinary ₱${STANDARD_PRICES.Ordinary + AGENT_PRICE_ADD} • Premium ₱${STANDARD_PRICES.Premium + AGENT_PRICE_ADD}`;
+    const sp = $('agentSupplierPriceText'); if (sp) sp.textContent = prices || '___';
+    const pty = $('agentAgreementParty'); if (pty) pty.textContent = store.alias || store.storeName;
   }
   // Kita ng Agent
   const box = $('agentEarningsBox');
@@ -2257,7 +2269,7 @@ function _renderClientDashboardInner(store) {
 
   const agreementStatusDisplay = $('agreementStatusDisplay');
   if (agreementStatusDisplay) {
-    agreementStatusDisplay.textContent = `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
+    agreementStatusDisplay.textContent = agentStore ? `Status: ${(store.consignmentStatus || 'Aktibo').replace('Aktibo ang Consignment', 'Aktibo bilang Sales Agent')}` : `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
   }
 
   const term = PAY_TERMS[store.paymentTerms] || PAY_TERMS.monthly;
