@@ -230,10 +230,10 @@ button:hover { background-color: #1b5e20; }
                     </form>
                 </div>
 
-                <h2 style="margin-top:6px;">🟢 Aktibong Consignment Store Partner <span id="activeStoresCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
+                <h2 style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>🟢 Aktibong Consignment Store Partner <span id="activeStoresCount" style="font-size:.8rem;color:#558b2f;">(0)</span></span><button type="button" id="toggleBtn_storesList" onclick="toggleStoreSection('storesList', this)" style="width:auto;margin:0;padding:5px 12px;font-size:.78rem;background:#2e7d32;">▲ Close</button></h2>
                 <div id="storesList"><p style="text-align:center; color:#778; font-size:0.9rem;">Nag-load ng mga tindahan...</p></div>
 
-                <h2 style="margin-top:22px;border-bottom-color:#f9a825;color:#8a5a00;">🤝 Aktibong Sales Agent Partner <span id="activeAgentsCount" style="font-size:.8rem;color:#8a5a00;">(0)</span></h2>
+                <h2 style="margin-top:22px;border-bottom-color:#f9a825;color:#8a5a00;display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>🤝 Aktibong Sales Agent Partner <span id="activeAgentsCount" style="font-size:.8rem;color:#8a5a00;">(0)</span></span><button type="button" id="toggleBtn_storesListAgents" onclick="toggleStoreSection('storesListAgents', this)" style="width:auto;margin:0;padding:5px 12px;font-size:.78rem;background:#f9a825;color:#3b2a00;">▲ Close</button></h2>
                 <div id="storesListAgents"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong Sales Agent Partner.</p></div>
 
                 <h2 style="margin-top:22px;border-bottom-color:#ffcdd2;color:#b71c1c;">⛔ Deactivated Store Partner <span id="inactiveStoresCount" style="font-size:.8rem;color:#b71c1c;">(0)</span></h2>
@@ -464,6 +464,14 @@ const PAY_TERMS = {
 const DEFAULT_CLIENT_PASSWORD = 'admin123';
 // Standard na Presyo ng Supplier (default lang sa bagong approval; hindi nito binabago ang presyo ng mga kasalukuyang tindahan)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
+// Open / Close ng mga seksyon ng Aktibong Tindahan at Aktibong Sales Agent
+window.toggleStoreSection = function(listId, btn) {
+    const el = document.getElementById(listId);
+    if (!el) return;
+    const hide = el.style.display !== 'none';
+    el.style.display = hide ? 'none' : '';
+    if (btn) btn.textContent = hide ? '▼ Open' : '▲ Close';
+};
 // ===== SALES AGENT PARTNER =====
 // Supplier price ng Agent = standard + AGENT_PRICE_ADD. Bawat naibentang walis ay may automatic na AGENT_BONUS_PER_PC na kita ang Agent
 // (ibinabawas sa remittance). Sariling retail price/mark-up ng Agent ang patong niya.
