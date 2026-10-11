@@ -519,11 +519,11 @@ async function getImgUrl(path) {
     if (!url) throw new Error('Walang larawan');
     imgUrlCache.set(path, url); return url;
 }
-function appPhotosHtml(idPath, storePath) {
+function appPhotosHtml(idPath, storePath, isAgent) {
     const one = (path, label) => hasPhoto(path)
         ? `<div class="inq-photo"><span>${label}</span><img class="app-img" data-path="${path}" alt="${label}" onclick="openAppImage('${path}','${label}')"></div>`
         : `<div class="inq-photo"><span>${label}</span><div class="no-photo">${path === 'TEST' ? 'Test mode (walang upload)' : 'Walang larawan'}</div></div>`;
-    return `<div class="inq-photos">${one(idPath, '📇 Valid ID')}${one(storePath, '🏪 Store Front')}</div>`;
+    return `<div class="inq-photos">${one(idPath, '📇 Valid ID')}${isAgent ? '' : one(storePath, '🏪 Store Front')}</div>`;
 }
 // Pagkatapos mag-render, punuin ang mga larawan (mula sa cache kung meron na)
 function hydrateAppImages() {
@@ -1134,12 +1134,13 @@ function renderApp() {
             div.className = 'inquiry-card-box';
 
             div.innerHTML = `
-                <strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>
+                ${inq.applicantType === 'Sales Partner Agent' ? '<span class="badge" style="background:#f9a825;color:#3b2a00;margin-bottom:4px;display:inline-block;">🤝 SALES PARTNER AGENT (1 Valid ID)</span><br>' : ''}
+                <strong>${inq.applicantType === 'Sales Partner Agent' ? '🤝' : '🏪'} ${inq.storeName}</strong> (${inq.applicantType === 'Sales Partner Agent' ? 'Agent' : 'May-ari'}: ${inq.ownerName})<br>
                 📞 Contact: ${inq.contact} | 📧 Email: <strong style="color:#2e7d32;">${inq.email || 'Wala'}</strong><br>
                 📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>
                 📦 Hiniling na Qty: <strong>${inq.initialQty || inq.qty || 5} pcs</strong><br>
                 💬 <strong>Mensahe/Inquiry:</strong> <span style="color:#333; font-style:italic;">"${inq.message || inq.notes || 'Walang mensahe'}"</span><br>
-                ${appPhotosHtml(inq.idPath, inq.storePath)}
+                ${appPhotosHtml(inq.idPath, inq.storePath, inq.applicantType === 'Sales Partner Agent')}
                 <div class="password-display-box" style="background:#e3f2fd;border-color:#90caf9;">
                     <strong style="color:#1565c0;">🔐 FIREBASE AUTH:</strong>
                     Ang client ay gumawa na ng sarili niyang Firebase account nang isumite ang aplikasyon. Walang email na ipapadala.
@@ -1426,6 +1427,7 @@ function renderApp() {
                     <span style="font-size: 1rem;">🏢</span>
                     ${statusDot}
                     <strong style="font-size: 0.95rem;">${item.storeName}</strong>
+                    ${item.applicantType === 'Sales Partner Agent' ? '<span class="badge" style="background:#f9a825;color:#3b2a00;">🤝 Sales Partner Agent</span>' : ''}
                     ${hasClientMessage ? '<span class="badge badge-msg">💬 May Mensahe</span>' : ''}
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
@@ -1676,6 +1678,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             // Dinala mula sa aplikasyon (path lang sa Firebase Storage): 1 Valid ID at Store Front
             idPath: inq.idPath || '',
             storePath: inq.storePath || '',
+            applicantType: inq.applicantType || 'Store Partner',
             styleType: style,
             initialQty: initialStock,
             currentStock: initialStock,
