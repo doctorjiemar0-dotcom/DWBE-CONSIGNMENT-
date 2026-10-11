@@ -230,11 +230,17 @@ button:hover { background-color: #1b5e20; }
                     </form>
                 </div>
 
-                <h2 style="margin-top:6px;">🟢 Aktibong Tindahan <span id="activeStoresCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
+                <h2 style="margin-top:6px;">🟢 Aktibong Consignment Store Partner <span id="activeStoresCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
                 <div id="storesList"><p style="text-align:center; color:#778; font-size:0.9rem;">Nag-load ng mga tindahan...</p></div>
 
-                <h2 style="margin-top:22px;border-bottom-color:#ffcdd2;color:#b71c1c;">⛔ Deactivated / Nag-STOP na Tindahan <span id="inactiveStoresCount" style="font-size:.8rem;color:#b71c1c;">(0)</span></h2>
+                <h2 style="margin-top:22px;border-bottom-color:#f9a825;color:#8a5a00;">🤝 Aktibong Sales Agent Partner <span id="activeAgentsCount" style="font-size:.8rem;color:#8a5a00;">(0)</span></h2>
+                <div id="storesListAgents"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong Sales Agent Partner.</p></div>
+
+                <h2 style="margin-top:22px;border-bottom-color:#ffcdd2;color:#b71c1c;">⛔ Deactivated Store Partner <span id="inactiveStoresCount" style="font-size:.8rem;color:#b71c1c;">(0)</span></h2>
                 <div id="storesListInactive"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na tindahan.</p></div>
+
+                <h2 style="margin-top:22px;border-bottom-color:#ffcdd2;color:#b71c1c;">⛔ Deactivated Sales Agent Partner <span id="inactiveAgentsCount" style="font-size:.8rem;color:#b71c1c;">(0)</span></h2>
+                <div id="storesListAgentsInactive"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na Sales Agent Partner.</p></div>
             </div>
         </div>
 
@@ -458,6 +464,13 @@ const PAY_TERMS = {
 const DEFAULT_CLIENT_PASSWORD = 'admin123';
 // Standard na Presyo ng Supplier (default lang sa bagong approval; hindi nito binabago ang presyo ng mga kasalukuyang tindahan)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
+// ===== SALES AGENT PARTNER =====
+// Supplier price ng Agent = standard + AGENT_PRICE_ADD. Bawat naibentang walis ay may automatic na AGENT_BONUS_PER_PC na kita ang Agent
+// (ibinabawas sa remittance). Sariling retail price/mark-up ng Agent ang patong niya.
+const AGENT_PRICE_ADD = 10;
+const AGENT_BONUS_PER_PC = 10;
+const isAgentRec = (r) => !!r && r.applicantType === 'Sales Partner Agent';
+const stdPriceFor = (style, rec) => (STANDARD_PRICES[style] || 150) + (isAgentRec(rec) ? AGENT_PRICE_ADD : 0);
 // Halaga ng benta ng isang uri: ang mga naitalang benta ay nasa presyong may discount noong benta; ang luma ay sa kasalukuyang presyo
 function subSalesValue(sub, sold) {
   const lq = Number(sub.soldValueQty) || 0;
@@ -1129,13 +1142,20 @@ function renderApp() {
         inquiryTabBadge.style.display = 'block';
         inquiryTabBadge.textContent = appData.pendingInquiries.length;
 
+        if (inquiriesContainer) inquiriesContainer.innerHTML = '';
+        const inqStoreBox = document.createElement('div'), inqAgentBox = document.createElement('div');
+        let inqStoreCount = 0, inqAgentCount = 0;
         appData.pendingInquiries.forEach((inq, inqIdx) => {
+            const isAgentInq = inq.applicantType === 'Sales Partner Agent';
             const div = document.createElement('div');
             div.className = 'inquiry-card-box';
+            if (isAgentInq) div.style.borderLeft = '4px solid #f9a825';
 
             div.innerHTML = `
-                ${inq.applicantType === 'Sales Partner Agent' ? '<span class="badge" style="background:#f9a825;color:#3b2a00;margin-bottom:4px;display:inline-block;">🤝 SALES PARTNER AGENT (1 Valid ID)</span><br>' : ''}
-                <strong>${inq.applicantType === 'Sales Partner Agent' ? '🤝' : '🏪'} ${inq.storeName}</strong> (${inq.applicantType === 'Sales Partner Agent' ? 'Agent' : 'May-ari'}: ${inq.ownerName})<br>
+                ${inq.applicantType === 'Sales Partner Agent' ? '<span class="badge" style="background:#f9a825;color:#3b2a00;margin-bottom:4px;display:inline-block;">🤝 SALES AGENT PARTNER (1 Valid ID)</span><br>' : ''}
+                ${isAgentInq
+                    ? `<strong>🤝 Alyas: ${inq.alias || inq.storeName}</strong> | 👤 Tunay na pangalan (pribado): <strong>${inq.ownerName}</strong><br>`
+                    : `<strong>🏪 ${inq.storeName}</strong> (May-ari: ${inq.ownerName})<br>`}
                 📞 Contact: ${inq.contact} | 📧 Email: <strong style="color:#2e7d32;">${inq.email || 'Wala'}</strong><br>
                 📍 Address: <strong>${inq.address || 'Walang ibinigay na address'}</strong> | 🎁 Istilo: ${inq.styleType}<br>
                 📦 Hiniling na Qty: <strong>${inq.initialQty || inq.qty || 5} pcs</strong><br>
@@ -1150,8 +1170,18 @@ function renderApp() {
                     <button type="button" class="btn-decline" onclick="declineInquiry(${inqIdx})">❌ Tanggihan</button>
                 </div>
             `;
-            if (inquiriesContainer) inquiriesContainer.appendChild(div);
+            if (isAgentInq) { inqAgentCount++; inqAgentBox.appendChild(div); } else { inqStoreCount++; inqStoreBox.appendChild(div); }
         });
+        const emptyInq = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>';
+        if (!inqStoreCount) inqStoreBox.innerHTML = emptyInq;
+        if (!inqAgentCount) inqAgentBox.innerHTML = emptyInq;
+        const mkHead = (html, color) => { const h = document.createElement('h3'); h.style.cssText = `margin:12px 0 6px;font-size:.95rem;color:${color};`; h.innerHTML = html; return h; };
+        if (inquiriesContainer) {
+            inquiriesContainer.appendChild(mkHead(`🏪 Consignment Store Partner (${inqStoreCount})`, '#2e7d32'));
+            inquiriesContainer.appendChild(inqStoreBox);
+            inquiriesContainer.appendChild(mkHead(`🤝 Sales Agent Partner (${inqAgentCount})`, '#8a5a00'));
+            inquiriesContainer.appendChild(inqAgentBox);
+        }
     } else {
         inquiryTabBadge.style.display = 'none';
         if (inquiriesContainer) inquiriesContainer.innerHTML = '<p style="font-size: 0.85rem; color: #666;">Wala pang bagong inquiry.</p>';
@@ -1161,7 +1191,11 @@ function renderApp() {
     if (storesList) storesList.innerHTML = '';
     const storesListInactive = document.getElementById('storesListInactive');
     if (storesListInactive) storesListInactive.innerHTML = '';
-    let activeStoreCount = 0, inactiveStoreCount = 0;
+    const storesListAgents = document.getElementById('storesListAgents');
+    if (storesListAgents) storesListAgents.innerHTML = '';
+    const storesListAgentsInactive = document.getElementById('storesListAgentsInactive');
+    if (storesListAgentsInactive) storesListAgentsInactive.innerHTML = '';
+    let activeStoreCount = 0, inactiveStoreCount = 0, activeAgentCount = 0, inactiveAgentCount = 0;
 
     const requestsContainerModal = document.getElementById('adminRequestsContainerModal');
     if (requestsContainerModal) requestsContainerModal.innerHTML = '';
@@ -1210,7 +1244,8 @@ function renderApp() {
             }];
         }
 
-        let storeTotalStock = 0, storeTotalSold = 0, storeTotalStoreSales = 0, storeIsDue = false, storeItemsHtml = '';
+        const isAgentStore = isAgentRec(item);
+        let storeTotalStock = 0, storeTotalSold = 0, storeTotalStoreSales = 0, storeGrossSales = 0, storeAgentCredit = 0, storeIsDue = false, storeItemsHtml = '';
         item.storeItems.forEach((subItem, subIdx) => {
             if (subItem.rejectedQty === undefined) subItem.rejectedQty = 0;
             if (subItem.returnedQty === undefined) subItem.returnedQty = 0;
@@ -1220,10 +1255,13 @@ function renderApp() {
 
             storeTotalStock += subItem.currentStock;
             storeTotalSold += subSold;
-            storeTotalStoreSales += subSales;
+            const subCredit = isAgentStore ? subSold * AGENT_BONUS_PER_PC : 0;   // automatic na kita ng Agent
+            storeGrossSales += subSales;
+            storeAgentCredit += subCredit;
+            storeTotalStoreSales += subSales - subCredit;                         // net na ibabayad
             tStock += subItem.currentStock;
             tSold += subSold;
-            tSales += subSales;
+            tSales += subSales - subCredit;
 
             const subIsDue = subItem.collectionDate && (termOf(item) === 'monthly'
                 ? subItem.collectionDate.startsWith(currentYM)
@@ -1257,7 +1295,7 @@ function renderApp() {
         dashboardEarningsHtml += `
             <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #c8e6c9;">
                 <span>🏢 <strong>${item.storeName}</strong></span>
-                <span style="color: #1b5e20; font-weight: bold;">₱${storeTotalStoreSales.toLocaleString()} (${storeTotalSold} pcs nabenta)</span>
+                <span style="color: #1b5e20; font-weight: bold;">₱${storeTotalStoreSales.toLocaleString()} (${storeTotalSold} pcs nabenta)${isAgentStore ? ' • net ng Agent' : ''}</span>
             </div>
         `;
 
@@ -1299,7 +1337,7 @@ function renderApp() {
                 saleRow.style.background = '#e8f5e9';
                 saleRow.style.borderColor = '#a5d6a7';
                 saleRow.innerHTML = `
-                    <span>🏢 <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}</span>
+                    <span>${isAgentStore ? '🤝' : '🏢'} <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${isAgentStore ? ` <small style="color:#8a5a00;">(Auto-kita ng Agent: ₱${sale.qty * AGENT_BONUS_PER_PC})</small>` : ''}${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}</span>
                     <div>
                         <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>
                         <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Tanggihan</button>
@@ -1317,7 +1355,7 @@ function renderApp() {
             stoppedList.push(item.storeName);
             const stopKey = 'stop_seen_' + (TEST_MODE ? 't_' : 'l_') + (item.id || item.email) + '_' + (item.stopRequestedAt || '');
             if (!localStorage.getItem(stopKey)) newStops.push({ key: stopKey, name: item.storeName });
-            const pendAmt = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0), 0) * 100) / 100;
+            const pendAmt = Math.round((item.pendingSales || []).reduce((t, x) => t + (Number(x.totalAmount) || 0) - (isAgentStore ? (Number(x.qty) || 0) * AGENT_BONUS_PER_PC : 0), 0) * 100) / 100;
             const stopRow = document.createElement('div');
             stopRow.className = 'request-action-row';
             stopRow.style.cssText = 'background:#ffebee;border-color:#ef9a9a;flex-direction:column;align-items:stretch;gap:6px;';
@@ -1419,6 +1457,14 @@ function renderApp() {
                     ${hasPhoto(item.storePath) ? `<button type="button" onclick="openAppImage('${item.storePath}','🏪 Store Front')" style="background-color: #37474f; font-size: 0.75rem; padding: 6px; flex: 1;">🏪 Tingnan ang Store Front</button>` : ''}
                 </div>` : '';
 
+        const agentSummaryHtml = isAgentStore ? `
+                <div style="margin-top:8px;padding:8px;background:#fff8e1;border:1px solid #f9a825;border-radius:8px;font-size:.78rem;line-height:1.5;">
+                    <strong style="color:#8a5a00;">🤝 SALES AGENT PARTNER</strong><br>
+                    👤 Alyas: <strong>${item.alias || item.storeName}</strong> | Tunay na pangalan (pribado, para sa Admin lang): <strong>${item.ownerName || '-'}</strong><br>
+                    💵 Gross na benta (Naibenta × Supplier Price): <strong>₱${storeGrossSales.toLocaleString()}</strong><br>
+                    ✨ Auto-kita ng Agent (₱${AGENT_BONUS_PER_PC} × ${storeTotalSold} pcs): <strong style="color:#2e7d32;">−₱${storeAgentCredit.toLocaleString()}</strong><br>
+                    🧾 Net na ibabayad ng Agent: <strong style="color:#1b5e20;">₱${storeTotalStoreSales.toLocaleString()}</strong>
+                </div>` : '';
         const div = document.createElement('div');
         div.className = storeCardClass;
         div.innerHTML = `
@@ -1427,7 +1473,7 @@ function renderApp() {
                     <span style="font-size: 1rem;">🏢</span>
                     ${statusDot}
                     <strong style="font-size: 0.95rem;">${item.storeName}</strong>
-                    ${item.applicantType === 'Sales Partner Agent' ? '<span class="badge" style="background:#f9a825;color:#3b2a00;">🤝 Sales Partner Agent</span>' : ''}
+                    ${item.applicantType === 'Sales Partner Agent' ? '<span class="badge" style="background:#f9a825;color:#3b2a00;">🤝 Sales Agent Partner</span>' : ''}
                     ${hasClientMessage ? '<span class="badge badge-msg">💬 May Mensahe</span>' : ''}
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
@@ -1447,6 +1493,7 @@ function renderApp() {
                     👀 Status: ${isOnline ? '<span style="color: #2e7d32; font-weight: bold;">Online</span>' : '<span style="color: #d32f2f; font-weight: bold;">Offline</span>'} | Huling bista: <strong>${clientLastSeenText}</strong>
                 </div>
                 ${approvedRestocksHtml}
+                ${agentSummaryHtml}
                 <div style="margin-top: 10px;">${storeItemsHtml}</div>
                 <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
                     <button type="button" onclick="editStoreName(${index})" style="background-color: #6d4c41; font-size: 0.75rem; padding: 6px; flex: 1;">Pangalan</button>
@@ -1478,15 +1525,26 @@ function renderApp() {
                 </div>
             </div>
         `;
-        if (isStoppedStatus) { inactiveStoreCount++; div.style.opacity = '0.92'; storesListInactive.appendChild(div); }
-        else { activeStoreCount++; storesList.appendChild(div); }
+        if (isStoppedStatus) {
+            div.style.opacity = '0.92';
+            if (isAgentStore) { inactiveAgentCount++; storesListAgentsInactive.appendChild(div); }
+            else { inactiveStoreCount++; storesListInactive.appendChild(div); }
+        } else if (isAgentStore) {
+            activeAgentCount++; div.style.borderLeft = '4px solid #f9a825'; storesListAgents.appendChild(div);
+        } else { activeStoreCount++; storesList.appendChild(div); }
     });
 
     const activeCntEl = document.getElementById('activeStoresCount');
     const inactiveCntEl = document.getElementById('inactiveStoresCount');
     if (activeCntEl) activeCntEl.textContent = `(${activeStoreCount})`;
     if (inactiveCntEl) inactiveCntEl.textContent = `(${inactiveStoreCount})`;
-    if (activeStoreCount === 0) storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong tindahan.</p>';
+    const activeAgCntEl = document.getElementById('activeAgentsCount');
+    const inactiveAgCntEl = document.getElementById('inactiveAgentsCount');
+    if (activeAgCntEl) activeAgCntEl.textContent = `(${activeAgentCount})`;
+    if (inactiveAgCntEl) inactiveAgCntEl.textContent = `(${inactiveAgentCount})`;
+    if (activeAgentCount === 0) storesListAgents.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong Sales Agent Partner.</p>';
+    if (inactiveAgentCount === 0) storesListAgentsInactive.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na Sales Agent Partner.</p>';
+    if (activeStoreCount === 0) storesList.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong Store Partner.</p>';
     if (inactiveStoreCount === 0) storesListInactive.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na tindahan.</p>';
 
     const dashTotalStores = document.getElementById('dashTotalStores');
@@ -1601,7 +1659,7 @@ window.approveInquiryWithPassword = async function(inqIdx) {
     if (initialStockStr === null) return;
     const initialStock = parseInt(initialStockStr) || 0;
 
-    const priceStr = await prompt(`[Prompt] Presyo bawat piraso (₱):`, String(STANDARD_PRICES[inq.styleType || 'Ordinary'] || 150));
+    const priceStr = await prompt(`[Prompt] Presyo bawat piraso (₱):`, String(stdPriceFor(inq.styleType || 'Ordinary', inq)));
     if (priceStr === null) return;
     const price = parseFloat(priceStr) || 150;
 
@@ -1679,6 +1737,8 @@ window.approveInquiryWithPassword = async function(inqIdx) {
             idPath: inq.idPath || '',
             storePath: inq.storePath || '',
             applicantType: inq.applicantType || 'Store Partner',
+            alias: inq.alias || '',
+            agentBonusPerPc: isAgentRec(inq) ? AGENT_BONUS_PER_PC : 0,
             styleType: style,
             initialQty: initialStock,
             currentStock: initialStock,
@@ -1770,7 +1830,7 @@ window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApprov
         // BERIPIKASYON NG PRESYO bago i-approve
         const priceSub = (item.storeItems || []).find(s => s.styleType === style);
         const curPrice = priceSub ? priceSub.price : ((item.storeItems && item.storeItems[0]) ? item.storeItems[0].price : 150);
-        const pStr = await prompt(`Beripikahin ang presyo bawat piraso (₱)\n\n🏪 ${item.storeName}\n📦 ${qty} pcs ${style}\nKasalukuyang presyo: ₱${curPrice}\nStandard na Presyo ng Supplier: ₱${STANDARD_PRICES[style] || '-'}\n\nIlagay ang napag-usapang presyo:`, String(curPrice));
+        const pStr = await prompt(`Beripikahin ang presyo bawat piraso (₱)\n\n🏪 ${item.storeName}\n📦 ${qty} pcs ${style}\nKasalukuyang presyo: ₱${curPrice}\nStandard na Presyo ng Supplier${isAgentRec(item) ? ' (Sales Agent: +₱' + AGENT_PRICE_ADD + ')' : ''}: ₱${stdPriceFor(style, item)}\n\nIlagay ang napag-usapang presyo:`, String(curPrice));
         if (pStr === null) return;
         const agreedPrice = parseFloat(pStr);
         if (isNaN(agreedPrice) || agreedPrice <= 0) {
