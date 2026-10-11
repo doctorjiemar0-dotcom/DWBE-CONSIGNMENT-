@@ -1558,6 +1558,8 @@ window.promptStopAgreement = async function() {
 
   store.agreementAccepted = false;
   store.consignmentStatus = "Stopped";
+  store.stopRequestedAt = now();
+  store.stopAcknowledged = false;
 
   addTx(store, 'Kasunduan', 'Itinigil/Ikinansela ang Consignment Agreement.');
 
@@ -1728,7 +1730,6 @@ function initPortalView() {
     $('loginScreen').style.display = on ? 'none' : 'flex';
     $('portalContent').style.display = on ? 'block' : 'none';
     $('langCard').style.display = on ? 'none' : '';
-    const al = $('adminLink'); if (al) al.style.display = on ? 'none' : 'inline';
     if (!on) $('forcePwOverlay').style.display = 'none';
   };
 
