@@ -123,6 +123,7 @@ button:hover { background-color: #1b5e20; }
             <button type="button" class="tab-btn" onclick="switchTab('inquiriesTab', this)">📥 Inquiries<span class="tab-badge" id="inquiryTabBadge">0</span></button>
             <button type="button" class="tab-btn" onclick="switchTab('storesTab', this)">🏢 Tindahan</button>
             <button type="button" class="tab-btn" onclick="switchTab('inventoryTab', this)">📋 Inventory</button>
+            <button type="button" class="tab-btn" onclick="switchTab('buyersTab', this)">🛒 Direct Buyers<span class="tab-badge" id="buyerTabBadge">0</span></button>
         </div>
 
         <div class="action-bar-top">
@@ -245,6 +246,39 @@ button:hover { background-color: #1b5e20; }
         </div>
 
         <!-- TAB 4: INVENTORY -->
+        <!-- TAB: DIRECT BUYERS -->
+        <div id="buyersTab" class="tab-content">
+            <div class="card">
+                <h2>💰 Presyo at Promo para sa Direct Buyers</h2>
+                <div style="display:flex;gap:8px;">
+                    <div style="flex:1;"><label>Ordinary (₱/pc):</label><input type="number" id="buyerPriceOrdinary" min="0" step="1" inputmode="numeric"></div>
+                    <div style="flex:1;"><label>Premium (₱/pc):</label><input type="number" id="buyerPricePremium" min="0" step="1" inputmode="numeric"></div>
+                    <div style="flex:1;"><label>Min. order (pcs):</label><input type="number" id="buyerMinOrder" min="1" step="1" inputmode="numeric"></div>
+                </div>
+                <button type="button" onclick="saveBuyerSettings()" style="margin-top:8px;">💾 I-save ang Presyo</button>
+                <hr style="margin:12px 0;border:0;border-top:1px solid #e0e6e1;">
+                <label>Bagong Promo (pamagat):</label><input type="text" id="buyerPromoTitle" placeholder="Hal. Buy 10 Get 1 Free">
+                <label style="margin-top:6px;">Detalye:</label><textarea id="buyerPromoText" rows="2" placeholder="Hal. Para sa lahat ng order na 10 pcs pataas."></textarea>
+                <label style="margin-top:6px;">Hanggang (petsa, opsyonal):</label><input type="date" id="buyerPromoUntil">
+                <button type="button" onclick="addBuyerPromo()" style="margin-top:8px;background-color:#6a1b9a;">➕ Idagdag ang Promo</button>
+                <div id="buyerPromoList" style="margin-top:10px;"></div>
+            </div>
+
+            <div class="card">
+                <h2>🏪 Directory ng Distributors (para sa Direct Buyers)</h2>
+                <p style="font-size:.78rem;color:#555;margin:0 0 8px;">Lalabas lang ang may ✔ <b>consent</b> at hindi naka-STOP. Store Partner: <b>apelyido lang</b> ang ipapakita (hal. <i>●●●● ●●●● Cruz</i>). Sales Agent: <b>Alyas</b> lang. Walang address, numero, o email na ipapakita.</p>
+                <div id="buyerDirectoryList"></div>
+                <button type="button" onclick="publishBuyerDirectory()" style="margin-top:10px;background-color:#00796b;">📣 I-publish sa Direct Buyers</button>
+                <div id="buyerPublishInfo" style="font-size:.75rem;color:#555;margin-top:6px;"></div>
+            </div>
+
+            <div class="card">
+                <h2>📦 Mga Order ng Direct Buyers <span id="buyerOrdersCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
+                <button type="button" onclick="loadBuyerOrders()" style="width:auto;padding:6px 12px;font-size:.8rem;margin-bottom:8px;">🔄 I-refresh</button>
+                <div id="buyerOrdersList"><p style="font-size:.85rem;color:#666;">Walang order pa.</p></div>
+            </div>
+        </div>
+
         <div id="inventoryTab" class="tab-content">
             <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5;">
                 <h2>CONSIGNMENT INVENTORY AND MONITORING</h2>
@@ -382,7 +416,7 @@ function togglePasswordVisibilityField(inputId, btnEl) {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -608,6 +642,7 @@ window.switchTab = function(tabId, btnElement) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if (btnElement) btnElement.classList.add('active');
+    if (tabId === 'buyersTab') { renderBuyerTab(); loadBuyerOrders(); }
 };
 
 async function handleAdminLogin(email, password) {
@@ -658,6 +693,129 @@ onAuthStateChanged(auth, (user) => {
         if (logoutBtn) logoutBtn.style.display = 'none';
     }
 });
+
+// ================= DIRECT BUYERS =================
+const BUYER_DIR_DOC = TEST_MODE ? 'directory_test' : 'directory';
+const BUYER_ORDERS_COL = TEST_MODE ? 'buyer_orders_test' : 'buyer_orders';
+const escH = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Apelyido lang ang ilalantad (kasama ang "Dela", "De la", "San", atbp.)
+function surnameOf(full) {
+    const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '';
+    const particles = ['dela', 'de', 'del', 'delos', 'la', 'las', 'los', 'san', 'santa', 'van', 'von', 'mac', 'mc'];
+    let i = parts.length - 1, sn = parts[i];
+    while (i > 0 && particles.includes(parts[i - 1].toLowerCase())) { i--; sn = parts[i] + ' ' + sn; }
+    return sn.replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase()).replace(/(\S)(\S*)/g, (m, a, b) => a + b.toLowerCase());
+}
+function directoryLabel(rec) {
+    if (isAgentRec(rec)) return rec.alias || rec.storeName || 'Sales Agent';
+    const sn = surnameOf(rec.ownerName || rec.storeName);
+    return sn ? '●●●● ●●●● ' + sn : '●●●● ●●●●';
+}
+function buyerSettings() {
+    if (!appData.buyerSettings) appData.buyerSettings = { prices: { Ordinary: 0, Premium: 0 }, minOrder: 5, promos: [] };
+    const b = appData.buyerSettings;
+    if (!b.prices) b.prices = { Ordinary: 0, Premium: 0 };
+    if (!Array.isArray(b.promos)) b.promos = [];
+    if (!b.minOrder) b.minOrder = 5;
+    return b;
+}
+function renderBuyerTab() {
+    if (!document.getElementById('buyersTab')) return;
+    const b = buyerSettings();
+    const setV = (id, v) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = v; };
+    setV('buyerPriceOrdinary', b.prices.Ordinary || ''); setV('buyerPricePremium', b.prices.Premium || ''); setV('buyerMinOrder', b.minOrder || 5);
+    const pl = document.getElementById('buyerPromoList');
+    if (pl) pl.innerHTML = b.promos.length ? b.promos.map((p, i) => `<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:8px;margin-bottom:6px;font-size:.82rem;"><b>🎁 ${escH(p.title)}</b>${p.until ? ` <small>(hanggang ${escH(p.until)})</small>` : ''}<br>${escH(p.text || '')}<br><button type="button" onclick="removeBuyerPromo(${i})" style="width:auto;padding:4px 10px;font-size:.72rem;background:#c62828;margin-top:4px;">🗑️ Alisin</button></div>`).join('') : '<p style="font-size:.8rem;color:#666;">Wala pang promo.</p>';
+    const list = document.getElementById('buyerDirectoryList');
+    if (list) {
+        const rows = (appData.consignments || []).map((r, idx) => ({ r, idx })).sort((a, b2) => (isAgentRec(a.r) - isAgentRec(b2.r)) || String(a.r.storeName).localeCompare(String(b2.r.storeName)));
+        list.innerHTML = rows.length ? rows.map(({ r, idx }) => {
+            const stopped = r.consignmentStatus === 'Stopped';
+            return `<div style="border:1px solid ${isAgentRec(r) ? '#f9a825' : '#c5e1a5'};border-radius:8px;padding:8px;margin-bottom:6px;background:${stopped ? '#f5f5f5' : '#fff'};opacity:${stopped ? .6 : 1};">
+                <div style="font-size:.85rem;"><b>${escH(directoryLabel(r))}</b> <span class="badge" style="background:${isAgentRec(r) ? '#f9a825;color:#3b2a00' : '#2e7d32'};">${isAgentRec(r) ? 'Sales Agent' : 'Store Partner'}</span>${stopped ? ' <small>(naka-STOP)</small>' : ''}</div>
+                <div style="font-size:.7rem;color:#777;">Internal: ${escH(r.storeName)}${isAgentRec(r) ? '' : ' / ' + escH(r.ownerName || '')}</div>
+                <label style="display:flex;align-items:center;gap:6px;margin:6px 0 4px;font-weight:600;"><input type="checkbox" style="width:auto;margin:0;" ${r.showInDirectory ? 'checked' : ''} ${stopped ? 'disabled' : ''} onchange="setDirectoryFlag(${idx}, this.checked)"> ✔ Pumayag (consent) na ipakita sa Direct Buyers</label>
+                <input type="text" placeholder="Lugar (bayan/lungsod lang, hal. Sorsogon City)" value="${escH(r.directoryArea || '')}" onchange="setDirectoryArea(${idx}, this.value)">
+            </div>`;
+        }).join('') : '<p style="font-size:.8rem;color:#666;">Wala pang distributor.</p>';
+    }
+}
+window.setDirectoryFlag = async function(idx, on) { const r = appData.consignments[idx]; if (!r) return; r.showInDirectory = !!on; await saveToCloud(); renderBuyerTab(); };
+window.setDirectoryArea = async function(idx, v) { const r = appData.consignments[idx]; if (!r) return; r.directoryArea = String(v || '').trim(); await saveToCloud(); renderBuyerTab(); };
+window.saveBuyerSettings = async function() {
+    const b = buyerSettings();
+    b.prices.Ordinary = Math.max(0, parseFloat(document.getElementById('buyerPriceOrdinary').value) || 0);
+    b.prices.Premium = Math.max(0, parseFloat(document.getElementById('buyerPricePremium').value) || 0);
+    b.minOrder = Math.max(1, parseInt(document.getElementById('buyerMinOrder').value) || 1);
+    await saveToCloud(); renderBuyerTab();
+    alert('✅ Na-save ang presyo. Pindutin ang "I-publish sa Direct Buyers" para makita ito ng mga buyer.');
+};
+window.addBuyerPromo = async function() {
+    const t = document.getElementById('buyerPromoTitle').value.trim();
+    if (!t) { alert('Maglagay ng pamagat ng promo.'); return; }
+    buyerSettings().promos.push({ title: t, text: document.getElementById('buyerPromoText').value.trim(), until: document.getElementById('buyerPromoUntil').value || '' });
+    ['buyerPromoTitle', 'buyerPromoText', 'buyerPromoUntil'].forEach(id => { document.getElementById(id).value = ''; });
+    await saveToCloud(); renderBuyerTab();
+};
+window.removeBuyerPromo = async function(i) {
+    if (!(await confirm('Alisin ang promo na ito?'))) return;
+    buyerSettings().promos.splice(i, 1); await saveToCloud(); renderBuyerTab();
+};
+window.publishBuyerDirectory = async function() {
+    const b = buyerSettings();
+    const distributors = (appData.consignments || [])
+        .filter(r => r.showInDirectory && r.consignmentStatus !== 'Stopped')
+        .map(r => ({ label: directoryLabel(r), type: isAgentRec(r) ? 'Sales Agent Partner' : 'Store Partner', area: r.directoryArea || '' }));
+    const payload = { updatedAt: new Date().toISOString(), distributors, prices: { Ordinary: b.prices.Ordinary || 0, Premium: b.prices.Premium || 0 }, minOrder: b.minOrder || 1, promos: b.promos.map(p => ({ title: p.title, text: p.text || '', until: p.until || '' })) };
+    try {
+        await setDoc(doc(db, 'buyer_public', BUYER_DIR_DOC), payload);
+        document.getElementById('buyerPublishInfo').textContent = `✅ Na-publish: ${distributors.length} distributor, ${payload.promos.length} promo • ${new Date().toLocaleString()}`;
+        alert('✅ Na-publish na sa Direct Buyers.');
+    } catch (err) {
+        console.error(err);
+        alert('⚠️ Hindi na-publish: ' + (err.code || err.message) + '\nTiyaking naka-set ang Firestore rules para sa "buyer_public".');
+    }
+};
+const BUYER_STATUS = { Pending: ['🕒 Naghihintay', '#f57c00'], Approved: ['✅ Aprubado', '#2e7d32'], Delivering: ['🚚 Ihinahatid', '#0277bd'], Completed: ['🏁 Tapos na', '#455a64'], Rejected: ['❌ Tinanggihan', '#c62828'] };
+async function loadBuyerOrders(silent) {
+    const list = document.getElementById('buyerOrdersList');
+    try {
+        if (silent === true) {
+            const qs = await getDocs(query(collection(db, BUYER_ORDERS_COL), where('status', '==', 'Pending')));
+            const bd = document.getElementById('buyerTabBadge'); if (bd) { bd.textContent = qs.size; bd.style.display = qs.size ? 'inline-block' : 'none'; }
+            return;
+        }
+        const snap = await getDocs(collection(db, BUYER_ORDERS_COL));
+        const orders = []; snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
+        orders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const pend = orders.filter(o => o.status === 'Pending').length;
+        const bd = document.getElementById('buyerTabBadge'); if (bd) { bd.textContent = pend; bd.style.display = pend ? 'inline-block' : 'none'; }
+        const cnt = document.getElementById('buyerOrdersCount'); if (cnt) cnt.textContent = `(${orders.length})`;
+        if (!list) return;
+        list.innerHTML = orders.length ? orders.map(o => {
+            const st = BUYER_STATUS[o.status] || [o.status, '#777'];
+            const btns = o.status === 'Pending' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Approved')">✅ Aprubahan</button> <button type="button" class="btn-decline" onclick="setBuyerOrderStatus('${o.id}','Rejected')">❌ Tanggihan</button>`
+                : o.status === 'Approved' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Delivering')">🚚 Ihatid na</button>`
+                : o.status === 'Delivering' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Completed')">🏁 Tapos na</button>` : '';
+            return `<div class="store-card" style="border-left-color:${st[1]};">
+                <div style="font-size:.85rem;"><b>${escH(o.name)}</b> <span class="badge" style="background:${st[1]};">${st[0]}</span></div>
+                <div style="font-size:.78rem;line-height:1.5;">📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>💵 <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
+                <div class="btn-group">${btns}</div></div>`;
+        }).join('') : '<p style="font-size:.85rem;color:#666;">Walang order pa.</p>';
+    } catch (err) {
+        console.error(err);
+        if (silent !== true && list) list.innerHTML = '<p style="font-size:.85rem;color:#c62828;">⚠️ Hindi makuha ang mga order: ' + escH(err.code || err.message) + '. Tiyaking naka-set ang Firestore rules para sa buyer orders.</p>';
+    }
+}
+window.loadBuyerOrders = loadBuyerOrders;
+window.setBuyerOrderStatus = async function(id, status) {
+    try { await updateDoc(doc(db, BUYER_ORDERS_COL, id), { status, updatedAt: Date.now() }); loadBuyerOrders(); }
+    catch (err) { alert('⚠️ Hindi ma-update: ' + (err.code || err.message)); }
+};
+setTimeout(() => loadBuyerOrders(true), 4000);
+setInterval(() => { if (auth.currentUser) loadBuyerOrders(true); }, 120000);
 
 function handleAdminLogout() { signOut(auth); }
 window.handleAdminLogout = handleAdminLogout;
@@ -1347,7 +1505,7 @@ function renderApp() {
                 saleRow.style.background = '#e8f5e9';
                 saleRow.style.borderColor = '#a5d6a7';
                 saleRow.innerHTML = `
-                    <span>${isAgentStore ? '🤝' : '🏢'} <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${isAgentStore ? ` <small style="color:#8a5a00;">(Auto-kita ng Agent: ₱${sale.qty * AGENT_BONUS_PER_PC})</small>` : ''}${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}</span>
+                    <span>${isAgentStore ? '🤝' : '🏢'} <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${isAgentStore ? ` <small style="color:#8a5a00;">(Auto-kita ng Agent: ₱${sale.qty * AGENT_BONUS_PER_PC})</small>` : ''}${sale.qrOff > 0 ? `<br><small style="color:#7b1fa2;font-weight:bold;">🎟️ Buyer QR ${sale.qrCode || ''}: −₱${sale.qrOff}/pc (₱${Math.round(sale.qrOff * sale.qty * 100) / 100} kabuuang diskwento)</small>` : ''}${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}</span>
                     <div>
                         <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>
                         <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Tanggihan</button>
