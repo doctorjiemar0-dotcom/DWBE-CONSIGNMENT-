@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Doctor's Whisk Broom - Buyer</title>
+<style>
+  :root{--g:#185c38;--g2:#2e7d32;--amber:#f2b632;--ink:#12331f;--bg:#f4f7f5}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:env(safe-area-inset-bottom,0)}
+  header{background:var(--g);color:#fff;padding:calc(14px + env(safe-area-inset-top,0)) 16px 14px;font-weight:800;font-size:1.05rem}
+  main{max-width:480px;margin:0 auto;padding:16px}
+  .card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:14px}
+  .dist{font-size:.8rem;color:#587;letter-spacing:1px;font-weight:700}
+  .distname{font-size:1.4rem;font-weight:800;letter-spacing:2px;margin-top:2px}
+  .promo{background:var(--amber);color:#3b2a00;border-radius:12px;padding:12px;text-align:center;font-weight:800;font-size:1.15rem;margin:12px 0}
+  h3{margin:14px 0 8px;font-size:.95rem;color:var(--g)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{flex:1;min-width:120px;padding:12px;border-radius:12px;border:2px solid #cfd8dc;background:#fff;font-weight:800;font-size:1rem;color:#455a64;cursor:pointer}
+  .chip.on{border-color:var(--g2);background:#e8f5e9;color:var(--g)}
+  .chip small{display:block;font-weight:600;font-size:.72rem;color:#789}
+  .qty{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0}
+  .qty button{width:48px;height:48px;border-radius:50%;border:0;background:var(--g);color:#fff;font-size:1.6rem;font-weight:800;cursor:pointer}
+  .qty span{font-size:2rem;font-weight:800;min-width:48px;text-align:center}
+  .go{width:100%;padding:16px;border:0;border-radius:14px;background:var(--g2);color:#fff;font-size:1.1rem;font-weight:800;cursor:pointer;margin-top:12px}
+  .go:disabled{opacity:.5}
+  .note{font-size:.78rem;color:#567;margin-top:10px;line-height:1.45;text-align:center}
+  .big{font-size:3.2rem;text-align:center}
+  .msg{text-align:center;font-size:1.05rem;font-weight:700;line-height:1.4}
+  .code{font-size:2.4rem;font-weight:800;letter-spacing:6px;text-align:center;color:var(--g);background:#e8f5e9;border-radius:14px;padding:12px;margin:12px 0}
+  .spin{width:44px;height:44px;border:5px solid #cfe8d6;border-top-color:var(--g2);border-radius:50%;animation:sp .8s linear infinite;margin:10px auto}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .err{color:#b71c1c}
+</style>
+</head>
+<body>
+<header>🧹 Doctor's Whisk Broom · Buyer</header>
+<main id="app"><div class="card"><div class="spin"></div><div class="msg">Binubuksan ang QR...</div></div></main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
+  authDomain: "dwbe-consignment.firebaseapp.com",
+  projectId: "dwbe-consignment",
+  storageBucket: "dwbe-consignment.firebasestorage.app",
+  messagingSenderId: "205759197252",
+  appId: "1:205759197252:web:b04400821f81791d10cc11"
+}, "buyer");
+const db = getFirestore(app);
+
+const qp = new URLSearchParams(location.search);
+const TOKEN = (qp.get('q') || '').trim();
+const COLL = qp.get('test') === '1' ? 'buyer_qr_test' : 'buyer_qr';
+const root = document.getElementById('app');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const view = html => { root.innerHTML = html; };
+const info = (icon, text, cls) => view(`<div class="card"><div class="big">${icon}</div><div class="msg ${cls || ''}">${text}</div></div>`);
+
+let qr = null, style = null, qty = 1;
+
+function renderForm() {
+  const styles = qr.styles || [];
+  const cur = styles.find(s => s.styleType === style);
+  const max = Math.max(1, Math.min(qr.maxQty || 10, cur ? cur.stock : 10));
+  if (qty > max) qty = max;
+  view(`
+    <div class="card">
+      <div class="dist">DISTRIBUTOR</div>
+      <div class="distname">${esc(qr.maskedName)}</div>
+      <div class="promo">🎟️ ₱${esc(qr.discountPerPc)} OFF bawat walis tambo</div>
+      <h3>Piliin ang binili mo</h3>
+      <div class="chips">${styles.map(s => `<button type="button" class="chip ${s.styleType === style ? 'on' : ''}" data-style="${esc(s.styleType)}">${esc(s.styleType)}<small>${esc(s.stock)} pcs ang available</small></button>`).join('')}</div>
+      <h3>Ilang piraso?</h3>
+      <div class="qty"><button type="button" id="minus">−</button><span id="q">${qty}</span><button type="button" id="plus">+</button></div>
+      <div style="text-align:center;font-weight:800;color:#8a5a00;">Diskwento mo: ₱${qty * qr.discountPerPc}</div>
+      <button type="button" class="go" id="go" ${style ? '' : 'disabled'}>✅ Kumpirmahin ang Pagbili</button>
+      <div class="note">Agad itong ipapaalam sa distributor. Ang ₱${esc(qr.discountPerPc)} diskwento bawat piraso ay ibabawas sa babayaran mo.</div>
+    </div>`);
+  root.querySelectorAll('.chip').forEach(b => b.onclick = () => { style = b.dataset.style; renderForm(); });
+  document.getElementById('minus').onclick = () => { if (qty > 1) { qty--; renderForm(); } };
+  document.getElementById('plus').onclick = () => { if (qty < max) { qty++; renderForm(); } };
+  document.getElementById('go').onclick = submit;
+}
+
+async function submit() {
+  const btn = document.getElementById('go');
+  if (btn) { btn.disabled = true; btn.textContent = 'Ipinapadala...'; }
+  try {
+    await updateDoc(doc(db, COLL, TOKEN), { status: 'scanned', style, qty, scannedAt: Date.now() });
+  } catch (e) {
+    console.error(e);
+    info('⚠️', 'Hindi naipadala. Baka nagamit na o expired na ang QR, o mahina ang internet. Humingi ng bagong QR sa distributor.', 'err');
+    return;
+  }
+  waitResult();
+}
+
+function waitResult() {
+  const code = TOKEN.slice(-4).toUpperCase();
+  view(`<div class="card"><div class="spin"></div><div class="msg">⏳ Hinihintay ang kumpirmasyon ng distributor...</div><div class="note">Huwag isara ang page na ito. Code: <b>${esc(code)}</b></div></div>`);
+  onSnapshot(doc(db, COLL, TOKEN), (snap) => {
+    const d = snap.data() || {};
+    if (d.status === 'recorded') {
+      view(`<div class="card"><div class="big">✅</div><div class="msg">Naitala na ng distributor!</div>
+        <div class="code">${esc(code)}</div>
+        <div class="msg">${esc(d.style)} × ${esc(d.qty)} pcs<br><span style="color:#8a5a00;">Diskwento mo: ₱${esc(d.discount)}</span></div>
+        <div class="note">Ipakita ang code na ito sa distributor. Salamat sa pagbili!</div></div>`);
+    } else if (d.status === 'rejected') {
+      info('⚠️', 'Hindi naitala: ' + esc(d.reason || 'May problema.') + '<br>Makipag-usap sa distributor.', 'err');
+    }
+  }, () => {});
+}
+
+async function init() {
+  if (!TOKEN) { info('❓', 'Walang QR code. I-scan ang QR mula sa distributor.', 'err'); return; }
+  try {
+    const snap = await getDoc(doc(db, COLL, TOKEN));
+    if (!snap.exists()) { info('❌', 'Hindi nahanap ang QR na ito. Humingi ng bagong QR sa distributor.', 'err'); return; }
+    qr = snap.data();
+    if (qr.status !== 'open') { info('ℹ️', 'Nagamit na ang QR na ito. Humingi ng bagong QR sa distributor para sa susunod na bili.'); return; }
+    if (Date.now() > qr.expiresAt) { info('⌛', 'Expired na ang QR na ito. Humingi ng bagong QR sa distributor.', 'err'); return; }
+    style = (qr.styles && qr.styles[0]) ? qr.styles[0].styleType : null;
+    renderForm();
+  } catch (e) {
+    console.error(e);
+    info('⚠️', 'Hindi ma-load ang QR. Suriin ang internet mo at subukan ulit.', 'err');
+  }
+}
+init();
+</script>
+</body>
+</html>
