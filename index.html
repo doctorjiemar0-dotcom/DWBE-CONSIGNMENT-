@@ -45,9 +45,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .application-drawer-toggle:active{transform:scale(.99)}
 .application-drawer-toggle .drawer-arrow{font-size:1.05rem;transition:transform .2s ease}
 .application-drawer-toggle.open .drawer-arrow{transform:rotate(180deg)}
-.application-drawer{display:none;overflow:hidden;width:100%}
-.application-drawer.open{display:block;animation:applicationDrawerIn .2s ease}
-@keyframes applicationDrawerIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+/* Mini drawer: bagong screen na lumalabas mula sa ibaba; ang napiling uri lang ang nasa Current Screen */
+.application-drawer{display:none;width:100%}
+.application-drawer.open{display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;left:0;z-index:9500;background:#f4f7f5;animation:drawerSheetIn .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes drawerSheetIn{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.drawer-head{flex:none;background:#fff;padding:6px 12px 0;box-shadow:0 2px 8px rgba(0,0,0,.08);border-radius:0 0 14px 14px}
+.drawer-handle{width:42px;height:4px;border-radius:2px;background:#cfd8dc;margin:2px auto 8px}
+.drawer-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.drawer-title{font-weight:800;font-size:.95rem;color:#1b5e20}
+button.drawer-close{width:auto;margin:0;padding:6px 14px;min-height:34px;font-size:.82rem;background:#eceff1;color:#37474f;border:1px solid #cfd8dc}
+.drawer-tabs{display:flex;gap:6px;margin-top:8px}
+button.drawer-tab{flex:1;width:auto;margin:0;padding:10px 6px;min-height:42px;font-size:.85rem;font-weight:800;background:#eceff1;color:#455a64;border:0;border-radius:10px 10px 0 0}
+button.drawer-tab.active{background:#2e7d32;color:#fff}
+button.drawer-tab.active.agent{background:#f9a825;color:#3b2a00}
+.drawer-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 48px;box-sizing:border-box}
+body.drawer-open{overflow:hidden}
 .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .style-option-card{border:2px solid #ddd;border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;min-height:170px;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .style-option-card:active{transform:scale(.99)}
@@ -254,14 +266,26 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
       <button type="button" id="applicationDrawerToggle" class="application-drawer-toggle" aria-expanded="false" aria-controls="applicationDrawer" onclick="openApplication('Store Partner')">
         <span>🏪 Mag-apply bilang Consignment Store Partner</span>
-        <span class="drawer-arrow">▼</span>
+        <span class="drawer-arrow" style="font-size:1.4rem;line-height:1;">›</span>
       </button>
 
       <button type="button" id="agentApplyBtn" class="agent-apply-btn" onclick="openApplication('Sales Partner Agent')">
         <span>🤝</span><span><span id="agentApplyLabel">Mag-apply bilang SALES AGENT PARTNER</span></span>
       </button>
 
-      <div id="applicationDrawer" class="application-drawer" aria-hidden="true">
+      <div id="applicationDrawer" class="application-drawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Bagong Aplikasyon">
+        <div class="drawer-head">
+          <div class="drawer-handle"></div>
+          <div class="drawer-head-row">
+            <span class="drawer-title">📋 Bagong Aplikasyon</span>
+            <button type="button" class="drawer-close" onclick="closeApplicationDrawer()">✕ Isara</button>
+          </div>
+          <div class="drawer-tabs" role="tablist">
+            <button type="button" id="tabStore" class="drawer-tab active" role="tab" aria-selected="true" onclick="selectApplicantType('Store Partner')">🏪 Store Partner</button>
+            <button type="button" id="tabAgent" class="drawer-tab agent" role="tab" aria-selected="false" onclick="selectApplicantType('Sales Partner Agent')">🤝 Sales Agent</button>
+          </div>
+        </div>
+        <div class="drawer-body" id="applicationDrawerBody">
         <div class="elig-card no-print" id="eligibilityCard">
           <div id="eligStore">
             <h3>✅ Eligibility: Consignment Store Partner</h3>
@@ -357,6 +381,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
         <button type="submit" id="inqSubmitBtn" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
+        </div>
       </div>
     </div>
   </div>
@@ -423,6 +448,17 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
     <!-- ======== 2. STOCK AT BENTA ======== -->
     <div class="sec-title">Stock at Benta</div>
     <!-- Active Stock -->
+    <div class="card" id="buyerQrCard" style="border-left:4px solid #7b1fa2;">
+      <h2 style="color:#7b1fa2;">📲 Buyer QR · ₱5 Diskwento</h2>
+      <p style="font-size:.82rem;color:#555;margin:0 0 8px;">Ipa-scan ito sa buyer mo. Awtomatikong maitatala ang <strong>"May Bumili"</strong> at may <strong>₱5 bawas bawat piraso</strong> sa presyo.</p>
+      <div id="buyerQrBox" style="display:none;text-align:center;margin-bottom:8px;">
+        <div id="buyerQrCanvas" style="display:inline-block;background:#fff;padding:10px;border-radius:12px;border:2px solid #7b1fa2;"></div>
+        <div id="buyerQrCode" style="font-weight:800;letter-spacing:3px;color:#7b1fa2;margin-top:6px;"></div>
+        <div id="buyerQrStatus" style="font-size:.85rem;font-weight:bold;margin-top:4px;color:#444;"></div>
+      </div>
+      <button type="button" id="buyerQrBtn" onclick="createBuyerQr()" style="background-color:#7b1fa2;">📲 Gumawa ng QR para sa Buyer</button>
+    </div>
+
     <div class="card">
       <h2>📦 Aktibong Stock at mga Paninda</h2>
       <div id="agentEarningsBox" style="display:none;margin-bottom:8px;padding:10px;border-radius:10px;background:#fff8e1;border:1px solid #f9a825;font-size:.84rem;line-height:1.55;color:#4a3500;"></div>
@@ -1389,19 +1425,37 @@ window.selectApplicantType = function(type) {
 };
 
 function updateApplyButtons() {
-  const drawer = $('applicationDrawer');
-  const open = !!drawer && drawer.classList.contains('open');
   const agent = formIsAgent();
-  const sb = $('applicationDrawerToggle');
-  if (sb) {
-    const lbl = sb.querySelector('span:first-child');
-    if (lbl) lbl.textContent = (open && !agent) ? '🏪 Isara ang Application (Store Partner)' : '🏪 Mag-apply bilang Consignment Store Partner';
-    sb.classList.toggle('open', open && !agent);
-    sb.setAttribute('aria-expanded', (open && !agent) ? 'true' : 'false');
-  }
-  const al = $('agentApplyLabel');
-  if (al) al.textContent = (open && agent) ? 'Isara ang Application (Sales Agent Partner)' : 'Mag-apply bilang SALES AGENT PARTNER';
+  const tS = $('tabStore'), tA = $('tabAgent');
+  if (tS) { tS.classList.toggle('active', !agent); tS.setAttribute('aria-selected', agent ? 'false' : 'true'); }
+  if (tA) { tA.classList.toggle('active', agent); tA.setAttribute('aria-selected', agent ? 'true' : 'false'); }
 }
+
+// ===== MINI DRAWER: bagong screen; ang napiling uri lang ang makikita =====
+let _drawerHistory = false;
+window.openApplicationDrawer = function(type) {
+  const drawer = $('applicationDrawer');
+  if (!drawer) return;
+  drawer.classList.add('open');
+  drawer.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('drawer-open');
+  window.selectApplicantType(type);
+  const body = $('applicationDrawerBody'); if (body) body.scrollTop = 0;
+  // Para ang Back button ng phone ay magsara lang ng drawer
+  if (!_drawerHistory) { try { history.pushState({ appDrawer: 1 }, ''); _drawerHistory = true; } catch (e) {} }
+};
+function _hideDrawer() {
+  const drawer = $('applicationDrawer');
+  if (!drawer) return;
+  drawer.classList.remove('open');
+  drawer.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('drawer-open');
+}
+window.closeApplicationDrawer = function() {
+  if (_drawerHistory) { _drawerHistory = false; _hideDrawer(); try { history.back(); } catch (e) {} }
+  else _hideDrawer();
+};
+window.addEventListener('popstate', () => { if (_drawerHistory) { _drawerHistory = false; } _hideDrawer(); });
 
 // Hiwalay na pasukan: Store Partner o Sales Agent Partner
 window.openApplication = function(type) {
@@ -1411,32 +1465,16 @@ window.openApplication = function(type) {
   if (btn && btn.classList.contains('apply-btn-loading')) return;   // iwas doble-click
   if (btn) btn.classList.add('apply-btn-loading');                  // umikot na bilog agad
   const stop = () => { if (btn) btn.classList.remove('apply-btn-loading'); };
-  // Dalawang frame muna para makita agad ang spinner bago ang mabigat na pagbukas
+  // Dalawang frame muna para makita agad ang spinner bago ang pagbukas
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    try {
-      const isOpen = drawer.classList.contains('open');
-      const same = (formIsAgent() ? 'Sales Partner Agent' : 'Store Partner') === type;
-      if (isOpen && same) { window.toggleApplicationDrawer(); }
-      else {
-        if (!isOpen) window.toggleApplicationDrawer();
-        window.selectApplicantType(type);
-        setTimeout(() => { const bn = $('applicantModeBanner'); if (bn && bn.scrollIntoView) bn.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120);
-      }
-    } finally { setTimeout(stop, 450); }
+    try { window.openApplicationDrawer(type); }
+    finally { setTimeout(stop, 450); }
   }));
 };
 window.openAgentApplication = function() { window.openApplication('Sales Partner Agent'); };
-
 window.toggleApplicationDrawer = function() {
-  const drawer = $('applicationDrawer');
-  const btn = $('applicationDrawerToggle');
-  if (!drawer || !btn) return;
-  const willOpen = !drawer.classList.contains('open');
-  drawer.classList.toggle('open', willOpen);
-  btn.classList.toggle('open', willOpen);
-  btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-  drawer.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
-  updateApplyButtons();
+  const d = $('applicationDrawer');
+  if (d && d.classList.contains('open')) window.closeApplicationDrawer(); else window.openApplicationDrawer(formIsAgent() ? 'Sales Partner Agent' : 'Store Partner');
 };
 
 window.toggleQrVisibility = function() {
@@ -2103,6 +2141,7 @@ if (inquiryForm) {
       $('inqIdPrev').style.display = 'none';
       $('inqStorePrev').style.display = 'none';
       window.selectApplicantType('Store Partner');
+      window.closeApplicationDrawer();
     } finally {
       applying = false;
       initPortalView();
@@ -2205,6 +2244,7 @@ const isPersonalMsg = m => m && (m.kind === 'chat' || (!m.kind && !SYSTEM_MSG_RE
 // Render Dashboard
 function renderClientDashboard(store) {
   try { _renderClientDashboardInner(store); } finally { applyStoreLock(store); }
+  if (!_qrResumed) { _qrResumed = true; resumeBuyerQr(); }
 }
 
 // ===== LOCK: kapag Deactivated/Stopped ang tindahan, walang button na gagana maliban sa Logout (at pagbukas/pagtago ng mga seksyon) =====
@@ -2267,6 +2307,7 @@ function subSalesValueC(sub, sold) {
 function applyAgentPortalView(store) {
   const agent = isAgentStore(store);
   const show = (id, on) => { const el = $(id); if (el) el.style.display = on ? '' : 'none'; };
+  show('buyerQrCard', !agent);   // Buyer QR: para sa Consignment Store Partner lang
   show('agreementIntroP', !agent);
   show('agreementOl', !agent);
   show('agentAgreementBox', agent);
@@ -2296,6 +2337,151 @@ function applyAgentPortalView(store) {
       📅 Cut-off: <strong>araw-araw</strong> • Tira ngayon: ${st0.remaining} pcs<br>
       <small>Ikaw ang bahala sa retail price / patong (mark-up) mo. Sa iyo ang patong na iyon, bukod sa ₱${AGENT_BONUS_PER_PC} bawat benta.</small>`;
   }
+}
+
+// ===================== BUYER QR (₱5 diskwento) =====================
+// Gagawa ang distributor ng isang-beses-gamiting QR. Pag-scan ng buyer, awtomatikong magtatala ng "May Bumili" na may ₱5 bawas bawat piraso.
+const BUYER_QR_DISCOUNT = 5;                 // ₱ bawas bawat piraso
+const BUYER_QR_TTL_MS = 15 * 60 * 1000;      // 15 minuto ang bisa ng QR
+const BUYER_PAGE = 'buyer.html';             // nasa parehong folder/site ng portal na ito
+const QR_COLL = TEST_MODE ? 'buyer_qr_test' : 'buyer_qr';
+let _qrUnsub = null, _qrToken = null, _qrBusy = false, _qrResumed = false, _qrTick = null;
+const _round2 = n => Math.round(n * 100) / 100;
+
+// Apelyido lang ang nakikita ng buyer (ang unang pangalan ay naka-mask). Para lang sa Consignment Store Partner.
+function maskedBuyerName(store) {
+  const words = String(store.ownerName || store.storeName || '').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return 'Distributor';
+  if (words.length === 1) return words[0].toUpperCase();
+  const surname = words[words.length - 1].toUpperCase();
+  return words.slice(0, -1).map(w => '●'.repeat(Math.min(Math.max(w.length, 3), 6))).join(' ') + ' ' + surname;
+}
+function newQrToken() {
+  const a = new Uint8Array(16); crypto.getRandomValues(a);
+  return Array.from(a, b => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('');
+}
+function setQrStatus(msg, color) { const el = $('buyerQrStatus'); if (el) { el.textContent = msg; el.style.color = color || '#444'; } }
+function stopBuyerQrListen(clear) {
+  if (_qrUnsub) { _qrUnsub(); _qrUnsub = null; }
+  if (_qrTick) { clearInterval(_qrTick); _qrTick = null; }
+  if (clear) { _qrToken = null; try { localStorage.removeItem('dwbe_buyer_qr'); } catch (e) {} }
+}
+function showBuyerQr(token, expiresAt) {
+  const url = new URL(BUYER_PAGE, location.href);
+  url.search = ''; url.hash = '';
+  url.searchParams.set('q', token);
+  if (TEST_MODE) url.searchParams.set('test', '1');
+  const box = $('buyerQrBox'), cv = $('buyerQrCanvas');
+  if (!box || !cv) return;
+  cv.innerHTML = '';
+  try { new QRCode(cv, { text: url.toString(), width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { console.error(e); }
+  $('buyerQrCode').textContent = 'CODE: ' + token.slice(-4).toUpperCase();
+  box.style.display = 'block';
+  const btn = $('buyerQrBtn'); if (btn) btn.textContent = '📲 Gumawa ng Bagong QR';
+  if (_qrTick) clearInterval(_qrTick);
+  _qrTick = setInterval(() => {
+    if (!_qrToken) return;
+    const left = expiresAt - Date.now();
+    if (left <= 0 && $('buyerQrStatus') && /Naghihintay/.test($('buyerQrStatus').textContent)) setQrStatus('⌛ Expired na ang QR. Gumawa ng bago.', '#c62828');
+  }, 5000);
+}
+window.createBuyerQr = async function() {
+  const store = getStore(), user = authData.currentUser;
+  if (!store || !user) return;
+  if (isAgentStore(store)) { alert('Ang Buyer QR ay para lang sa Consignment Store Partner.'); return; }
+  if (isStoreLocked(store)) { alert('Naka-lock ang iyong account.'); return; }
+  const styles = (store.storeItems || []).filter(s => (s.currentStock || 0) > 0).map(s => ({ styleType: s.styleType, stock: s.currentStock }));
+  if (!styles.length) { alert('Wala kang natitirang stock na maibebenta.'); return; }
+  stopBuyerQrListen(true);
+  const token = newQrToken(), nowMs = Date.now();
+  const data = {
+    ownerUid: user.uid, storeKey: String(store.email || '').toLowerCase(),
+    maskedName: maskedBuyerName(store), styles,
+    discountPerPc: BUYER_QR_DISCOUNT, maxQty: Math.min(10, Math.max.apply(null, styles.map(s => s.stock))),
+    status: 'open', createdAt: nowMs, expiresAt: nowMs + BUYER_QR_TTL_MS
+  };
+  try { await setDoc(doc(db, QR_COLL, token), data); }
+  catch (e) { console.error(e); alert('Hindi nagawa ang QR: ' + (e.code || e.message) + '. Pakisuri ang Firestore Rules ng "' + QR_COLL + '".'); return; }
+  _qrToken = token;
+  try { localStorage.setItem('dwbe_buyer_qr', JSON.stringify({ token, expiresAt: data.expiresAt, email: data.storeKey })); } catch (e) {}
+  showBuyerQr(token, data.expiresAt);
+  setQrStatus('⏳ Naghihintay ng scan ng buyer...', '#7b1fa2');
+  listenBuyerQr(token);
+};
+function listenBuyerQr(token) {
+  if (_qrUnsub) { _qrUnsub(); _qrUnsub = null; }
+  _qrUnsub = onSnapshot(doc(db, QR_COLL, token), (snap) => {
+    if (!snap.exists() || token !== _qrToken) return;
+    const d = snap.data() || {};
+    if (d.status === 'open') setQrStatus(Date.now() > d.expiresAt ? '⌛ Expired na ang QR. Gumawa ng bago.' : '⏳ Naghihintay ng scan ng buyer...', '#7b1fa2');
+    else if (d.status === 'scanned') { setQrStatus('📲 Na-scan! Itinatala ang benta...', '#e65100'); recordQrSale(token, d); }
+    else if (d.status === 'recorded') { setQrStatus(`✅ Naitala na: ${d.style} × ${d.qty} pcs (−₱${d.discount || 0} diskwento)`, '#2e7d32'); stopBuyerQrListen(true); }
+    else if (d.status === 'rejected') { setQrStatus('⚠️ Hindi naitala: ' + (d.reason || ''), '#c62828'); stopBuyerQrListen(true); }
+  }, (err) => { console.error(err); setQrStatus('⚠️ Hindi mabasa ang QR sa Cloud (' + (err.code || '') + ').', '#c62828'); });
+}
+// Ito ang awtomatikong "MAY BUMILI" na may ₱5 bawas bawat piraso
+async function recordQrSale(token, d) {
+  if (_qrBusy) return;
+  _qrBusy = true;
+  const ref = doc(db, QR_COLL, token);
+  try {
+    const store = getStore();
+    const sub = store && (store.storeItems || []).find(i => i.styleType === d.style);
+    const qty = parseInt(d.qty);
+    let reason = '';
+    if (!store || isStoreLocked(store)) reason = 'Naka-lock ang account ng distributor.';
+    else if (isAgentStore(store)) reason = 'Hindi available ang Buyer QR sa account na ito.';
+    else if (!sub) reason = 'Walang ganitong uri ng walis.';
+    else if (!(qty > 0) || qty > (sub.currentStock || 0)) reason = `Kulang ang stock (${sub ? sub.currentStock : 0} pcs na lang).`;
+    if (reason) { await setDoc(ref, { status: 'rejected', reason, processedAt: Date.now() }, { merge: true }); return; }
+
+    const eff = priceWithDiscount(store, sub);
+    const qrOff = Math.min(BUYER_QR_DISCOUNT, eff.price);
+    const unit = _round2(eff.price - qrOff);
+    const total = _round2(qty * unit);
+    const code = token.slice(-4).toUpperCase();
+    const prevSold = Number(sub.soldValue) || 0, prevQty = Number(sub.soldValueQty) || 0;
+
+    sub.currentStock -= qty;
+    sub.soldValue = _round2(prevSold + qty * unit);
+    sub.soldValueQty = prevQty + qty;
+    if (!store.pendingSales) store.pendingSales = [];
+    const sale = Object.assign({
+      styleType: d.style, qty, price: unit, listPrice: eff.base, discountOff: _round2(eff.off + qrOff),
+      qrOff, qrCode: code, source: 'Buyer QR', totalAmount: total, status: 'Pending'
+    }, stamp());
+    store.pendingSales.unshift(sale);
+    addTx(store, 'Benta', `Buyer QR ${code}: ${qty} pcs (${d.style}) = ₱${total} (−₱${_round2(qrOff * qty)} diskwento)`);
+    const txRef = store.transactionHistory[0];
+
+    const ok = await saveData();
+    if (!ok) {   // ibalik kung hindi na-save
+      sub.currentStock += qty; sub.soldValue = prevSold; sub.soldValueQty = prevQty;
+      store.pendingSales = store.pendingSales.filter(x => x !== sale);
+      store.transactionHistory = store.transactionHistory.filter(x => x !== txRef);
+      setQrStatus('⚠️ Hindi na-save ang benta. Subukan ulit.', '#c62828');
+      return;
+    }
+    await setDoc(ref, { status: 'recorded', recordedAt: Date.now(), discount: _round2(qrOff * qty), total }, { merge: true });
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+    renderClientDashboard(store);
+  } catch (e) {
+    console.error(e);
+    setQrStatus('⚠️ May error sa pagtatala: ' + (e.code || e.message), '#c62828');
+  } finally { _qrBusy = false; }
+}
+// Ituloy ang pakikinig kung may nakabinbing QR (hal. na-refresh ang page)
+async function resumeBuyerQr() {
+  try {
+    const raw = localStorage.getItem('dwbe_buyer_qr'); if (!raw) return;
+    const o = JSON.parse(raw), store = getStore();
+    if (!store || isAgentStore(store) || String(store.email || '').toLowerCase() !== o.email || Date.now() > o.expiresAt + 3600000) { localStorage.removeItem('dwbe_buyer_qr'); return; }
+    const snap = await getDoc(doc(db, QR_COLL, o.token));
+    if (!snap.exists()) { localStorage.removeItem('dwbe_buyer_qr'); return; }
+    const st = (snap.data() || {}).status;
+    if (st === 'recorded' || st === 'rejected') { localStorage.removeItem('dwbe_buyer_qr'); return; }
+    _qrToken = o.token; showBuyerQr(o.token, o.expiresAt); listenBuyerQr(o.token);
+  } catch (e) { console.error(e); }
 }
 
 function _renderClientDashboardInner(store) {
@@ -2385,7 +2571,8 @@ function _renderClientDashboardInner(store) {
         tag: 'Benta',
         body: `Uri: <strong>${esc(sale.styleType)}</strong> | Dami: <strong>${esc(sale.qty)} pcs</strong>` +
               (sale.price ? `<br>Presyo: ${sale.discountOff > 0 ? `<s style="color:#999">₱${esc(sale.listPrice)}</s> ` : ''}<strong>₱${esc(sale.price)}</strong> × ${esc(sale.qty)} = <strong>₱${esc(sale.totalAmount)}</strong>` : '') +
-              (sale.discountOff > 0 ? `<br><span style="font-size:0.75rem;color:#2e7d32;">🏷️ May discount (−₱${esc(sale.discountOff)}/pc) — naka-lock ang presyo kahit matapos ang discount</span>` : ''),
+              (sale.discountOff > 0 ? `<br><span style="font-size:0.75rem;color:#2e7d32;">🏷️ May discount (−₱${esc(sale.discountOff)}/pc) — naka-lock ang presyo kahit matapos ang discount</span>` : '') +
+              (sale.qrOff > 0 ? `<br><span style="font-size:0.75rem;color:#7b1fa2;font-weight:bold;">🎟️ Buyer QR ${esc(sale.qrCode || '')} · −₱${esc(sale.qrOff)}/pc</span>` : ''),
         status: 'Nakabinbin sa Admin',
         date: sale.date
       }));
