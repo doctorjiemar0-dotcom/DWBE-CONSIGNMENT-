@@ -140,6 +140,26 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 .rec-x{background:none!important;border:none;color:#d32f2f;font-weight:bold;cursor:pointer;width:auto;min-height:0;padding:0 4px;margin:0;font-size:1rem;line-height:1}
 .rec .rec-btn{background-color:#2e7d32;padding:6px;font-size:.8rem;margin-top:6px}
 
+/* ===== Spinner sa application button habang nagbubukas ===== */
+.apply-btn-loading{pointer-events:none;opacity:.9}
+.apply-btn-loading::after{content:'';flex:none;width:18px;height:18px;margin-left:10px;border:3px solid currentColor;border-top-color:transparent;border-radius:50%;animation:applySpin .7s linear infinite}
+.apply-btn-loading .drawer-arrow{display:none}
+@keyframes applySpin{to{transform:rotate(360deg)}}
+
+/* ===== Eligibility / Sales Partner Agent ===== */
+.elig-card{background:#f1f8e9;border:1px solid #c5e1a5;border-radius:12px;padding:12px 14px;margin:0 0 12px;font-size:.84rem;line-height:1.5;color:#1b3a26}
+.elig-card h3{margin:0 0 6px;font-size:.95rem;color:#2e7d32}
+.elig-card ul{margin:4px 0 8px;padding-left:18px}
+.elig-card li{margin:2px 0}
+.elig-types{display:flex;gap:8px;margin:8px 0}
+.elig-type{flex:1;background:#fff;border:1px solid #c5e1a5;border-radius:10px;padding:8px 10px}
+.elig-type b{display:block;color:#2e7d32;margin-bottom:2px}
+.agent-apply-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;background:#fff8e1;border:2px solid #f9a825;color:#8a5a00;border-radius:10px;padding:11px 13px;margin:0 0 10px;cursor:pointer;font-weight:800;font-size:.92rem;touch-action:manipulation}
+.agent-apply-btn small{display:block;font-weight:600;font-size:.74rem;opacity:.9}
+.agent-apply-btn:active{transform:scale(.99)}
+#applicantTypeToggle .broom-toggle-btn.active{background:#f9a825!important;color:#3b2a00!important;border-color:#c17900!important}
+#applicantTypeToggle .broom-toggle-btn.active[data-type="Store Partner"]{background:#2e7d32!important;color:#fff!important;border-color:#1b5e20!important}
+
 /* ===== LOCKED: naka-deactivate (Stopped) na tindahan ===== */
 #portalContent.store-locked button:not([data-keep]){display:none!important}
 #portalContent.store-locked input,#portalContent.store-locked select,#portalContent.store-locked textarea{pointer-events:none;opacity:.55}
@@ -228,17 +248,51 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
     <hr style="width:100%;border:0;border-top:1px solid #eee;margin:10px 0;">
 
-    <!-- Digital Consignment / New Application -->
+    <!-- Bagong Aplikasyon: Store Partner o Sales Agent -->
     <div id="printableInquirySection" style="width:100%;">
-      <h2 style="margin-top:10px;color:#0288d1;font-size:1rem;">Digital Consignment / Bagong Aplikasyon</h2>
+      <h2 style="margin-top:10px;color:#0288d1;font-size:1rem;">Bagong Aplikasyon: Store Partner o Sales Agent</h2>
 
-      <button type="button" id="applicationDrawerToggle" class="application-drawer-toggle" aria-expanded="false" aria-controls="applicationDrawer" onclick="toggleApplicationDrawer()">
-        <span>📋 Buksan ang Bagong Application</span>
+      <button type="button" id="applicationDrawerToggle" class="application-drawer-toggle" aria-expanded="false" aria-controls="applicationDrawer" onclick="openApplication('Store Partner')">
+        <span>🏪 Mag-apply bilang Consignment Store Partner</span>
         <span class="drawer-arrow">▼</span>
       </button>
 
+      <button type="button" id="agentApplyBtn" class="agent-apply-btn" onclick="openApplication('Sales Partner Agent')">
+        <span>🤝</span><span><span id="agentApplyLabel">Mag-apply bilang SALES AGENT PARTNER</span></span>
+      </button>
+
       <div id="applicationDrawer" class="application-drawer" aria-hidden="true">
-        <div class="no-print" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
+        <div class="elig-card no-print" id="eligibilityCard">
+          <div id="eligStore">
+            <h3>✅ Eligibility: Consignment Store Partner</h3>
+            <div class="elig-type"><b>🏪 Para kanino?</b>May-ari o taga-pamahala ng tindahan (sari-sari, grocery, hardware, stall sa palengke, atbp.) na may sariling puwesto.</div>
+            <strong>Requirements sa online registration:</strong>
+            <ul><li>1 Valid ID ng may-ari.</li><li>Litrato ng Store Front (tindahan).</li><li>Tunay na pangalan ng may-ari at ng tindahan.</li></ul>
+            <strong>Presyo:</strong> Supplier Price ang bayad sa Owner (Ordinary at Premium); ang Store Partner ang magtatakda ng sariling patong/mark-up.
+            <ul style="margin-top:6px"><li>Sumasang-ayon sa lahat ng nakasaad sa Consignment Agreement (supplier price, cut-off, bayad sa naibenta, at pagtigil ng kasunduan).</li></ul>
+          </div>
+          <div id="eligAgent" style="display:none">
+            <h3>✅ Eligibility: Sales Agent Partner</h3>
+            <div class="elig-type"><b>🤝 Para kanino?</b>Indibidwal na magbebenta o mag-aalok ng walis, kahit walang sariling tindahan.</div>
+            <strong>Requirements sa online registration:</strong>
+            <ul><li><b>1 Valid ID lang</b> (walang Store Front).</li><li><b>Alyas</b> ang gagamitin sa app at makikita ng iba. Ang tunay na pangalan ay para sa beripikasyon ng Admin lang.</li></ul>
+            <strong>Espesyal na terms ng Sales Agent Partner:</strong>
+            <ul>
+              <li><b>Bawat walis na maibenta, automatic na may ₱10 kang kita</b> (ibinabawas sa babayaran mo sa Owner).</li>
+              <li>Ikaw ang bahala sa sarili mong <b>retail price / patong (mark-up)</b>; sa iyo ang patong na iyon.</li>
+              <li><b>Daily ang cut-off.</b> Kapag ayaw mo nang magtinda, awtomatiko mong ibabalik ang natitirang stock at babayaran ang mga naibenta.</li>
+              <li>Sumasang-ayon sa simpleng <b>Sales Agent Agreement</b>.</li>
+            </ul>
+          </div>
+          <strong>Pangkalahatang kwalipikasyon:</strong>
+          <ul>
+            <li>Hindi bababa sa 18 taong gulang.</li>
+            <li>May aktibong email at numero ng telepono / GCash.</li>
+            <li>May kumpletong address at nasa lugar na naseserbisyuhan ng DWBE.</li>
+          </ul>
+        </div>
+
+        <div class="no-print" id="applyInfoBox" style="background:#e3f2fd;border-left:4px solid #0288d1;padding:10px;margin-bottom:12px;font-size:.82rem;color:#0d47a1;border-radius:4px;line-height:1.4;">
           <strong>💡 Impormasyon:</strong>
           Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.
           <strong>Tandaan o i-memorize ang password na iyong ilalagay</strong>
@@ -246,8 +300,13 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         </div>
 
       <form id="inquiryForm" style="width:100%;margin-top:8px;">
-        <div class="form-group"><label>Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
-        <div class="form-group"><label>Pangalan ng May-ari:</label><input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required></div>
+        <div class="form-group">
+          <input type="hidden" id="inqApplicantType" value="Store Partner">
+          <div id="applicantModeBanner" style="padding:8px 10px;border-radius:8px;font-weight:800;font-size:.9rem;background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;">🏪 Aplikasyon: Consignment Store Partner</div>
+        </div>
+        <div class="form-group"><label id="inqStoreNameLabel">Pangalan ng Tindahan:</label><input type="text" id="inqStoreName" placeholder="Hal. Aling Nena Store" required></div>
+        <div class="form-group"><label id="inqOwnerNameLabel">Pangalan ng May-ari:</label><input type="text" id="inqOwnerName" placeholder="Hal. Juan & Maria Dela Cruz-Santos" required></div>
+        <p class="hint" id="agentNameHint" style="display:none;margin-top:-4px;">🎭 Ang <b>Alyas</b> ang makikita sa app. Ang <b>Real Name</b> ay para lang sa Admin (tugma sa Valid ID) at hindi makikita ng iba.</p>
         <div class="form-group"><label>Sariling Password (Para sa Portal Login):</label><div class="pw-wrapper"><input type="password" id="inqPassword" placeholder="Gumawa ng iyong sariling password (hindi bababa sa 6 na karakter)" minlength="6" required><button type="button" class="pw-toggle-btn" aria-label="Ipakita o itago ang password" onclick="togglePasswordVisibilityField('inqPassword', this)">👁️</button></div></div>
         <div class="form-group"><label>Numero ng Telepono / GCash:</label><input type="text" id="inqContact" placeholder="Hal. 09123456789" required></div>
         <div class="form-group"><label>Personal Active Email Address (sarili mong aktibong email):</label><input type="email" id="inqEmail" placeholder="Ilagay ang sarili mong aktibong Gmail/email" autocomplete="email" required></div>
@@ -255,16 +314,16 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
         <!-- Mga larawang kailangan (1 Valid ID at Store Front) -->
         <div class="form-group">
-          <label for="inqIdFile">📇 1 Valid ID ng May-ari (litrato ng harap):</label>
+          <label for="inqIdFile" id="inqIdLabel">📇 1 Valid ID ng May-ari (litrato ng harap):</label>
           <input type="file" id="inqIdFile" accept="image/*" required>
           <img id="inqIdPrev" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;">
         </div>
-        <div class="form-group">
+        <div class="form-group" id="storeFrontGroup">
           <label for="inqStoreFile">🏪 Upload your Store Front (litrato ng tindahan):</label>
           <input type="file" id="inqStoreFile" accept="image/*" required>
           <img id="inqStorePrev" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;">
         </div>
-        <p class="hint" style="margin-top:-2px;">🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.</p>
+        <p class="hint" id="inqPhotoHint" style="margin-top:-2px;">🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.</p>
 
         <!-- Walis Style Selection -->
         <div class="form-group">
@@ -296,7 +355,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         <div class="form-group"><label>Dami ng Nais i-Order (Fixed: 5 pcs):</label><input type="number" id="inqInitialQty" value="5" min="5" max="5" readonly required style="background:#eee;"></div>
         <div class="form-group"><label>Mensahe / Katanungan (Optional):</label><textarea id="inqMessage" rows="2" placeholder="I-type ang mensahe..."></textarea></div>
 
-        <button type="submit" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
+        <button type="submit" id="inqSubmitBtn" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
       </div>
     </div>
@@ -366,6 +425,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
     <!-- Active Stock -->
     <div class="card">
       <h2>📦 Aktibong Stock at mga Paninda</h2>
+      <div id="agentEarningsBox" style="display:none;margin-bottom:8px;padding:10px;border-radius:10px;background:#fff8e1;border:1px solid #f9a825;font-size:.84rem;line-height:1.55;color:#4a3500;"></div>
       <div id="clientItemsContainer"><p style="font-size:.85rem;color:#666;">Kinukuha ang data...</p></div>
     </div>
 
@@ -479,7 +539,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
     <!-- Official Consignment Agreement -->
     <div class="card dash-wide" style="background:#e8f5e9;border-left:4px solid #2e7d32;">
       <div class="row">
-        <h2 style="color:#2e7d32;font-size:.95rem;margin-bottom:0;">📜 Opisyal na Kasunduan sa Consignment</h2>
+        <h2 id="agreementCardTitle" style="color:#2e7d32;font-size:.95rem;margin-bottom:0;">📜 Opisyal na Kasunduan sa Consignment</h2>
         <button type="button" id="toggleAgreementBtn" onclick="toggleAgreementVisibility()" class="tgl" style="background-color:#2e7d32;">Buksan</button>
       </div>
 
@@ -489,10 +549,10 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
           DOCTOR'S WHISK BROOM ETC.<br>
           <span style="font-size:.75rem;font-weight:normal;color:#555;">Osiao, Sorsogon City • FB: Jiemar Garais Doc Tor • 09104057065</span>
           <br>
-          <strong>CONSIGNMENT AGREEMENT (STORE PARTNER)</strong>
+          <strong id="agreementTitleType">CONSIGNMENT AGREEMENT (STORE PARTNER)</strong>
         </div>
 
-        <p style="margin-bottom:8px;background-color:#e8f5e9;padding:8px;border-left:4px solid #2e7d32;border-radius:4px;">
+        <p id="agreementIntroP" style="margin-bottom:8px;background-color:#e8f5e9;padding:8px;border-left:4px solid #2e7d32;border-radius:4px;">
           <strong>SA MGA KINAUUKULAN:</strong>
           Ang kasunduang ito ay pinagbisa sa pagitan ng Owner
           (<strong style="color:#c62828;">JIEMAR GARAIS DOCTOR</strong>)
@@ -501,7 +561,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
           upang pormal na itakda ang mga sumusunod na detalyadong alituntunin:
         </p>
 
-        <ol style="padding-left:18px;margin-bottom:10px;">
+        <ol id="agreementOl" style="padding-left:18px;margin-bottom:10px;">
           <li style="margin-bottom:6px;">
             <strong>SISTEMA NG SUPPLY:</strong>
             Mag-iiwan ang Owner ng mga produktong Walis Tambo sa tindahan ng Store Partner nang
@@ -510,7 +570,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
             <span class="y">pagbaba ng bagong supply ay nakadepende sa takbo ng benta at space ng tindahan</span>.
           </li>
 
-          <li style="margin-bottom:6px;">
+          <li style="margin-bottom:6px;" id="clauseSupplierStore">
             <strong>SUPPLIER PRICE AT MARK-UP:</strong>
             Ang pinal na presyo ng bawat isang (1) piraso ng bawat uri ng Walis Tambo
             (<span class="y">Ordinary at Premium</span>)
@@ -530,7 +590,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
             Tuwing may
             <span class="y">pending sales</span>
             na naka-record sa portal, ang Owner ay magbibisita upang kolektahin ang remittance at isagawa ang physical inventory count.
-            <em>(Formula: <span class="r">Bilang ng Naibenta × Supplier Price</span>)</em>.
+            <em>(Formula: <span class="r" id="remitFormulaSpan">Bilang ng Naibenta × Supplier Price</span>)</em>.
             Kung walang pending sales sa loob ng mahabang panahon, ang Owner ay magbibisita pa rin sa loob ng
             <span class="y">30 days</span>
             para sa monitoring at pag-ensure ng store condition.
@@ -566,10 +626,26 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
           </li>
         </ol>
 
+        <div id="agentAgreementBox" style="display:none;">
+          <p style="margin-bottom:8px;background-color:#fff8e1;padding:8px;border-left:4px solid #f9a825;border-radius:4px;">
+            <strong>SA MGA KINAUUKULAN:</strong>
+            Ang simpleng kasunduang ito ay sa pagitan ng Owner (<strong style="color:#c62828;">JIEMAR GARAIS DOCTOR</strong>) at ng Sales Agent Partner (<span id="agentAgreementParty" style="font-weight:bold;color:#8a5a00;">Alyas</span>).
+          </p>
+          <ol style="padding-left:18px;margin-bottom:10px;">
+            <li style="margin-bottom:6px;"><strong>ALYAS:</strong> <span class="y">Alyas</span> ng Agent ang gagamitin sa app. Ang Real Name at Valid ID ay para lang sa beripikasyon ng Owner at hindi ipapakita sa iba.</li>
+            <li style="margin-bottom:6px;"><strong>PAGBEBENTA:</strong> Ibebenta ng Agent ang mga Walis Tambo (Ordinary at Premium) na ibinigay ng Owner nang <span class="r">walang advance na bayad</span>. I-record ang bawat benta gamit ang <span class="y">"May Bumili"</span> button.</li>
+            <li style="margin-bottom:6px;"><strong>PRESYO AT MARK-UP:</strong> Supplier Price bawat piraso: <strong id="agentSupplierPriceText">___</strong>. Ang Agent ang bahala sa sarili niyang <span class="y">retail price / patong (mark-up)</span> at sa kanya ang patong na iyon.</li>
+            <li style="margin-bottom:6px;"><strong>AUTOMATIC NA KITA:</strong> Sa <span class="y">bawat (1) walis na maibenta</span>, may <span class="r">automatic na ₱10 na kita ang Agent</span>, na ibinabawas sa babayaran. <em>Net na ibabayad = (Naibenta × Supplier Price) − (Naibenta × ₱10).</em></li>
+            <li style="margin-bottom:6px;"><strong>CUT-OFF AT BAYAD:</strong> Ang cut-off ay <span class="r">araw-araw (daily)</span>. Babayaran ng Agent sa Owner ang net na halaga ng mga naibenta ayon sa Terms ng Bayad sa ibaba.</li>
+            <li style="margin-bottom:6px;"><strong>HINDI NABENTANG STOCK:</strong> Mananatiling pag-aari ng Owner ang mga hindi nabentang walis.</li>
+            <li><strong>PAGWAWAKAS:</strong> Kapag <span class="y">ayaw nang magtinda</span> ng Agent, pipindutin lang ang <span style="background-color:#ffeb3b;color:#d32f2f;font-weight:bold;padding:2px 6px;border-radius:3px;">"STOP/CANCEL"</span> button. <span class="r">Awtomatiko niyang ibabalik ang natitirang stock at babayaran ang mga naibenta.</span></li>
+          </ol>
+        </div>
+
         <div id="agreementPayTermBox" style="margin-bottom:10px;padding:8px;border-radius:4px;background:#fff8e1;border-left:4px solid #f57f17;">
           💳 <strong>TERMS NG BAYAD:</strong> <strong id="agreementPayTermLabel" style="color:#e65100;">Buwanan (End of Month)</strong><br>
           <span id="agreementPayTermText"></span><br>
-          <em style="font-size:.75rem;color:#555;">Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.</em>
+          <em id="agreementPayTermNote" style="font-size:.75rem;color:#555;">Ang terms na ito ang susundin sa halip na ang cut-off na nakasulat sa Seksyon 3.</em>
         </div>
 
         <div id="agreementStatusDisplay" style="font-weight:bold;color:white;background-color:#2e7d32;margin-top:12px;border-radius:4px;padding:8px;text-align:center;font-size:1.05em;">✅ Status: Aktibo ang Consignment</div>
@@ -607,7 +683,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
   </div>
 
   <div style="text-align:center;margin-top:20px;margin-bottom:10px;">
-    <a href="https://www.facebook.com/DWBE.23" target="_blank" rel="noopener" style="font-size:.9rem;color:#1877f2;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877f2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.03 4.39 11.03 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg><span>Sundan ang aming Facebook Page</span></a><br><br>
+    <a href="https://www.facebook.com/DWBE.23" target="_blank" rel="noopener" style="font-size:.9rem;color:#6a1b9a;background:#f3e5f5;border:2px solid #6a1b9a;border-radius:999px;padding:8px 16px;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877f2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.03 4.39 11.03 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg><span>Sundan ang aming Facebook Page</span></a><br><br>
     <a id="adminLink" href="admin.html" style="font-size:.8rem;color:#666;text-decoration:none;">🔐 Pumunta sa Admin Panel</a>
   </div>
 
@@ -684,7 +760,7 @@ var D={
 'Ilagay ang password ng tindahan':'Enter the store password',
 'Buksan ang Aking Portal':'Open My Portal',
 'Ituloy sa Aking Portal':'Continue to My Portal',
-'Digital Consignment / Bagong Aplikasyon':'Digital Consignment / New Application',
+'Bagong Aplikasyon: Store Partner o Sales Agent':'New Application: Store Partner or Sales Agent',
 '💡 Impormasyon:':'💡 Information:',
 'Para sa mga bagong kliyente, dito isinusumite ang aplikasyon at digital consignment agreement. Maaari mong itakda ang iyong sariling password at dami ng nais i-order.':'For new clients, the application and digital consignment agreement are submitted here. You can set your own password and the quantity you want to order.',
 'Tandaan o i-memorize ang password na iyong ilalagay':'Remember or memorize the password you enter',
@@ -1063,7 +1139,8 @@ const PAY_TERMS = {
   monthly:     { label: 'Buwanan (End of Month)', text: 'Cut-off tuwing katapusan ng buwan. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
   semimonthly: { label: 'Kada 15 Araw',           text: 'Cut-off kada 15 araw. Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
   weekly:      { label: 'Lingguhan',              text: 'Cut-off kada 7 araw (lingguhan). Magbibisita ang Owner para kolektahin ang bayad at magbilang ng stock. (Naibenta × Supplier Price)' },
-  sellout:     { label: 'Pagkaubos ng Stock',     text: 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)' }
+  sellout:     { label: 'Pagkaubos ng Stock',     text: 'Bayad kapag naubos na ang dalang stock, o pagdating ng 30 araw, alinman ang mauna. (Naibenta × Supplier Price)' },
+  daily:       { label: 'Araw-araw (Daily Cut-off)', text: 'Cut-off ay araw-araw. Sa katapusan ng bawat araw, bayaran ang mga naibenta. Kapag ayaw nang magtinda, awtomatikong ibabalik ang natitirang stock at babayaran ang mga naibenta. (Net: Naibenta × Supplier Price − ₱10 auto-kita bawat piraso)' }
 };
 
 // Ang tindahan ay nakikilala sa pamamagitan ng email ng naka-login na Firebase Auth account
@@ -1104,6 +1181,17 @@ async function findImage(base) {
 }
 // Presyo ng Supplier na ipinapakita sa unang larawan (display lang; hindi nito binabago ang presyo ng mga kasalukuyang client)
 const STANDARD_PRICES = { Ordinary: 150, Premium: 160 };
+// ===== SALES AGENT PARTNER =====
+const AGENT_PRICE_ADD = 10;      // dagdag sa Supplier Price ng Agent
+const AGENT_BONUS_PER_PC = 10;   // automatic na kita ng Agent bawat naibentang walis
+const isAgentStore = st => !!st && st.applicantType === 'Sales Partner Agent';
+const formIsAgent = () => { const h = $('inqApplicantType'); return !!h && h.value === 'Sales Partner Agent'; };
+function stdPriceFor(style) {
+  const base = STANDARD_PRICES[style];
+  if (!base) return 0;
+  const agent = window._catalogStore ? isAgentStore(window._catalogStore) : formIsAgent();
+  return base + (agent ? AGENT_PRICE_ADD : 0);
+}
 // ===== DISCOUNT NA MAY PERIOD =====
 // store.discounts = [{ styleType: 'Ordinary'|'Premium'|'All', type: 'amount'|'percent', value, startDate, endDate }]
 function ymd(d) {
@@ -1162,7 +1250,7 @@ function showGallery() {
 window.openGallery = async function(style, idx) {
   galList = await getValidImages(style);
   galIdx = Math.min(idx || 0, galList.length - 1);
-  galTitle = style + ' Style Walis Tambo' + (STANDARD_PRICES[style] ? ' · ₱' + STANDARD_PRICES[style] : '');
+  galTitle = style + ' Style Walis Tambo' + (STANDARD_PRICES[style] ? ' · ₱' + stdPriceFor(style) : '');
   showGallery();
   $('imageModal').style.display = 'flex';
 };
@@ -1205,7 +1293,7 @@ function initGalleries() {
     if (STANDARD_PRICES[style]) {
       const badge = document.createElement('div');
       badge.className = 'gal-price';
-      badge.innerHTML = '<span>Presyo ng Supplier</span><b>₱' + STANDARD_PRICES[style] + '</b> <small>/ piraso</small>';
+      badge.innerHTML = '<span>Presyo ng Supplier</span><b>₱' + stdPriceFor(style) + '</b> <small>/ piraso</small>';
       frame.appendChild(badge);
     }
     el.appendChild(frame);
@@ -1262,6 +1350,83 @@ window.selectInqStyle = function(style, el) {
   });
 };
 
+const IB_STORE_HTML = (document.getElementById('applyInfoBox') || {}).innerHTML || '';
+window.selectApplicantType = function(type) {
+  const isAgent = type === 'Sales Partner Agent';
+  const hidden = $('inqApplicantType'); if (hidden) hidden.value = isAgent ? 'Sales Partner Agent' : 'Store Partner';
+  const sf = $('storeFrontGroup'), sfi = $('inqStoreFile');
+  if (sf) sf.style.display = isAgent ? 'none' : '';
+  if (sfi) { sfi.required = !isAgent; if (isAgent) { sfi.value = ''; const pv = $('inqStorePrev'); if (pv) pv.style.display = 'none'; } }
+  const set = (id, t) => { const el = $(id); if (el) el.textContent = t; };
+  set('inqStoreNameLabel', isAgent ? '🎭 Alyas:' : 'Pangalan ng Tindahan:');
+  set('inqOwnerNameLabel', isAgent ? '👤 Real Name (Tunay na Pangalan):' : 'Pangalan ng May-ari:');
+  const nh = $('agentNameHint'); if (nh) nh.style.display = isAgent ? '' : 'none';
+  const sbtn = $('inqSubmitBtn'); if (sbtn) sbtn.textContent = isAgent ? 'Isumite ang Sales Agent Aplikasyon' : 'Isumite ang Digital Consignment Aplikasyon';
+  const ib = $('applyInfoBox');
+  if (ib) ib.innerHTML = isAgent
+    ? '<strong>💡 Impormasyon:</strong> Para sa mga bagong Sales Agent Partner. Itakda ang iyong sariling password at <strong>tandaan ito</strong>, dahil ito ang gagamitin mo sa pag-login sa portal pagka-apruba.'
+    : IB_STORE_HTML;
+  set('inqIdLabel', isAgent ? '📇 1 Valid ID ng Agent (litrato ng harap):' : '📇 1 Valid ID ng May-ari (litrato ng harap):');
+  set('inqPhotoHint', isAgent ? '🔒 Sales Agent Partner: 1 Valid ID lang ang kailangan. Para lang sa beripikasyon ng Admin ang larawan at hindi makikita ng ibang tao.' : '🔒 Para lang sa beripikasyon ng Admin ang mga larawang ito at hindi makikita ng ibang tao.');
+  const sn = $('inqStoreName'); if (sn) sn.placeholder = isAgent ? 'Hal. Boss Juan' : 'Hal. Aling Nena Store';
+  const on = $('inqOwnerName'); if (on) on.placeholder = isAgent ? 'Hal. Juan Dela Cruz' : 'Hal. Juan & Maria Dela Cruz-Santos';
+  const banner = $('applicantModeBanner');
+  if (banner) {
+    banner.textContent = isAgent ? '🤝 Aplikasyon: Sales Agent Partner' : '🏪 Aplikasyon: Consignment Store Partner';
+    banner.style.background = isAgent ? '#fff8e1' : '#e8f5e9';
+    banner.style.color = isAgent ? '#8a5a00' : '#1b5e20';
+    banner.style.borderColor = isAgent ? '#f9a825' : '#a5d6a7';
+  }
+  const es = $('eligStore'), ea = $('eligAgent');
+  if (es) es.style.display = isAgent ? 'none' : '';
+  if (ea) ea.style.display = isAgent ? '' : 'none';
+  // I-update ang presyong nakikita sa mga larawan (Agent = +₱10)
+  document.querySelectorAll('#applicationDrawer .style-gallery .gal-price b').forEach(b => {
+    const g = b.closest('.style-gallery'); const st = g && g.dataset.style;
+    if (st && STANDARD_PRICES[st]) b.textContent = '₱' + stdPriceFor(st);
+  });
+  updateApplyButtons();
+};
+
+function updateApplyButtons() {
+  const drawer = $('applicationDrawer');
+  const open = !!drawer && drawer.classList.contains('open');
+  const agent = formIsAgent();
+  const sb = $('applicationDrawerToggle');
+  if (sb) {
+    const lbl = sb.querySelector('span:first-child');
+    if (lbl) lbl.textContent = (open && !agent) ? '🏪 Isara ang Application (Store Partner)' : '🏪 Mag-apply bilang Consignment Store Partner';
+    sb.classList.toggle('open', open && !agent);
+    sb.setAttribute('aria-expanded', (open && !agent) ? 'true' : 'false');
+  }
+  const al = $('agentApplyLabel');
+  if (al) al.textContent = (open && agent) ? 'Isara ang Application (Sales Agent Partner)' : 'Mag-apply bilang SALES AGENT PARTNER';
+}
+
+// Hiwalay na pasukan: Store Partner o Sales Agent Partner
+window.openApplication = function(type) {
+  const drawer = $('applicationDrawer');
+  if (!drawer) return;
+  const btn = type === 'Sales Partner Agent' ? $('agentApplyBtn') : $('applicationDrawerToggle');
+  if (btn && btn.classList.contains('apply-btn-loading')) return;   // iwas doble-click
+  if (btn) btn.classList.add('apply-btn-loading');                  // umikot na bilog agad
+  const stop = () => { if (btn) btn.classList.remove('apply-btn-loading'); };
+  // Dalawang frame muna para makita agad ang spinner bago ang mabigat na pagbukas
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try {
+      const isOpen = drawer.classList.contains('open');
+      const same = (formIsAgent() ? 'Sales Partner Agent' : 'Store Partner') === type;
+      if (isOpen && same) { window.toggleApplicationDrawer(); }
+      else {
+        if (!isOpen) window.toggleApplicationDrawer();
+        window.selectApplicantType(type);
+        setTimeout(() => { const bn = $('applicantModeBanner'); if (bn && bn.scrollIntoView) bn.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120);
+      }
+    } finally { setTimeout(stop, 450); }
+  }));
+};
+window.openAgentApplication = function() { window.openApplication('Sales Partner Agent'); };
+
 window.toggleApplicationDrawer = function() {
   const drawer = $('applicationDrawer');
   const btn = $('applicationDrawerToggle');
@@ -1271,8 +1436,7 @@ window.toggleApplicationDrawer = function() {
   btn.classList.toggle('open', willOpen);
   btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
   drawer.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
-  const label = btn.querySelector('span:first-child');
-  if (label) label.textContent = willOpen ? '📋 Isara ang Application' : '📋 Buksan ang Bagong Application';
+  updateApplyButtons();
 };
 
 window.toggleQrVisibility = function() {
@@ -1536,15 +1700,18 @@ $('unifiedPasswordInput').addEventListener('keypress', (e) => { if (e.key === 'E
 
 // Logout
 window.requestLogout = async function() {
-  const storeInput = await prompt("Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
+  const _st = getStore();
+  const _agent = isAgentStore(_st);
+  const storeInput = await prompt(_agent ? "Para sa security, ilagay ang iyong Alyas upang mag-logout:" : "Para sa security, ilagay ang pangalan ng may-ari upang mag-logout:");
   if (storeInput === null) return;
-  const store = getStore();
-  if (store && storeInput.toLowerCase().trim() === store.ownerName.toLowerCase().trim()) {
+  const store = _st;
+  const _expected = store ? String(_agent ? (store.alias || store.storeName || '') : (store.ownerName || '')) : '';
+  if (store && storeInput.toLowerCase().trim() === _expected.toLowerCase().trim()) {
     try { await signOut(authData); } catch(e) {}
     currentStoreName = '';
     window.location.href = window.location.pathname.split('?')[0];
   } else {
-    alert("Mali ang pangalan ng may-ari.");
+    alert(_agent ? "Mali ang Alyas." : "Mali ang pangalan ng may-ari.");
   }
 };
 
@@ -1558,19 +1725,28 @@ window.clearAllNotifications = async function() {
 
 // Stop Agreement (Kasaysayan ng Transaksyon lang ang tinatala; hindi na ito napupunta sa Support chat)
 window.promptStopAgreement = async function() {
-  if (!(await confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?"))) return;
   const store = getStore();
   if (!store) return;
+  const agent = isAgentStore(store);
+  let settle = null;
+  if (agent) {
+    settle = agentSettlement(store);
+    const msg = `⚠️ Ayaw mo na bang magtinda?\n\nAwtomatikong mangyayari:\n• Ibabalik mo ang natitirang stock: ${settle.remaining} pcs\n• Babayaran mo ang mga naibenta: ${settle.sold} pcs = ₱${settle.net.toLocaleString()} (net, matapos ang ₱${settle.bonus} auto-kita mo)\n\nItuloy?`;
+    if (!(await confirm(msg))) return;
+  } else if (!(await confirm("⚠️ Sigurado ka bang gusto mong ITIGIL o IKANSELA ang iyong Consignment Agreement?"))) return;
 
   store.agreementAccepted = false;
   store.consignmentStatus = "Stopped";
   store.stopRequestedAt = now();
   store.stopAcknowledged = false;
 
-  addTx(store, 'Kasunduan', 'Itinigil/Ikinansela ang Consignment Agreement.');
+  if (agent && settle) {
+    store.stopSettlement = Object.assign({ at: now() }, settle);
+    addTx(store, 'Kasunduan', `Sales Agent: ayaw nang magtinda. Awtomatikong ibabalik ang ${settle.remaining} pcs na tira at babayaran ang ${settle.sold} pcs na naibenta (net ₱${settle.net}).`);
+  } else addTx(store, 'Kasunduan', 'Itinigil/Ikinansela ang Consignment Agreement.');
 
   await saveData();
-  alert("Matagumpay na naitala ang iyong pagpapahinto sa kasunduan.");
+  alert(agent ? "Naitala na. Ibalik ang natitirang stock at bayaran ang mga naibenta ayon sa settlement." : "Matagumpay na naitala ang iyong pagpapahinto sa kasunduan.");
   renderClientDashboard(store);
 };
 
@@ -1832,13 +2008,16 @@ if (inquiryForm) {
     const styleType = $('inqStyleType').value;
     const initialQty = 5; // Fixed: min at max ay 5 pcs
     const message = $('inqMessage').value.trim();
+    const applicantType = ($('inqApplicantType') && $('inqApplicantType').value === 'Sales Partner Agent') ? 'Sales Partner Agent' : 'Store Partner';
+    const isAgent = applicantType === 'Sales Partner Agent';
 
     if (password.length < 6) { alert('Ang password ay dapat hindi bababa sa 6 na karakter.'); return; }
+    if (isAgent && storeName.toLowerCase() === ownerName.toLowerCase()) { alert('Gumamit ng Alyas na HINDI katulad ng Real Name mo.'); return; }
 
-    // Kailangan ang 1 Valid ID at Store Front (larawan lang, hanggang 15 MB bawat isa)
-    const idFile = $('inqIdFile').files[0], storeFile = $('inqStoreFile').files[0];
-    if (!idFile || !storeFile) { alert('Kailangan ang litrato ng 1 Valid ID at ng Store Front.'); return; }
-    if (![idFile, storeFile].every(f => f.type.startsWith('image/') && f.size < 15 * 1024 * 1024)) {
+    // Store Partner: 1 Valid ID at Store Front. Sales Partner Agent: 1 Valid ID lang (larawan lang, hanggang 15 MB)
+    const idFile = $('inqIdFile').files[0], storeFile = isAgent ? null : $('inqStoreFile').files[0];
+    if (!idFile || (!isAgent && !storeFile)) { alert(isAgent ? 'Kailangan ang litrato ng 1 Valid ID.' : 'Kailangan ang litrato ng 1 Valid ID at ng Store Front.'); return; }
+    if (![idFile, storeFile].filter(Boolean).every(f => f.type.startsWith('image/') && f.size < 15 * 1024 * 1024)) {
       alert('Larawan lang ang tinatanggap (awtomatikong paliliitin sa ilalim ng 1 MB).'); return;
     }
 
@@ -1847,9 +2026,20 @@ if (inquiryForm) {
     try {
       if (!TEST_MODE) {
       try {
-        await createUserWithEmailAndPassword(authData, email, password);
+        try {
+          await createUserWithEmailAndPassword(authData, email, password);
+        } catch (e0) {
+          // Mahinang signal: subukan ulit isang beses bago sumuko
+          if (e0 && e0.code === 'auth/network-request-failed') {
+            await new Promise(r => setTimeout(r, 1500));
+            await createUserWithEmailAndPassword(authData, email, password);
+          } else { throw e0; }
+        }
       } catch (err) {
-        if (err.code === 'auth/email-already-in-use') {
+        if (err.code === 'auth/network-request-failed') {
+          alert('⚠️ Hindi maabot ang Cloud (Firebase): walang o mahina ang internet. Suriin ang data/WiFi, patayin ang VPN, Data Saver o Battery Saver, tapos pindutin ulit ang "Isumite". Naka-save pa ang mga nilagay mo.');
+          return;
+        } else if (err.code === 'auth/email-already-in-use') {
           try {
             await signInWithEmailAndPassword(authData, email, password);
           } catch (err2) {
@@ -1873,15 +2063,15 @@ if (inquiryForm) {
       // Ang mga larawan ay naka-save sa Firestore (Live: app_images/<uid>; Testing: app_images_test/<id>)
       let idPath = '', storePath = '';
       try {
-        const idImg = await compressImage(idFile), storeImg = await compressImage(storeFile);
+        const idImg = await compressImage(idFile), storeImg = storeFile ? await compressImage(storeFile) : '';
         if (TEST_MODE) {
           const tid = 'T' + Date.now() + Math.random().toString(36).slice(2, 7);
           await setDoc(doc(db, 'app_images_test', tid), Object.assign({ idImg, storeImg, email }, stamp()));
-          idPath = 'app_images_test/' + tid + '#id'; storePath = 'app_images_test/' + tid + '#store';
+          idPath = 'app_images_test/' + tid + '#id'; storePath = storeFile ? 'app_images_test/' + tid + '#store' : '';
         } else {
           const uid = authData.currentUser.uid;
           await setDoc(doc(db, 'app_images', uid), Object.assign({ idImg, storeImg, email }, stamp()));
-          idPath = 'app_images/' + uid + '#id'; storePath = 'app_images/' + uid + '#store';
+          idPath = 'app_images/' + uid + '#id'; storePath = storeFile ? 'app_images/' + uid + '#store' : '';
         }
       } catch (err) {
         alert('⚠️ Hindi na-upload ang larawan: ' + (err.message || err.code));
@@ -1899,7 +2089,7 @@ if (inquiryForm) {
       if (!appData.pendingInquiries) appData.pendingInquiries = [];
       appData.pendingInquiries.push(Object.assign({
         storeName, ownerName, contact, email, address,
-        styleType, initialQty, message, idPath, storePath, accountCreated: true
+        styleType, initialQty, message, idPath, storePath, applicantType, alias: isAgent ? storeName : '', accountCreated: true
       }, stamp()));
 
       const saved = await saveData();
@@ -1912,6 +2102,7 @@ if (inquiryForm) {
       inquiryForm.reset();
       $('inqIdPrev').style.display = 'none';
       $('inqStorePrev').style.display = 'none';
+      window.selectApplicantType('Store Partner');
     } finally {
       applying = false;
       initPortalView();
@@ -2016,7 +2207,7 @@ function renderClientDashboard(store) {
   try { _renderClientDashboardInner(store); } finally { applyStoreLock(store); }
 }
 
-// ===== LOCK: kapag nag-STOP ang Kasunduan (Stopped), walang button na gagana maliban sa Logout (at pagbukas/pagtago ng mga seksyon) =====
+// ===== LOCK: kapag Deactivated/Stopped ang tindahan, walang button na gagana maliban sa Logout (at pagbukas/pagtago ng mga seksyon) =====
 const isStoreLocked = (st) => !!st && st.consignmentStatus === 'Stopped';
 function applyStoreLock(store) {
   const pc = $('portalContent');
@@ -2025,10 +2216,12 @@ function applyStoreLock(store) {
   pc.classList.toggle('store-locked', locked);
   const banner = $('lockedBanner');
   if (banner) banner.style.display = locked ? 'block' : 'none';
+  const agentLk = isAgentStore(store);
   const st = $('displayStoreStatus');
-  if (st) st.textContent = locked ? '⛔ Deactivated (Naka-lock)' : 'Aktibo ang Consignment';
+  if (st) st.textContent = locked ? '⛔ Deactivated (Naka-lock)' : (agentLk ? 'Aktibo bilang Sales Agent' : 'Aktibo ang Consignment');
   const sd = $('agreementStatusDisplay');
-  if (sd) { sd.style.backgroundColor = locked ? '#c62828' : '#2e7d32'; if (locked) sd.textContent = '⛔ Status: Deactivated (Nag-STOP ang Consignment)'; }
+  if (sd) { sd.style.backgroundColor = locked ? '#c62828' : '#2e7d32'; if (locked) sd.textContent = agentLk ? '⛔ Status: Deactivated (Nag-STOP ang Sales Agent Agreement)' : '⛔ Status: Deactivated (Nag-STOP ang Consignment)'; }
+  if (banner && locked && agentLk) banner.textContent = '🔒 Naka-deactivate ang iyong Sales Agent account. Naka-lock na ang dashboard at wala nang magagamit na button. Makipag-ugnayan sa Admin kung nais mong ibalik ito sa Aktibo.';
   // Panatilihing gumagana ang pagbukas/pagtago ng mga seksyon (read-only), maliban sa QR at Password
   pc.querySelectorAll('button[id^="toggle"]').forEach(b => {
     if (b.id === 'toggleQrBtn' || b.id === 'togglePasswordBtn') return;
@@ -2053,15 +2246,70 @@ function applyStoreLock(store) {
   pc.addEventListener('submit', (e) => { if (blocked()) { e.preventDefault(); e.stopPropagation(); } }, true);
 })();
 
+// Awtomatikong settlement ng Sales Agent kapag ayaw na magtinda: ibalik ang tira + bayaran ang naibenta (net ng auto-kita)
+function agentSettlement(store) {
+  let sold = 0, gross = 0, remaining = 0;
+  (store.storeItems || []).forEach(sub => {
+    const sSold = Math.max(0, (sub.initialQty || 0) - (sub.currentStock || 0) - (sub.returnedQty || 0) - (sub.rejectedQty || 0));
+    sold += sSold; gross += subSalesValueC(sub, sSold); remaining += Math.max(0, sub.currentStock || 0);
+  });
+  gross = Math.round(gross * 100) / 100;
+  const bonus = sold * AGENT_BONUS_PER_PC;
+  return { sold, gross, bonus, net: Math.round((gross - bonus) * 100) / 100, remaining };
+}
+// Halaga ng benta ng isang uri (kapareho ng sa Admin)
+function subSalesValueC(sub, sold) {
+  const lq = Number(sub.soldValueQty) || 0, lv = Number(sub.soldValue) || 0;
+  if (sold <= lq) return lq ? lv * (sold / lq) : 0;
+  return lv + (sold - lq) * (Number(sub.price) || 0);
+}
+// Hiwalay na itsura ng portal/kontrata ng Sales Agent Partner (simpleng Sales Agent Agreement, hindi Consignment Agreement)
+function applyAgentPortalView(store) {
+  const agent = isAgentStore(store);
+  const show = (id, on) => { const el = $(id); if (el) el.style.display = on ? '' : 'none'; };
+  show('agreementIntroP', !agent);
+  show('agreementOl', !agent);
+  show('agentAgreementBox', agent);
+  show('agreementPayTermNote', !agent);
+  document.querySelectorAll('button[onclick*="promptStopAgreement"]').forEach(b => {
+    if (!b.dataset.orig) b.dataset.orig = b.textContent;
+    b.textContent = agent ? '🛑 Ayaw nang magtinda (ibalik ang tira at bayaran ang benta)' : b.dataset.orig;
+  });
+  const ct = $('agreementCardTitle'); if (ct) ct.textContent = agent ? '📜 Sales Agent Agreement' : '📜 Opisyal na Kasunduan sa Consignment';
+  const title = $('agreementTitleType'); if (title) title.textContent = agent ? 'SALES AGENT AGREEMENT' : 'CONSIGNMENT AGREEMENT (STORE PARTNER)';
+  if (agent) {
+    const items = store.storeItems || [];
+    const prices = items.map(i => `${i.styleType} ₱${i.price}`).join(' • ');
+    const sp = $('agentSupplierPriceText'); if (sp) sp.textContent = prices || '___';
+    const pty = $('agentAgreementParty'); if (pty) pty.textContent = store.alias || store.storeName;
+  }
+  // Kita ng Agent
+  const box = $('agentEarningsBox');
+  if (box) {
+    if (!agent) { box.style.display = 'none'; return; }
+    const st0 = agentSettlement(store), sold = st0.sold, gross = st0.gross, bonus = st0.bonus, net = st0.net;
+    box.style.display = 'block';
+    box.innerHTML = `<strong>💰 Kita ng Sales Agent Partner</strong><br>
+      ✨ Automatic na kita mo (₱${AGENT_BONUS_PER_PC} × ${sold} pcs): <strong style="color:#2e7d32;">₱${bonus.toLocaleString()}</strong><br>
+      💵 Naibenta × Supplier Price: ₱${Math.round(gross * 100) / 100}<br>
+      🧾 Net na ibabayad sa Owner: <strong>₱${net.toLocaleString()}</strong><br>
+      📅 Cut-off: <strong>araw-araw</strong> • Tira ngayon: ${st0.remaining} pcs<br>
+      <small>Ikaw ang bahala sa retail price / patong (mark-up) mo. Sa iyo ang patong na iyon, bukod sa ₱${AGENT_BONUS_PER_PC} bawat benta.</small>`;
+  }
+}
+
 function _renderClientDashboardInner(store) {
 
-  $('displayStoreName').innerHTML =
-    esc(store.storeName) + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${esc(store.ownerName)})</span>` : '');
+  const agentStore = isAgentStore(store);
+  $('displayStoreName').innerHTML = agentStore
+    ? '🤝 ' + esc(store.alias || store.storeName) + ' <span style="color:#8a5a00;font-size:.7em;">(Sales Agent Partner)</span>'
+    : esc(store.storeName) + (store.ownerName ? ` <span style="color: #e8f5e9;">( ${esc(store.ownerName)})</span>` : '');
 
   const agreementStorePartner = $('agreementStorePartner');
   if (agreementStorePartner) {
-    agreementStorePartner.textContent = `${store.storeName} (${store.ownerName || 'May-ari'})`;
+    agreementStorePartner.textContent = agentStore ? `${store.alias || store.storeName} (Alyas)` : `${store.storeName} (${store.ownerName || 'May-ari'})`;
   }
+  applyAgentPortalView(store);
 
   const agreementSupplierPrice = $('agreementSupplierPrice');
   if (agreementSupplierPrice) {
@@ -2071,10 +2319,10 @@ function _renderClientDashboardInner(store) {
 
   const agreementStatusDisplay = $('agreementStatusDisplay');
   if (agreementStatusDisplay) {
-    agreementStatusDisplay.textContent = `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
+    agreementStatusDisplay.textContent = agentStore ? `Status: ${(store.consignmentStatus || 'Aktibo').replace('Aktibo ang Consignment', 'Aktibo bilang Sales Agent')}` : `Status: ${store.consignmentStatus || 'Aktibo ang Consignment'}`;
   }
 
-  const term = PAY_TERMS[store.paymentTerms] || PAY_TERMS.monthly;
+  const term = agentStore ? PAY_TERMS.daily : (PAY_TERMS[store.paymentTerms] || PAY_TERMS.monthly);
   $('agreementPayTermLabel').textContent = term.label;
   $('agreementPayTermText').textContent = term.text;
 
