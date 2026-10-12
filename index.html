@@ -45,9 +45,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .application-drawer-toggle:active{transform:scale(.99)}
 .application-drawer-toggle .drawer-arrow{font-size:1.05rem;transition:transform .2s ease}
 .application-drawer-toggle.open .drawer-arrow{transform:rotate(180deg)}
-.application-drawer{display:none;overflow:hidden;width:100%}
-.application-drawer.open{display:block;animation:applicationDrawerIn .2s ease}
-@keyframes applicationDrawerIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+/* Mini drawer: bagong screen na lumalabas mula sa ibaba; ang napiling uri lang ang nasa Current Screen */
+.application-drawer{display:none;width:100%}
+.application-drawer.open{display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;left:0;z-index:9500;background:#f4f7f5;animation:drawerSheetIn .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes drawerSheetIn{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.drawer-head{flex:none;background:#fff;padding:6px 12px 0;box-shadow:0 2px 8px rgba(0,0,0,.08);border-radius:0 0 14px 14px}
+.drawer-handle{width:42px;height:4px;border-radius:2px;background:#cfd8dc;margin:2px auto 8px}
+.drawer-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.drawer-title{font-weight:800;font-size:.95rem;color:#1b5e20}
+button.drawer-close{width:auto;margin:0;padding:6px 14px;min-height:34px;font-size:.82rem;background:#eceff1;color:#37474f;border:1px solid #cfd8dc}
+.drawer-tabs{display:flex;gap:6px;margin-top:8px}
+button.drawer-tab{flex:1;width:auto;margin:0;padding:10px 6px;min-height:42px;font-size:.85rem;font-weight:800;background:#eceff1;color:#455a64;border:0;border-radius:10px 10px 0 0}
+button.drawer-tab.active{background:#2e7d32;color:#fff}
+button.drawer-tab.active.agent{background:#f9a825;color:#3b2a00}
+.drawer-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 48px;box-sizing:border-box}
+body.drawer-open{overflow:hidden}
 .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .style-option-card{border:2px solid #ddd;border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;min-height:170px;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .style-option-card:active{transform:scale(.99)}
@@ -254,14 +266,26 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
       <button type="button" id="applicationDrawerToggle" class="application-drawer-toggle" aria-expanded="false" aria-controls="applicationDrawer" onclick="openApplication('Store Partner')">
         <span>🏪 Mag-apply bilang Consignment Store Partner</span>
-        <span class="drawer-arrow">▼</span>
+        <span class="drawer-arrow" style="font-size:1.4rem;line-height:1;">›</span>
       </button>
 
       <button type="button" id="agentApplyBtn" class="agent-apply-btn" onclick="openApplication('Sales Partner Agent')">
         <span>🤝</span><span><span id="agentApplyLabel">Mag-apply bilang SALES AGENT PARTNER</span></span>
       </button>
 
-      <div id="applicationDrawer" class="application-drawer" aria-hidden="true">
+      <div id="applicationDrawer" class="application-drawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Bagong Aplikasyon">
+        <div class="drawer-head">
+          <div class="drawer-handle"></div>
+          <div class="drawer-head-row">
+            <span class="drawer-title">📋 Bagong Aplikasyon</span>
+            <button type="button" class="drawer-close" onclick="closeApplicationDrawer()">✕ Isara</button>
+          </div>
+          <div class="drawer-tabs" role="tablist">
+            <button type="button" id="tabStore" class="drawer-tab active" role="tab" aria-selected="true" onclick="selectApplicantType('Store Partner')">🏪 Store Partner</button>
+            <button type="button" id="tabAgent" class="drawer-tab agent" role="tab" aria-selected="false" onclick="selectApplicantType('Sales Partner Agent')">🤝 Sales Agent</button>
+          </div>
+        </div>
+        <div class="drawer-body" id="applicationDrawerBody">
         <div class="elig-card no-print" id="eligibilityCard">
           <div id="eligStore">
             <h3>✅ Eligibility: Consignment Store Partner</h3>
@@ -357,6 +381,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 
         <button type="submit" id="inqSubmitBtn" style="background-color:#0288d1;">Isumite ang Digital Consignment Aplikasyon</button>
       </form>
+        </div>
       </div>
     </div>
   </div>
@@ -1389,19 +1414,37 @@ window.selectApplicantType = function(type) {
 };
 
 function updateApplyButtons() {
-  const drawer = $('applicationDrawer');
-  const open = !!drawer && drawer.classList.contains('open');
   const agent = formIsAgent();
-  const sb = $('applicationDrawerToggle');
-  if (sb) {
-    const lbl = sb.querySelector('span:first-child');
-    if (lbl) lbl.textContent = (open && !agent) ? '🏪 Isara ang Application (Store Partner)' : '🏪 Mag-apply bilang Consignment Store Partner';
-    sb.classList.toggle('open', open && !agent);
-    sb.setAttribute('aria-expanded', (open && !agent) ? 'true' : 'false');
-  }
-  const al = $('agentApplyLabel');
-  if (al) al.textContent = (open && agent) ? 'Isara ang Application (Sales Agent Partner)' : 'Mag-apply bilang SALES AGENT PARTNER';
+  const tS = $('tabStore'), tA = $('tabAgent');
+  if (tS) { tS.classList.toggle('active', !agent); tS.setAttribute('aria-selected', agent ? 'false' : 'true'); }
+  if (tA) { tA.classList.toggle('active', agent); tA.setAttribute('aria-selected', agent ? 'true' : 'false'); }
 }
+
+// ===== MINI DRAWER: bagong screen; ang napiling uri lang ang makikita =====
+let _drawerHistory = false;
+window.openApplicationDrawer = function(type) {
+  const drawer = $('applicationDrawer');
+  if (!drawer) return;
+  drawer.classList.add('open');
+  drawer.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('drawer-open');
+  window.selectApplicantType(type);
+  const body = $('applicationDrawerBody'); if (body) body.scrollTop = 0;
+  // Para ang Back button ng phone ay magsara lang ng drawer
+  if (!_drawerHistory) { try { history.pushState({ appDrawer: 1 }, ''); _drawerHistory = true; } catch (e) {} }
+};
+function _hideDrawer() {
+  const drawer = $('applicationDrawer');
+  if (!drawer) return;
+  drawer.classList.remove('open');
+  drawer.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('drawer-open');
+}
+window.closeApplicationDrawer = function() {
+  if (_drawerHistory) { _drawerHistory = false; _hideDrawer(); try { history.back(); } catch (e) {} }
+  else _hideDrawer();
+};
+window.addEventListener('popstate', () => { if (_drawerHistory) { _drawerHistory = false; } _hideDrawer(); });
 
 // Hiwalay na pasukan: Store Partner o Sales Agent Partner
 window.openApplication = function(type) {
@@ -1411,32 +1454,16 @@ window.openApplication = function(type) {
   if (btn && btn.classList.contains('apply-btn-loading')) return;   // iwas doble-click
   if (btn) btn.classList.add('apply-btn-loading');                  // umikot na bilog agad
   const stop = () => { if (btn) btn.classList.remove('apply-btn-loading'); };
-  // Dalawang frame muna para makita agad ang spinner bago ang mabigat na pagbukas
+  // Dalawang frame muna para makita agad ang spinner bago ang pagbukas
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    try {
-      const isOpen = drawer.classList.contains('open');
-      const same = (formIsAgent() ? 'Sales Partner Agent' : 'Store Partner') === type;
-      if (isOpen && same) { window.toggleApplicationDrawer(); }
-      else {
-        if (!isOpen) window.toggleApplicationDrawer();
-        window.selectApplicantType(type);
-        setTimeout(() => { const bn = $('applicantModeBanner'); if (bn && bn.scrollIntoView) bn.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120);
-      }
-    } finally { setTimeout(stop, 450); }
+    try { window.openApplicationDrawer(type); }
+    finally { setTimeout(stop, 450); }
   }));
 };
 window.openAgentApplication = function() { window.openApplication('Sales Partner Agent'); };
-
 window.toggleApplicationDrawer = function() {
-  const drawer = $('applicationDrawer');
-  const btn = $('applicationDrawerToggle');
-  if (!drawer || !btn) return;
-  const willOpen = !drawer.classList.contains('open');
-  drawer.classList.toggle('open', willOpen);
-  btn.classList.toggle('open', willOpen);
-  btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-  drawer.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
-  updateApplyButtons();
+  const d = $('applicationDrawer');
+  if (d && d.classList.contains('open')) window.closeApplicationDrawer(); else window.openApplicationDrawer(formIsAgent() ? 'Sales Partner Agent' : 'Store Partner');
 };
 
 window.toggleQrVisibility = function() {
@@ -2103,6 +2130,7 @@ if (inquiryForm) {
       $('inqIdPrev').style.display = 'none';
       $('inqStorePrev').style.display = 'none';
       window.selectApplicantType('Store Partner');
+      window.closeApplicationDrawer();
     } finally {
       applying = false;
       initPortalView();
