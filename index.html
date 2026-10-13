@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Doctor's Whisk Broom Etc. - Client Portal</title>
+<title>Doctor's Whisk Broom - Client Portal</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2e7d32">
 <meta name="msapplication-navbutton-color" content="#2e7d32">
@@ -151,6 +151,23 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 .rec-date{margin-top:5px;font-size:.7rem;color:#778;text-align:right}
 .rec-x{background:none!important;border:none;color:#d32f2f;font-weight:bold;cursor:pointer;width:auto;min-height:0;padding:0 4px;margin:0;font-size:1rem;line-height:1}
 .rec .rec-btn{background-color:#2e7d32;padding:6px;font-size:.8rem;margin-top:6px}
+
+/* ===== Buyer QR: full screen ===== */
+#buyerQrFull{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:9600;background:linear-gradient(160deg,#4a148c,#7b1fa2 55%,#6a1b9a);color:#fff;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));box-sizing:border-box;overflow-y:auto}
+#buyerQrFull.open{display:flex;animation:drawerSheetIn .25s ease}
+body.qr-full-open{overflow:hidden}
+#buyerQrFull .qf-title{font-size:1.15rem;font-weight:800;margin-bottom:4px}
+#buyerQrFull .qf-promo{background:#f2b632;color:#3b2a00;border-radius:999px;padding:6px 16px;font-weight:800;font-size:.95rem;margin:6px 0 14px}
+#buyerQrFull .qf-card{background:#fff;border-radius:18px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.35);line-height:0}
+#buyerQrFull .qf-code{font-size:1.9rem;font-weight:800;letter-spacing:6px;margin-top:12px}
+#buyerQrFull .qf-status{font-size:1rem;font-weight:700;margin-top:6px;min-height:1.4em}
+#buyerQrFull .qf-timer{font-size:.8rem;opacity:.85;margin-top:2px}
+#buyerQrFull .qf-actions{display:flex;gap:10px;margin-top:16px;width:100%;max-width:420px}
+#buyerQrFull button{flex:1;width:auto;margin:0;padding:13px 10px;font-size:.95rem;font-weight:800;border-radius:12px;border:0;cursor:pointer}
+#buyerQrFull .qf-close{background:#fff;color:#4a148c}
+#buyerQrFull .qf-new{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.5)}
+#buyerQrFull .qf-done{display:none;flex-direction:column;align-items:center}
+#buyerQrFull .qf-bigicon{font-size:5rem;line-height:1.1}
 
 /* ===== Spinner sa application button habang nagbubukas ===== */
 .apply-btn-loading{pointer-events:none;opacity:.9}
@@ -455,6 +472,7 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
         <div id="buyerQrCanvas" style="display:inline-block;background:#fff;padding:10px;border-radius:12px;border:2px solid #7b1fa2;"></div>
         <div id="buyerQrCode" style="font-weight:800;letter-spacing:3px;color:#7b1fa2;margin-top:6px;"></div>
         <div id="buyerQrStatus" style="font-size:.85rem;font-weight:bold;margin-top:4px;color:#444;"></div>
+        <button type="button" onclick="openBuyerQrFull()" style="background-color:#4a148c;margin-top:8px;">🔳 Buksan sa Full Screen</button>
       </div>
       <button type="button" id="buyerQrBtn" onclick="createBuyerQr()" style="background-color:#7b1fa2;">📲 Gumawa ng QR para sa Buyer</button>
     </div>
@@ -1071,6 +1089,25 @@ apply();
 </script>
 
 <!-- Firebase SDKs -->
+<div id="buyerQrFull" role="dialog" aria-modal="true" aria-label="Buyer QR">
+  <div class="qf-main" id="buyerQrFullMain" style="display:flex;flex-direction:column;align-items:center;">
+    <div class="qf-title">📲 Ipa-scan sa Buyer</div>
+    <div class="qf-promo">🎟️ ₱5 OFF bawat walis</div>
+    <div class="qf-card"><div id="buyerQrFullCanvas"></div></div>
+    <div class="qf-code" id="buyerQrFullCode"></div>
+    <div class="qf-status" id="buyerQrFullStatus"></div>
+    <div class="qf-timer" id="buyerQrFullTimer"></div>
+  </div>
+  <div class="qf-done" id="buyerQrFullDone">
+    <div class="qf-bigicon" id="buyerQrFullIcon">✅</div>
+    <div class="qf-title" id="buyerQrFullDoneTitle">Naitala na!</div>
+    <div class="qf-status" id="buyerQrFullDoneText"></div>
+  </div>
+  <div class="qf-actions">
+    <button type="button" class="qf-close" onclick="closeBuyerQrFull()">✕ Isara</button>
+    <button type="button" class="qf-new" onclick="createBuyerQr()">↻ Bagong QR</button>
+  </div>
+</div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -2360,7 +2397,51 @@ function newQrToken() {
   const a = new Uint8Array(16); crypto.getRandomValues(a);
   return Array.from(a, b => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('');
 }
-function setQrStatus(msg, color) { const el = $('buyerQrStatus'); if (el) { el.textContent = msg; el.style.color = color || '#444'; } }
+function setQrStatus(msg, color) {
+  const el = $('buyerQrStatus'); if (el) { el.textContent = msg; el.style.color = color || '#444'; }
+  const f = $('buyerQrFullStatus'); if (f) f.textContent = msg;
+}
+// ----- Full screen na QR (para madaling i-scan ng buyer) -----
+let _qrUrl = '', _qrExpires = 0, _qrFullTimer = null, _wake = null;
+window.openBuyerQrFull = function() {
+  const ov = $('buyerQrFull');
+  if (!ov || !_qrUrl || !_qrToken) return;
+  $('buyerQrFullMain').style.display = 'flex';
+  $('buyerQrFullDone').style.display = 'none';
+  const size = Math.floor(Math.min(window.innerWidth * 0.78, window.innerHeight * 0.46, 460));
+  const cv = $('buyerQrFullCanvas'); cv.innerHTML = '';
+  try { new QRCode(cv, { text: _qrUrl, width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { console.error(e); }
+  $('buyerQrFullCode').textContent = 'CODE: ' + _qrToken.slice(-4).toUpperCase();
+  const cur = $('buyerQrStatus'); if (cur) $('buyerQrFullStatus').textContent = cur.textContent;
+  ov.classList.add('open');
+  document.body.classList.add('qr-full-open');
+  const tick = () => {
+    const left = _qrExpires - Date.now(), t = $('buyerQrFullTimer');
+    if (!t) return;
+    if (left <= 0) t.textContent = '⌛ Expired na ang QR. Pindutin ang "Bagong QR".';
+    else t.textContent = 'Mag-eexpire sa ' + Math.floor(left / 60000) + ':' + String(Math.floor(left / 1000) % 60).padStart(2, '0');
+  };
+  if (_qrFullTimer) clearInterval(_qrFullTimer);
+  tick(); _qrFullTimer = setInterval(tick, 1000);
+  // Panatilihing bukas ang screen habang naghihintay ng scan
+  try { if (navigator.wakeLock && !_wake) navigator.wakeLock.request('screen').then(l => { _wake = l; l.addEventListener('release', () => { _wake = null; }); }).catch(() => {}); } catch (e) {}
+};
+window.closeBuyerQrFull = function() {
+  const ov = $('buyerQrFull');
+  if (ov) ov.classList.remove('open');
+  document.body.classList.remove('qr-full-open');
+  if (_qrFullTimer) { clearInterval(_qrFullTimer); _qrFullTimer = null; }
+  try { if (_wake) { _wake.release(); _wake = null; } } catch (e) {}
+};
+function buyerQrFullResult(ok, title, text) {
+  const m = $('buyerQrFullMain'), d = $('buyerQrFullDone');
+  if (!m || !d) return;
+  m.style.display = 'none'; d.style.display = 'flex';
+  $('buyerQrFullIcon').textContent = ok ? '✅' : '⚠️';
+  $('buyerQrFullDoneTitle').textContent = title;
+  $('buyerQrFullDoneText').innerHTML = text;
+  if (_qrFullTimer) { clearInterval(_qrFullTimer); _qrFullTimer = null; }
+}
 function stopBuyerQrListen(clear) {
   if (_qrUnsub) { _qrUnsub(); _qrUnsub = null; }
   if (_qrTick) { clearInterval(_qrTick); _qrTick = null; }
@@ -2371,6 +2452,7 @@ function showBuyerQr(token, expiresAt) {
   url.search = ''; url.hash = '';
   url.searchParams.set('q', token);
   if (TEST_MODE) url.searchParams.set('test', '1');
+  _qrUrl = url.toString(); _qrExpires = expiresAt;
   const box = $('buyerQrBox'), cv = $('buyerQrCanvas');
   if (!box || !cv) return;
   cv.innerHTML = '';
@@ -2407,6 +2489,7 @@ window.createBuyerQr = async function() {
   showBuyerQr(token, data.expiresAt);
   setQrStatus('⏳ Naghihintay ng scan ng buyer...', '#7b1fa2');
   listenBuyerQr(token);
+  window.openBuyerQrFull();   // mag-full screen agad ang QR
 };
 function listenBuyerQr(token) {
   if (_qrUnsub) { _qrUnsub(); _qrUnsub = null; }
@@ -2415,8 +2498,16 @@ function listenBuyerQr(token) {
     const d = snap.data() || {};
     if (d.status === 'open') setQrStatus(Date.now() > d.expiresAt ? '⌛ Expired na ang QR. Gumawa ng bago.' : '⏳ Naghihintay ng scan ng buyer...', '#7b1fa2');
     else if (d.status === 'scanned') { setQrStatus('📲 Na-scan! Itinatala ang benta...', '#e65100'); recordQrSale(token, d); }
-    else if (d.status === 'recorded') { setQrStatus(`✅ Naitala na: ${d.style} × ${d.qty} pcs (−₱${d.discount || 0} diskwento)`, '#2e7d32'); stopBuyerQrListen(true); }
-    else if (d.status === 'rejected') { setQrStatus('⚠️ Hindi naitala: ' + (d.reason || ''), '#c62828'); stopBuyerQrListen(true); }
+    else if (d.status === 'recorded') {
+      setQrStatus(`✅ Naitala na: ${d.style} × ${d.qty} pcs (−₱${d.discount || 0} diskwento)`, '#2e7d32');
+      buyerQrFullResult(true, 'Naitala na ang benta!', `${esc(d.style)} × ${esc(d.qty)} pcs<br>Diskwento ng buyer: ₱${esc(d.discount || 0)}<br>CODE: ${esc(token.slice(-4).toUpperCase())}`);
+      stopBuyerQrListen(true);
+    }
+    else if (d.status === 'rejected') {
+      setQrStatus('⚠️ Hindi naitala: ' + (d.reason || ''), '#c62828');
+      buyerQrFullResult(false, 'Hindi naitala', esc(d.reason || ''));
+      stopBuyerQrListen(true);
+    }
   }, (err) => { console.error(err); setQrStatus('⚠️ Hindi mabasa ang QR sa Cloud (' + (err.code || '') + ').', '#c62828'); });
 }
 // Ito ang awtomatikong "MAY BUMILI" na may ₱5 bawas bawat piraso
