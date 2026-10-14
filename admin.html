@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Doctor's Whisk Broom Etc. - ADMIN APP</title>
+<title>Doctor's Whisk Broom - ADMIN APP</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1b5e20">
 <style>
@@ -1502,12 +1502,13 @@ function renderApp() {
                 const saleStyle = sale.styleType || 'Ordinary';
                 const saleRow = document.createElement('div');
                 saleRow.className = 'request-action-row';
-                saleRow.style.background = '#e8f5e9';
-                saleRow.style.borderColor = '#a5d6a7';
+                const clientConfirmed = sale.status === 'Locked' || sale.status === 'Confirmed';
+                saleRow.style.background = clientConfirmed ? '#e8f5e9' : '#fff8e1';
+                saleRow.style.borderColor = clientConfirmed ? '#a5d6a7' : '#ffe082';
                 saleRow.innerHTML = `
-                    <span>${isAgentStore ? '🤝' : '🏢'} <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${isAgentStore ? ` <small style="color:#8a5a00;">(Auto-kita ng Agent: ₱${sale.qty * AGENT_BONUS_PER_PC})</small>` : ''}${sale.qrOff > 0 ? `<br><small style="color:#7b1fa2;font-weight:bold;">🎟️ Buyer QR ${sale.qrCode || ''}: −₱${sale.qrOff}/pc (₱${Math.round(sale.qrOff * sale.qty * 100) / 100} kabuuang diskwento)</small>` : ''}${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}</span>
+                    <span>${isAgentStore ? '🤝' : '🏢'} <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${isAgentStore ? ` <small style="color:#8a5a00;">(Auto-kita ng Agent: ₱${sale.qty * AGENT_BONUS_PER_PC})</small>` : ''}${sale.qrOff > 0 ? `<br><small style="color:#7b1fa2;font-weight:bold;">🎟️ Buyer QR ${sale.qrCode || ''}: −₱${sale.qrOff}/pc (₱${Math.round(sale.qrOff * sale.qty * 100) / 100} kabuuang diskwento)</small>` : ''}${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}<br><strong style="color:${clientConfirmed ? '#1b5e20' : '#a35a00'}">${clientConfirmed ? '🔒 CONFIRMED BY CLIENT · Awaiting Admin Approval' : '⏳ Waiting for Client Confirmation'}</strong>${clientConfirmed && sale.clientConfirmedAt ? `<br><small>Confirmed: ${new Date(sale.clientConfirmedAt).toLocaleString('en-PH')}</small>` : ''}</span>
                     <div>
-                        <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>
+                        <button type="button" class="btn-approve" ${clientConfirmed ? '' : 'disabled title="Hintayin muna ang confirmation ng Client" style="opacity:.45;cursor:not-allowed"'} onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>
                         <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Tanggihan</button>
                     </div>
                 `;
@@ -2046,10 +2047,23 @@ window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApprov
 };
 
 window.processPendingSales = async function(storeIdx, saleIdx, qty, styleType, isApproved) {
-    const item = appData.consignments[storeIdx];
+    // Recheck cloud status bago mag-approve para hindi ma-approve ang hindi pa confirmed.
+    if (isApproved) {
+        try {
+            const latest = await getDoc(doc(db, 'app_data', DATA_DOC));
+            if (!latest.exists()) { await alert('Walang cloud data.'); return; }
+            appData = latest.data();
+        } catch (err) { await alert('Hindi ma-verify ang confirmation: ' + err.message); return; }
+    }
+    const item = (appData.consignments || [])[storeIdx];
+    if (!item || !item.pendingSales || !item.pendingSales[saleIdx]) { await alert('Hindi na makita ang bentang ito.'); return; }
     const timestamp = new Date().toLocaleString();
     const style = styleType || 'Ordinary';
-    const sale = item.pendingSales[saleIdx] || {};
+    const sale = item.pendingSales[saleIdx];
+    if (isApproved && sale.status !== 'Locked' && sale.status !== 'Confirmed') {
+        await alert('⏳ Hintayin muna ang Lock / Confirm ng Client bago aprubahan ang benta.');
+        renderApp(); return;
+    }
 
     if (isApproved) {
         item.pendingSales.splice(saleIdx, 1);
