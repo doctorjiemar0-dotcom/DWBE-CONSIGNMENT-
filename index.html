@@ -2644,6 +2644,36 @@ function _renderClientDashboardInner(store) {
     pendingDeliveryCard.style.display = 'none';
   }
 
+  // Client-only pending-sale actions; Admin remains the final approver.
+  window.clientPendingSaleAction = async function(index, action) {
+    const current = getStore();
+    if (!current || isStoreLocked(current) || !Array.isArray(current.pendingSales)) return;
+    const sale = current.pendingSales[index];
+    if (!sale || (sale.status && sale.status !== 'Pending')) {
+      alert('Hindi na puwedeng baguhin ang transaksyong ito.'); return;
+    }
+    const label = action === 'cancel' ? 'kanselahin at ibalik ang stock' : 'i-lock para sa approval ng Admin';
+    if (!['cancel','lock'].includes(action) || !confirm(`Sigurado ka bang nais mong ${label} ang bentang ito?`)) return;
+    const backup = JSON.parse(JSON.stringify(current));
+    if (action === 'cancel') {
+      const item = (current.storeItems || []).find(i => i.styleType === sale.styleType);
+      if (!item) { alert('Hindi makita ang stock item. Kontakin ang Admin.'); return; }
+      const qty = Number(sale.qty) || 0;
+      item.currentStock = (Number(item.currentStock) || 0) + qty;
+      item.soldValue = Math.max(0, Math.round(((Number(item.soldValue) || 0) - (Number(sale.totalAmount) || 0)) * 100) / 100);
+      item.soldValueQty = Math.max(0, (Number(item.soldValueQty) || 0) - qty);
+      current.pendingSales.splice(index, 1);
+      addTx(current, 'Kinanselang Benta', `${qty} pcs (${sale.styleType}) — ibinalik sa aktibong stock; ₱${sale.totalAmount || 0}`);
+    } else {
+      sale.status = 'Locked';
+      sale.clientConfirmedAt = new Date().toISOString();
+      addTx(current, 'Kumpirmadong Benta', `${sale.qty} pcs (${sale.styleType}) — naka-lock; naghihintay ng Admin approval`);
+    }
+    const ok = await saveData();
+    if (!ok) { Object.keys(current).forEach(k => delete current[k]); Object.assign(current, backup); alert('Hindi na-save. Pakisubukan muli.'); }
+    renderClientDashboard(current);
+  };
+
   // Pending Sales (pinakabago sa itaas)
   const pendingSalesCard = $('pendingSalesCard');
   const pendingSalesContainer = $('pendingSalesContainer');
@@ -2657,6 +2687,8 @@ function _renderClientDashboardInner(store) {
     totDiv.textContent = 'Kabuuang nakabinbin: ₱' + (Math.round(pendTotal * 100) / 100);
     pendingSalesContainer.appendChild(totDiv);
     sortNewest(store.pendingSales).forEach(({ x: sale }) => {
+      const saleIndex = store.pendingSales.indexOf(sale);
+      const editable = !sale.status || sale.status === "Pending";
       pendingSalesContainer.appendChild(recCard({
         color: '#f57c00',
         tag: 'Benta',
@@ -2664,7 +2696,8 @@ function _renderClientDashboardInner(store) {
               (sale.price ? `<br>Presyo: ${sale.discountOff > 0 ? `<s style="color:#999">₱${esc(sale.listPrice)}</s> ` : ''}<strong>₱${esc(sale.price)}</strong> × ${esc(sale.qty)} = <strong>₱${esc(sale.totalAmount)}</strong>` : '') +
               (sale.discountOff > 0 ? `<br><span style="font-size:0.75rem;color:#2e7d32;">🏷️ May discount (−₱${esc(sale.discountOff)}/pc) — naka-lock ang presyo kahit matapos ang discount</span>` : '') +
               (sale.qrOff > 0 ? `<br><span style="font-size:0.75rem;color:#7b1fa2;font-weight:bold;">🎟️ Buyer QR ${esc(sale.qrCode || '')} · −₱${esc(sale.qrOff)}/pc</span>` : ''),
-        status: 'Nakabinbin sa Admin',
+        status: sale.status === 'Locked' ? '🔒 Kumpirmado ng Client · Para sa approval ng Admin' : '⏳ Naghihintay ng kumpirmasyon ng Client',
+        extra: editable ? {bottom: `<div style="display:flex;gap:8px;"><button type="button" class="rec-btn" style="background:#c62828;flex:1" onclick="clientPendingSaleAction(${saleIndex},'cancel')">❌ Cancel</button><button type="button" class="rec-btn" style="flex:1" onclick="clientPendingSaleAction(${saleIndex},'lock')">🔒 Lock / Confirm</button></div>`} : undefined,
         date: sale.date
       }));
     });
