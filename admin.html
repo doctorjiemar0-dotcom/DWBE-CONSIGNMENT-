@@ -727,7 +727,7 @@ function renderBuyerTab() {
     const setV = (id, v) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = v; };
     setV('buyerPriceOrdinary', b.prices.Ordinary || ''); setV('buyerPricePremium', b.prices.Premium || ''); setV('buyerMinOrder', b.minOrder || 5);
     const pl = document.getElementById('buyerPromoList');
-    if (pl) pl.innerHTML = b.promos.length ? b.promos.map((p, i) => `<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:8px;margin-bottom:6px;font-size:.82rem;"><b>🎁 ${escH(p.title)}</b>${p.until ? ` <small>(hanggang ${escH(p.until)})</small>` : ''}<br>${escH(p.text || '')}<br><button type="button" onclick="removeBuyerPromo(${i})" style="width:auto;padding:4px 10px;font-size:.72rem;background:#c62828;margin-top:4px;">🗑️ Alisin</button></div>`).join('') : '<p style="font-size:.8rem;color:#666;">Wala pang promo.</p>';
+    if (pl) pl.innerHTML = b.promos.length ? b.promos.map((p, i) => `<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:8px;margin-bottom:6px;font-size:.82rem;"><b>🎁 ${escH(p.title)}</b> <span style="font-weight:bold;color:${p.until && p.until < localToday() ? '#b71c1c' : '#2e7d32'};">${p.until && p.until < localToday() ? '🔴 EXPIRED' : '🟢 ACTIVE'}</span>${p.until ? ` <small>(hanggang ${escH(p.until)})</small>` : ''}<br>${escH(p.text || '')}<br><button type="button" onclick="removeBuyerPromo(${i})" style="width:auto;padding:4px 10px;font-size:.72rem;background:#c62828;margin-top:4px;">🗑️ Alisin</button></div>`).join('') : '<p style="font-size:.8rem;color:#666;">Wala pang promo.</p>';
     const list = document.getElementById('buyerDirectoryList');
     if (list) {
         const rows = (appData.consignments || []).map((r, idx) => ({ r, idx })).sort((a, b2) => (isAgentRec(a.r) - isAgentRec(b2.r)) || String(a.r.storeName).localeCompare(String(b2.r.storeName)));
@@ -750,25 +750,29 @@ window.saveBuyerSettings = async function() {
     b.prices.Premium = Math.max(0, parseFloat(document.getElementById('buyerPricePremium').value) || 0);
     b.minOrder = Math.max(1, parseInt(document.getElementById('buyerMinOrder').value) || 1);
     await saveToCloud(); renderBuyerTab();
-    alert('✅ Na-save ang presyo. Pindutin ang "I-publish sa Direct Buyers" para makita ito ng mga buyer.');
+    await publishBuyerDirectory();
 };
 window.addBuyerPromo = async function() {
     const t = document.getElementById('buyerPromoTitle').value.trim();
     if (!t) { alert('Maglagay ng pamagat ng promo.'); return; }
+    const until = document.getElementById('buyerPromoUntil').value;
+    if (until && until < localToday()) { alert('⚠️ Lumipas na ang expiration date. Pumili ng petsa ngayon o sa hinaharap.'); return; }
     buyerSettings().promos.push({ title: t, text: document.getElementById('buyerPromoText').value.trim(), until: document.getElementById('buyerPromoUntil').value || '' });
     ['buyerPromoTitle', 'buyerPromoText', 'buyerPromoUntil'].forEach(id => { document.getElementById(id).value = ''; });
     await saveToCloud(); renderBuyerTab();
+    await publishBuyerDirectory();
 };
 window.removeBuyerPromo = async function(i) {
     if (!(await confirm('Alisin ang promo na ito?'))) return;
     buyerSettings().promos.splice(i, 1); await saveToCloud(); renderBuyerTab();
+    await publishBuyerDirectory();
 };
 window.publishBuyerDirectory = async function() {
     const b = buyerSettings();
     const distributors = (appData.consignments || [])
         .filter(r => r.showInDirectory && r.consignmentStatus !== 'Stopped')
         .map(r => ({ label: directoryLabel(r), type: isAgentRec(r) ? 'Sales Agent Partner' : 'Store Partner', area: r.directoryArea || '' }));
-    const payload = { updatedAt: new Date().toISOString(), distributors, prices: { Ordinary: b.prices.Ordinary || 0, Premium: b.prices.Premium || 0 }, minOrder: b.minOrder || 1, promos: b.promos.map(p => ({ title: p.title, text: p.text || '', until: p.until || '' })) };
+    const payload = { updatedAt: new Date().toISOString(), distributors, prices: { Ordinary: b.prices.Ordinary || 0, Premium: b.prices.Premium || 0 }, minOrder: b.minOrder || 1, promos: b.promos.filter(p => !p.until || p.until >= localToday()).map(p => ({ title: p.title, text: p.text || '', until: p.until || '' })) };
     try {
         await setDoc(doc(db, 'buyer_public', BUYER_DIR_DOC), payload);
         document.getElementById('buyerPublishInfo').textContent = `✅ Na-publish: ${distributors.length} distributor, ${payload.promos.length} promo • ${new Date().toLocaleString()}`;
