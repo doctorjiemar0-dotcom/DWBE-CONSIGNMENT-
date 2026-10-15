@@ -15,6 +15,7 @@
   .distname{font-size:1.4rem;font-weight:800;letter-spacing:2px;margin-top:2px}
   .promo{background:var(--amber);color:#3b2a00;border-radius:12px;padding:12px;text-align:center;font-weight:800;font-size:1.15rem;margin:12px 0}
   h3{margin:14px 0 8px;font-size:.95rem;color:var(--g)}
+  h2{margin:0 0 10px;font-size:1.05rem;color:var(--g)}
   .chips{display:flex;gap:8px;flex-wrap:wrap}
   .chip{flex:1;min-width:120px;padding:12px;border-radius:12px;border:2px solid #cfd8dc;background:#fff;font-weight:800;font-size:1rem;color:#455a64;cursor:pointer}
   .chip.on{border-color:var(--g2);background:#e8f5e9;color:var(--g)}
@@ -31,15 +32,49 @@
   .spin{width:44px;height:44px;border:5px solid #cfe8d6;border-top-color:var(--g2);border-radius:50%;animation:sp .8s linear infinite;margin:10px auto}
   @keyframes sp{to{transform:rotate(360deg)}}
   .err{color:#b71c1c}
+
+  /* ===== Storefront ng Direct Buyers ===== */
+  .hero{background:linear-gradient(135deg,#185c38,#2e7d32);color:#fff;border-radius:16px;padding:18px;margin-bottom:14px}
+  .hero h1{margin:0 0 4px;font-size:1.3rem}
+  .hero p{margin:0;font-size:.88rem;opacity:.92;line-height:1.45}
+  .promoitem{background:#fff8e1;border:1px solid #f9a825;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .promoitem b{color:#8a5a00}
+  .promoitem small{display:block;color:#7a6a40;margin-top:2px}
+  .prod{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:2px solid #e1e9e3;border-radius:12px;margin-bottom:8px}
+  .prod.on{border-color:var(--g2);background:#f3faf4}
+  .prod .nm{font-weight:800;font-size:1.05rem}
+  .prod .pr{font-size:.85rem;color:#587}
+  .stepper{display:flex;align-items:center;gap:10px}
+  .stepper button{width:42px;height:42px;border-radius:50%;border:0;background:var(--g);color:#fff;font-size:1.5rem;font-weight:800;cursor:pointer;line-height:1}
+  .stepper button:disabled{opacity:.35}
+  .stepper span{min-width:30px;text-align:center;font-size:1.3rem;font-weight:800}
+  .totalbar{display:flex;justify-content:space-between;align-items:center;background:#e8f5e9;border-radius:12px;padding:12px;font-weight:800;margin:10px 0}
+  .totalbar small{display:block;font-weight:600;color:#587;font-size:.72rem}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:.8rem;font-weight:700;margin-bottom:4px;color:#31473a}
+  .field input,.field textarea{width:100%;padding:12px;border:1px solid #cfd8dc;border-radius:10px;font-size:1rem;font-family:inherit;background:#fafafa}
+  .field input:focus,.field textarea:focus{outline:3px solid rgba(46,125,50,.22);background:#fff}
+  .errmsg{display:none;background:#ffebee;color:#b71c1c;border-radius:10px;padding:10px;font-size:.85rem;font-weight:700;margin-bottom:10px}
+  .drow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px dashed #dfe9e2}
+  .drow:last-child{border-bottom:0}
+  .drow .nm{font-weight:800;letter-spacing:1px}
+  .drow .ar{font-size:.76rem;color:#678}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:800;color:#fff;white-space:nowrap}
+  .pill.store{background:#2e7d32}
+  .pill.agent{background:#f9a825;color:#3b2a00}
+  .stline{font-weight:800;margin-top:8px;text-align:center}
+  .itemrow{display:flex;justify-content:space-between;font-size:.9rem;padding:4px 0}
+  .hp{position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0}
+  .fbl{display:block;text-align:center;margin:6px 0 18px;font-size:.85rem;color:#6a1b9a;font-weight:800;text-decoration:none}
 </style>
 </head>
 <body>
 <header>🧹 Doctor's Whisk Broom · Buyer</header>
-<main id="app"><div class="card"><div class="spin"></div><div class="msg">Binubuksan ang QR...</div></div></main>
+<main id="app"><div class="card"><div class="spin"></div><div class="msg">Binubuksan ang page...</div></div></main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyDMFmZfC84e3pFQM8pHociQ0JwUL8ek_us",
@@ -53,12 +88,19 @@ const db = getFirestore(app);
 
 const qp = new URLSearchParams(location.search);
 const TOKEN = (qp.get('q') || '').trim();
-const COLL = qp.get('test') === '1' ? 'buyer_qr_test' : 'buyer_qr';
+const IS_TEST = qp.get('test') === '1';
+const COLL = IS_TEST ? 'buyer_qr_test' : 'buyer_qr';                       // para sa QR
+const PUB_DOC = IS_TEST ? 'directory_test' : 'directory';                   // buyer_public/<PUB_DOC> (ina-publish ng Admin)
+const ORDERS_COL = IS_TEST ? 'buyer_orders_test' : 'buyer_orders';          // mga order ng Direct Buyers
 const root = document.getElementById('app');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const view = html => { root.innerHTML = html; };
 const info = (icon, text, cls) => view(`<div class="card"><div class="big">${icon}</div><div class="msg ${cls || ''}">${text}</div></div>`);
+const peso = n => '₱' + (Math.round(Number(n) * 100) / 100).toLocaleString();
 
+/* =====================================================================
+   A) QR NG DISTRIBUTOR (₱5 diskwento) — bukas kapag may ?q=
+   ===================================================================== */
 let qr = null, style = null, qty = 1;
 
 function renderForm() {
@@ -114,8 +156,7 @@ function waitResult() {
   }, () => {});
 }
 
-async function init() {
-  if (!TOKEN) { info('❓', 'Walang QR code. I-scan ang QR mula sa distributor.', 'err'); return; }
+async function initQr() {
   try {
     const snap = await getDoc(doc(db, COLL, TOKEN));
     if (!snap.exists()) { info('❌', 'Hindi nahanap ang QR na ito. Humingi ng bagong QR sa distributor.', 'err'); return; }
@@ -129,7 +170,171 @@ async function init() {
     info('⚠️', 'Hindi ma-load ang QR. Suriin ang internet mo at subukan ulit.', 'err');
   }
 }
-init();
+
+/* =====================================================================
+   B) STOREFRONT NG DIRECT BUYERS — bukas kapag WALANG ?q=
+   Binabasa ang buyer_public/directory (ina-publish ng Admin) at
+   isinusulat ang order sa buyer_orders (nakikita sa Admin > Direct Buyers).
+   ===================================================================== */
+const PRODUCTS = ['Ordinary', 'Premium'];
+const ST = {
+  Pending:    ['🕒 Naghihintay ng aprubal ng Owner', '#f57c00'],
+  Approved:   ['✅ Aprubado na ang order mo', '#2e7d32'],
+  Delivering: ['🚚 Ihinahatid na', '#0277bd'],
+  Completed:  ['🏁 Tapos na ang order', '#455a64'],
+  Rejected:   ['❌ Hindi naaprubahan ang order', '#c62828']
+};
+const LAST_KEY = 'dwbe_last_order' + (IS_TEST ? '_test' : '');
+let pub = null, cart = { Ordinary: 0, Premium: 0 };
+
+const ymdToday = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const fmtD = s => { try { return new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return s; } };
+const lsGet = () => { try { return JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); } catch (e) { return null; } };
+const lsSet = v => { try { localStorage.setItem(LAST_KEY, JSON.stringify(v)); } catch (e) {} };
+
+function watchStatus(id, el) {
+  if (!el) return;
+  try {
+    onSnapshot(doc(db, ORDERS_COL, id), (snap) => {
+      const d = snap.data();
+      if (!d) return;
+      const st = ST[d.status] || [d.status || '', '#555'];
+      el.textContent = st[0]; el.style.color = st[1];
+    }, () => {});
+  } catch (e) {}
+}
+
+async function initStore() {
+  view('<div class="card"><div class="spin"></div><div class="msg">Binubuksan ang tindahan...</div></div>');
+  try {
+    const s = await getDoc(doc(db, 'buyer_public', PUB_DOC));
+    pub = s.exists() ? s.data() : null;
+  } catch (e) {
+    console.error(e);
+    info('⚠️', 'Hindi ma-load ang page. Suriin ang internet mo at subukan ulit.', 'err');
+    return;
+  }
+  cart = { Ordinary: 0, Premium: 0 };
+  renderStore();
+}
+
+function renderStore() {
+  const prices = (pub && pub.prices) || {};
+  const prods = PRODUCTS.filter(s => Number(prices[s]) > 0);
+  const minOrder = Math.max(1, parseInt(pub && pub.minOrder) || 1);
+  const promos = ((pub && pub.promos) || []).filter(p => !p.until || p.until >= ymdToday());
+  const dist = (pub && pub.distributors) || [];
+  const last = lsGet();
+
+  let h = `<div class="hero"><h1>🧹 Bumili nang Direkta</h1><p>Walis Tambo mula sa Doctor's Whisk Broom etc., Sorsogon. Mag-order dito at kokontakin ka ng Owner.</p></div>`;
+
+  if (last && last.id) {
+    h += `<div class="card" id="lastCard"><h2>📦 Huling order mo</h2><div class="itemrow"><span>Code: <b>${esc(String(last.id).slice(0, 6).toUpperCase())}</b></span><span><b>${peso(last.total)}</b></span></div><div class="stline" id="lastSt">Kinukuha ang status...</div></div>`;
+  }
+
+  if (promos.length) {
+    h += `<div class="card"><h2>🎁 Mga Promo</h2>${promos.map(p => `<div class="promoitem"><b>${esc(p.title)}</b>${p.text ? `<div>${esc(p.text)}</div>` : ''}${p.until ? `<small>Hanggang ${esc(fmtD(p.until))}</small>` : ''}</div>`).join('')}</div>`;
+  }
+
+  if (prods.length) {
+    h += `<div class="card"><h2>🛒 Mag-order</h2>
+      ${prods.map(s => `<div class="prod" id="prod_${s}"><div><div class="nm">${esc(s)}</div><div class="pr">${peso(prices[s])} bawat piraso</div></div>
+        <div class="stepper"><button type="button" data-s="${s}" data-d="-1" aria-label="Bawasan">−</button><span id="q_${s}">0</span><button type="button" data-s="${s}" data-d="1" aria-label="Dagdagan">+</button></div></div>`).join('')}
+      <div class="totalbar"><div>Kabuuan<small id="pcsLine">0 pcs • minimum ${minOrder} pcs</small></div><div id="totalLine" style="font-size:1.3rem;">₱0</div></div>
+      <div class="errmsg" id="errBox"></div>
+      <div class="field"><label for="f_name">Pangalan</label><input id="f_name" type="text" maxlength="80" autocomplete="name" placeholder="Buong pangalan"></div>
+      <div class="field"><label for="f_phone">Telepono / GCash</label><input id="f_phone" type="tel" maxlength="20" autocomplete="tel" inputmode="tel" placeholder="09XXXXXXXXX"></div>
+      <div class="field"><label for="f_email">Email</label><input id="f_email" type="email" maxlength="100" autocomplete="email" placeholder="iyong@email.com"></div>
+      <div class="field"><label for="f_addr">Address ng Delivery</label><textarea id="f_addr" rows="2" maxlength="200" autocomplete="street-address" placeholder="Barangay, Bayan/Lungsod, Probinsya"></textarea></div>
+      <div class="field"><label for="f_note">Tala (opsyonal)</label><textarea id="f_note" rows="2" maxlength="200" placeholder="Hal. anong oras ang pwede"></textarea></div>
+      <div class="hp" aria-hidden="true"><label>Website<input id="f_hp" type="text" tabindex="-1" autocomplete="off"></label></div>
+      <button type="button" class="go" id="placeBtn" disabled>📨 Ipadala ang Order</button>
+      <div class="note">Hindi ito agad-agad bayad. Susuriin ng Owner ang order mo at kokontakin ka para sa kumpirmasyon at bayad.</div></div>`;
+  } else {
+    h += `<div class="card"><h2>🛒 Mag-order</h2><div class="msg" style="font-size:.95rem;">Wala pang naka-publish na presyo ngayon. Bumalik mamaya.</div></div>`;
+  }
+
+  h += `<div class="card"><h2>🏪 Mga Distributor</h2>`;
+  if (dist.length) {
+    h += dist.map(d => `<div class="drow"><div><div class="nm">${esc(d.label)}</div>${d.area ? `<div class="ar">📍 ${esc(d.area)}</div>` : ''}</div><span class="pill ${d.type === 'Sales Agent Partner' ? 'agent' : 'store'}">${d.type === 'Sales Agent Partner' ? 'Sales Agent' : 'Store Partner'}</span></div>`).join('');
+    h += `<div class="note" style="text-align:left;">Apelyido o alyas lang ang ipinapakita para sa privacy ng mga distributor.</div>`;
+  } else {
+    h += `<div class="msg" style="font-size:.9rem;">Wala pang nakalistang distributor.</div>`;
+  }
+  h += `</div><a class="fbl" href="https://www.facebook.com/DWBE.23" target="_blank" rel="noopener">Sundan ang aming Facebook Page</a>`;
+  view(h);
+
+  if (last && last.id) watchStatus(last.id, document.getElementById('lastSt'));
+  if (!prods.length) return;
+
+  const calc = () => { let pcs = 0, total = 0; prods.forEach(s => { pcs += cart[s]; total += cart[s] * Number(prices[s]); }); return { pcs, total }; };
+  const refresh = () => {
+    const { pcs, total } = calc();
+    prods.forEach(s => {
+      document.getElementById('q_' + s).textContent = cart[s];
+      document.getElementById('prod_' + s).classList.toggle('on', cart[s] > 0);
+    });
+    document.getElementById('pcsLine').textContent = pcs + ' pcs • minimum ' + minOrder + ' pcs';
+    document.getElementById('totalLine').textContent = peso(total);
+    document.getElementById('placeBtn').disabled = pcs < minOrder;
+    root.querySelectorAll('.stepper button').forEach(b => {
+      const d = parseInt(b.dataset.d), s = b.dataset.s;
+      b.disabled = d < 0 ? cart[s] <= 0 : cart[s] >= 50;
+    });
+  };
+  root.querySelectorAll('.stepper button').forEach(b => b.onclick = () => {
+    const s = b.dataset.s, d = parseInt(b.dataset.d);
+    cart[s] = Math.max(0, Math.min(50, cart[s] + d));
+    refresh();
+  });
+  refresh();
+
+  const showErr = m => { const e = document.getElementById('errBox'); e.textContent = m; e.style.display = 'block'; e.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  document.getElementById('placeBtn').onclick = async () => {
+    document.getElementById('errBox').style.display = 'none';
+    const v = id => document.getElementById(id).value.trim();
+    const name = v('f_name'), phone = v('f_phone'), email = v('f_email').toLowerCase(), address = v('f_addr'), note = v('f_note');
+    const { pcs, total } = calc();
+    if (v('f_hp')) return;                                           // bot
+    if (pcs < minOrder) return showErr('Minimum na order ay ' + minOrder + ' pcs.');
+    if (name.length < 2) return showErr('Ilagay ang pangalan mo.');
+    if (phone.replace(/\D/g, '').length < 7) return showErr('Ilagay ang wastong numero ng telepono / GCash.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr('Ilagay ang wastong email.');
+    if (address.length < 8) return showErr('Ilagay ang kumpletong address ng delivery.');
+    const prev = lsGet();
+    if (prev && prev.at && Date.now() - prev.at < 60000) return showErr('Katatapos lang ng isang order mo. Maghintay ng 1 minuto bago mag-order ulit.');
+
+    const items = prods.filter(s => cart[s] > 0).map(s => ({ style: s, qty: cart[s], price: Number(prices[s]) }));
+    const data = { name, phone, email, address, note, items, total: Math.round(total * 100) / 100, status: 'Pending', createdAt: Date.now(), source: 'buyer-app' };
+    const btn = document.getElementById('placeBtn');
+    btn.disabled = true; btn.textContent = 'Ipinapadala...';
+    try {
+      const ref = await addDoc(collection(db, ORDERS_COL), data);
+      lsSet({ id: ref.id, total: data.total, at: Date.now() });
+      showDone(ref.id, data);
+    } catch (e) {
+      console.error(e);
+      btn.disabled = false; btn.textContent = '📨 Ipadala ang Order';
+      showErr('Hindi naipadala ang order (' + (e.code || e.message) + '). Suriin ang internet mo at subukan ulit.');
+    }
+  };
+}
+
+function showDone(id, data) {
+  const code = String(id).slice(0, 6).toUpperCase();
+  view(`<div class="card"><div class="big">✅</div><div class="msg">Naipadala na ang order mo!</div>
+    <div class="code">${esc(code)}</div>
+    ${data.items.map(i => `<div class="itemrow"><span>${esc(i.style)} × ${esc(i.qty)}</span><span>${peso(i.qty * i.price)}</span></div>`).join('')}
+    <div class="totalbar"><div>Kabuuan</div><div style="font-size:1.3rem;">${peso(data.total)}</div></div>
+    <div class="stline" id="doneSt">${esc(ST.Pending[0])}</div>
+    <div class="note">Itago ang code na ito. Kokontakin ka ng Owner sa numero o email na inilagay mo. Ina-update ang status sa itaas kapag may pagbabago.</div>
+    <button type="button" class="go" id="again">Bumalik sa tindahan</button></div>`);
+  const st = document.getElementById('doneSt'); st.style.color = ST.Pending[1];
+  watchStatus(id, st);
+  document.getElementById('again').onclick = () => initStore();
+}
+
+if (TOKEN) initQr(); else initStore();
 </script>
 </body>
 </html>
