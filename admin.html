@@ -249,7 +249,7 @@ button:hover { background-color: #1b5e20; }
         <!-- TAB: DIRECT BUYERS -->
         <div id="buyersTab" class="tab-content">
             <div class="card">
-                <h2>💰 Presyo at Promo para sa Direct Buyers</h2>
+                <h2>💰 Presyo at Promo para sa Direct Buyers</h2><p style="font-size:.8rem;color:#2e7d32;margin-bottom:10px;">✅ Default minimum 7 pcs · Awtomatikong 10% OFF sa kabuuang regular-price order (7 pcs pataas). Ang mga text promo ay announcement lamang.</p>
                 <div style="display:flex;gap:8px;">
                     <div style="flex:1;"><label>Ordinary (₱/pc):</label><input type="number" id="buyerPriceOrdinary" min="0" step="1" inputmode="numeric"></div>
                     <div style="flex:1;"><label>Premium (₱/pc):</label><input type="number" id="buyerPricePremium" min="0" step="1" inputmode="numeric"></div>
@@ -714,20 +714,22 @@ function directoryLabel(rec) {
     return sn ? '●●●● ●●●● ' + sn : '●●●● ●●●●';
 }
 function buyerSettings() {
-    if (!appData.buyerSettings) appData.buyerSettings = { prices: { Ordinary: 0, Premium: 0 }, minOrder: 5, promos: [] };
+    if (!appData.buyerSettings) appData.buyerSettings = { prices: { Ordinary: 0, Premium: 0 }, minOrder: 7, promos: [] };
     const b = appData.buyerSettings;
     if (!b.prices) b.prices = { Ordinary: 0, Premium: 0 };
     if (!Array.isArray(b.promos)) b.promos = [];
-    if (!b.minOrder) b.minOrder = 5;
+    if (!b.minOrder) b.minOrder = 7;
     return b;
 }
 function renderBuyerTab() {
     if (!document.getElementById('buyersTab')) return;
     const b = buyerSettings();
+    b.minOrder = 7;
+    const minInput = document.getElementById('buyerMinOrder'); if (minInput) { minInput.value = 7; minInput.disabled = true; minInput.title = 'Default minimum: 7 pcs'; }
     const setV = (id, v) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = v; };
-    setV('buyerPriceOrdinary', b.prices.Ordinary || ''); setV('buyerPricePremium', b.prices.Premium || ''); setV('buyerMinOrder', b.minOrder || 5);
+    setV('buyerPriceOrdinary', b.prices.Ordinary || ''); setV('buyerPricePremium', b.prices.Premium || ''); setV('buyerMinOrder', b.minOrder || 7);
     const pl = document.getElementById('buyerPromoList');
-    if (pl) pl.innerHTML = b.promos.length ? b.promos.map((p, i) => `<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:8px;margin-bottom:6px;font-size:.82rem;"><b>🎁 ${escH(p.title)}</b>${p.until ? ` <small>(hanggang ${escH(p.until)})</small>` : ''}<br>${escH(p.text || '')}<br><button type="button" onclick="removeBuyerPromo(${i})" style="width:auto;padding:4px 10px;font-size:.72rem;background:#c62828;margin-top:4px;">🗑️ Alisin</button></div>`).join('') : '<p style="font-size:.8rem;color:#666;">Wala pang promo.</p>';
+    if (pl) pl.innerHTML = b.promos.length ? b.promos.map((p, i) => `<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:8px;margin-bottom:6px;font-size:.82rem;"><b>🎁 ${escH(p.title)}</b> <span style="font-weight:bold;color:${p.until && p.until < localToday() ? '#b71c1c' : '#2e7d32'};">${p.until && p.until < localToday() ? '🔴 EXPIRED' : '🟢 ACTIVE'}</span>${p.until ? ` <small>(hanggang ${escH(p.until)})</small>` : ''}<br>${escH(p.text || '')}<br><button type="button" onclick="removeBuyerPromo(${i})" style="width:auto;padding:4px 10px;font-size:.72rem;background:#c62828;margin-top:4px;">🗑️ Alisin</button></div>`).join('') : '<p style="font-size:.8rem;color:#666;">Wala pang promo.</p>';
     const list = document.getElementById('buyerDirectoryList');
     if (list) {
         const rows = (appData.consignments || []).map((r, idx) => ({ r, idx })).sort((a, b2) => (isAgentRec(a.r) - isAgentRec(b2.r)) || String(a.r.storeName).localeCompare(String(b2.r.storeName)));
@@ -748,27 +750,31 @@ window.saveBuyerSettings = async function() {
     const b = buyerSettings();
     b.prices.Ordinary = Math.max(0, parseFloat(document.getElementById('buyerPriceOrdinary').value) || 0);
     b.prices.Premium = Math.max(0, parseFloat(document.getElementById('buyerPricePremium').value) || 0);
-    b.minOrder = Math.max(1, parseInt(document.getElementById('buyerMinOrder').value) || 1);
+    b.minOrder = 7;
     await saveToCloud(); renderBuyerTab();
-    alert('✅ Na-save ang presyo. Pindutin ang "I-publish sa Direct Buyers" para makita ito ng mga buyer.');
+    await publishBuyerDirectory();
 };
 window.addBuyerPromo = async function() {
     const t = document.getElementById('buyerPromoTitle').value.trim();
     if (!t) { alert('Maglagay ng pamagat ng promo.'); return; }
+    const until = document.getElementById('buyerPromoUntil').value;
+    if (until && until < localToday()) { alert('⚠️ Lumipas na ang expiration date. Pumili ng petsa ngayon o sa hinaharap.'); return; }
     buyerSettings().promos.push({ title: t, text: document.getElementById('buyerPromoText').value.trim(), until: document.getElementById('buyerPromoUntil').value || '' });
     ['buyerPromoTitle', 'buyerPromoText', 'buyerPromoUntil'].forEach(id => { document.getElementById(id).value = ''; });
     await saveToCloud(); renderBuyerTab();
+    await publishBuyerDirectory();
 };
 window.removeBuyerPromo = async function(i) {
     if (!(await confirm('Alisin ang promo na ito?'))) return;
     buyerSettings().promos.splice(i, 1); await saveToCloud(); renderBuyerTab();
+    await publishBuyerDirectory();
 };
 window.publishBuyerDirectory = async function() {
     const b = buyerSettings();
     const distributors = (appData.consignments || [])
         .filter(r => r.showInDirectory && r.consignmentStatus !== 'Stopped')
         .map(r => ({ label: directoryLabel(r), type: isAgentRec(r) ? 'Sales Agent Partner' : 'Store Partner', area: r.directoryArea || '' }));
-    const payload = { updatedAt: new Date().toISOString(), distributors, prices: { Ordinary: b.prices.Ordinary || 0, Premium: b.prices.Premium || 0 }, minOrder: b.minOrder || 1, promos: b.promos.map(p => ({ title: p.title, text: p.text || '', until: p.until || '' })) };
+    const payload = { updatedAt: new Date().toISOString(), distributors, prices: { Ordinary: b.prices.Ordinary || 0, Premium: b.prices.Premium || 0 }, minOrder: 7, discountRate: 0.10, promos: b.promos.filter(p => !p.until || p.until >= localToday()).map(p => ({ title: p.title, text: p.text || '', until: p.until || '' })) };
     try {
         await setDoc(doc(db, 'buyer_public', BUYER_DIR_DOC), payload);
         document.getElementById('buyerPublishInfo').textContent = `✅ Na-publish: ${distributors.length} distributor, ${payload.promos.length} promo • ${new Date().toLocaleString()}`;
@@ -801,7 +807,7 @@ async function loadBuyerOrders(silent) {
                 : o.status === 'Delivering' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Completed')">🏁 Tapos na</button>` : '';
             return `<div class="store-card" style="border-left-color:${st[1]};">
                 <div style="font-size:.85rem;"><b>${escH(o.name)}</b> <span class="badge" style="background:${st[1]};">${st[0]}</span></div>
-                <div style="font-size:.78rem;line-height:1.5;">📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>💵 <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
+                <div style="font-size:.78rem;line-height:1.5;">📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount: ₱${Math.max(0,Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0))-(Number(o.total)||0))*100)/100).toLocaleString()}<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
                 <div class="btn-group">${btns}</div></div>`;
         }).join('') : '<p style="font-size:.85rem;color:#666;">Walang order pa.</p>';
     } catch (err) {
@@ -1502,12 +1508,13 @@ function renderApp() {
                 const saleStyle = sale.styleType || 'Ordinary';
                 const saleRow = document.createElement('div');
                 saleRow.className = 'request-action-row';
-                saleRow.style.background = '#e8f5e9';
-                saleRow.style.borderColor = '#a5d6a7';
+                const clientConfirmed = sale.status === 'Locked' || sale.status === 'Confirmed';
+                saleRow.style.background = clientConfirmed ? '#e8f5e9' : '#fff8e1';
+                saleRow.style.borderColor = clientConfirmed ? '#a5d6a7' : '#ffe082';
                 saleRow.innerHTML = `
-                    <span>${isAgentStore ? '🤝' : '🏢'} <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${isAgentStore ? ` <small style="color:#8a5a00;">(Auto-kita ng Agent: ₱${sale.qty * AGENT_BONUS_PER_PC})</small>` : ''}${sale.qrOff > 0 ? `<br><small style="color:#7b1fa2;font-weight:bold;">🎟️ Buyer QR ${sale.qrCode || ''}: −₱${sale.qrOff}/pc (₱${Math.round(sale.qrOff * sale.qty * 100) / 100} kabuuang diskwento)</small>` : ''}${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}</span>
+                    <span>${isAgentStore ? '🤝' : '🏢'} <strong>${item.storeName} (${saleStyle})</strong> benta: <strong>${sale.qty} pcs</strong> = <strong>₱${(sale.totalAmount || 0).toLocaleString()}</strong>${isAgentStore ? ` <small style="color:#8a5a00;">(Auto-kita ng Agent: ₱${sale.qty * AGENT_BONUS_PER_PC})</small>` : ''}${sale.qrOff > 0 ? `<br><small style="color:#7b1fa2;font-weight:bold;">🎟️ Buyer QR ${sale.qrCode || ''}: −₱${sale.qrOff}/pc (₱${Math.round(sale.qrOff * sale.qty * 100) / 100} kabuuang diskwento)</small>` : ''}${sale.discountOff > 0 ? `<br><small style="color:#2e7d32;">🏷️ ₱${sale.price}/pc (dating ₱${sale.listPrice}, discount −₱${sale.discountOff}) — naka-lock ang presyo</small>` : (sale.price ? `<br><small>₱${sale.price}/pc</small>` : '')}<br><strong style="color:${clientConfirmed ? '#1b5e20' : '#a35a00'}">${clientConfirmed ? '🔒 CONFIRMED BY CLIENT · Awaiting Admin Approval' : '⏳ Waiting for Client Confirmation'}</strong>${clientConfirmed && sale.clientConfirmedAt ? `<br><small>Confirmed: ${new Date(sale.clientConfirmedAt).toLocaleString('en-PH')}</small>` : ''}</span>
                     <div>
-                        <button type="button" class="btn-approve" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>
+                        <button type="button" class="btn-approve" ${clientConfirmed ? '' : 'disabled title="Hintayin muna ang confirmation ng Client" style="opacity:.45;cursor:not-allowed"'} onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', true)">Apruba</button>
                         <button type="button" class="btn-decline" onclick="processPendingSales(${index}, ${saleIdx}, ${sale.qty}, '${saleStyle}', false)">Tanggihan</button>
                     </div>
                 `;
@@ -2046,10 +2053,23 @@ window.processRestock = async function(storeIdx, reqIdx, qty, reqStyle, isApprov
 };
 
 window.processPendingSales = async function(storeIdx, saleIdx, qty, styleType, isApproved) {
-    const item = appData.consignments[storeIdx];
+    // Recheck cloud status bago mag-approve para hindi ma-approve ang hindi pa confirmed.
+    if (isApproved) {
+        try {
+            const latest = await getDoc(doc(db, 'app_data', DATA_DOC));
+            if (!latest.exists()) { await alert('Walang cloud data.'); return; }
+            appData = latest.data();
+        } catch (err) { await alert('Hindi ma-verify ang confirmation: ' + err.message); return; }
+    }
+    const item = (appData.consignments || [])[storeIdx];
+    if (!item || !item.pendingSales || !item.pendingSales[saleIdx]) { await alert('Hindi na makita ang bentang ito.'); return; }
     const timestamp = new Date().toLocaleString();
     const style = styleType || 'Ordinary';
-    const sale = item.pendingSales[saleIdx] || {};
+    const sale = item.pendingSales[saleIdx];
+    if (isApproved && sale.status !== 'Locked' && sale.status !== 'Confirmed') {
+        await alert('⏳ Hintayin muna ang Lock / Confirm ng Client bago aprubahan ang benta.');
+        renderApp(); return;
+    }
 
     if (isApproved) {
         item.pendingSales.splice(saleIdx, 1);
