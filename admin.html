@@ -416,7 +416,7 @@ function togglePasswordVisibilityField(inputId, btnEl) {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, updateDoc, query, where, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -807,7 +807,7 @@ async function loadBuyerOrders(silent) {
                 : o.status === 'Delivering' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Completed')">🏁 Tapos na</button>` : '';
             return `<div class="store-card" style="border-left-color:${st[1]};">
                 <div style="font-size:.85rem;"><b>${escH(o.name)}</b> <span class="badge" style="background:${st[1]};">${st[0]}</span></div>
-                <div style="font-size:.78rem;line-height:1.5;">📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount: ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
+                <div style="font-size:.78rem;line-height:1.5;">📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount: ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>🪙 Gagamitin: ${Number(o.coinsRequested||0)} coins · Na-credit: ${Number(o.coinsEarned||0)} coins<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
                 <div class="btn-group">${btns}</div></div>`;
         }).join('') : '<p style="font-size:.85rem;color:#666;">Walang order pa.</p>';
     } catch (err) {
@@ -817,9 +817,45 @@ async function loadBuyerOrders(silent) {
 }
 window.loadBuyerOrders = loadBuyerOrders;
 window.setBuyerOrderStatus = async function(id, status) {
-    try { await updateDoc(doc(db, BUYER_ORDERS_COL, id), { status, updatedAt: Date.now() }); loadBuyerOrders(); }
-    catch (err) { alert('⚠️ Hindi ma-update: ' + (err.code || err.message)); }
+    const orderRef = doc(db, BUYER_ORDERS_COL, id);
+    const walletCol = TEST_MODE ? 'buyer_wallets_test' : 'buyer_wallets';
+    try {
+      await runTransaction(db, async tx => {
+        const orderSnap = await tx.get(orderRef);
+        if (!orderSnap.exists()) throw new Error('Order not found');
+        const order = orderSnap.data();
+        const transitions = {Pending:['Approved','Rejected'],Approved:['Delivering','Rejected'],Delivering:['Completed','Rejected']};
+        if (!(transitions[order.status] || []).includes(status)) throw new Error('Invalid status transition');
+        if (!order.buyerUid) {
+          // Old orders without wallet account: preserve previous workflow, no coins.
+          tx.update(orderRef,{status,updatedAt:Date.now()});return;
+        }
+        const walletRef = doc(db,walletCol,order.buyerUid);
+        const walletSnap = await tx.get(walletRef);
+        const wallet = walletSnap.exists()?walletSnap.data():{};
+        let balance = Number(wallet.balance||0);
+        const requested = Number(order.coinsRequested||0);
+        const alreadySpent = Number(order.coinsSpent||0);
+        const pcs = (order.items||[]).reduce((n,i)=>n+Number(i.qty||0),0);
+        const earned = Math.floor(pcs/7)*2;
+        if (status === 'Approved' && requested > 0) {
+          if (!Number.isInteger(requested) || requested > 20 || balance < requested) throw new Error('Kulang ang available coins ng buyer. Hilingin na mag-order muli nang walang coins.');
+          balance -= requested;
+        }
+        if (status === 'Rejected' && alreadySpent > 0) balance += alreadySpent;
+        if (status === 'Completed' && !order.coinsCredited) balance += earned;
+        if (balance < 0) throw new Error('Invalid coin balance');
+        const updates = {status,updatedAt:Date.now()};
+        if (status === 'Approved') updates.coinsSpent=requested;
+        if (status === 'Rejected') updates.coinsSpent=0;
+        if (status === 'Completed') {updates.coinsCredited=true;updates.coinsEarned=earned;}
+        tx.update(orderRef,updates);
+        tx.set(walletRef,{balance,updatedAt:Date.now()}, {merge:true});
+      });
+      loadBuyerOrders();
+    } catch (err) { alert('⚠️ Hindi ma-update: ' + (err.code || err.message)); }
 };
+
 setTimeout(() => loadBuyerOrders(true), 4000);
 setInterval(() => { if (auth.currentUser) loadBuyerOrders(true); }, 120000);
 
