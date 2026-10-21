@@ -131,6 +131,7 @@ button:hover { background-color: #1b5e20; }
             <button type="button" onclick="openModal('backupModal')" style="background-color: #00796b;">💾 Backup</button>
             <button type="button" id="testModeBtn" onclick="toggleTestMode()" style="background-color:#455a64;">🧪 Testing: OFF</button>
             <button type="button" id="seedTestBtn" onclick="seedTestFromLive()" style="background-color:#e65100;display:none;">🔄 Kopyahin Live → Test</button>
+
             <button type="button" onclick="openModal('requestModal')" style="background-color: #f57c00; position:relative;">💰 Benta & 📦 Requests <span id="requestTopBadge" style="background:#d32f2f; color:white; border-radius:50%; padding:1px 5px; font-size:10px; display:none;">0</span></button>
         </div>
 
@@ -249,7 +250,7 @@ button:hover { background-color: #1b5e20; }
         <!-- TAB: DIRECT BUYERS -->
         <div id="buyersTab" class="tab-content">
             <div class="card">
-                <h2>💰 Presyo at Promo para sa Direct Buyers</h2><p style="font-size:.8rem;color:#2e7d32;margin-bottom:10px;">✅ Default minimum 7 pcs · Awtomatikong 10% OFF sa kabuuang regular-price order (7 pcs pataas). Ang mga text promo ay announcement lamang.</p>
+                <h2>💰 Presyo at Promo para sa Direct Buyers</h2><p style="font-size:.8rem;color:#2e7d32;margin-bottom:10px;">✅ Default minimum 7 pcs · Awtomatikong 5% OFF sa kabuuang regular-price order (7 pcs pataas). Ang mga text promo ay announcement lamang.</p>
                 <div style="display:flex;gap:8px;">
                     <div style="flex:1;"><label>Ordinary (₱/pc):</label><input type="number" id="buyerPriceOrdinary" min="0" step="1" inputmode="numeric"></div>
                     <div style="flex:1;"><label>Premium (₱/pc):</label><input type="number" id="buyerPricePremium" min="0" step="1" inputmode="numeric"></div>
@@ -265,14 +266,26 @@ button:hover { background-color: #1b5e20; }
             </div>
 
             <div class="card">
-                <h2>🏪 Directory ng Distributors (para sa Direct Buyers)</h2>
+                <button type="button" id="distributorToggle" aria-expanded="false" aria-controls="adminDistributorPanel" onclick="toggleAdminDistributors()" style="width:100%;background:#185c38;color:white;font-weight:800;padding:14px;border-radius:12px">🏪 Mga Distributor — Ipakita ▼</button>
+                <div id="adminDistributorPanel" hidden style="padding-top:12px">
+                <h2>🏪 Directory ng Distributors (Admin lamang)</h2>
                 <p style="font-size:.78rem;color:#555;margin:0 0 8px;">Lalabas lang ang may ✔ <b>consent</b> at hindi naka-STOP. Store Partner: <b>apelyido lang</b> ang ipapakita (hal. <i>●●●● ●●●● Cruz</i>). Sales Agent: <b>Alyas</b> lang. Walang address, numero, o email na ipapakita.</p>
                 <div id="buyerDirectoryList"></div>
                 <button type="button" onclick="publishBuyerDirectory()" style="margin-top:10px;background-color:#00796b;">📣 I-publish sa Direct Buyers</button>
                 <div id="buyerPublishInfo" style="font-size:.75rem;color:#555;margin-top:6px;"></div>
+                </div>
             </div>
 
-            <div class="card">
+            <div class="card" style="border:2px solid #2e7d32"><h2>📅 Pickup Scheduling — Admin</h2><p>Ang Admin ang magtatakda ng pickup date at mag-uupdate kung <b>Unavailable Pa</b>, <b>May Pickup Schedule</b>, o <b>For Pickup Na</b> ang order. Minimum 7 pcs bawat order; walang 15-pcs na limit sa Buyer.</p><p style="font-size:.85rem;color:#555">Suriin ang dami ng order at production availability bago magtakda ng petsa.</p></div>
+            <div class="card" style="border:2px solid #1565c0;text-align:center">
+<h2 id="buyerQrTitle">📱 Buyer Portal — QR Code</h2>
+<p id="buyerQrHint" style="font-size:.85rem">Awtomatikong nakaayon sa TESTING / LIVE.</p>
+<a id="buyerQrAnchor" target="_blank" rel="noopener noreferrer"><img id="buyerQrImg" alt="Buyer Portal QR Code" style="width:240px;max-width:100%;height:auto;border:1px solid #ddd;border-radius:12px"></a>
+<p><a id="buyerQrLink" target="_blank" rel="noopener noreferrer" style="overflow-wrap:anywhere;font-weight:700">🔗 Buksan ang Buyer Portal</a></p>
+<button type="button" id="buyerQrCopyBtn">📋 Kopyahin ang Buyer Link</button>
+<p style="font-size:.8rem;color:#555">Ang QR sa Admin ay nagbabago ayon sa aktibong mode. Ang naka-print na QR ay hindi kusang magbabago.</p>
+</div>
+             <div class="card">
                 <h2>📦 Mga Order ng Direct Buyers <span id="buyerOrdersCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
                 <button type="button" onclick="loadBuyerOrders()" style="width:auto;padding:6px 12px;font-size:.8rem;margin-bottom:8px;">🔄 I-refresh</button>
                 <div id="buyerOrdersList"><p style="font-size:.85rem;color:#666;">Walang order pa.</p></div>
@@ -354,6 +367,14 @@ function togglePasswordVisibilityField(inputId, btnEl) {
   input.type = show ? 'text' : 'password';
   btnEl.textContent = show ? '🙈' : '👁️';
 }
+
+// Opens a GitHub Pull Request comparison. No automatic deployment or merge.
+window.openTestingToLivePR = function () {
+  const msg = 'Bubuksan ang GitHub upang i-review ang Testing → main Pull Request.\n\nHindi nito awtomatikong babaguhin ang LIVE. Ikaw pa rin ang pipindot sa Create Pull Request at Merge pagkatapos mag-review.\n\nTiyaking handa rin ang LIVE Firestore Rules at buyer.html bago mag-merge.\n\nMagpatuloy?';
+  if (!window.confirm(msg)) return;
+  const url = 'https://github.com/doctorjiemar0-dotcom/DWBE-CONSIGNMENT-/compare/main...Testing?expand=1';
+  window.location.href = url;
+};
 </script>
 <script>
 // Propesyonal na dialog box (kapalit ng "xxx.vercel.app says" ng browser)
@@ -435,8 +456,33 @@ const auth = getAuth();
 // ===== TESTING MODE (shared key sa index.html) =====
 const LIVE_DOC_ID = 'main_inventory';
 const TEST_DOC_ID = 'test_inventory';
-const TEST_MODE = localStorage.getItem('dwbe_test_mode') === '1';
+const TEST_MODE = new URLSearchParams(location.search).get('test') === '1' || (new URLSearchParams(location.search).get('test') !== '0' && localStorage.getItem('dwbe_test_mode') === '1');
 const DATA_DOC = TEST_MODE ? TEST_DOC_ID : LIVE_DOC_ID;
+
+// Buyer QR follows the actual deployed hostname and selected Firestore mode.
+function setupBuyerPortalQR(){
+  const test = TEST_MODE;
+  const buyerUrl = new URL('buyer.html', window.location.href);
+  buyerUrl.search = test ? '?test=1' : '';
+  const url = buyerUrl.href;
+  const title = document.getElementById('buyerQrTitle');
+  const hint = document.getElementById('buyerQrHint');
+  const link = document.getElementById('buyerQrLink');
+  const anchor = document.getElementById('buyerQrAnchor');
+  const img = document.getElementById('buyerQrImg');
+  const copy = document.getElementById('buyerQrCopyBtn');
+  if (!img) return;
+  title.textContent = '📱 Buyer Portal — QR Code (' + (test ? 'TESTING' : 'LIVE') + ')';
+  hint.textContent = test ? '🧪 TESTING Buyer Portal (hiwalay na test data)' : '🟢 LIVE Buyer Portal (real orders)';
+  anchor.href = link.href = url;
+  link.textContent = '🔗 Buksan ang Buyer Portal (' + (test ? 'TESTING' : 'LIVE') + ')';
+  // Public QR image generator: URL text is sent to the QR image service.
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=' + encodeURIComponent(url);
+  img.onerror = () => { img.alt = 'Hindi ma-load ang QR; gamitin ang Buyer link sa ibaba.'; };
+  copy.onclick = async () => { try { await navigator.clipboard.writeText(url); alert('Nakopya ang Buyer Portal link'); } catch { prompt('Kopyahin ang link:',url); } };
+}
+window.addEventListener('DOMContentLoaded', setupBuyerPortalQR);
+
 const LOCAL_KEY = TEST_MODE ? 'consignments_test' : 'consignments_v3';
 
 (function () {
@@ -769,12 +815,20 @@ window.removeBuyerPromo = async function(i) {
     buyerSettings().promos.splice(i, 1); await saveToCloud(); renderBuyerTab();
     await publishBuyerDirectory();
 };
+window.toggleAdminDistributors = function() {
+    const panel = document.getElementById('adminDistributorPanel');
+    const button = document.getElementById('distributorToggle');
+    if (!panel || !button) return;
+    panel.hidden = !panel.hidden;
+    button.setAttribute('aria-expanded', String(!panel.hidden));
+    button.textContent = panel.hidden ? '🏪 Mga Distributor — Ipakita ▼' : '🏪 Mga Distributor — Itago ▲';
+};
 window.publishBuyerDirectory = async function() {
     const b = buyerSettings();
     const distributors = (appData.consignments || [])
         .filter(r => r.showInDirectory && r.consignmentStatus !== 'Stopped')
         .map(r => ({ label: directoryLabel(r), type: isAgentRec(r) ? 'Sales Agent Partner' : 'Store Partner', area: r.directoryArea || '' }));
-    const payload = { updatedAt: new Date().toISOString(), distributors, prices: { Ordinary: b.prices.Ordinary || 0, Premium: b.prices.Premium || 0 }, minOrder: 7, discountRate: 0.10, promos: b.promos.filter(p => !p.until || p.until >= localToday()).map(p => ({ title: p.title, text: p.text || '', until: p.until || '' })) };
+    const payload = { updatedAt: new Date().toISOString(), distributors, prices: { Ordinary: b.prices.Ordinary || 0, Premium: b.prices.Premium || 0 }, minOrder: 7, discountRate: 0.05, promos: b.promos.filter(p => !p.until || p.until >= localToday()).map(p => ({ title: p.title, text: p.text || '', until: p.until || '' })) };
     try {
         await setDoc(doc(db, 'buyer_public', BUYER_DIR_DOC), payload);
         document.getElementById('buyerPublishInfo').textContent = `✅ Na-publish: ${distributors.length} distributor, ${payload.promos.length} promo • ${new Date().toLocaleString()}`;
@@ -802,33 +856,54 @@ async function loadBuyerOrders(silent) {
         if (!list) return;
         list.innerHTML = orders.length ? orders.map(o => {
             const st = BUYER_STATUS[o.status] || [o.status, '#777'];
+            const pickup = o.pickupDate || '';
+            const sched = `<div style="margin-top:8px;padding:9px;background:#e8f5e9;border-radius:8px"><b>📅 Admin Pickup Schedule</b><br><input type="date" id="pickup_${o.id}" value="${escH(pickup)}" style="margin:6px 0"><button type="button" class="btn-approve" onclick="assignBuyerPickup('${o.id}')">📅 I-save ang Pickup Date</button><div style="margin-top:6px;font-size:.8rem">Buyer notification: <b>${o.pickupReady?'✅ FOR PICKUP':pickup?'🕒 Naka-schedule; hindi pa ready':'⏳ Unavailable pa / naghihintay ng schedule'}</b></div><button type="button" class="btn-approve" onclick="setBuyerPickupReady('${o.id}',true)">✅ For Pickup Na</button> <button type="button" class="btn-decline" onclick="setBuyerPickupReady('${o.id}',false)">⏳ Unavailable Pa</button></div>`;
             const btns = o.status === 'Pending' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Approved')">✅ Aprubahan</button> <button type="button" class="btn-decline" onclick="setBuyerOrderStatus('${o.id}','Rejected')">❌ Tanggihan</button>`
                 : o.status === 'Approved' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Delivering')">🚚 Ihatid na</button>`
                 : o.status === 'Delivering' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Completed')">🏁 Tapos na</button>` : '';
             return `<div class="store-card" style="border-left-color:${st[1]};">
                 <div style="font-size:.85rem;"><b>${escH(o.name)}</b> <span class="badge" style="background:${st[1]};">${st[0]}</span></div>
-                <div style="font-size:.78rem;line-height:1.5;">📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount: ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>🪙 Gagamitin: ${Number(o.coinsRequested||0)} coins · Na-credit: ${Number(o.coinsEarned||0)} coins<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
-                <div class="btn-group">${btns}</div></div>`;
+                <div style="font-size:.9rem;margin:8px 0;padding:9px;background:#e8f5e9;border-radius:8px;"><b>🎟️ Buyer Code: <span style="font-family:monospace;letter-spacing:1px;font-size:1.08rem;">${escH(o.id.slice(0,6).toUpperCase())}</span></b><br><small>Order ID: ${escH(o.id)}</small></div>
+                <div style="font-size:.78rem;line-height:1.5;">📅 Pickup: ${escH(o.pickupDate || "Wala pang schedule")} · ${escH(o.priority || "Minor")} priority<br>📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount/charges (legacy estimate): ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>🪙 Gagamitin: ${Number(o.coinsRequested||0)} coins · Na-credit: ${Number(o.coinsEarned||0)} coins<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
+                <div class="btn-group">${btns}</div>${sched}</div>`;
         }).join('') : '<p style="font-size:.85rem;color:#666;">Walang order pa.</p>';
     } catch (err) {
         console.error(err);
         if (silent !== true && list) list.innerHTML = '<p style="font-size:.85rem;color:#c62828;">⚠️ Hindi makuha ang mga order: ' + escH(err.code || err.message) + '. Tiyaking naka-set ang Firestore rules para sa buyer orders.</p>';
     }
 }
+window.assignBuyerPickup = async function(id) {
+  const date = document.getElementById('pickup_' + id)?.value;
+  if (!date) { alert('Pumili muna ng pickup date.'); return; }
+  try {
+    await updateDoc(doc(db, BUYER_ORDERS_COL, id), {pickupDate: date, pickupReady: false, updatedAt: Date.now()});
+    await loadBuyerOrders();
+    alert('✅ Na-save ang pickup schedule. Makikita ito ng Buyer.');
+  } catch(e) { alert('⚠️ Hindi na-save: ' + (e.code || e.message)); }
+};
+window.setBuyerPickupReady = async function(id, ready) {
+  try {
+    await updateDoc(doc(db, BUYER_ORDERS_COL, id), {pickupReady: !!ready, updatedAt: Date.now()});
+    await loadBuyerOrders();
+  } catch(e) { alert('⚠️ Hindi na-update: ' + (e.code || e.message)); }
+};
 window.loadBuyerOrders = loadBuyerOrders;
 window.setBuyerOrderStatus = async function(id, status) {
     const orderRef = doc(db, BUYER_ORDERS_COL, id);
     const walletCol = TEST_MODE ? 'buyer_wallets_test' : 'buyer_wallets';
+    const slotCol = TEST_MODE ? 'buyer_slots_test' : 'buyer_slots';
     try {
       await runTransaction(db, async tx => {
         const orderSnap = await tx.get(orderRef);
         if (!orderSnap.exists()) throw new Error('Order not found');
         const order = orderSnap.data();
+        const slotRef = order.pickupDate && order.slotNumber ? doc(db, slotCol, order.pickupDate + '_' + order.slotNumber) : null;
+        if (status === 'Rejected' && slotRef) await tx.get(slotRef);
         const transitions = {Pending:['Approved','Rejected'],Approved:['Delivering','Rejected'],Delivering:['Completed','Rejected']};
         if (!(transitions[order.status] || []).includes(status)) throw new Error('Invalid status transition');
         if (!order.buyerUid) {
           // Old orders without wallet account: preserve previous workflow, no coins.
-          tx.update(orderRef,{status,updatedAt:Date.now()});return;
+          tx.update(orderRef,{status,updatedAt:Date.now()});if(status==='Rejected'&&slotRef)tx.delete(slotRef);return;
         }
         const walletRef = doc(db,walletCol,order.buyerUid);
         const walletSnap = await tx.get(walletRef);
@@ -850,6 +925,7 @@ window.setBuyerOrderStatus = async function(id, status) {
         if (status === 'Rejected') updates.coinsSpent=0;
         if (status === 'Completed') {updates.coinsCredited=true;updates.coinsEarned=earned;}
         tx.update(orderRef,updates);
+        if(status==='Rejected'&&slotRef)tx.delete(slotRef);
         tx.set(walletRef,{balance,updatedAt:Date.now()}, {merge:true});
       });
       loadBuyerOrders();
