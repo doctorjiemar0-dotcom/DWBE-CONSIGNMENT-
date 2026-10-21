@@ -803,20 +803,37 @@ async function loadBuyerOrders(silent) {
         if (!list) return;
         list.innerHTML = orders.length ? orders.map(o => {
             const st = BUYER_STATUS[o.status] || [o.status, '#777'];
+            const pickup = o.pickupDate || '';
+            const sched = `<div style="margin-top:8px;padding:9px;background:#e8f5e9;border-radius:8px"><b>📅 Admin Pickup Schedule</b><br><input type="date" id="pickup_${o.id}" value="${escH(pickup)}" style="margin:6px 0"><button type="button" class="btn-approve" onclick="assignBuyerPickup('${o.id}')">📅 I-save ang Pickup Date</button><div style="margin-top:6px;font-size:.8rem">Buyer notification: <b>${o.pickupReady?'✅ FOR PICKUP':pickup?'🕒 Naka-schedule; hindi pa ready':'⏳ Unavailable pa / naghihintay ng schedule'}</b></div><button type="button" class="btn-approve" onclick="setBuyerPickupReady('${o.id}',true)">✅ For Pickup Na</button> <button type="button" class="btn-decline" onclick="setBuyerPickupReady('${o.id}',false)">⏳ Unavailable Pa</button></div>`;
             const btns = o.status === 'Pending' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Approved')">✅ Aprubahan</button> <button type="button" class="btn-decline" onclick="setBuyerOrderStatus('${o.id}','Rejected')">❌ Tanggihan</button>`
                 : o.status === 'Approved' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Delivering')">🚚 Ihatid na</button>`
                 : o.status === 'Delivering' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Completed')">🏁 Tapos na</button>` : '';
             return `<div class="store-card" style="border-left-color:${st[1]};">
                 <div style="font-size:.85rem;"><b>${escH(o.name)}</b> <span class="badge" style="background:${st[1]};">${st[0]}</span></div>
                 <div style="font-size:.9rem;margin:8px 0;padding:9px;background:#e8f5e9;border-radius:8px;"><b>🎟️ Buyer Code: <span style="font-family:monospace;letter-spacing:1px;font-size:1.08rem;">${escH(o.id.slice(0,6).toUpperCase())}</span></b><br><small>Order ID: ${escH(o.id)}</small></div>
-                <div style="font-size:.78rem;line-height:1.5;">📅 Pickup: ${escH(o.pickupDate || "Legacy order")} · ${escH(o.priority || "Minor")} priority<br>📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount/charges (legacy estimate): ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>🪙 Gagamitin: ${Number(o.coinsRequested||0)} coins · Na-credit: ${Number(o.coinsEarned||0)} coins<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
-                <div class="btn-group">${btns}</div></div>`;
+                <div style="font-size:.78rem;line-height:1.5;">📅 Pickup: ${escH(o.pickupDate || "Wala pang schedule")} · ${escH(o.priority || "Minor")} priority<br>📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount/charges (legacy estimate): ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>🪙 Gagamitin: ${Number(o.coinsRequested||0)} coins · Na-credit: ${Number(o.coinsEarned||0)} coins<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
+                <div class="btn-group">${btns}</div>${sched}</div>`;
         }).join('') : '<p style="font-size:.85rem;color:#666;">Walang order pa.</p>';
     } catch (err) {
         console.error(err);
         if (silent !== true && list) list.innerHTML = '<p style="font-size:.85rem;color:#c62828;">⚠️ Hindi makuha ang mga order: ' + escH(err.code || err.message) + '. Tiyaking naka-set ang Firestore rules para sa buyer orders.</p>';
     }
 }
+window.assignBuyerPickup = async function(id) {
+  const date = document.getElementById('pickup_' + id)?.value;
+  if (!date) { alert('Pumili muna ng pickup date.'); return; }
+  try {
+    await updateDoc(doc(db, BUYER_ORDERS_COL, id), {pickupDate: date, pickupReady: false, updatedAt: Date.now()});
+    await loadBuyerOrders();
+    alert('✅ Na-save ang pickup schedule. Makikita ito ng Buyer.');
+  } catch(e) { alert('⚠️ Hindi na-save: ' + (e.code || e.message)); }
+};
+window.setBuyerPickupReady = async function(id, ready) {
+  try {
+    await updateDoc(doc(db, BUYER_ORDERS_COL, id), {pickupReady: !!ready, updatedAt: Date.now()});
+    await loadBuyerOrders();
+  } catch(e) { alert('⚠️ Hindi na-update: ' + (e.code || e.message)); }
+};
 window.loadBuyerOrders = loadBuyerOrders;
 window.setBuyerOrderStatus = async function(id, status) {
     const orderRef = doc(db, BUYER_ORDERS_COL, id);
