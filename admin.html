@@ -436,7 +436,7 @@ const auth = getAuth();
 // ===== TESTING MODE (shared key sa index.html) =====
 const LIVE_DOC_ID = 'main_inventory';
 const TEST_DOC_ID = 'test_inventory';
-const TEST_MODE = localStorage.getItem('dwbe_test_mode') === '1';
+const TEST_MODE = new URLSearchParams(location.search).get('test') === '1' || (new URLSearchParams(location.search).get('test') !== '0' && localStorage.getItem('dwbe_test_mode') === '1');
 const DATA_DOC = TEST_MODE ? TEST_DOC_ID : LIVE_DOC_ID;
 const LOCAL_KEY = TEST_MODE ? 'consignments_test' : 'consignments_v3';
 
@@ -808,6 +808,7 @@ async function loadBuyerOrders(silent) {
                 : o.status === 'Delivering' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Completed')">🏁 Tapos na</button>` : '';
             return `<div class="store-card" style="border-left-color:${st[1]};">
                 <div style="font-size:.85rem;"><b>${escH(o.name)}</b> <span class="badge" style="background:${st[1]};">${st[0]}</span></div>
+                <div style="font-size:.9rem;margin:8px 0;padding:9px;background:#e8f5e9;border-radius:8px;"><b>🎟️ Buyer Code: <span style="font-family:monospace;letter-spacing:1px;font-size:1.08rem;">${escH(o.id.slice(0,6).toUpperCase())}</span></b><br><small>Order ID: ${escH(o.id)}</small></div>
                 <div style="font-size:.78rem;line-height:1.5;">📅 Pickup: ${escH(o.pickupDate || "Legacy order")} · ${escH(o.priority || "Minor")} priority<br>📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount/charges (legacy estimate): ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>🪙 Gagamitin: ${Number(o.coinsRequested||0)} coins · Na-credit: ${Number(o.coinsEarned||0)} coins<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
                 <div class="btn-group">${btns}</div></div>`;
         }).join('') : '<p style="font-size:.85rem;color:#666;">Walang order pa.</p>';
