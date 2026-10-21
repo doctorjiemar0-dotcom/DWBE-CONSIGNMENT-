@@ -122,6 +122,7 @@ button:hover { background-color: #1b5e20; }
             <button type="button" class="tab-btn active" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>
             <button type="button" class="tab-btn" onclick="switchTab('inquiriesTab', this)">📥 Inquiries<span class="tab-badge" id="inquiryTabBadge">0</span></button>
             <button type="button" class="tab-btn" onclick="switchTab('storesTab', this)">🏢 Tindahan</button>
+            <button type="button" class="tab-btn" onclick="switchTab('agentsTab', this)">🤝 Sales Agents<span class="tab-badge" id="agentTabBadge">0</span></button>
             <button type="button" class="tab-btn" onclick="switchTab('inventoryTab', this)">📋 Inventory</button>
             <button type="button" class="tab-btn" onclick="switchTab('buyersTab', this)">🛒 Direct Buyers<span class="tab-badge" id="buyerTabBadge">0</span></button>
         </div>
@@ -235,11 +236,17 @@ button:hover { background-color: #1b5e20; }
                 <h2 style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>🟢 Aktibong Consignment Store Partner <span id="activeStoresCount" style="font-size:.8rem;color:#558b2f;">(0)</span></span><button type="button" id="toggleBtn_storesList" onclick="toggleStoreSection('storesList', this)" style="width:auto;margin:0;padding:5px 12px;font-size:.78rem;background:#2e7d32;">▲ Close</button></h2>
                 <div id="storesList"><p style="text-align:center; color:#778; font-size:0.9rem;">Nag-load ng mga tindahan...</p></div>
 
-                <h2 style="margin-top:22px;border-bottom-color:#f9a825;color:#8a5a00;display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>🤝 Aktibong Sales Agent Partner <span id="activeAgentsCount" style="font-size:.8rem;color:#8a5a00;">(0)</span></span><button type="button" id="toggleBtn_storesListAgents" onclick="toggleStoreSection('storesListAgents', this)" style="width:auto;margin:0;padding:5px 12px;font-size:.78rem;background:#f9a825;color:#3b2a00;">▲ Close</button></h2>
-                <div id="storesListAgents"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong Sales Agent Partner.</p></div>
-
                 <h2 style="margin-top:22px;border-bottom-color:#ffcdd2;color:#b71c1c;">⛔ Deactivated Store Partner <span id="inactiveStoresCount" style="font-size:.8rem;color:#b71c1c;">(0)</span></h2>
                 <div id="storesListInactive"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na tindahan.</p></div>
+            </div>
+        </div>
+
+        <!-- TAB: SALES AGENTS -->
+        <div id="agentsTab" class="tab-content">
+            <div class="card" style="border-top:4px solid #f9a825;">
+                <h2 style="border-bottom-color:#f9a825;color:#8a5a00;">🤝 Mga Sales Agent Partner</h2>
+                <h2 style="margin-top:6px;border-bottom-color:#f9a825;color:#8a5a00;display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>🤝 Aktibong Sales Agent Partner <span id="activeAgentsCount" style="font-size:.8rem;color:#8a5a00;">(0)</span></span><button type="button" id="toggleBtn_storesListAgents" onclick="toggleStoreSection('storesListAgents', this)" style="width:auto;margin:0;padding:5px 12px;font-size:.78rem;background:#f9a825;color:#3b2a00;">▲ Close</button></h2>
+                <div id="storesListAgents"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong Sales Agent Partner.</p></div>
 
                 <h2 style="margin-top:22px;border-bottom-color:#ffcdd2;color:#b71c1c;">⛔ Deactivated Sales Agent Partner <span id="inactiveAgentsCount" style="font-size:.8rem;color:#b71c1c;">(0)</span></h2>
                 <div id="storesListAgentsInactive"><p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na Sales Agent Partner.</p></div>
@@ -1828,6 +1835,8 @@ function renderApp() {
     const activeAgCntEl = document.getElementById('activeAgentsCount');
     const inactiveAgCntEl = document.getElementById('inactiveAgentsCount');
     if (activeAgCntEl) activeAgCntEl.textContent = `(${activeAgentCount})`;
+    const agentTabBadge = document.getElementById('agentTabBadge');
+    if (agentTabBadge) { agentTabBadge.textContent = activeAgentCount; agentTabBadge.style.display = activeAgentCount ? 'block' : 'none'; }
     if (inactiveAgCntEl) inactiveAgCntEl.textContent = `(${inactiveAgentCount})`;
     if (activeAgentCount === 0) storesListAgents.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang aktibong Sales Agent Partner.</p>';
     if (inactiveAgentCount === 0) storesListAgentsInactive.innerHTML = '<p style="text-align:center; color:#778; font-size:0.9rem;">Walang deactivated na Sales Agent Partner.</p>';
