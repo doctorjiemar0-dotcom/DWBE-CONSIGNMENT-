@@ -292,6 +292,16 @@ button:hover { background-color: #1b5e20; }
 <button type="button" id="buyerQrCopyBtn">📋 Kopyahin ang Buyer Link</button>
 <p style="font-size:.8rem;color:#555">Ang QR sa Admin ay nagbabago ayon sa aktibong mode. Ang naka-print na QR ay hindi kusang magbabago.</p>
 </div>
+             <div class="card" id="buyerResetCard" style="border:2px solid #5e35b1">
+                <h2>🔑 I-reset ang Password ng Buyer</h2>
+                <p style="font-size:.8rem;color:#555;margin-bottom:8px;">Ilagay ang email ng buyer at ang pansamantalang password. Ibigay ito sa buyer at paalalahanan siyang palitan ito pagkatapos mag-login.</p>
+                <label for="buyerResetEmail">Email ng buyer:</label>
+                <input type="email" id="buyerResetEmail" placeholder="buyer@email.com" autocapitalize="none" style="margin-bottom:8px;">
+                <label for="buyerResetPass">Default password (min. 6):</label>
+                <input type="text" id="buyerResetPass" placeholder="Iwanang blangko para sa default (admin123)" autocomplete="off">
+                <button type="button" id="buyerResetBtn" onclick="resetBuyerPassword()" style="background-color:#5e35b1;">🔑 I-set ang Password</button>
+                <div id="buyerResetResult"></div>
+            </div>
              <div class="card">
                 <h2>📦 Mga Order ng Direct Buyers <span id="buyerOrdersCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
                 <button type="button" onclick="loadBuyerOrders()" style="width:auto;padding:6px 12px;font-size:.8rem;margin-bottom:8px;">🔄 I-refresh</button>
@@ -872,7 +882,7 @@ async function loadBuyerOrders(silent) {
                 <div style="font-size:.85rem;"><b>${escH(o.name)}</b> <span class="badge" style="background:${st[1]};">${st[0]}</span></div>
                 <div style="font-size:.9rem;margin:8px 0;padding:9px;background:#e8f5e9;border-radius:8px;"><b>🎟️ Buyer Code: <span style="font-family:monospace;letter-spacing:1px;font-size:1.08rem;">${escH(o.id.slice(0,6).toUpperCase())}</span></b><br><small>Order ID: ${escH(o.id)}</small></div>
                 <div style="font-size:.78rem;line-height:1.5;">📅 Pickup: ${escH(o.pickupDate || "Wala pang schedule")} · ${escH(o.priority || "Minor")} priority<br>📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount/charges (legacy estimate): ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>🪙 Gagamitin: ${Number(o.coinsRequested||0)} coins · Na-credit: ${Number(o.coinsEarned||0)} coins<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
-                <div class="btn-group">${btns}</div>${sched}</div>`;
+                <div class="btn-group">${btns}<button type="button" class="btn-approve" style="background:#5e35b1;" onclick="prepBuyerReset('${escH(o.email)}')">🔑 Reset Password</button></div>${sched}</div>`;
         }).join('') : '<p style="font-size:.85rem;color:#666;">Walang order pa.</p>';
     } catch (err) {
         console.error(err);
@@ -893,6 +903,35 @@ window.setBuyerPickupReady = async function(id, ready) {
     await updateDoc(doc(db, BUYER_ORDERS_COL, id), {pickupReady: !!ready, updatedAt: Date.now()});
     await loadBuyerOrders();
   } catch(e) { alert('⚠️ Hindi na-update: ' + (e.code || e.message)); }
+};
+window.prepBuyerReset = function(email) {
+    document.getElementById('buyerResetEmail').value = email || '';
+    document.getElementById('buyerResetCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('buyerResetPass').focus();
+};
+window.resetBuyerPassword = async function() {
+    const emailEl = document.getElementById('buyerResetEmail'), pwEl = document.getElementById('buyerResetPass');
+    const out = document.getElementById('buyerResetResult'), btn = document.getElementById('buyerResetBtn');
+    const email = (emailEl.value || '').trim().toLowerCase();
+    const password = (pwEl.value || '').trim() || DEFAULT_CLIENT_PASSWORD;
+    out.innerHTML = '';
+    if (!email) { alert('Ilagay ang email ng buyer.'); return; }
+    if (password.length < 6) { alert('Hindi bababa sa 6 na karakter ang password.'); return; }
+    if (TEST_MODE) { alert('🧪 TESTING MODE: naka-block ang Reset Password (totoong Firebase account ito).'); return; }
+    if (!(await confirm(`I-reset ang password ng buyer na ${email}?\n\nBagong password: ${password}\n\nKung wala pang account ang email na ito, gagawa ng bagong account. Siguraduhing tama ang email.`))) return;
+    btn.disabled = true; btn.textContent = 'Sine-set...';
+    try {
+        const idToken = await auth.currentUser.getIdToken(true);
+        const resp = await fetch(RESET_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, email, password }) });
+        const raw = await resp.text(); let d = {}; try { d = JSON.parse(raw); } catch (_) {}
+        if (!resp.ok || !d.ok) throw new Error(d.error || (resp.status + ' ' + raw.slice(0, 120)));
+        const msg = 'Email: ' + email + '\nPassword: ' + password;
+        out.innerHTML = '<div style="background:#e8f5e9;border-radius:10px;padding:10px;margin-top:8px;font-size:.85rem;"><b>' + (d.created ? '✅ Bagong account ang ginawa.' : '✅ Napalitan na ang password.') + '</b><pre style="white-space:pre-wrap;margin:6px 0;">' + escH(msg) + '</pre><small>Sabihin sa buyer na palitan ito pagkatapos mag-login.</small><button type="button" id="buyerResetCopy" style="margin-top:8px;background-color:#1661a8;">📋 Kopyahin</button></div>';
+        document.getElementById('buyerResetCopy').onclick = () => { navigator.clipboard && navigator.clipboard.writeText(msg).then(() => { document.getElementById('buyerResetCopy').textContent = '✅ Nakopya na'; }); };
+        pwEl.value = '';
+    } catch (e) {
+        out.innerHTML = '<p style="color:#b71c1c;background:#ffebee;padding:10px;border-radius:8px;margin-top:8px;font-size:.85rem;">⚠️ ' + escH(e.message) + '</p>';
+    } finally { btn.disabled = false; btn.textContent = '🔑 I-set ang Password'; }
 };
 window.loadBuyerOrders = loadBuyerOrders;
 window.setBuyerOrderStatus = async function(id, status) {
