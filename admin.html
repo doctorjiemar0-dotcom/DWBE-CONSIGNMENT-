@@ -91,6 +91,38 @@ button:hover { background-color: #1b5e20; }
 .pw-wrapper input{padding-right:42px}
 .pw-toggle-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none!important;border:none!important;color:#666;font-size:1.1rem;padding:4px;cursor:pointer;width:auto!important;min-height:0!important;margin-top:0!important;box-shadow:none!important}
 .pw-toggle-btn:hover{color:#2e7d32}
+
+/* ===== Direct Buyers: compact na disenyo ===== */
+#buyersTab .bx{background:#fff;border:1px solid #dcedc8;border-radius:10px;margin-bottom:8px;overflow:hidden}
+#buyersTab .bx>summary{list-style:none;cursor:pointer;padding:11px 14px;font-weight:700;font-size:.9rem;color:var(--primary-color);display:flex;justify-content:space-between;align-items:center}
+#buyersTab .bx>summary::-webkit-details-marker{display:none}
+#buyersTab .bx>summary::after{content:'▾';opacity:.6}
+#buyersTab .bx[open]>summary::after{content:'▴'}
+#buyersTab .bx-body{padding:10px 14px 14px;border-top:1px solid #eef3e6}
+#buyersTab .bx-body label{margin-top:6px}
+.bhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bhead h2{margin:0;border:0;padding:0}
+.bhead button{width:auto;margin:0;padding:6px 12px;font-size:.78rem}
+.bnote{font-size:.74rem;color:#6b7c70;margin:6px 0 0}
+.bfilter{display:flex;gap:6px;overflow-x:auto;padding:8px 0 6px;margin:0;scrollbar-width:none}
+.bfilter::-webkit-scrollbar{display:none}
+.bfilter button{flex:none;width:auto;margin:0;padding:6px 11px;border-radius:99px;background:#f1f8e9;color:#33691e;border:1px solid #c5e1a5;font-size:.76rem;box-shadow:none}
+.bfilter button.on{background:var(--primary-color);color:#fff;border-color:var(--primary-color)}
+#buyerSearch{padding:8px 10px;margin-bottom:8px;font-size:.85rem}
+.bo{border:1px solid #e3ebdc;border-left:4px solid #999;border-radius:10px;background:#fff;margin-bottom:7px;overflow:hidden}
+.bo>summary{list-style:none;cursor:pointer;padding:9px 11px;display:grid;grid-template-columns:1fr auto;gap:3px 8px;align-items:center}
+.bo>summary::-webkit-details-marker{display:none}
+.bo .l1{font-weight:700;font-size:.9rem;min-width:0;overflow-wrap:anywhere}
+.bo .l2{font-size:.74rem;color:#667}
+.bo .amt{font-weight:800;color:#1b5e20;text-align:right;font-size:.92rem}
+.bo .pk{text-align:right;font-size:.72rem;color:#667}
+.bo .badge{font-size:.62rem;padding:2px 6px;margin-left:4px;vertical-align:middle}
+.bo-body{padding:6px 11px 11px;font-size:.78rem;line-height:1.55;border-top:1px dashed #e3ebdc}
+.bo-body .btn-group{margin-top:8px}
+.bo-sched{margin-top:8px;padding:8px;background:#f1f8e9;border-radius:8px}
+.bo-sched .r{display:flex;gap:6px;align-items:center;margin-top:5px}
+.bo-sched input{flex:1;padding:7px;font-size:.82rem;min-width:0}
+.bo-sched button{width:auto;margin:0;padding:7px 10px;font-size:.75rem}
 </style>
 </head>
 <body>
@@ -256,57 +288,66 @@ button:hover { background-color: #1b5e20; }
         <!-- TAB 4: INVENTORY -->
         <!-- TAB: DIRECT BUYERS -->
         <div id="buyersTab" class="tab-content">
-            <div class="card">
-                <h2>💰 Presyo at Promo para sa Direct Buyers</h2><p style="font-size:.8rem;color:#2e7d32;margin-bottom:10px;">✅ Default minimum 7 pcs · Awtomatikong 5% OFF sa kabuuang regular-price order (7 pcs pataas). Ang mga text promo ay announcement lamang.</p>
-                <div style="display:flex;gap:8px;">
-                    <div style="flex:1;"><label>Ordinary (₱/pc):</label><input type="number" id="buyerPriceOrdinary" min="0" step="1" inputmode="numeric"></div>
-                    <div style="flex:1;"><label>Premium (₱/pc):</label><input type="number" id="buyerPricePremium" min="0" step="1" inputmode="numeric"></div>
-                    <div style="flex:1;"><label>Min. order (pcs):</label><input type="number" id="buyerMinOrder" min="1" step="1" inputmode="numeric"></div>
-                </div>
-                <button type="button" onclick="saveBuyerSettings()" style="margin-top:8px;">💾 I-save ang Presyo</button>
-                <hr style="margin:12px 0;border:0;border-top:1px solid #e0e6e1;">
-                <label>Bagong Promo (pamagat):</label><input type="text" id="buyerPromoTitle" placeholder="Hal. Buy 10 Get 1 Free">
-                <label style="margin-top:6px;">Detalye:</label><textarea id="buyerPromoText" rows="2" placeholder="Hal. Para sa lahat ng order na 10 pcs pataas."></textarea>
-                <label style="margin-top:6px;">Hanggang (petsa, opsyonal):</label><input type="date" id="buyerPromoUntil">
-                <button type="button" onclick="addBuyerPromo()" style="margin-top:8px;background-color:#6a1b9a;">➕ Idagdag ang Promo</button>
-                <div id="buyerPromoList" style="margin-top:10px;"></div>
-            </div>
-
-            <div class="card">
-                <button type="button" id="distributorToggle" aria-expanded="false" aria-controls="adminDistributorPanel" onclick="toggleAdminDistributors()" style="width:100%;background:#185c38;color:white;font-weight:800;padding:14px;border-radius:12px">🏪 Mga Distributor — Ipakita ▼</button>
-                <div id="adminDistributorPanel" hidden style="padding-top:12px">
-                <h2>🏪 Directory ng Distributors (Admin lamang)</h2>
-                <p style="font-size:.78rem;color:#555;margin:0 0 8px;">Lalabas lang ang may ✔ <b>consent</b> at hindi naka-STOP. Store Partner: <b>apelyido lang</b> ang ipapakita (hal. <i>●●●● ●●●● Cruz</i>). Sales Agent: <b>Alyas</b> lang. Walang address, numero, o email na ipapakita.</p>
-                <div id="buyerDirectoryList"></div>
-                <button type="button" onclick="publishBuyerDirectory()" style="margin-top:10px;background-color:#00796b;">📣 I-publish sa Direct Buyers</button>
-                <div id="buyerPublishInfo" style="font-size:.75rem;color:#555;margin-top:6px;"></div>
-                </div>
-            </div>
-
-            <div class="card" style="border:2px solid #2e7d32"><h2>📅 Pickup Scheduling — Admin</h2><p>Ang Admin ang magtatakda ng pickup date at mag-uupdate kung <b>Unavailable Pa</b>, <b>May Pickup Schedule</b>, o <b>For Pickup Na</b> ang order. Minimum 7 pcs bawat order; walang 15-pcs na limit sa Buyer.</p><p style="font-size:.85rem;color:#555">Suriin ang dami ng order at production availability bago magtakda ng petsa.</p></div>
-            <div class="card" style="border:2px solid #1565c0;text-align:center">
-<h2 id="buyerQrTitle">📱 Buyer Portal — QR Code</h2>
-<p id="buyerQrHint" style="font-size:.85rem">Awtomatikong nakaayon sa TESTING / LIVE.</p>
-<a id="buyerQrAnchor" target="_blank" rel="noopener noreferrer"><img id="buyerQrImg" alt="Buyer Portal QR Code" style="width:240px;max-width:100%;height:auto;border:1px solid #ddd;border-radius:12px"></a>
-<p><a id="buyerQrLink" target="_blank" rel="noopener noreferrer" style="overflow-wrap:anywhere;font-weight:700">🔗 Buksan ang Buyer Portal</a></p>
-<button type="button" id="buyerQrCopyBtn">📋 Kopyahin ang Buyer Link</button>
-<p style="font-size:.8rem;color:#555">Ang QR sa Admin ay nagbabago ayon sa aktibong mode. Ang naka-print na QR ay hindi kusang magbabago.</p>
-</div>
-             <div class="card" id="buyerResetCard" style="border:2px solid #5e35b1">
-                <h2>🔑 I-reset ang Password ng Buyer</h2>
-                <p style="font-size:.8rem;color:#555;margin-bottom:8px;">Ilagay ang email ng buyer at ang pansamantalang password. Ibigay ito sa buyer at paalalahanan siyang palitan ito pagkatapos mag-login.</p>
-                <label for="buyerResetEmail">Email ng buyer:</label>
-                <input type="email" id="buyerResetEmail" placeholder="buyer@email.com" autocapitalize="none" style="margin-bottom:8px;">
-                <label for="buyerResetPass">Default password (min. 6):</label>
-                <input type="text" id="buyerResetPass" placeholder="Iwanang blangko para sa default (admin123)" autocomplete="off">
-                <button type="button" id="buyerResetBtn" onclick="resetBuyerPassword()" style="background-color:#5e35b1;">🔑 I-set ang Password</button>
-                <div id="buyerResetResult"></div>
-            </div>
-             <div class="card">
-                <h2>📦 Mga Order ng Direct Buyers <span id="buyerOrdersCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2>
-                <button type="button" onclick="loadBuyerOrders()" style="width:auto;padding:6px 12px;font-size:.8rem;margin-bottom:8px;">🔄 I-refresh</button>
+            <div class="card" style="padding:14px;">
+                <div class="bhead"><h2>📦 Mga Order <span id="buyerOrdersCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2><button type="button" onclick="loadBuyerOrders()">🔄 I-refresh</button></div>
+                <div class="bfilter" id="buyerFilterBar"></div>
+                <input type="search" id="buyerSearch" placeholder="🔍 Hanapin: pangalan, code, telepono, address" oninput="renderBuyerOrders()">
                 <div id="buyerOrdersList"><p style="font-size:.85rem;color:#666;">Walang order pa.</p></div>
+                <p class="bnote">📅 Ang Admin ang nagtatakda ng pickup date at ng status (Unavailable / For Pickup). Pindutin ang order para makita ang detalye.</p>
             </div>
+
+            <details class="bx" id="buyerResetCard">
+                <summary>🔑 I-reset ang Password ng Buyer</summary>
+                <div class="bx-body">
+                    <p style="font-size:.78rem;color:#555;margin-bottom:6px;">Ibigay ang pansamantalang password sa buyer at paalalahanan siyang palitan ito pagkatapos mag-login.</p>
+                    <label for="buyerResetEmail">Email ng buyer:</label>
+                    <input type="email" id="buyerResetEmail" placeholder="buyer@email.com" autocapitalize="none">
+                    <label for="buyerResetPass">Default password (min. 6):</label>
+                    <input type="text" id="buyerResetPass" placeholder="Iwanang blangko para sa default (admin123)" autocomplete="off">
+                    <button type="button" id="buyerResetBtn" onclick="resetBuyerPassword()" style="background-color:#5e35b1;">🔑 I-set ang Password</button>
+                    <div id="buyerResetResult"></div>
+                </div>
+            </details>
+
+            <details class="bx">
+                <summary>💰 Presyo at Promo</summary>
+                <div class="bx-body">
+                    <p style="font-size:.76rem;color:#2e7d32;margin-bottom:8px;">✅ Minimum 7 pcs · Awtomatikong 5% OFF (7 pcs pataas). Ang mga text promo ay announcement lamang.</p>
+                    <div style="display:flex;gap:8px;">
+                        <div style="flex:1;"><label>Ordinary (₱/pc)</label><input type="number" id="buyerPriceOrdinary" min="0" step="1" inputmode="numeric"></div>
+                        <div style="flex:1;"><label>Premium (₱/pc)</label><input type="number" id="buyerPricePremium" min="0" step="1" inputmode="numeric"></div>
+                        <div style="flex:1;"><label>Min. (pcs)</label><input type="number" id="buyerMinOrder" min="1" step="1" inputmode="numeric"></div>
+                    </div>
+                    <button type="button" onclick="saveBuyerSettings()" style="margin-top:8px;">💾 I-save ang Presyo</button>
+                    <hr style="margin:12px 0;border:0;border-top:1px solid #e0e6e1;">
+                    <label>Bagong Promo (pamagat)</label><input type="text" id="buyerPromoTitle" placeholder="Hal. Buy 10 Get 1 Free">
+                    <label>Detalye</label><textarea id="buyerPromoText" rows="2" placeholder="Hal. Para sa lahat ng order na 10 pcs pataas."></textarea>
+                    <label>Hanggang (petsa, opsyonal)</label><input type="date" id="buyerPromoUntil">
+                    <button type="button" onclick="addBuyerPromo()" style="margin-top:8px;background-color:#6a1b9a;">➕ Idagdag ang Promo</button>
+                    <div id="buyerPromoList" style="margin-top:10px;"></div>
+                </div>
+            </details>
+
+            <div style="margin-bottom:8px;">
+                <button type="button" id="distributorToggle" aria-expanded="false" aria-controls="adminDistributorPanel" onclick="toggleAdminDistributors()" style="width:100%;margin:0;background:#fff;color:#1b5e20;border:1px solid #dcedc8;border-radius:10px;padding:11px 14px;font-weight:700;font-size:.9rem;text-align:left;box-shadow:none;">🏪 Mga Distributor — Ipakita ▼</button>
+                <div id="adminDistributorPanel" hidden style="background:#fff;border:1px solid #dcedc8;border-top:0;border-radius:0 0 10px 10px;padding:10px 14px 14px;">
+                    <p style="font-size:.76rem;color:#555;margin:0 0 8px;">Lalabas lang ang may ✔ <b>consent</b> at hindi naka-STOP. Store Partner: <b>apelyido lang</b> (hal. <i>●●●● ●●●● Cruz</i>). Sales Agent: <b>Alyas</b> lang. Walang address, numero, o email na ipapakita.</p>
+                    <div id="buyerDirectoryList"></div>
+                    <button type="button" onclick="publishBuyerDirectory()" style="margin-top:10px;background-color:#00796b;">📣 I-publish sa Direct Buyers</button>
+                    <div id="buyerPublishInfo" style="font-size:.75rem;color:#555;margin-top:6px;"></div>
+                </div>
+            </div>
+
+            <details class="bx">
+                <summary id="buyerQrTitle">📱 Buyer Portal — QR Code</summary>
+                <div class="bx-body" style="text-align:center;">
+                    <p id="buyerQrHint" style="font-size:.8rem;margin-bottom:6px;">Awtomatikong nakaayon sa TESTING / LIVE.</p>
+                    <a id="buyerQrAnchor" target="_blank" rel="noopener noreferrer"><img id="buyerQrImg" alt="Buyer Portal QR Code" style="width:200px;max-width:100%;height:auto;border:1px solid #ddd;border-radius:12px"></a>
+                    <p style="margin:6px 0;"><a id="buyerQrLink" target="_blank" rel="noopener noreferrer" style="overflow-wrap:anywhere;font-weight:700;font-size:.85rem">🔗 Buksan ang Buyer Portal</a></p>
+                    <button type="button" id="buyerQrCopyBtn">📋 Kopyahin ang Buyer Link</button>
+                    <p style="font-size:.74rem;color:#555;margin-top:6px;">Ang naka-print na QR ay hindi kusang magbabago kapag nagpalit ng mode.</p>
+                </div>
+            </details>
         </div>
 
         <div id="inventoryTab" class="tab-content">
@@ -856,6 +897,54 @@ window.publishBuyerDirectory = async function() {
     }
 };
 const BUYER_STATUS = { Pending: ['🕒 Naghihintay', '#f57c00'], Approved: ['✅ Aprubado', '#2e7d32'], Delivering: ['🚚 Ihinahatid', '#0277bd'], Completed: ['🏁 Tapos na', '#455a64'], Rejected: ['❌ Tinanggihan', '#c62828'] };
+let buyerFilter = 'active';
+const openBuyerOrders = new Set();
+window.toggleBO = function(id, isOpen) { if (isOpen) openBuyerOrders.add(id); else openBuyerOrders.delete(id); };
+window.setBuyerFilter = function(f) { buyerFilter = f; renderBuyerOrders(); };
+function renderBuyerOrders() {
+    const list = document.getElementById('buyerOrdersList'); if (!list) return;
+    const all = window.__buyerOrders || [];
+    const ACTIVE = ['Pending', 'Approved', 'Delivering'];
+    const cnt = (f) => f === 'all' ? all.length : f === 'active' ? all.filter(o => ACTIVE.includes(o.status)).length : all.filter(o => o.status === f).length;
+    const chips = [['active', 'Aktibo'], ['Pending', 'Pending'], ['Approved', 'Aprubado'], ['Delivering', 'Hinahatid'], ['Completed', 'Tapos na'], ['Rejected', 'Tinanggihan'], ['all', 'Lahat']];
+    const bar = document.getElementById('buyerFilterBar');
+    if (bar) bar.innerHTML = chips.map(([k, l]) => `<button type="button" class="${buyerFilter === k ? 'on' : ''}" onclick="setBuyerFilter('${k}')">${l} (${cnt(k)})</button>`).join('');
+    const q = (document.getElementById('buyerSearch')?.value || '').trim().toLowerCase();
+    let rows = all.filter(o => buyerFilter === 'all' ? true : buyerFilter === 'active' ? ACTIVE.includes(o.status) : o.status === buyerFilter);
+    if (q) rows = all.filter(o => [o.name, o.id.slice(0, 6), o.phone, o.email, o.address, ...(o.items || []).map(i => i.style)].join(' ').toLowerCase().includes(q));
+    if (!rows.length) { list.innerHTML = `<p style="font-size:.85rem;color:#666;padding:6px 0;">${q ? 'Walang nahanap na order.' : 'Walang order sa kategoryang ito.'}</p>`; return; }
+    list.innerHTML = rows.map(o => {
+        const st = BUYER_STATUS[o.status] || [o.status, '#777'];
+        const pickup = o.pickupDate || '';
+        const pcs = (o.items || []).reduce((n, i) => n + (Number(i.qty) || 0), 0);
+        const regular = (o.items || []).reduce((sum, i) => sum + (Number(i.qty) || 0) * (Number(i.price) || 0), 0);
+        const code6 = escH(o.id.slice(0, 6).toUpperCase());
+        const btns = o.status === 'Pending' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Approved')">✅ Aprubahan</button><button type="button" class="btn-decline" style="margin-left:0" onclick="setBuyerOrderStatus('${o.id}','Rejected')">❌ Tanggihan</button>`
+            : o.status === 'Approved' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Delivering')">🚚 Ihatid na</button>`
+            : o.status === 'Delivering' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Completed')">🏁 Tapos na</button>` : '';
+        const notif = o.pickupReady ? '✅ FOR PICKUP' : pickup ? '🕒 Naka-schedule, hindi pa ready' : '⏳ Unavailable pa';
+        return `<details class="bo" style="border-left-color:${st[1]};" ${openBuyerOrders.has(o.id) ? 'open' : ''} ontoggle="toggleBO('${o.id}',this.open)">
+            <summary>
+                <div class="l1">${escH(o.name)}<span class="badge" style="background:${st[1]};">${st[0]}</span></div><div class="amt">₱${(Number(o.total) || 0).toLocaleString()}</div>
+                <div class="l2">🎟️ <b style="font-family:monospace;">${code6}</b> · ${pcs} pcs${o.priority === 'Urgent' ? ' · ⚡Urgent' : ''}</div><div class="pk">${pickup ? '📅 ' + escH(pickup) : ''}${o.pickupReady ? ' ✅' : ''}</div>
+            </summary>
+            <div class="bo-body">
+                🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>
+                📞 ${escH(o.phone)} · ✉️ ${escH(o.email)}<br>
+                📍 ${escH(o.address)}${o.mapLink ? ` · <a href="${escH(o.mapLink)}" target="_blank" rel="noopener noreferrer">🗺️ Mapa</a>` : ''}<br>
+                🏷️ Regular ₱${regular.toLocaleString()} · 🪙 Gamit ${Number(o.coinsRequested || 0)} · Credit ${Number(o.coinsEarned || 0)}${o.note ? `<br>📝 ${escH(o.note)}` : ''}<br>
+                <small style="color:#889;">${new Date(o.createdAt || 0).toLocaleString()} · ID: ${escH(o.id)}</small>
+                <div class="btn-group">${btns}<button type="button" class="btn-approve" style="background:#5e35b1;" onclick="prepBuyerReset('${escH(o.email)}')">🔑 Reset Password</button></div>
+                <div class="bo-sched">
+                    <b>📅 Pickup:</b> <span style="color:#33691e;font-weight:700;">${notif}</span>
+                    <div class="r"><input type="date" id="pickup_${o.id}" value="${escH(pickup)}"><button type="button" class="btn-approve" onclick="assignBuyerPickup('${o.id}')">💾 I-save</button></div>
+                    <div class="r"><button type="button" class="btn-approve" onclick="setBuyerPickupReady('${o.id}',true)">✅ For Pickup Na</button><button type="button" class="btn-decline" style="margin-left:0" onclick="setBuyerPickupReady('${o.id}',false)">⏳ Unavailable Pa</button></div>
+                </div>
+            </div>
+        </details>`;
+    }).join('');
+}
+window.renderBuyerOrders = renderBuyerOrders;
 async function loadBuyerOrders(silent) {
     const list = document.getElementById('buyerOrdersList');
     try {
@@ -871,19 +960,7 @@ async function loadBuyerOrders(silent) {
         const bd = document.getElementById('buyerTabBadge'); if (bd) { bd.textContent = pend; bd.style.display = pend ? 'inline-block' : 'none'; }
         const cnt = document.getElementById('buyerOrdersCount'); if (cnt) cnt.textContent = `(${orders.length})`;
         if (!list) return;
-        list.innerHTML = orders.length ? orders.map(o => {
-            const st = BUYER_STATUS[o.status] || [o.status, '#777'];
-            const pickup = o.pickupDate || '';
-            const sched = `<div style="margin-top:8px;padding:9px;background:#e8f5e9;border-radius:8px"><b>📅 Admin Pickup Schedule</b><br><input type="date" id="pickup_${o.id}" value="${escH(pickup)}" style="margin:6px 0"><button type="button" class="btn-approve" onclick="assignBuyerPickup('${o.id}')">📅 I-save ang Pickup Date</button><div style="margin-top:6px;font-size:.8rem">Buyer notification: <b>${o.pickupReady?'✅ FOR PICKUP':pickup?'🕒 Naka-schedule; hindi pa ready':'⏳ Unavailable pa / naghihintay ng schedule'}</b></div><button type="button" class="btn-approve" onclick="setBuyerPickupReady('${o.id}',true)">✅ For Pickup Na</button> <button type="button" class="btn-decline" onclick="setBuyerPickupReady('${o.id}',false)">⏳ Unavailable Pa</button></div>`;
-            const btns = o.status === 'Pending' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Approved')">✅ Aprubahan</button> <button type="button" class="btn-decline" onclick="setBuyerOrderStatus('${o.id}','Rejected')">❌ Tanggihan</button>`
-                : o.status === 'Approved' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Delivering')">🚚 Ihatid na</button>`
-                : o.status === 'Delivering' ? `<button type="button" class="btn-approve" onclick="setBuyerOrderStatus('${o.id}','Completed')">🏁 Tapos na</button>` : '';
-            return `<div class="store-card" style="border-left-color:${st[1]};">
-                <div style="font-size:.85rem;"><b>${escH(o.name)}</b> <span class="badge" style="background:${st[1]};">${st[0]}</span></div>
-                <div style="font-size:.9rem;margin:8px 0;padding:9px;background:#e8f5e9;border-radius:8px;"><b>🎟️ Buyer Code: <span style="font-family:monospace;letter-spacing:1px;font-size:1.08rem;">${escH(o.id.slice(0,6).toUpperCase())}</span></b><br><small>Order ID: ${escH(o.id)}</small></div>
-                <div style="font-size:.78rem;line-height:1.5;">📅 Pickup: ${escH(o.pickupDate || "Wala pang schedule")} · ${escH(o.priority || "Minor")} priority<br>📞 ${escH(o.phone)} • ✉️ ${escH(o.email)}<br>📍 ${escH(o.address)}<br>🧹 ${(o.items || []).map(i => `${escH(i.style)} × ${i.qty} (₱${i.price})`).join(', ')}<br>🏷️ Regular: ₱${(o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0).toLocaleString()} · Discount/charges (legacy estimate): ₱${Math.max(0, Math.round(((o.items || []).reduce((sum,i)=>sum+(Number(i.qty)||0)*(Number(i.price)||0),0) - (Number(o.total)||0))*100)/100).toLocaleString()}<br>🪙 Gagamitin: ${Number(o.coinsRequested||0)} coins · Na-credit: ${Number(o.coinsEarned||0)} coins<br>💵 Final: <b>₱${(o.total || 0).toLocaleString()}</b>${o.note ? '<br>📝 ' + escH(o.note) : ''}<br><small>${new Date(o.createdAt || 0).toLocaleString()}</small></div>
-                <div class="btn-group">${btns}<button type="button" class="btn-approve" style="background:#5e35b1;" onclick="prepBuyerReset('${escH(o.email)}')">🔑 Reset Password</button></div>${sched}</div>`;
-        }).join('') : '<p style="font-size:.85rem;color:#666;">Walang order pa.</p>';
+        window.__buyerOrders = orders; renderBuyerOrders();
     } catch (err) {
         console.error(err);
         if (silent !== true && list) list.innerHTML = '<p style="font-size:.85rem;color:#c62828;">⚠️ Hindi makuha ang mga order: ' + escH(err.code || err.message) + '. Tiyaking naka-set ang Firestore rules para sa buyer orders.</p>';
@@ -906,7 +983,8 @@ window.setBuyerPickupReady = async function(id, ready) {
 };
 window.prepBuyerReset = function(email) {
     document.getElementById('buyerResetEmail').value = email || '';
-    document.getElementById('buyerResetCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const rc = document.getElementById('buyerResetCard'); rc.open = true;
+    rc.scrollIntoView({ behavior: 'smooth', block: 'center' });
     document.getElementById('buyerResetPass').focus();
 };
 window.resetBuyerPassword = async function() {
