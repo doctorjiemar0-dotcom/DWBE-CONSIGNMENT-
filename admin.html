@@ -825,7 +825,7 @@ window.loadBuyerReviews = async function() {
         <button type="button" class="btn-decline" onclick="moderateBuyerReview('${x.id}','Rejected')">❌ Reject</button>
         <button type="button" style="background:#546e7a" onclick="moderateBuyerReview('${x.id}','Hidden')">🙈 Hide</button>
       </div>` : '';
-      return `<div class="bo" style="padding:11px;margin-bottom:9px"><b>${escH(x.buyerName||'Buyer')}</b> · Order ${escH(String(x.orderId||x.id).slice(0,6).toUpperCase())}<br>
+      return `<div class="bo" style="padding:11px;margin-bottom:9px"><b>${escH(x.buyerName||'Buyer')}</b> ${x.nameMasked?'🔒':''} · 📍 ${escH(x.buyerArea||'Hindi tinukoy')} · Order ${escH(String(x.orderId||x.id).slice(0,6).toUpperCase())}<br>
       <span style="font-size:.8rem">⭐ ${stars} · <b>${escH(status)}</b></span>
       <div style="margin-top:7px;font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere">${escH(x.comment||'(Walang written comment)')}</div>${actions}</div>`;
     }).join('') || '<p>Wala pang reviews.</p>';
