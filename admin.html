@@ -296,6 +296,13 @@ button:hover { background-color: #1b5e20; }
                 <p class="bnote">📅 Ang Admin ang nagtatakda ng pickup date at ng status (Unavailable / For Pickup). Pindutin ang order para makita ang detalye.</p>
             </div>
 
+
+            <div class="card" id="buyerReviewManagement">
+                <div class="bhead"><h2>⭐ Customer Reviews <span id="reviewPendingCount"></span></h2><button type="button" onclick="loadBuyerReviews()">🔄 I-refresh</button></div>
+                <p class="bnote">Ang star ratings ay automatic na public. Written comments lamang ang ina-approve, nire-reject o itinatago. Hindi binabago ang stars o coins.</p>
+                <div id="buyerReviewList" style="margin-top:10px">I-load ang reviews...</div>
+            </div>
+
             <details class="bx" id="buyerResetCard">
                 <summary>🔑 I-reset ang Password ng Buyer</summary>
                 <div class="bx-body">
@@ -746,7 +753,7 @@ window.switchTab = function(tabId, btnElement) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if (btnElement) btnElement.classList.add('active');
-    if (tabId === 'buyersTab') { renderBuyerTab(); loadBuyerOrders(); }
+    if (tabId === 'buyersTab') { renderBuyerTab(); loadBuyerOrders(); loadBuyerReviews(); }
 };
 
 async function handleAdminLogin(email, password) {
@@ -799,6 +806,38 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // ================= DIRECT BUYERS =================
+
+// ===== Buyer review moderation (stars remain public, comments require approval) =====
+const BUYER_REVIEWS_COL = TEST_MODE ? 'buyer_reviews_test' : 'buyer_reviews';
+window.loadBuyerReviews = async function() {
+  const box = document.getElementById('buyerReviewList'); if (!box) return;
+  box.textContent = 'Kinukuha ang reviews...';
+  try {
+    const snap = await getDocs(collection(db, BUYER_REVIEWS_COL));
+    const arr = snap.docs.map(x=>({id:x.id,...x.data()})).sort((x,y)=>(y.createdAt||0)-(x.createdAt||0));
+    const pending = arr.filter(x=>x.comment && (x.moderationStatus||'Approved')==='Pending').length;
+    document.getElementById('reviewPendingCount').textContent = '('+pending+' pending)';
+    box.innerHTML = arr.map(x=>{
+      const status=x.moderationStatus||'Approved';
+      const stars=(x.ratings||[]).map(z=>escH(z.style)+': '+Number(z.stars)+'/5').join(' · ');
+      const actions=x.comment ? `<div class="btn-group">
+        <button type="button" class="btn-approve" onclick="moderateBuyerReview('${x.id}','Approved')">✅ Approve</button>
+        <button type="button" class="btn-decline" onclick="moderateBuyerReview('${x.id}','Rejected')">❌ Reject</button>
+        <button type="button" style="background:#546e7a" onclick="moderateBuyerReview('${x.id}','Hidden')">🙈 Hide</button>
+      </div>` : '';
+      return `<div class="bo" style="padding:11px;margin-bottom:9px"><b>${escH(x.buyerName||'Buyer')}</b> · Order ${escH(String(x.orderId||x.id).slice(0,6).toUpperCase())}<br>
+      <span style="font-size:.8rem">⭐ ${stars} · <b>${escH(status)}</b></span>
+      <div style="margin-top:7px;font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere">${escH(x.comment||'(Walang written comment)')}</div>${actions}</div>`;
+    }).join('') || '<p>Wala pang reviews.</p>';
+  } catch(e) { box.textContent='Hindi ma-load ang reviews: '+(e.code||e.message); }
+};
+window.moderateBuyerReview = async function(id,status) {
+  if (!['Approved','Rejected','Hidden'].includes(status)) return;
+  if (!confirm(status+' ang written comment na ito? Hindi mababago ang star rating o coin reward.')) return;
+  try { await updateDoc(doc(db,BUYER_REVIEWS_COL,id),{moderationStatus:status,moderatedAt:Date.now()}); await loadBuyerReviews(); }
+  catch(e){alert('Hindi na-update ang review: '+(e.code||e.message));}
+};
+
 const BUYER_DIR_DOC = TEST_MODE ? 'directory_test' : 'directory';
 const BUYER_ORDERS_COL = TEST_MODE ? 'buyer_orders_test' : 'buyer_orders';
 const escH = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
