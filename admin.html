@@ -157,6 +157,7 @@ button:hover { background-color: #1b5e20; }
             <button type="button" class="tab-btn" onclick="switchTab('agentsTab', this)">🤝 Sales Agents<span class="tab-badge" id="agentTabBadge">0</span></button>
             <button type="button" class="tab-btn" onclick="switchTab('inventoryTab', this)">📋 Inventory</button>
             <button type="button" class="tab-btn" onclick="switchTab('buyersTab', this)">🛒 Direct Buyers<span class="tab-badge" id="buyerTabBadge">0</span></button>
+            <button type="button" class="tab-btn" onclick="switchTab('reviewsTab', this)">⭐ Reviews<span class="tab-badge" id="reviewTabBadge">0</span></button>
         </div>
 
         <div class="action-bar-top">
@@ -297,11 +298,7 @@ button:hover { background-color: #1b5e20; }
             </div>
 
 
-            <div class="card" id="buyerReviewManagement">
-                <div class="bhead"><h2>⭐ Customer Reviews <span id="reviewPendingCount"></span></h2><button type="button" onclick="loadBuyerReviews()">🔄 I-refresh</button></div>
-                <p class="bnote">Ang star ratings ay automatic na public. Written comments lamang ang ina-approve, nire-reject o itinatago. Hindi binabago ang stars o coins.</p>
-                <div id="buyerReviewList" style="margin-top:10px">I-load ang reviews...</div>
-            </div>
+            
 
             <details class="bx" id="buyerResetCard">
                 <summary>🔑 I-reset ang Password ng Buyer</summary>
@@ -355,6 +352,15 @@ button:hover { background-color: #1b5e20; }
                     <p style="font-size:.74rem;color:#555;margin-top:6px;">Ang naka-print na QR ay hindi kusang magbabago kapag nagpalit ng mode.</p>
                 </div>
             </details>
+        </div>
+
+        <div id="reviewsTab" class="tab-content">
+            <div class="card" style="padding:14px;">
+                <div class="bhead"><h2>⭐ Mga Review <span id="reviewCount" style="font-size:.8rem;color:#558b2f;">(0)</span></h2><button type="button" onclick="loadAdminReviews()">🔄 I-refresh</button></div>
+                <div class="bfilter" id="revFilterBar"></div>
+                <div id="adminReviewsList"><p style="font-size:.85rem;color:#666;">Walang review pa.</p></div>
+                <p class="bnote">Aprubahan muna ang review bago ito lumabas sa public page. Pwede mong i-edit ang komento (halimbawa, tanggalin ang numero ng telepono). Hindi mababago ang bituin.</p>
+            </div>
         </div>
 
         <div id="inventoryTab" class="tab-content">
@@ -753,7 +759,8 @@ window.switchTab = function(tabId, btnElement) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if (btnElement) btnElement.classList.add('active');
-    if (tabId === 'buyersTab') { renderBuyerTab(); loadBuyerOrders(); loadBuyerReviews(); }
+    if (tabId === 'buyersTab') { renderBuyerTab(); loadBuyerOrders(); }
+    if (tabId === 'reviewsTab') { loadAdminReviews(); }
 };
 
 async function handleAdminLogin(email, password) {
@@ -807,36 +814,7 @@ onAuthStateChanged(auth, (user) => {
 
 // ================= DIRECT BUYERS =================
 
-// ===== Buyer review moderation (stars remain public, comments require approval) =====
-const BUYER_REVIEWS_COL = TEST_MODE ? 'buyer_reviews_test' : 'buyer_reviews';
-window.loadBuyerReviews = async function() {
-  const box = document.getElementById('buyerReviewList'); if (!box) return;
-  box.textContent = 'Kinukuha ang reviews...';
-  try {
-    const snap = await getDocs(collection(db, BUYER_REVIEWS_COL));
-    const arr = snap.docs.map(x=>({id:x.id,...x.data()})).sort((x,y)=>(y.createdAt||0)-(x.createdAt||0));
-    const pending = arr.filter(x=>x.comment && (x.moderationStatus||'Approved')==='Pending').length;
-    document.getElementById('reviewPendingCount').textContent = '('+pending+' pending)';
-    box.innerHTML = arr.map(x=>{
-      const status=x.moderationStatus||'Approved';
-      const stars=(x.ratings||[]).map(z=>escH(z.style)+': '+Number(z.stars)+'/5').join(' · ');
-      const actions=x.comment ? `<div class="btn-group">
-        <button type="button" class="btn-approve" onclick="moderateBuyerReview('${x.id}','Approved')">✅ Approve</button>
-        <button type="button" class="btn-decline" onclick="moderateBuyerReview('${x.id}','Rejected')">❌ Reject</button>
-        <button type="button" style="background:#546e7a" onclick="moderateBuyerReview('${x.id}','Hidden')">🙈 Hide</button>
-      </div>` : '';
-      return `<div class="bo" style="padding:11px;margin-bottom:9px"><b>${escH(x.buyerName||'Buyer')}</b> ${x.nameMasked?'🔒':''} · 📍 ${escH(x.buyerArea||'Hindi tinukoy')} · Order ${escH(String(x.orderId||x.id).slice(0,6).toUpperCase())}<br>
-      <span style="font-size:.8rem">⭐ ${stars} · <b>${escH(status)}</b></span>
-      <div style="margin-top:7px;font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere">${escH(x.comment||'(Walang written comment)')}</div>${actions}</div>`;
-    }).join('') || '<p>Wala pang reviews.</p>';
-  } catch(e) { box.textContent='Hindi ma-load ang reviews: '+(e.code||e.message); }
-};
-window.moderateBuyerReview = async function(id,status) {
-  if (!['Approved','Rejected','Hidden'].includes(status)) return;
-  if (!confirm(status+' ang written comment na ito? Hindi mababago ang star rating o coin reward.')) return;
-  try { await updateDoc(doc(db,BUYER_REVIEWS_COL,id),{moderationStatus:status,moderatedAt:Date.now()}); await loadBuyerReviews(); }
-  catch(e){alert('Hindi na-update ang review: '+(e.code||e.message));}
-};
+
 
 const BUYER_DIR_DOC = TEST_MODE ? 'directory_test' : 'directory';
 const BUYER_ORDERS_COL = TEST_MODE ? 'buyer_orders_test' : 'buyer_orders';
@@ -1050,6 +1028,106 @@ window.resetBuyerPassword = async function() {
         out.innerHTML = '<p style="color:#b71c1c;background:#ffebee;padding:10px;border-radius:8px;margin-top:8px;font-size:.85rem;">⚠️ ' + escH(e.message) + '</p>';
     } finally { btn.disabled = false; btn.textContent = '🔑 I-set ang Password'; }
 };
+
+// ================= REVIEWS (Admin) =================
+const REV_COL = TEST_MODE ? 'buyer_reviews_test' : 'buyer_reviews';
+const REV_IMG = TEST_MODE ? 'buyer_review_images_test' : 'buyer_review_images';
+const REV_COLORS = { Pending: '#f57c00', Approved: '#2e7d32', Rejected: '#c62828', Hidden: '#607d8b' };
+let adminReviews = [], revFilter = 'Pending';
+const openRev = new Set();
+const revSt = (r) => r.moderationStatus || 'Approved';
+window.toggleRev = function(id, isOpen) { if (isOpen) openRev.add(id); else openRev.delete(id); };
+window.setRevFilter = function(f) { revFilter = f; renderAdminReviews(); };
+async function loadAdminReviews(silent) {
+    const list = document.getElementById('adminReviewsList');
+    try {
+        const snap = await getDocs(collection(db, REV_COL));
+        adminReviews = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const pend = adminReviews.filter(r => revSt(r) === 'Pending').length;
+        const bd = document.getElementById('reviewTabBadge'); if (bd) { bd.textContent = pend; bd.style.display = pend ? 'inline-block' : 'none'; }
+        if (silent !== true) renderAdminReviews();
+    } catch (err) {
+        if (silent !== true && list) list.innerHTML = '<p style="font-size:.85rem;color:#c62828;">⚠️ Hindi makuha ang mga review: ' + escH(err.code || err.message) + '</p>';
+    }
+}
+window.loadAdminReviews = loadAdminReviews;
+function renderAdminReviews() {
+    const list = document.getElementById('adminReviewsList'); if (!list) return;
+    const cnt = (k) => k === 'all' ? adminReviews.length : adminReviews.filter(r => revSt(r) === k).length;
+    const bar = document.getElementById('revFilterBar');
+    if (bar) bar.innerHTML = [['Pending', 'Naghihintay'], ['Approved', 'Aprubado'], ['Rejected', 'Tinanggihan'], ['Hidden', 'Nakatago'], ['all', 'Lahat']].map(([k, l]) => `<button type="button" class="${revFilter === k ? 'on' : ''}" onclick="setRevFilter('${k}')">${l} (${cnt(k)})</button>`).join('');
+    const c = document.getElementById('reviewCount'); if (c) c.textContent = `(${adminReviews.length})`;
+    const rows = adminReviews.filter(r => revFilter === 'all' || revSt(r) === revFilter);
+    list.innerHTML = rows.length ? rows.map(r => {
+        const st = revSt(r), col = REV_COLORS[st] || '#777', avg = (r.ratings || []).map(x => x.stars + '★').join(' · ');
+        return `<details class="bo" style="border-left-color:${col};" ${openRev.has(r.id) ? 'open' : ''} ontoggle="toggleRev('${r.id}',this.open)">
+            <summary>
+                <div class="l1">${escH(r.buyerName)}<span class="badge" style="background:${col};">${st}</span></div><div class="amt" style="font-size:.8rem;">${escH(avg)}</div>
+                <div class="l2">📍 ${escH(r.buyerArea)} · 🎟️ ${escH(String(r.orderId || r.id).slice(0, 6).toUpperCase())}</div><div class="pk">${r.photoCount ? '📷 ' + Number(r.photoCount) : ''}${r.editedByAdmin ? ' ✏️' : ''}</div>
+            </summary>
+            <div class="bo-body">
+                ${(r.ratings || []).map(x => `🧹 ${escH(x.style)} · ${'★'.repeat(x.stars)}${'☆'.repeat(5 - x.stars)}`).join('<br>')}
+                <label style="margin-top:8px;">Komento (pwedeng i-edit, hanggang 300 letra):</label>
+                <textarea id="rc_${r.id}" rows="3" maxlength="300">${escH(r.comment || '')}</textarea>
+                <div class="btn-group">
+                    <button type="button" class="btn-approve" onclick="saveReviewComment('${r.id}')">💾 I-save ang komento</button>
+                    ${r.photoCount ? `<button type="button" class="btn-approve" style="background:#1661a8;" onclick="showAdminReviewPhotos('${r.id}')">📷 Tingnan ang larawan</button><button type="button" class="btn-decline" style="margin-left:0;" onclick="removeReviewPhotos('${r.id}')">🗑️ Alisin ang larawan</button>` : ''}
+                </div>
+                <div id="rph_${r.id}"></div>
+                <div class="btn-group">
+                    <button type="button" class="btn-approve" onclick="setReviewStatus('${r.id}','Approved')">✅ Aprubahan</button>
+                    <button type="button" class="btn-approve" style="background:#607d8b;" onclick="setReviewStatus('${r.id}','Hidden')">🙈 Itago</button>
+                    <button type="button" class="btn-decline" style="margin-left:0;" onclick="setReviewStatus('${r.id}','Rejected')">❌ Tanggihan</button>
+                    <button type="button" class="btn-decline" style="margin-left:0;" onclick="deleteAdminReview('${r.id}')">🗑️ Burahin</button>
+                </div>
+                <small style="color:#889;">${new Date(r.createdAt || 0).toLocaleString()}</small>
+            </div>
+        </details>`;
+    }).join('') : '<p style="font-size:.85rem;color:#666;padding:6px 0;">Walang review sa kategoryang ito.</p>';
+}
+window.setReviewStatus = async function(id, status) {
+    try {
+        await updateDoc(doc(db, REV_COL, id), { moderationStatus: status, moderatedAt: Date.now() });
+        const r = adminReviews.find(x => x.id === id); if (r) r.moderationStatus = status;
+        renderAdminReviews(); loadAdminReviews(true);
+    } catch (e) { alert('⚠️ Hindi na-update: ' + (e.code || e.message)); }
+};
+window.saveReviewComment = async function(id) {
+    const t = (document.getElementById('rc_' + id)?.value || '').trim().slice(0, 300);
+    try {
+        await updateDoc(doc(db, REV_COL, id), { comment: t, editedByAdmin: true, moderatedAt: Date.now() });
+        const r = adminReviews.find(x => x.id === id); if (r) { r.comment = t; r.editedByAdmin = true; }
+        renderAdminReviews(); alert('✅ Na-save ang komento.');
+    } catch (e) { alert('⚠️ Hindi na-save: ' + (e.code || e.message) + '\nTiyaking naka-publish ang bagong Firestore Rules para sa review editing.'); }
+};
+window.showAdminReviewPhotos = async function(id) {
+    const box = document.getElementById('rph_' + id); if (!box) return;
+    box.innerHTML = '<small>Kinukuha...</small>';
+    try {
+        const s = await getDoc(doc(db, REV_IMG, id));
+        box.innerHTML = s.exists() ? (s.data().images || []).map(u => `<img src="${escH(u)}" alt="Larawan ng review" style="width:100%;border-radius:10px;margin:6px 0;">`).join('') : '<small>Walang larawan.</small>';
+    } catch (e) { box.innerHTML = '<small style="color:#c62828;">' + escH(e.code || e.message) + '</small>'; }
+};
+window.removeReviewPhotos = async function(id) {
+    if (!(await confirm('Alisin ang larawan ng review na ito? Mananatili ang review at komento.'))) return;
+    try {
+        try { await deleteDoc(doc(db, REV_IMG, id)); } catch (_) {}
+        await updateDoc(doc(db, REV_COL, id), { photoCount: 0, moderatedAt: Date.now() });
+        const r = adminReviews.find(x => x.id === id); if (r) r.photoCount = 0;
+        renderAdminReviews();
+    } catch (e) { alert('⚠️ Hindi naalis: ' + (e.code || e.message)); }
+};
+window.deleteAdminReview = async function(id) {
+    if (!(await confirm('Burahin nang tuluyan ang review na ito?\n\nBabala: lalabas ulit ang "Rate" na button sa buyer at maaari siyang makakuha ng +1 coin ulit. Mas mainam ang "Itago" kung ayaw mo lang ipakita.'))) return;
+    try {
+        await deleteDoc(doc(db, REV_COL, id));
+        try { await deleteDoc(doc(db, REV_IMG, id)); } catch (_) {}
+        adminReviews = adminReviews.filter(x => x.id !== id);
+        renderAdminReviews(); loadAdminReviews(true);
+    } catch (e) { alert('⚠️ Hindi nabura: ' + (e.code || e.message)); }
+};
+setTimeout(() => loadAdminReviews(true), 5000);
+setInterval(() => { if (auth.currentUser) loadAdminReviews(true); }, 120000);
 window.loadBuyerOrders = loadBuyerOrders;
 window.setBuyerOrderStatus = async function(id, status) {
     const orderRef = doc(db, BUYER_ORDERS_COL, id);
