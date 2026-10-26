@@ -201,6 +201,21 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 .pw-wrapper input{padding-right:42px}
 .pw-toggle-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none!important;border:none!important;color:#666;font-size:1.1rem;padding:4px;cursor:pointer;width:auto!important;min-height:0!important;margin-top:0!important;box-shadow:none!important}
 .pw-toggle-btn:hover{color:#2e7d32}
+
+/* ===== Interactive Tutorial ===== */
+#tourFab{position:fixed;left:12px;bottom:14px;z-index:900;width:auto;margin:0;padding:10px 14px;border-radius:99px;background:#6a1b9a;color:#fff;font-size:.82rem;font-weight:800;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+#tourSpot{position:fixed;z-index:20100;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.62),0 0 0 3px #ffd54f inset;pointer-events:none;transition:all .25s ease}
+#tourBlock{position:fixed;inset:0;z-index:20090;background:transparent}
+#tourSheet{position:fixed;left:0;right:0;bottom:0;z-index:20200;background:#fff;border-radius:16px 16px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 18px rgba(0,0,0,.3);max-width:600px;margin:auto}
+#tourSheet h3{font-size:1rem;color:#2e7d32;margin-bottom:5px}
+#tourSheet p{font-size:.88rem;line-height:1.45;color:#333;margin-bottom:8px}
+#tourSheet .tdots{display:flex;gap:5px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+#tourSheet .tdots i{width:7px;height:7px;border-radius:50%;background:#cfd8dc}#tourSheet .tdots i.on{background:#2e7d32;width:18px;border-radius:99px}
+#tourSheet .tbtns{display:flex;gap:8px}
+#tourSheet .tbtns button{margin:0;padding:10px;font-size:.88rem;width:auto;flex:1}
+#tourSheet .tskip{background:#eceff1;color:#455a64;flex:none!important;padding:10px 14px!important}
+#tourSheet .tback{background:#78909c}
+@media print{#tourFab{display:none}}
 </style>
 </head>
 <body>
@@ -2630,5 +2645,79 @@ onAuthStateChanged(authData, (user) => {
 
 </script>
 
+
+<!-- Interactive Tutorial (guided tour) -->
+<script>
+(function(){
+var T={
+login:[
+ {sel:'#langCard',t:['Piliin ang Wika','Choose Your Language'],d:['Pwede mong gawing Tagalog o English ang buong app dito.','You can switch the whole app between Tagalog and English here.']},
+ {sel:'#storeSearchInput',t:['1. Hanapin ang Tindahan','1. Find Your Store'],d:['I-type ang unang titik ng pangalan ng tindahan mo, tapos piliin sa listahan. Naka-mask ang mga pangalan para sa privacy.','Type the first letters of your store name, then pick it from the list. Names are masked for privacy.']},
+ {sel:'#unifiedPasswordInput',t:['2. Ilagay ang Password','2. Enter Your Password'],d:['Ilagay ang password na itinakda mo sa aplikasyon. I-tap ang 👁️ para makita ang tina-type.','Enter the password you set in your application. Tap 👁️ to see what you typed.']},
+ {sel:'#unifiedLoginBtn',t:['3. Buksan ang Portal','3. Open Your Portal'],d:['I-tap ito para pumasok sa iyong portal. Kapag nag-login, may bagong tutorial para sa loob ng portal.','Tap to enter your portal. After logging in, tap 📖 again for the in-portal tutorial.']},
+ {sel:'#applicationDrawerToggle',t:['Bagong Kliyente?','New Client?'],d:['Mag-apply dito bilang Consignment Store Partner. Kumpletuhin ang form at digital agreement, tapos hintayin ang pag-apruba ng Admin.','Apply here as a Consignment Store Partner. Complete the form and digital agreement, then wait for Admin approval.']},
+ {sel:'#agentApplyBtn',t:['Walang Tindahan?','No Store?'],d:['Mag-apply bilang Sales Agent Partner. Isang valid ID lang ang kailangan at may ₱10 kang kita sa bawat walis na maibenta.','Apply as a Sales Agent Partner. Only 1 valid ID is needed and you earn ₱10 per broom sold.']}
+],
+portal:[
+ {sel:'#displayStoreName',t:['Ang Iyong Portal','Your Portal'],d:['Dito makikita ang pangalan at status ng iyong consignment.','Your store name and consignment status appear here.']},
+ {sel:'#toggleQrBtn',t:['QR Code','QR Code'],d:['I-tap para ipakita ang QR mo. I-scan ito para mabilis na makapag-login.','Tap to show your QR. Scan it for quick login.']},
+ {sel:'#notifCard',t:['Mga Abiso','Notifications'],d:['Dito dumarating ang updates mula sa Admin: approval, delivery, at iba pa. Pwede mong "Itago" o "Clear All".','Updates from the Admin arrive here: approvals, deliveries and more. You can hide or clear them.']},
+ {sel:'#toggleChatBtn',t:['Support Chat','Support Chat'],d:['I-tap ang "Buksan" para makipag-usap nang personal sa Admin.','Tap "Open" to chat privately with the Admin.']},
+ {sel:'#clientItemsContainer',t:['Aktibong Stock','Active Stock'],d:['Ito ang listahan ng walis na hawak mo. Dito mo rin itatala ang mga naibenta.','This lists the brooms you currently hold. Record your sales here.']},
+ {sel:'#toggleRestockBtn',t:['Restock','Restock'],d:['Kapag paubos na ang stock, mag-request dito ng dagdag. Kailangan munang may email ang tindahan.','When stock runs low, request more here. Your store needs an email first.']},
+ {sel:'#toggleTransactionBtn',t:['Kasaysayan','History'],d:['Tingnan ang lahat ng nakaraang transaksyon mo.','Review all your past transactions.']},
+ {sel:'#toggleAgreementBtn',t:['Kasunduan','Agreement'],d:['Basahin ang opisyal na Consignment Agreement dito.','Read the official Consignment Agreement here.']},
+ {sel:'#togglePasswordBtn',t:['Palitan ang Password','Change Password'],d:['Para sa seguridad, pwede mong palitan ang password anumang oras.','For security, you can change your password anytime.']},
+ {sel:'button[onclick="requestLogout()"]',t:['Mag-logout','Log Out'],d:['Huwag kalimutang mag-logout kapag shared ang phone. Tapos na ang tutorial!','Remember to log out on shared phones. Tutorial complete!']}
+]};
+var L=function(){return (localStorage.getItem('dwbe_lang')||'tl')==='en'?1:0};
+var UI={next:['Susunod ❯','Next ❯'],back:['❮ Balik','❮ Back'],done:['✔ Tapos','✔ Done'],skip:['Laktawan','Skip'],fab:['📖 Tutorial','📖 Tutorial']};
+var u=function(k){return UI[k][L()]};
+var steps=[],n=0,spot,sheet,block,run=false;
+function vis(el){return el&&el.getClientRects().length>0}
+function inPortal(){var p=document.getElementById('portalContent');return p&&p.style.display!=='none'&&vis(p)}
+function place(){
+  if(!run)return;var el=document.querySelector(steps[n].sel);if(!el)return;
+  var r=el.getBoundingClientRect(),pad=6;
+  spot.style.top=(r.top-pad)+'px';spot.style.left=(r.left-pad)+'px';
+  spot.style.width=(r.width+pad*2)+'px';spot.style.height=(r.height+pad*2)+'px';
+}
+function render(){
+  var st=steps[n],el=document.querySelector(st.sel);
+  var h=sheet.offsetHeight||190;
+  var r=el.getBoundingClientRect(),avail=window.innerHeight-h-20;
+  var target=window.scrollY+r.top-Math.max(10,(avail-Math.min(r.height,avail-20))/2);
+  window.scrollTo({top:Math.max(0,target),behavior:'smooth'});
+  var dots='';for(var i=0;i<steps.length;i++)dots+='<i class="'+(i===n?'on':'')+'"></i>';
+  sheet.innerHTML='<h3>'+st.t[L()]+'</h3><p>'+st.d[L()]+'</p><div class="tdots">'+dots+'</div><div class="tbtns"><button type="button" class="tskip" id="tourSkip">'+u('skip')+'</button>'+(n?'<button type="button" class="tback" id="tourBack">'+u('back')+'</button>':'')+'<button type="button" id="tourNext">'+(n===steps.length-1?u('done'):u('next'))+'</button></div>';
+  document.getElementById('tourSkip').onclick=end;
+  var b=document.getElementById('tourBack');if(b)b.onclick=function(){n--;render()};
+  document.getElementById('tourNext').onclick=function(){if(n>=steps.length-1)end();else{n++;render()}};
+  setTimeout(place,60);setTimeout(place,350);setTimeout(place,700);
+}
+function start(){
+  if(run)return;
+  var set=inPortal()?T.portal:T.login;
+  steps=set.filter(function(s){return vis(document.querySelector(s.sel))});
+  if(!steps.length)return;
+  run=true;n=0;
+  block=document.createElement('div');block.id='tourBlock';block.setAttribute('data-no-i18n','');
+  spot=document.createElement('div');spot.id='tourSpot';spot.setAttribute('data-no-i18n','');
+  sheet=document.createElement('div');sheet.id='tourSheet';sheet.setAttribute('data-no-i18n','');
+  document.body.appendChild(block);document.body.appendChild(spot);document.body.appendChild(sheet);
+  render();
+}
+function end(){
+  run=false;[block,spot,sheet].forEach(function(e){if(e&&e.parentNode)e.parentNode.removeChild(e)});
+  try{localStorage.setItem('dwbe_tour_seen','1')}catch(e){}
+}
+window.addEventListener('scroll',function(){if(run)requestAnimationFrame(place)},{passive:true});
+window.addEventListener('resize',function(){if(run)place()});
+document.addEventListener('keydown',function(e){if(!run)return;if(e.key==='Escape')end();if(e.key==='ArrowRight')document.getElementById('tourNext').click();if(e.key==='ArrowLeft'){var b=document.getElementById('tourBack');if(b)b.click()}});
+var fab=document.createElement('button');fab.type='button';fab.id='tourFab';fab.setAttribute('data-no-i18n','');fab.className='no-print';
+fab.textContent=u('fab');fab.onclick=start;document.body.appendChild(fab);
+window.startDwbeTour=start;
+})();
+</script>
 </body>
 </html>
