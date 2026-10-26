@@ -215,6 +215,9 @@ label{font-size:.82rem;color:#31473a;margin-bottom:6px}
 #tourSheet .tbtns button{margin:0;padding:10px;font-size:.88rem;width:auto;flex:1}
 #tourSheet .tskip{background:#eceff1;color:#455a64;flex:none!important;padding:10px 14px!important}
 #tourSheet .tback{background:#78909c}
+#tourSheet .tcnt{font-size:.72rem;font-weight:800;color:#6a1b9a;text-align:right;margin-bottom:3px}
+#tourSheet .tbar{height:4px;background:#e0e0e0;border-radius:99px;overflow:hidden;margin-bottom:8px}#tourSheet .tbar b{display:block;height:100%;background:#2e7d32;transition:width .25s}
+body.touring{padding-bottom:300px}body.touring .drawer-body{padding-bottom:320px}
 @media print{#tourFab{display:none}}
 </style>
 </head>
@@ -2649,71 +2652,125 @@ onAuthStateChanged(authData, (user) => {
 <!-- Interactive Tutorial (guided tour) -->
 <script>
 (function(){
+var DR='applicationDrawer';
+function drawerOpen(){var d=document.getElementById(DR);return d&&d.classList.contains('open')}
+function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+async function needDrawer(type){
+  if(!drawerOpen()){
+    if(window.openApplication)window.openApplication(type);
+    for(var i=0;i<25&&!drawerOpen();i++)await wait(100);
+    await wait(350);
+  }
+  if(window.selectApplicantType){window.selectApplicantType(type);await wait(200)}
+}
+async function noDrawer(){
+  if(drawerOpen()&&window.closeApplicationDrawer){window.closeApplicationDrawer();await wait(450)}
+}
+function S(sel,t,d,o){o=o||{};o.sel=sel;o.t=t;o.d=d;return o}
+var ST='Store Partner',AG='Sales Partner Agent';
 var T={
 login:[
- {sel:'#langCard',t:['Piliin ang Wika','Choose Your Language'],d:['Pwede mong gawing Tagalog o English ang buong app dito.','You can switch the whole app between Tagalog and English here.']},
- {sel:'#storeSearchInput',t:['1. Hanapin ang Tindahan','1. Find Your Store'],d:['I-type ang unang titik ng pangalan ng tindahan mo, tapos piliin sa listahan. Naka-mask ang mga pangalan para sa privacy.','Type the first letters of your store name, then pick it from the list. Names are masked for privacy.']},
- {sel:'#unifiedPasswordInput',t:['2. Ilagay ang Password','2. Enter Your Password'],d:['Ilagay ang password na itinakda mo sa aplikasyon. I-tap ang 👁️ para makita ang tina-type.','Enter the password you set in your application. Tap 👁️ to see what you typed.']},
- {sel:'#unifiedLoginBtn',t:['3. Buksan ang Portal','3. Open Your Portal'],d:['I-tap ito para pumasok sa iyong portal. Kapag nag-login, may bagong tutorial para sa loob ng portal.','Tap to enter your portal. After logging in, tap 📖 again for the in-portal tutorial.']},
- {sel:'#applicationDrawerToggle',t:['Bagong Kliyente?','New Client?'],d:['Mag-apply dito bilang Consignment Store Partner. Kumpletuhin ang form at digital agreement, tapos hintayin ang pag-apruba ng Admin.','Apply here as a Consignment Store Partner. Complete the form and digital agreement, then wait for Admin approval.']},
- {sel:'#agentApplyBtn',t:['Walang Tindahan?','No Store?'],d:['Mag-apply bilang Sales Agent Partner. Isang valid ID lang ang kailangan at may ₱10 kang kita sa bawat walis na maibenta.','Apply as a Sales Agent Partner. Only 1 valid ID is needed and you earn ₱10 per broom sold.']}
+ S('#langCard',['Hakbang 1 · Piliin ang Wika','Step 1 · Choose Language'],['Simulan sa pagpili ng wika. Pwedeng Tagalog o English ang buong app.','Start by choosing your language. The whole app can be Tagalog or English.'],{pre:noDrawer}),
+ S('#storeSearchInput',['Hakbang 2 · Hanapin ang Tindahan','Step 2 · Find Your Store'],['Para sa mga aprubadong kliyente: i-type ang unang titik ng pangalan ng tindahan. May lalabas na listahan, i-tap ang tindahan mo. Naka-mask ang mga pangalan para sa privacy.','For approved clients: type the first letters of your store name. A list appears; tap your store. Names are masked for privacy.']),
+ S('#unifiedPasswordInput',['Hakbang 3 · Password','Step 3 · Password'],['Ilagay ang password na ginawa mo noong nag-apply. I-tap ang 👁️ para makita ang tina-type mo.','Enter the password you created when you applied. Tap 👁️ to see what you are typing.']),
+ S('#unifiedLoginBtn',['Hakbang 4 · Buksan ang Portal','Step 4 · Open the Portal'],['I-tap ito para pumasok. Hindi ka pa aprubado? Pwedeng mag-apply, ituturo ko iyon sa susunod na mga hakbang.','Tap this to log in. Not approved yet? You can apply; the next steps show how.']),
+ S('#applicationDrawerToggle',['Bagong Kliyente? Mag-apply','New Client? Apply'],['Para sa may tindahan: i-tap ito para buksan ang application form bilang Consignment Store Partner.','For store owners: tap this to open the application form as a Consignment Store Partner.']),
+ S('#agentApplyBtn',['Walang Tindahan?','No Store?'],['Pwede ka pa ring magbenta bilang Sales Agent Partner. Subukan natin ang Store Partner form muna.','You can still sell as a Sales Agent Partner. We will go through the Store Partner form first.']),
+ S('.drawer-tabs',['Dalawang Uri ng Aplikasyon','Two Application Types'],['Narito ang form. Sa itaas, pumili sa pagitan ng 🏪 Store Partner at 🤝 Sales Agent. Nagbabago ang form ayon sa pinili.','Here is the form. At the top, switch between 🏪 Store Partner and 🤝 Sales Agent. The form changes to match.'],{pre:function(){return needDrawer(ST)}}),
+ S('#eligibilityCard',['Basahin ang Eligibility','Read the Eligibility'],['Nakalista rito kung para kanino ang programa, ang mga requirements (Valid ID, litrato ng tindahan), at ang presyo. Basahin muna bago mag-fill out.','This shows who the program is for, the requirements (Valid ID, store photo) and pricing. Read it before filling out the form.']),
+ S('#applyInfoBox',['Mahalagang Paalala','Important Note'],['Ikaw ang magtatakda ng sarili mong password. I-memorize ito dahil ito ang gagamitin mo sa pag-login pagka-apruba.','You set your own password. Memorize it; you will use it to log in once approved.']),
+ S('#applicantModeBanner',['Uri ng Aplikasyon','Application Type'],['Ipinapakita nito kung Store Partner o Sales Agent ang kasalukuyang form.','This shows whether the current form is for a Store Partner or Sales Agent.']),
+ S('#inqStoreName',['Pangalan ng Tindahan','Store Name'],['Isulat ang tunay na pangalan ng tindahan mo, hal. "Aling Nena Store".','Enter your real store name, e.g. "Aling Nena Store".'],{g:1}),
+ S('#inqOwnerName',['Pangalan ng May-ari','Owner Name'],['Ilagay ang buong pangalan ng may-ari. Dapat tugma sa Valid ID.','Enter the owner\'s full name. It must match the Valid ID.'],{g:1}),
+ S('#inqPassword',['Sariling Password','Your Own Password'],['Gumawa ng password na hindi bababa sa 6 na karakter. Ito ang gagamitin mo sa Login.','Create a password of at least 6 characters. You will use it to log in.'],{g:1}),
+ S('#inqContact',['Telepono / GCash','Phone / GCash'],['Ilagay ang numero mo, hal. 09123456789. Ito rin ang gagamitin para sa GCash.','Enter your number, e.g. 09123456789. It is also used for GCash.'],{g:1}),
+ S('#inqEmail',['Email Address','Email Address'],['Gumamit ng sarili mong aktibong email. Dito ipapadala ang mga mahahalagang update.','Use your own active email. Important updates are sent here.'],{g:1}),
+ S('#inqAddress',['Lokasyon / Address','Location / Address'],['Isulat ang kumpletong address ng tindahan mo, hal. Brgy. Osiao, Sorsogon.','Write your store\'s complete address, e.g. Brgy. Osiao, Sorsogon.'],{g:1}),
+ S('#inqIdFile',['Upload ng Valid ID','Upload a Valid ID'],['I-tap at pumili ng malinaw na litrato ng harap ng Valid ID. Lalabas ang preview. Admin lang ang makakakita nito.','Tap and choose a clear photo of the front of your Valid ID. A preview appears. Only the Admin can see it.'],{g:1}),
+ S('#inqStoreFile',['Litrato ng Store Front','Store Front Photo'],['Mag-upload ng litrato ng harap ng tindahan mo. Para lang ito sa beripikasyon ng Admin.','Upload a photo of your storefront. It is used only for Admin verification.'],{g:1}),
+ S('#broomStyleToggle',['Piliin ang Uri ng Walis','Choose Broom Style'],['I-tap ang 🧹 Ordinary (standard) o ⭐ Premium (makapal at matibay). Pwede ring i-tap ang card sa ilalim.','Tap 🧹 Ordinary (standard) or ⭐ Premium (thick and durable). You can also tap the cards below.']),
+ S('#applicationDrawerBody .style-grid',['Tingnan ang mga Larawan','View the Photos'],['I-tap ang "🔍 View Images" sa card para makita ang mas maraming larawan ng walis bago pumili.','Tap "🔍 View Images" on a card to see more photos of the broom before choosing.']),
+ S('#inqInitialQty',['Dami ng Order','Order Quantity'],['Fixed sa 5 pcs ang unang order at hindi ito mababago.','The first order is fixed at 5 pcs and cannot be changed.'],{g:1}),
+ S('#inqMessage',['Mensahe (Optional)','Message (Optional)'],['May tanong o paalala sa Admin? Isulat dito. Pwedeng iwanang blangko.','Have a question or note for the Admin? Write it here. You may leave it blank.'],{g:1}),
+ S('#inqSubmitBtn',['Isumite ang Aplikasyon','Submit the Application'],['Kapag kumpleto na, i-tap ito. Hintayin ang pag-apruba ng Admin. Pagka-apruba, mag-login gamit ang pangalan ng tindahan at ang password na ginawa mo.','When complete, tap this. Wait for Admin approval. Once approved, log in with your store name and the password you created.']),
+ S('#tabAgent',['Para sa Sales Agent','For Sales Agents'],['Ngayon, tingnan natin ang 🤝 Sales Agent. Ito ang tab para sa walang tindahan.','Now let\'s look at 🤝 Sales Agent. This tab is for people without a store.'],{pre:function(){return needDrawer(AG)}}),
+ S('#eligAgent',['Eligibility ng Sales Agent','Sales Agent Eligibility'],['1 Valid ID lang ang kailangan. Alyas ang makikita sa app. May ₱10 kang kita sa bawat walis na maibenta, at daily ang cut-off.','Only 1 Valid ID is needed. Your alias is what shows in the app. You earn ₱10 per broom sold, and cut-off is daily.']),
+ S('#inqStoreName',['Alyas (Sales Agent)','Alias (Sales Agent)'],['Dito, Alyas ang isusulat mo at ito ang makikita ng iba sa app.','Here you enter an Alias, which other people will see in the app.'],{g:1}),
+ S('#agentNameHint',['Alyas vs. Real Name','Alias vs. Real Name'],['Ang Real Name ay para lang sa Admin at dapat tugma sa Valid ID. Hindi ito makikita ng iba.','Your Real Name is for the Admin only and must match the Valid ID. Others cannot see it.']),
+ S('#inqIdFile',['Valid ID Lang','Valid ID Only'],['Walang Store Front photo ang Sales Agent. Valid ID lang ang ia-upload. Ang natitirang fields ay kapareho ng Store Partner.','Sales Agents do not need a Store Front photo; upload only a Valid ID. The remaining fields are the same as for Store Partners.'],{g:1}),
+ S('#unifiedLoginBtn',['Pag-login Pagka-apruba','Logging In After Approval'],['Tapos na ang application tour. Pagka-apruba, hanapin ang tindahan mo, ilagay ang password at i-tap ito. Pagkatapos ng login, i-tap ulit ang 📖 para sa tutorial sa loob ng portal.','The application tour is done. After approval, find your store, enter your password and tap this. After logging in, tap 📖 again for the in-portal tutorial.'],{pre:noDrawer})
 ],
 portal:[
- {sel:'#displayStoreName',t:['Ang Iyong Portal','Your Portal'],d:['Dito makikita ang pangalan at status ng iyong consignment.','Your store name and consignment status appear here.']},
- {sel:'#toggleQrBtn',t:['QR Code','QR Code'],d:['I-tap para ipakita ang QR mo. I-scan ito para mabilis na makapag-login.','Tap to show your QR. Scan it for quick login.']},
- {sel:'#notifCard',t:['Mga Abiso','Notifications'],d:['Dito dumarating ang updates mula sa Admin: approval, delivery, at iba pa. Pwede mong "Itago" o "Clear All".','Updates from the Admin arrive here: approvals, deliveries and more. You can hide or clear them.']},
- {sel:'#toggleChatBtn',t:['Support Chat','Support Chat'],d:['I-tap ang "Buksan" para makipag-usap nang personal sa Admin.','Tap "Open" to chat privately with the Admin.']},
- {sel:'#clientItemsContainer',t:['Aktibong Stock','Active Stock'],d:['Ito ang listahan ng walis na hawak mo. Dito mo rin itatala ang mga naibenta.','This lists the brooms you currently hold. Record your sales here.']},
- {sel:'#toggleRestockBtn',t:['Restock','Restock'],d:['Kapag paubos na ang stock, mag-request dito ng dagdag. Kailangan munang may email ang tindahan.','When stock runs low, request more here. Your store needs an email first.']},
- {sel:'#toggleTransactionBtn',t:['Kasaysayan','History'],d:['Tingnan ang lahat ng nakaraang transaksyon mo.','Review all your past transactions.']},
- {sel:'#toggleAgreementBtn',t:['Kasunduan','Agreement'],d:['Basahin ang opisyal na Consignment Agreement dito.','Read the official Consignment Agreement here.']},
- {sel:'#togglePasswordBtn',t:['Palitan ang Password','Change Password'],d:['Para sa seguridad, pwede mong palitan ang password anumang oras.','For security, you can change your password anytime.']},
- {sel:'button[onclick="requestLogout()"]',t:['Mag-logout','Log Out'],d:['Huwag kalimutang mag-logout kapag shared ang phone. Tapos na ang tutorial!','Remember to log out on shared phones. Tutorial complete!']}
+ S('#displayStoreName',['Ang Iyong Portal','Your Portal'],['Dito makikita ang pangalan at status ng iyong consignment.','Your store name and consignment status appear here.']),
+ S('#toggleQrBtn',['QR Code','QR Code'],['I-tap para ipakita ang QR mo. I-scan ito para mabilis na makapag-login.','Tap to show your QR. Scan it for quick login.']),
+ S('#notifCard',['Mga Abiso','Notifications'],['Dito dumarating ang updates mula sa Admin: approval, delivery, at iba pa. Pwede mong "Itago" o "Clear All".','Updates from the Admin arrive here: approvals, deliveries and more. You can hide or clear them.']),
+ S('#toggleChatBtn',['Support Chat','Support Chat'],['I-tap ang "Buksan" para makipag-usap nang personal sa Admin.','Tap "Open" to chat privately with the Admin.']),
+ S('#clientItemsContainer',['Aktibong Stock','Active Stock'],['Ito ang listahan ng walis na hawak mo. Dito mo rin itatala ang mga naibenta.','This lists the brooms you currently hold. Record your sales here.']),
+ S('#toggleRestockBtn',['Restock','Restock'],['Kapag paubos na ang stock, mag-request dito ng dagdag. Kailangan munang may email ang tindahan.','When stock runs low, request more here. Your store needs an email first.']),
+ S('#toggleTransactionBtn',['Kasaysayan','History'],['Tingnan ang lahat ng nakaraang transaksyon mo.','Review all your past transactions.']),
+ S('#toggleAgreementBtn',['Kasunduan','Agreement'],['Basahin ang opisyal na Consignment Agreement dito.','Read the official Consignment Agreement here.']),
+ S('#togglePasswordBtn',['Palitan ang Password','Change Password'],['Para sa seguridad, pwede mong palitan ang password anumang oras.','For security, you can change your password anytime.']),
+ S('button[onclick="requestLogout()"]',['Mag-logout','Log Out'],['Huwag kalimutang mag-logout kapag shared ang phone. Tapos na ang tutorial!','Remember to log out on shared phones. Tutorial complete!'])
 ]};
 var L=function(){return (localStorage.getItem('dwbe_lang')||'tl')==='en'?1:0};
 var UI={next:['Susunod ❯','Next ❯'],back:['❮ Balik','❮ Back'],done:['✔ Tapos','✔ Done'],skip:['Laktawan','Skip'],fab:['📖 Tutorial','📖 Tutorial']};
 var u=function(k){return UI[k][L()]};
-var steps=[],n=0,spot,sheet,block,run=false;
+var steps=[],n=0,spot,sheet,block,run=false,busy=false;
 function vis(el){return el&&el.getClientRects().length>0}
 function inPortal(){var p=document.getElementById('portalContent');return p&&p.style.display!=='none'&&vis(p)}
+function target(st){var el=document.querySelector(st.sel);if(el&&st.g)el=el.closest('.form-group')||el;return el}
 function place(){
-  if(!run)return;var el=document.querySelector(steps[n].sel);if(!el)return;
-  var r=el.getBoundingClientRect(),pad=6;
+  if(!run)return;var el=target(steps[n]);if(!vis(el))return;
+  var r=el.getBoundingClientRect(),pad=5;
   spot.style.top=(r.top-pad)+'px';spot.style.left=(r.left-pad)+'px';
   spot.style.width=(r.width+pad*2)+'px';spot.style.height=(r.height+pad*2)+'px';
 }
-function render(){
-  var st=steps[n],el=document.querySelector(st.sel);
-  var h=sheet.offsetHeight||190;
-  var r=el.getBoundingClientRect(),avail=window.innerHeight-h-20;
-  var target=window.scrollY+r.top-Math.max(10,(avail-Math.min(r.height,avail-20))/2);
-  window.scrollTo({top:Math.max(0,target),behavior:'smooth'});
-  var dots='';for(var i=0;i<steps.length;i++)dots+='<i class="'+(i===n?'on':'')+'"></i>';
-  sheet.innerHTML='<h3>'+st.t[L()]+'</h3><p>'+st.d[L()]+'</p><div class="tdots">'+dots+'</div><div class="tbtns"><button type="button" class="tskip" id="tourSkip">'+u('skip')+'</button>'+(n?'<button type="button" class="tback" id="tourBack">'+u('back')+'</button>':'')+'<button type="button" id="tourNext">'+(n===steps.length-1?u('done'):u('next'))+'</button></div>';
+function follow(){var t0=Date.now();(function loop(){place();if(run&&Date.now()-t0<1000)requestAnimationFrame(loop)})()}
+function bring(el){
+  var sc=el.closest('.drawer-body'),r=el.getBoundingClientRect();
+  var want=sc?sc.getBoundingClientRect().top+10:70,delta=r.top-want;
+  if(sc)sc.scrollBy({top:delta,behavior:'smooth'});else window.scrollBy({top:delta,behavior:'smooth'});
+}
+async function go(i,dir){
+  if(busy)return;busy=true;
+  try{
+    while(i>=0&&i<steps.length){
+      var st=steps[i];
+      if(st.pre){try{await st.pre()}catch(e){}}
+      var el=target(st);
+      if(vis(el)){n=i;paint(el);return}
+      i+=dir;
+    }
+    if(i>=steps.length)end();
+  }finally{busy=false}
+}
+function paint(el){
+  var st=steps[n],pct=Math.round((n+1)/steps.length*100);
+  sheet.innerHTML='<div class="tcnt"><span>'+(n+1)+' / '+steps.length+'</span></div><div class="tbar"><b style="width:'+pct+'%"></b></div><h3>'+st.t[L()]+'</h3><p>'+st.d[L()]+'</p><div class="tbtns"><button type="button" class="tskip" id="tourSkip">'+u('skip')+'</button>'+(n?'<button type="button" class="tback" id="tourBack">'+u('back')+'</button>':'')+'<button type="button" id="tourNext">'+(n===steps.length-1?u('done'):u('next'))+'</button></div>';
   document.getElementById('tourSkip').onclick=end;
-  var b=document.getElementById('tourBack');if(b)b.onclick=function(){n--;render()};
-  document.getElementById('tourNext').onclick=function(){if(n>=steps.length-1)end();else{n++;render()}};
-  setTimeout(place,60);setTimeout(place,350);setTimeout(place,700);
+  var b=document.getElementById('tourBack');if(b)b.onclick=function(){go(n-1,-1)};
+  document.getElementById('tourNext').onclick=function(){if(n>=steps.length-1)end();else go(n+1,1)};
+  bring(el);follow();
 }
 function start(){
   if(run)return;
-  var set=inPortal()?T.portal:T.login;
-  steps=set.filter(function(s){return vis(document.querySelector(s.sel))});
-  if(!steps.length)return;
-  run=true;n=0;
+  steps=inPortal()?T.portal:T.login;
+  run=true;n=0;document.body.classList.add('touring');
   block=document.createElement('div');block.id='tourBlock';block.setAttribute('data-no-i18n','');
   spot=document.createElement('div');spot.id='tourSpot';spot.setAttribute('data-no-i18n','');
   sheet=document.createElement('div');sheet.id='tourSheet';sheet.setAttribute('data-no-i18n','');
   document.body.appendChild(block);document.body.appendChild(spot);document.body.appendChild(sheet);
-  render();
+  go(0,1);
 }
-function end(){
-  run=false;[block,spot,sheet].forEach(function(e){if(e&&e.parentNode)e.parentNode.removeChild(e)});
+async function end(){
+  run=false;document.body.classList.remove('touring');
+  [block,spot,sheet].forEach(function(e){if(e&&e.parentNode)e.parentNode.removeChild(e)});
   try{localStorage.setItem('dwbe_tour_seen','1')}catch(e){}
+  await noDrawer();window.scrollTo({top:0,behavior:'smooth'});
 }
-window.addEventListener('scroll',function(){if(run)requestAnimationFrame(place)},{passive:true});
+document.addEventListener('scroll',function(){if(run)requestAnimationFrame(place)},true);
 window.addEventListener('resize',function(){if(run)place()});
-document.addEventListener('keydown',function(e){if(!run)return;if(e.key==='Escape')end();if(e.key==='ArrowRight')document.getElementById('tourNext').click();if(e.key==='ArrowLeft'){var b=document.getElementById('tourBack');if(b)b.click()}});
+document.addEventListener('keydown',function(e){if(!run)return;if(e.key==='Escape')end();if(e.key==='ArrowRight'){var x=document.getElementById('tourNext');if(x)x.click()}if(e.key==='ArrowLeft'){var b=document.getElementById('tourBack');if(b)b.click()}});
 var fab=document.createElement('button');fab.type='button';fab.id='tourFab';fab.setAttribute('data-no-i18n','');fab.className='no-print';
 fab.textContent=u('fab');fab.onclick=start;document.body.appendChild(fab);
 window.startDwbeTour=start;
