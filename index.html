@@ -545,8 +545,9 @@ body.touring{padding-bottom:300px}body.touring .drawer-body{padding-bottom:320px
           <label>Dami ng Restock (Fixed: 5 pcs):</label>
           <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
         </div>
+        <p id="restockQuota" class="hint" style="margin-bottom:8px;"></p>
         <p id="restockEmailLock" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".</p>
-        <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.</p>
+        <p id="restockNotice" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">Hindi ka makakapag-request ngayon: may nakabinbin pang request para sa uring ito, o naabot mo na ang 3 restock request ngayong buwan.</p>
         <button type="button" id="restockSubmitBtn" onclick="submitRestockRequest()" style="background-color:#f57f17;font-size:.85rem;">Ipadala ang Request</button>
       </div>
     </div>
@@ -647,10 +648,10 @@ body.touring{padding-bottom:300px}body.touring .drawer-body{padding-bottom:320px
           <li style="margin-bottom:6px;">
             <strong>MONTHLY RESTOCK REQUESTS:</strong>
             Ang Store Partner ay makakapag-submit ng
-            <span class="y">ISANG (1) restock request bawat uri ng walis (Ordinary at Premium) bawat buwan</span>. Ibig sabihin, puwedeng mag-request ng 5 pcs ng Ordinary at 5 pcs ng Premium sa iisang buwan.
+            <span class="y">hanggang TATLONG (3) restock request bawat buwan</span>. Ibig sabihin, puwedeng mag-request ng 5 pcs ng Ordinary o Premium nang hanggang tatlong beses sa iisang buwan (isa-isa; hintayin munang matanggap ang nakabinbin na request ng parehong uri bago mag-request ulit).
             Ang minimum at maximum na dami ng restock per request ay
             <span class="r">FIXED AT EXACTLY 5 PIECES (pcs) lamang</span>.
-            Kung kailangan ng mas maraming restock, maaaring isubmit ang bagong request sa susunod na buwan.
+            Kung kailangan ng mas maraming restock pagkatapos ng tatlong request, maaaring isubmit ang bagong request sa susunod na buwan.
             Ang
             <span class="y">Owner ay may diskresyon na aprubahan o tanggihan</span>
             ang restock request batay sa inventory availability at business conditions.
@@ -888,7 +889,7 @@ var D={
 '✅ Na-approve — hintayin ang delivery':'✅ Approved — wait for delivery',
 '❌ Tinanggihan':'❌ Rejected',
 '📦 Natanggap na':'📦 Received',
-'Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.':'You already requested this style this month. You can request again next month, or choose the other style.',
+'Hindi ka makakapag-request ngayon: may nakabinbin pang request para sa uring ito, o naabot mo na ang 3 restock request ngayong buwan.':'You cannot request right now: this style still has a pending request, or you have reached the 3 restock requests for this month.',
 'Mag-login gamit ang pangalan ng tindahan at password.':'Log in using your store name and password.',
 'Ilagay ang pangalan ng tindahan':'Enter the store name',
 'Ilagay ang password':'Enter your password',
@@ -959,6 +960,7 @@ var D={
 };
 var R=[
 [/^Hal\. /,'e.g. '],
+[/^Restock ngayong buwan: (\d+) \/ (\d+)$/,'Restocks this month: $1 / $2'],
 [/^(\d+) aktibo$/,'$1 active'],
 [/^(\d+) kabuuan$/,'$1 total'],
 [/^Dahilan: (.*)$/,'Reason: $1'],
@@ -2192,6 +2194,7 @@ function renderRestockStatus(store) {
     }));
   });
   note.style.display = restockBlocked(store, $('restockStyleType').value) ? 'block' : 'none';
+  const q = $('restockQuota'); if (q) q.textContent = 'Restock ngayong buwan: ' + Math.min(restockUsed(store), RESTOCK_MONTHLY_LIMIT) + ' / ' + RESTOCK_MONTHLY_LIMIT;
 }
 
 // ===== Email ng Tindahan (walang verification; kailangan para magamit ang Restock) =====
@@ -2569,15 +2572,19 @@ function _renderClientDashboardInner(store) {
 }
 
 // Submit Restock Request
+const RESTOCK_MONTHLY_LIMIT = 3;   // hanggang 3 restock request bawat buwan (5 pcs bawat isa)
 const monthKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 
 // Isang request lang bawat buwan (ang Tinanggihan ay hindi binibilang). Bawal din kung may nakabinbin pa.
+// Bilang ng restock request ngayong buwan (ang Tinanggihan ay hindi binibilang)
+function restockUsed(store) {
+  return (store.restockLog || []).filter(r => r.monthKey === monthKey() && r.status !== 'Rejected').length;
+}
+// Bawal kung may nakabinbin pa para sa parehong uri, o kung naabot na ang 3 request ngayong buwan
 function restockBlocked(store, style) {
-  // May nakabinbin pa para sa parehong uri
   if ((store.activeRequests || []).some(r => r.styleType === style)) return true;
   if ((store.approvedRestocks || []).some(r => r.styleType === style)) return true;
-  // O nakapag-request na ng parehong uri ngayong buwan (ang Tinanggihan ay hindi binibilang)
-  return (store.restockLog || []).some(r => r.styleType === style && r.monthKey === monthKey() && r.status !== 'Rejected');
+  return restockUsed(store) >= RESTOCK_MONTHLY_LIMIT;
 }
 
 window.submitRestockRequest = async function() {
@@ -2592,7 +2599,7 @@ window.submitRestockRequest = async function() {
 
   const styleType = $('restockStyleType').value;
   if (restockBlocked(store, styleType)) {
-    alert("Nakapag-request ka na ng uring ito ngayong buwan. Maaari kang mag-request muli sa susunod na buwan, o pumili ng ibang uri.");
+    alert("Hindi ka makakapag-request ngayon: may nakabinbin pang request para sa uring ito, o naabot mo na ang 3 restock request ngayong buwan.");
     return;
   }
   if (!(await confirm("Mag-request ng restock na eksaktong 5 piraso?"))) return;
