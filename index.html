@@ -542,8 +542,8 @@ body.touring{padding-bottom:300px}body.touring .drawer-body{padding-bottom:320px
           </select>
         </div>
         <div class="form-group">
-          <label>Dami ng Restock (Fixed: 5 pcs):</label>
-          <input type="number" id="restockQtyInput" value="5" min="5" max="5" readonly style="background:#eee;">
+          <label>Dami ng Restock (1–5 pcs bawat request):</label>
+          <input type="number" id="restockQtyInput" value="5" min="1" max="5" step="1" inputmode="numeric">
         </div>
         <p id="restockQuota" class="hint" style="margin-bottom:8px;"></p>
         <p id="restockEmailLock" style="display:none;font-size:.8rem;color:#c62828;margin-bottom:6px;">🔒 Naka-lock ang restock. Ilagay muna ang iyong email sa seksyong "Email ng Tindahan".</p>
@@ -648,9 +648,9 @@ body.touring{padding-bottom:300px}body.touring .drawer-body{padding-bottom:320px
           <li style="margin-bottom:6px;">
             <strong>MONTHLY RESTOCK REQUESTS:</strong>
             Ang Store Partner ay makakapag-submit ng
-            <span class="y">hanggang TATLONG (3) restock request bawat buwan</span>. Ibig sabihin, puwedeng mag-request ng 5 pcs ng Ordinary o Premium nang hanggang tatlong beses sa iisang buwan (isa-isa; hintayin munang matanggap ang nakabinbin na request ng parehong uri bago mag-request ulit).
-            Ang minimum at maximum na dami ng restock per request ay
-            <span class="r">FIXED AT EXACTLY 5 PIECES (pcs) lamang</span>.
+            <span class="y">hanggang TATLONG (3) restock request bawat buwan</span>. Ibig sabihin, puwedeng mag-request ng hanggang 5 pcs ng Ordinary o Premium nang hanggang tatlong beses sa iisang buwan (isa-isa; hintayin munang matanggap ang nakabinbin na request ng parehong uri bago mag-request ulit).
+            Ang dami ng restock per request ay
+            <span class="r">MAXIMUM NA 5 PIECES (pcs) bawat request, bawat style</span>.
             Kung kailangan ng mas maraming restock pagkatapos ng tatlong request, maaaring isubmit ang bagong request sa susunod na buwan.
             Ang
             <span class="y">Owner ay may diskresyon na aprubahan o tanggihan</span>
@@ -846,7 +846,7 @@ var D={
 '📜 Opisyal na Kasunduan sa Consignment':'📜 Official Consignment Agreement',
 'Buksan':'Open','Itago':'Hide','Isara':'Close',
 'Piliin ang Uri ng Istilo:':'Choose Style Type:',
-'Dami ng Restock (Fixed: 5 pcs):':'Restock Quantity (Fixed: 5 pcs):',
+'Dami ng Restock (1–5 pcs bawat request):':'Restock Quantity (1–5 pcs per request):',
 'Ipadala ang Request':'Send Request','Ipadala':'Send',
 'Mensahe sa admin...':'Message to admin...',
 'Wala pang mensahe.':'No messages yet.',
@@ -881,6 +881,7 @@ var D={
 'Matagumpay na naipadala ang pending receipt sa Admin!':'The pending receipt was sent to Admin!',
 'Matagumpay na naisumite ang Digital Consignment aplikasyon kasama ang dami ng nais i-order at password!':'Your Digital Consignment application, with the order quantity and password, was submitted successfully!',
 'Mag-request ng restock na eksaktong 5 piraso?':'Request a restock of exactly 5 pieces?',
+'Ang dami ng restock ay dapat 1 hanggang 5 piraso lamang.':'The restock quantity must be 1 to 5 pieces only.',
 'Matagumpay na naipadala ang iyong kahilingan sa Admin!':'Your request was sent to Admin!',
 '🆕 May bagong bersyon ng app. I-update na?':'🆕 A new version of the app is available. Update now?',
 'I-update Ngayon':'Update Now','Mamaya':'Later',
@@ -959,6 +960,7 @@ var D={
 'Ilagay muna ang iyong email sa seksyong "Email ng Tindahan" bago mag-request ng restock.':'Please enter your email in the "Store Email" section before requesting a restock.'
 };
 var R=[
+[/^Mag-request ng restock na (\d+) piraso\?$/,'Request a restock of $1 pieces?'],
 [/^Hal\. /,'e.g. '],
 [/^Restock ngayong buwan: (\d+) \/ (\d+)$/,'Restocks this month: $1 / $2'],
 [/^(\d+) aktibo$/,'$1 active'],
@@ -2602,17 +2604,22 @@ window.submitRestockRequest = async function() {
     alert("Hindi ka makakapag-request ngayon: may nakabinbin pang request para sa uring ito, o naabot mo na ang 3 restock request ngayong buwan.");
     return;
   }
-  if (!(await confirm("Mag-request ng restock na eksaktong 5 piraso?"))) return;
+  const qty = parseInt($('restockQtyInput').value, 10);
+  if (isNaN(qty) || qty < 1 || qty > 5) {
+    alert("Ang dami ng restock ay dapat 1 hanggang 5 piraso lamang.");
+    return;
+  }
+  if (!(await confirm(`Mag-request ng restock na ${qty} piraso?`))) return;
   const reqId = Date.now();
 
   if (!store.activeRequests) store.activeRequests = [];
-  store.activeRequests.push(Object.assign({ id: reqId, styleType: styleType, qty: 5 }, stamp()));
+  store.activeRequests.push(Object.assign({ id: reqId, styleType: styleType, qty: qty }, stamp()));
 
   if (!store.restockLog) store.restockLog = [];
-  store.restockLog.unshift(Object.assign({ id: reqId, styleType: styleType, qty: 5, monthKey: monthKey(), status: 'Pending', reason: '', updatedAt: now() }, stamp()));
+  store.restockLog.unshift(Object.assign({ id: reqId, styleType: styleType, qty: qty, monthKey: monthKey(), status: 'Pending', reason: '', updatedAt: now() }, stamp()));
 
   // Kasaysayan ng Transaksyon lang; hindi na napupunta sa Support chat
-  addTx(store, 'Request', `Humiling ng restock: 5 pcs (${styleType})`);
+  addTx(store, 'Request', `Humiling ng restock: ${qty} pcs (${styleType})`);
 
   await saveData();
   alert('Matagumpay na naipadala ang iyong kahilingan sa Admin!');
@@ -2637,6 +2644,10 @@ window.sendClientMessage = async function() {
 };
 
 // Palitan ang abiso kapag ibang uri ang pinili sa restock
+$('restockQtyInput').addEventListener('input', e => {
+  const v = parseInt(e.target.value, 10);
+  if (!isNaN(v)) e.target.value = Math.min(5, Math.max(1, v));
+});
 $('restockStyleType').addEventListener('change', () => { const st = getStore(); if (st) renderRestockStatus(st); });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && authData.currentUser) markClientPresence(false);
