@@ -1814,6 +1814,7 @@ function renderApp() {
                     </div>
                     <div class="btn-group">
                         <button type="button" onclick="bawasStockSub(${index}, ${subIdx})" style="background-color: #ff9800;">Bawas</button>
+                        <button type="button" onclick="editActivePrice(${index}, ${subIdx})" style="background-color: #6a1b9a;">✏️ Presyo</button>
                     </div>
                 </div>
             `;
@@ -2657,6 +2658,30 @@ window.editDiscount = async function(index) {
     await saveToCloud();
     const preview = targets.map(s => { const e = priceWithDiscount(item, s); return `${s.styleType}: ₱${e.base} → ₱${e.price}`; }).join('\n');
     alert(`✅ Naitala ang discount.\n\n${what} sa ${styleName(styleType)}\nHanggang ${fmtDate(endDate)}\n\n${preview}\n\nBabalik sa regular na presyo pagkatapos ng petsang iyon.`);
+};
+
+// I-edit ang aktibong presyo (bawat piraso) ng isang uri ng walis ng isang client
+window.editActivePrice = async function(index, subIdx) {
+    const item = appData.consignments[index];
+    const sub = item && (item.storeItems || [])[subIdx];
+    if (!sub) { alert('Hindi makita ang item.'); return; }
+    const style = sub.styleType || 'Ordinary';
+    const oldPrice = Number(sub.price) || 0;
+    const std = stdPriceFor(style, item);
+    const pStr = await prompt(`Bagong aktibong presyo bawat piraso (₱)\n\n🏪 ${item.storeName}\n📦 ${style}\nKasalukuyang presyo: ₱${oldPrice}\nStandard na presyo: ₱${std}`, String(oldPrice));
+    if (pStr === null) return;
+    const newPrice = Math.round(parseFloat(pStr) * 100) / 100;
+    if (isNaN(newPrice) || newPrice <= 0) { alert('Maglagay ng wastong presyo na higit sa zero.'); return; }
+    if (newPrice === oldPrice) { alert('Walang nagbago sa presyo.'); return; }
+    if (!await confirm(`Palitan ang presyo ng ${style} ng ${item.storeName} mula ₱${oldPrice} patungong ₱${newPrice}?\n\nAng mga benta na naitala na ng client ay mananatili sa dating presyo; ang bagong presyo ay para sa mga susunod na benta at restock.`)) return;
+    sub.price = newPrice;
+    if (!item.history) item.history = [];
+    if (!item.clientNotifications) item.clientNotifications = [];
+    const ts = new Date().toLocaleString();
+    item.history.unshift({ id: Date.now(), date: ts, text: `Binago ang presyo ng ${style}: ₱${oldPrice} → ₱${newPrice}/pc` });
+    item.clientNotifications.push({ id: Date.now(), text: `💲 Na-update ang presyo ng ${style} mo: ₱${oldPrice} → ₱${newPrice} bawat piraso.`, date: ts });
+    await saveToCloud();
+    alert(`✅ Na-update ang presyo ng ${style}: ₱${oldPrice} → ₱${newPrice}`);
 };
 
 window.createClientLogin = async function(index) {
